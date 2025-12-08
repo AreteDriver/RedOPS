@@ -1,0 +1,120 @@
+{
+  "metadata": {
+    "name": "Corporate Assessment Pipeline",
+    "description": "Corporate exposure and attack surface assessment pipeline",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["corporate", "assessment", "exposure"]
+  },
+  "steps": [
+    {
+      "name": "Validate Scope",
+      "module": "compliance.scope_guard.validate_scope",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Audit Pipeline Start",
+      "module": "compliance.audit_log.audit_pipeline_start",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Profile Domain",
+      "module": "recon.domains.profile_domain",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Fingerprint Technology Stack",
+      "module": "recon.tech_stack.fingerprint",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Scan Exposure",
+      "module": "corp_assessment.exposure_scan.scan_exposure",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Score Risks",
+      "module": "intel.risk_scoring.score_risks",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Build Graph",
+      "module": "intel.graph_build.build_graph",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Analyze Attack Paths",
+      "module": "simulation.attack_paths.analyze_paths",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Scenarios",
+      "module": "simulation.scenarios.generate_scenarios",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Map to MITRE ATT&CK",
+      "module": "simulation.mitre_mapping.map_to_mitre",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Surface Summary",
+      "module": "corp_assessment.surface_summary.generate_summary",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Executive Summary",
+      "module": "reporting.markdown_report.generate_exec_summary",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate HTML Report",
+      "module": "reporting.html_report.generate_html",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Export Data",
+      "module": "reporting.export.export_all",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Audit Pipeline End",
+      "module": "compliance.audit_log.audit_pipeline_end",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 300,
+    "strict_scope": true
+  }
+}
