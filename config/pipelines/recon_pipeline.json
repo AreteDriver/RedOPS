@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "name": "Reconnaissance Pipeline",
+    "description": "Comprehensive reconnaissance and OSINT gathering pipeline",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["recon", "osint", "discovery"]
+  },
+  "steps": [
+    {
+      "name": "Validate Scope",
+      "module": "compliance.scope_guard.validate_scope",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Audit Pipeline Start",
+      "module": "compliance.audit_log.audit_pipeline_start",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Profile Domain",
+      "module": "recon.domains.profile_domain",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Enumerate DNS",
+      "module": "recon.domains.enumerate_dns",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Fingerprint Technology Stack",
+      "module": "recon.tech_stack.fingerprint",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Gather OSINT",
+      "module": "recon.social_osint.gather_osint",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Extract Entities",
+      "module": "intel.entity_extract.extract_entities",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Score Risks",
+      "module": "intel.risk_scoring.score_risks",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Build Graph",
+      "module": "intel.graph_build.build_graph",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Executive Summary",
+      "module": "reporting.markdown_report.generate_exec_summary",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Export Data",
+      "module": "reporting.export.export_all",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Audit Pipeline End",
+      "module": "compliance.audit_log.audit_pipeline_end",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 300,
+    "strict_scope": true
+  }
+}
