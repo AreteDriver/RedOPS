@@ -52,6 +52,8 @@ RedOps is a comprehensive security assessment framework that combines:
 
 ## Installation
 
+**Quick Start**: For detailed installation instructions, see [SETUP.md](SETUP.md)
+
 ### From Source
 
 ```bash
@@ -71,6 +73,8 @@ pip install -e ".[full]"
 ```bash
 pip install redops
 ```
+
+For more detailed installation options, dependency management, and troubleshooting, please refer to the [SETUP.md](SETUP.md) guide.
 
 ## Quick Start
 
