@@ -18,11 +18,11 @@ pydantic>=2.0.0,<3.0.0
 # ============================================================================
 
 # For EXIF extraction from images
-Pillow>=10.0.0,<11.0.0
+Pillow>=10.2.0,<11.0.0
 exifread>=3.0.0,<4.0.0
 
 # For document metadata analysis (PDF, Office documents)
-PyPDF2>=3.0.0,<4.0.0
+pypdf>=3.0.0,<5.0.0
 python-docx>=0.8.11,<1.2.0
 openpyxl>=3.0.0,<4.0.0
 python-pptx>=0.6.21,<1.0.0
