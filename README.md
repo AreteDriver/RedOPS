@@ -694,7 +694,7 @@ If you discover a security vulnerability in RedOPS itself:
 
 MIT License - See [LICENSE](LICENSE) file for full details.
 
-RedOPS is free and open-source software, available for commercial and non-commercial use.
+RedOPS is free and open-source software, available for commercial and non-commercial use. However, **users must always obtain proper authorization** before conducting any security assessments, regardless of the software license.
 
 ---
 
@@ -759,5 +759,4 @@ We are grateful to all contributors and users who help improve RedOPS.
 *Empowering security professionals with systematic, ethical assessment capabilities*
 
 🔗 **Repository**: [https://github.com/AreteDriver/RedOPS](https://github.com/AreteDriver/RedOPS)  
-📚 **Documentation**: [Coming Soon]  
-💬 **Community**: [GitHub Discussions](https://github.com/AreteDriver/RedOPS/discussions)
+📚 **Issues & Support**: [GitHub Issues](https://github.com/AreteDriver/RedOPS/issues)
