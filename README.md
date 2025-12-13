@@ -102,6 +102,170 @@ Reports are saved to the `./output` directory (or your specified `--output-dir`)
 - `report_*.html` - HTML report with styling
 - `data_*.json` - Complete data export
 
+### 4. Verify Installation
+
+```bash
+# Check version
+redops --version
+
+# List available pipelines
+redops list
+
+# Test with example pipeline (replace with your authorized domain)
+redops run config/pipelines/recon_pipeline.json yourdomain.com
+```
+
+## Use Cases
+
+### 🎯 Corporate Security Assessment
+
+Assess your organization's external attack surface:
+
+```bash
+# Run corporate assessment on your domain
+redops run config/pipelines/corp_assessment.json company.com --output-dir ./assessment
+
+# Review exposure summary
+cat ./assessment/executive_summary_*.md
+```
+
+**What it analyzes:**
+- Public DNS records and IP exposure
+- Technology stack fingerprinting
+- Publicly accessible metadata
+- Risk scoring and prioritization
+
+### 🔍 Forensic Analysis
+
+Analyze metadata from documents and images in a directory:
+
+```bash
+# Analyze a directory of files
+redops run config/pipelines/forensic_pipeline.json /path/to/documents
+
+# Extract EXIF data, document metadata, and hidden information
+```
+
+**What it extracts:**
+- EXIF data from images (GPS, camera info, timestamps)
+- Document metadata (authors, creation dates, edit history)
+- Code repository artifacts
+- Dependency information
+
+### 🧪 Threat Modeling
+
+Model potential attack paths for your infrastructure:
+
+```bash
+# Generate threat model
+redops run config/pipelines/recon_pipeline.json target.com
+
+# Review MITRE ATT&CK mappings in report
+```
+
+**What it generates:**
+- Attack path scenarios
+- MITRE ATT&CK technique mappings
+- Risk assessment matrix
+- Defensive recommendations
+
+## Practical Examples
+
+### Example 1: Domain Reconnaissance
+
+```bash
+# Reconnaissance on authorized domain
+redops run config/pipelines/recon_pipeline.json example.com --output-dir ./recon_results
+```
+
+**Sample Output:**
+```
+[RedOps] Loading pipeline: config/pipelines/recon_pipeline.json
+[RedOps] Pipeline: Domain Reconnaissance
+[RedOps] Target: example.com
+[RedOps] Steps: 6
+
+[RedOps] Starting pipeline execution...
+  ✓ Scope validation passed
+  ✓ DNS enumeration completed (4 A records found)
+  ✓ Technology stack fingerprinted
+  ✓ Risk scoring completed
+  ✓ Executive summary generated
+  ✓ HTML report generated
+
+[RedOps] Pipeline completed successfully!
+
+=== Output Files ===
+  executive_summary_path: ./recon_results/executive_summary_20250113.md
+  technical_report_path: ./recon_results/technical_report_20250113.md
+  html_report_path: ./recon_results/report_20250113.html
+  data_export_path: ./recon_results/data_20250113.json
+```
+
+### Example 2: Document Metadata Analysis
+
+```bash
+# Analyze metadata from a directory
+redops run config/pipelines/forensic_pipeline.json ~/Documents/project_files
+```
+
+**Findings might include:**
+```
+📄 Document Metadata Summary:
+  - 15 PDF files analyzed
+  - 8 unique authors identified
+  - 3 documents contain GPS coordinates
+  - 12 images with camera EXIF data
+  - Creation dates spanning 2022-2025
+
+⚠️ Privacy Concerns:
+  - Report_Final.pdf contains author: "John Smith"
+  - IMG_1234.jpg contains GPS: 37.7749° N, 122.4194° W
+  - Proposal.docx has edit history with 4 contributors
+```
+
+### Example 3: Custom Pipeline
+
+Create your own pipeline for specific needs:
+
+```json
+{
+  "metadata": {
+    "name": "Quick Security Scan",
+    "description": "Fast security assessment for authorized targets",
+    "version": "1.0"
+  },
+  "steps": [
+    {
+      "name": "Validate Scope",
+      "module": "compliance.scope_guard.validate_scope",
+      "enabled": true
+    },
+    {
+      "name": "DNS Enumeration",
+      "module": "recon.domains.enumerate_dns",
+      "enabled": true
+    },
+    {
+      "name": "Risk Assessment",
+      "module": "intel.risk_scoring.calculate_risk",
+      "enabled": true
+    },
+    {
+      "name": "Generate Report",
+      "module": "reporting.markdown_report.generate_exec_summary",
+      "enabled": true
+    }
+  ]
+}
+```
+
+Save as `config/pipelines/quick_scan.json` and run:
+
+```bash
+redops run config/pipelines/quick_scan.json target.com
+```
+
 ## Architecture
 
 ### Project Structure
@@ -297,13 +461,39 @@ RedOps enforces scope through:
 
 ## Contributing
 
-Contributions are welcome! Please:
+We welcome contributions from the community! RedOps is designed to be a professional, ethical security assessment framework.
+
+### How to Contribute
 
 1. Fork the repository
-2. Create a feature branch
-3. Follow the existing code structure
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Follow the coding standards and write tests
+4. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+5. Push to your branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+### Contribution Guidelines
+
+Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+
+- Development setup and workflow
+- Coding standards and style guide
+- Testing requirements
+- Pull request process
+- Security considerations
+
+### What We're Looking For
+
+- 🐛 Bug fixes and improvements
+- 📚 Documentation enhancements
+- 🧪 Additional test coverage
+- 🔧 New analysis modules (OSINT, metadata, intelligence)
+- 📊 Reporting enhancements
+- 🛡️ Security and scope validation improvements
+
+### Code of Conduct
+
+Be respectful, professional, and constructive. We're building tools for security professionals, and we expect contributors to maintain high ethical standards.
 
 ## License
 

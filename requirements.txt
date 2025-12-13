@@ -1,36 +1,61 @@
 # RedOps Framework Dependencies
+# 
+# Installation:
+#   pip install -r requirements.txt              # Minimal install
+#   pip install -e ".[full]"                     # Full install with all features
+#
+# For development:
+#   pip install -r requirements.txt
+#   pip install pytest pytest-cov black flake8 mypy
 
-# Core dependencies
-pydantic>=2.0.0
+# ============================================================================
+# Core Dependencies (Required)
+# ============================================================================
+pydantic>=2.0.0,<3.0.0
 
-# Future enhancements (commented out for minimal install)
-# For EXIF extraction:
-# Pillow>=10.0.0
-# exifread>=3.0.0
+# ============================================================================
+# Optional Dependencies (Recommended for full functionality)
+# ============================================================================
 
-# For document metadata:
-# PyPDF2>=3.0.0
-# python-docx>=0.8.11
-# openpyxl>=3.0.0
-# python-pptx>=0.6.21
+# For EXIF extraction from images
+Pillow>=10.0.0,<11.0.0
+exifread>=3.0.0,<4.0.0
 
-# For DNS and networking:
-# dnspython>=2.0.0
-# requests>=2.31.0
+# For document metadata analysis (PDF, Office documents)
+PyPDF2>=3.0.0,<4.0.0
+python-docx>=0.8.11,<1.2.0
+openpyxl>=3.0.0,<4.0.0
+python-pptx>=0.6.21,<1.0.0
 
-# For NLP and entity extraction:
-# spacy>=3.0.0
-# nltk>=3.8.0
+# For DNS enumeration and networking
+dnspython>=2.0.0,<3.0.0
+requests>=2.31.0,<3.0.0
 
-# For data science and clustering:
-# scikit-learn>=1.3.0
-# numpy>=1.24.0
-# pandas>=2.0.0
+# For NLP and entity extraction
+# Note: spacy requires model download: python -m spacy download en_core_web_sm
+# spacy>=3.0.0,<4.0.0
+# nltk>=3.8.0,<4.0.0
 
-# For HTML/PDF report generation:
-# jinja2>=3.1.0
-# weasyprint>=59.0
+# For data science, clustering, and risk analysis
+scikit-learn>=1.3.0,<2.0.0
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<3.0.0
 
-# For visualization:
-# matplotlib>=3.7.0
-# networkx>=3.1
+# For HTML/PDF report generation
+jinja2>=3.1.0,<4.0.0
+# weasyprint>=59.0,<63.0  # Optional: for PDF generation, has system dependencies
+
+# For visualization and graph building
+matplotlib>=3.7.0,<4.0.0
+networkx>=3.1,<4.0.0
+
+# ============================================================================
+# Development Dependencies (Optional)
+# ============================================================================
+# Install separately with: pip install pytest pytest-cov black flake8 mypy
+#
+# pytest>=7.4.0           # Testing framework
+# pytest-cov>=4.1.0       # Coverage reports
+# black>=23.0.0           # Code formatting
+# flake8>=6.0.0           # Linting
+# mypy>=1.5.0             # Type checking
