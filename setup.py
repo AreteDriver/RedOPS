@@ -23,7 +23,7 @@ setup(
     ],
     extras_require={
         "full": [
-            "Pillow>=10.0.0",
+            "Pillow>=10.2.0",
             "dnspython>=2.0.0",
             "requests>=2.31.0",
             "jinja2>=3.1.0",
