@@ -13,26 +13,27 @@ from redops.core.config import RedOpsConfig, default_config
 
 class ScopeViolationError(Exception):
     """Raised when a target is out of scope."""
+
     pass
 
 
 def is_in_scope(target: str, config: RedOpsConfig = default_config) -> bool:
     """
     Check if a target is within the allowed scope.
-    
+
     Args:
         target: The target to check
         config: Configuration containing scope rules
-        
+
     Returns:
         True if in scope, False otherwise
     """
     scope = config.scope
-    
+
     # If not in strict mode, allow everything
     if not scope.strict_mode:
         return True
-    
+
     # Check if target is a local directory
     if Path(target).exists():
         target_path = Path(target).resolve()
@@ -40,44 +41,44 @@ def is_in_scope(target: str, config: RedOpsConfig = default_config) -> bool:
             allowed_path = Path(allowed_dir).resolve()
             if str(target_path).startswith(str(allowed_path)):
                 return True
-    
+
     # Check if target is an allowed domain
     for allowed_domain in scope.allowed_domains:
         if target == allowed_domain or target.endswith(f".{allowed_domain}"):
             return True
-    
+
     # Check if target is an allowed IP
     if target in scope.allowed_ips:
         return True
-    
+
     return False
 
 
 def validate_scope(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Pipeline module that validates target scope.
-    
+
     Args:
         ctx: Pipeline context
         params: Optional parameters including 'config'
-        
+
     Returns:
         Updated context
-        
+
     Raises:
         ScopeViolationError: If target is out of scope
     """
     params = params or {}
-    config = params.get('config', default_config)
-    
+    config = params.get("config", default_config)
+
     target = ctx.target
-    
+
     if not target:
         ctx.log("No target specified, skipping scope validation", level="WARNING")
         return ctx
-    
+
     ctx.log(f"Validating scope for target: {target}", level="INFO")
-    
+
     if is_in_scope(target, config):
         ctx.log(f"Target is in scope: {target}", level="INFO")
         ctx.add("scope_validated", True)
@@ -91,14 +92,14 @@ def validate_scope(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
 def add_to_scope(target: str, config: RedOpsConfig = default_config) -> None:
     """
     Add a target to the allowed scope.
-    
+
     Args:
         target: The target to add
         config: Configuration to update
     """
     if Path(target).exists():
         config.scope.allowed_directories.append(str(Path(target).resolve()))
-    elif target.replace('.', '').replace(':', '').isdigit():
+    elif target.replace(".", "").replace(":", "").isdigit():
         # Looks like an IP
         config.scope.allowed_ips.append(target)
     else:

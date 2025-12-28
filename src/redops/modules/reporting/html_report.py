@@ -95,107 +95,109 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 def generate_html(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Generate an HTML report.
-    
+
     Args:
         ctx: Pipeline context
         params: Optional parameters including 'output_path'
-        
+
     Returns:
         Updated context
     """
     params = params or {}
-    output_dir = Path(params.get('output_dir', './output'))
+    output_dir = Path(params.get("output_dir", "./output"))
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     ctx.log("Generating HTML report", level="INFO")
-    
+
     # Build the report content
     content = build_html_content(ctx)
-    
+
     # Fill in the template
     html = HTML_TEMPLATE.format(
         target=ctx.target or "N/A",
-        timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC'),
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC"),
         pipeline=ctx.get("pipeline_name", "Unknown"),
-        content=content
+        content=content,
     )
-    
+
     # Save to file
     output_path = output_dir / f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(html)
-    
+
     ctx.add("html_report_path", str(output_path))
     ctx.log(f"HTML report saved to {output_path}", level="INFO")
-    
+
     return ctx
 
 
 def build_html_content(ctx: Context) -> str:
     """
     Build the HTML report content sections.
-    
+
     Args:
         ctx: Pipeline context
-        
+
     Returns:
         HTML content string
     """
     content = ""
-    
+
     # Summary section
     content += '<div class="section">\n'
-    content += '<h2>Summary</h2>\n'
-    
+    content += "<h2>Summary</h2>\n"
+
     risks = ctx.get("risks", [])
     if risks:
-        content += f'<p>Total risks identified: <strong>{len(risks)}</strong></p>\n'
+        content += f"<p>Total risks identified: <strong>{len(risks)}</strong></p>\n"
     else:
-        content += '<p>No significant risks identified.</p>\n'
-    
-    content += '</div>\n'
-    
+        content += "<p>No significant risks identified.</p>\n"
+
+    content += "</div>\n"
+
     # Risks section
     if risks:
         content += '<div class="section">\n'
-        content += '<h2>Identified Risks</h2>\n'
-        content += '<table>\n'
-        content += '<tr><th>Title</th><th>Level</th><th>Score</th><th>Description</th></tr>\n'
-        
+        content += "<h2>Identified Risks</h2>\n"
+        content += "<table>\n"
+        content += (
+            "<tr><th>Title</th><th>Level</th><th>Score</th><th>Description</th></tr>\n"
+        )
+
         for risk in risks[:10]:  # Top 10 risks
             level = risk.get("level", "info")
             title = risk.get("title", "Untitled")
             score = risk.get("score", 0)
             desc = risk.get("description", "")[:100]
-            
-            content += f'<tr><td>{title}</td>'
+
+            content += f"<tr><td>{title}</td>"
             content += f'<td class="risk-{level}">{level.upper()}</td>'
-            content += f'<td>{score}</td>'
-            content += f'<td>{desc}</td></tr>\n'
-        
-        content += '</table>\n'
-        content += '</div>\n'
-    
+            content += f"<td>{score}</td>"
+            content += f"<td>{desc}</td></tr>\n"
+
+        content += "</table>\n"
+        content += "</div>\n"
+
     # Attack paths section
     attack_paths = ctx.get("attack_paths", [])
     if attack_paths:
         content += '<div class="section">\n'
-        content += '<h2>Attack Paths</h2>\n'
-        
+        content += "<h2>Attack Paths</h2>\n"
+
         for i, path in enumerate(attack_paths[:5], 1):
             name = path.get("name", f"Path {i}")
             desc = path.get("description", "")
             steps = path.get("steps", [])
-            
-            content += f'<h3>{i}. {name}</h3>\n'
-            content += f'<p>{desc}</p>\n'
-            
+
+            content += f"<h3>{i}. {name}</h3>\n"
+            content += f"<p>{desc}</p>\n"
+
             if steps:
-                content += '<ol>\n'
+                content += "<ol>\n"
                 for step in steps:
-                    content += f'<li>{step}</li>\n'
-                content += '</ol>\n'
-        
-        content += '</div>\n'
-    
+                    content += f"<li>{step}</li>\n"
+                content += "</ol>\n"
+
+        content += "</div>\n"
+
     return content

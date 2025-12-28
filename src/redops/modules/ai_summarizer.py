@@ -1,4 +1,3 @@
-
 def summarize(data: str, prompt: str = "Summarize the following security data:") -> str:
     """
     Uses a cloud LLM or local model to summarize output.

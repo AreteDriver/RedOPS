@@ -12,6 +12,7 @@ from enum import Enum
 
 class RiskLevel(str, Enum):
     """Risk level enumeration."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -21,6 +22,7 @@ class RiskLevel(str, Enum):
 
 class RiskCategory(str, Enum):
     """Risk category enumeration."""
+
     OWASP = "owasp"
     MITRE = "mitre"
     EXPOSURE = "exposure"
@@ -30,6 +32,7 @@ class RiskCategory(str, Enum):
 
 class Risk(BaseModel):
     """Model for risk assessment."""
+
     title: str
     description: str
     likelihood: int = Field(ge=1, le=5, description="Likelihood score (1-5)")
@@ -37,12 +40,12 @@ class Risk(BaseModel):
     category: Optional[RiskCategory] = None
     mitre_id: Optional[str] = None
     owasp_id: Optional[str] = None
-    
+
     @property
     def score(self) -> int:
         """Calculate risk score as likelihood × impact."""
         return self.likelihood * self.impact
-    
+
     @property
     def level(self) -> RiskLevel:
         """Determine risk level based on score."""
@@ -59,6 +62,7 @@ class Risk(BaseModel):
 
 class Target(BaseModel):
     """Model for a target (domain, IP, directory, etc.)."""
+
     value: str
     type: str = Field(description="Type of target: domain, ip, directory, etc.")
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -67,6 +71,7 @@ class Target(BaseModel):
 
 class Finding(BaseModel):
     """Model for a finding or discovery."""
+
     module: str
     title: str
     description: str
@@ -77,6 +82,7 @@ class Finding(BaseModel):
 
 class Asset(BaseModel):
     """Model for an identified asset."""
+
     name: str
     type: str
     description: Optional[str] = None
@@ -86,13 +92,14 @@ class Asset(BaseModel):
 
 class AttackPath(BaseModel):
     """Model for an attack path in simulation."""
+
     name: str
     description: str
     steps: List[str]
     mitre_techniques: List[str] = Field(default_factory=list)
     likelihood: int = Field(ge=1, le=5)
     impact: int = Field(ge=1, le=5)
-    
+
     @property
     def risk_score(self) -> int:
         """Calculate attack path risk score."""
@@ -101,6 +108,7 @@ class AttackPath(BaseModel):
 
 class ReconResult(BaseModel):
     """Model for reconnaissance results."""
+
     target: str
     findings: List[Finding] = Field(default_factory=list)
     assets: List[Asset] = Field(default_factory=list)
@@ -110,6 +118,7 @@ class ReconResult(BaseModel):
 
 class TechStack(BaseModel):
     """Model for technology stack fingerprinting."""
+
     web_server: Optional[str] = None
     frameworks: List[str] = Field(default_factory=list)
     languages: List[str] = Field(default_factory=list)
@@ -120,6 +129,7 @@ class TechStack(BaseModel):
 
 class ExifData(BaseModel):
     """Model for EXIF metadata."""
+
     filename: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
     sensitive_fields: List[str] = Field(default_factory=list)
@@ -128,6 +138,7 @@ class ExifData(BaseModel):
 
 class DocumentMetadata(BaseModel):
     """Model for document metadata."""
+
     filename: str
     file_type: str
     author: Optional[str] = None
