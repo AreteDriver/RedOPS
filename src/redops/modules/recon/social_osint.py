@@ -7,7 +7,6 @@ Limited to public profile metadata.
 
 from typing import Optional, Dict, Any, List
 from redops.core.context import Context
-from redops.core.models import Finding, RiskLevel
 
 
 def gather_osint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:

@@ -7,7 +7,7 @@ Limited to public information only.
 
 from typing import Optional, Dict, Any, List
 from redops.core.context import Context
-from redops.core.models import Finding, RiskLevel
+from redops.core.models import Finding
 
 
 def scan_exposure(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:

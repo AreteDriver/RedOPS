@@ -7,7 +7,6 @@ Non-exploitative, textual analysis only.
 
 from typing import Optional, Dict, Any, List
 from redops.core.context import Context
-from redops.core.models import AttackPath
 
 
 def generate_scenarios(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:

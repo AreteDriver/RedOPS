@@ -11,7 +11,6 @@ from pathlib import Path
 from redops.pipelines.loader import PipelineLoader
 from redops.pipelines.runner import PipelineRunner
 from redops.core.config import RedOpsConfig
-from redops.core.context import Context
 
 
 __version__ = "1.0.0"

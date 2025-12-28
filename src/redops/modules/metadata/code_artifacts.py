@@ -50,7 +50,7 @@ def analyze_repository(ctx: Context, params: Optional[Dict[str, Any]] = None) ->
     analysis["patterns"] = patterns
     
     ctx.add("repository_analysis", analysis)
-    ctx.log(f"Repository analysis completed", level="INFO")
+    ctx.log("Repository analysis completed", level="INFO")
     
     return ctx
 

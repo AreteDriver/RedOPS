@@ -6,7 +6,7 @@ Calculates and assigns risk scores to findings and assets.
 
 from typing import Optional, Dict, Any, List
 from redops.core.context import Context
-from redops.core.models import Risk, RiskLevel, RiskCategory
+from redops.core.models import Risk, RiskLevel
 
 
 def score_risks(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:

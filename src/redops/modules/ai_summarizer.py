@@ -1,4 +1,3 @@
-import os
 
 def summarize(data: str, prompt: str = "Summarize the following security data:") -> str:
     """

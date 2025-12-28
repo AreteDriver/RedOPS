@@ -1,6 +1,5 @@
 """Tests for the Context module."""
 
-import pytest
 from redops.core.context import Context
 
 

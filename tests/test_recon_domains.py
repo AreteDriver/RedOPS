@@ -1,7 +1,6 @@
 """Tests for the Recon Domains module."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from redops.core.context import Context
 from redops.modules.recon.domains import (
     get_dns_records,

@@ -1,6 +1,5 @@
 """Tests for the Reporting modules."""
 
-import pytest
 from pathlib import Path
 from redops.core.context import Context
 from redops.modules.reporting.markdown_report import (

@@ -29,7 +29,7 @@ def get_dns_records(domain: str, record_type: str = 'A') -> List[str]:
             # For other record types, we'd use dnspython library
             # For now, return a stub
             return []
-    except Exception as e:
+    except Exception:
         return []
 
 
@@ -162,6 +162,6 @@ def discover_subdomains(ctx: Context, params: Optional[Dict[str, Any]] = None) -
     subdomains = []
     
     ctx.add("subdomains", subdomains)
-    ctx.log(f"Subdomain discovery completed (placeholder)", level="INFO")
+    ctx.log("Subdomain discovery completed (placeholder)", level="INFO")
     
     return ctx

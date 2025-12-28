@@ -4,7 +4,7 @@ Graph building module.
 Builds directed graphs of assets, risks, and relationships for attack path analysis.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List
 from redops.core.context import Context
 
 

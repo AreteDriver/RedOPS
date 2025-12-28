@@ -4,7 +4,7 @@ Configuration management for RedOps.
 Handles loading configuration from files and environment variables.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 from pathlib import Path
 import json
 import os

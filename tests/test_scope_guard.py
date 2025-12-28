@@ -1,7 +1,6 @@
 """Tests for the Scope Guard module."""
 
 import pytest
-from pathlib import Path
 from redops.core.context import Context
 from redops.core.config import RedOpsConfig, ScopeConfig
 from redops.modules.compliance.scope_guard import (
