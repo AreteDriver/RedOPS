@@ -146,8 +146,8 @@ def test_pipeline_runner_disabled_steps():
     )
     
     runner = PipelineRunner(pipeline)
-    ctx = runner.run(target="test.com")
-    
+    _ctx = runner.run(target="test.com")  # noqa: F841 - run to validate pipeline
+
     # The enabled_steps property should filter out disabled steps
     assert len(pipeline.enabled_steps) == 1
     assert pipeline.enabled_steps[0].name == "Enabled Step"

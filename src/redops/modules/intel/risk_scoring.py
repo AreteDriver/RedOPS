@@ -27,7 +27,7 @@ def score_risks(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     risks = []
     
     # Example: Create sample risks based on context data
-    findings = ctx.get("findings", [])
+    _findings = ctx.get("findings", [])  # noqa: F841 - placeholder for future use
     
     # Placeholder: Real implementation would analyze findings
     # and create risk objects with proper scoring
