@@ -1,0 +1,19 @@
+{
+  "scope": {
+    "allowed_domains": ["example.com", "google.com", "github.com"],
+    "allowed_ips": [],
+    "allowed_directories": [],
+    "strict_mode": true
+  },
+  "output": {
+    "output_dir": "./output",
+    "format": "markdown",
+    "include_logs": true,
+    "verbose": true
+  },
+  "modules": {
+    "timeout": 300,
+    "max_retries": 3,
+    "user_agent": "RedOps/1.0 (Security Assessment Framework)"
+  }
+}

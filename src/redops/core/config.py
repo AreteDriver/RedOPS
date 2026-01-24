@@ -95,5 +95,5 @@ class RedOpsConfig(BaseModel):
             json.dump(self.model_dump(), f, indent=2)
 
 
-# Default configuration instance
-default_config = RedOpsConfig()
+# Default configuration instance (loads from environment variables)
+default_config = RedOpsConfig.from_env()
