@@ -305,3 +305,276 @@ class TestAnalyzeVirusTotalIntel:
         intel = result.get("virustotal_intel")
         assert intel is not None
         assert intel["domain"]["error"] is not None
+
+
+class TestGetVTApiKey:
+    """Tests for get_vt_api_key function."""
+
+    def test_api_key_from_env(self):
+        """Test API key loaded from environment."""
+        from redops.modules.intel.virustotal_intel import get_vt_api_key
+
+        with patch.dict("os.environ", {"VIRUSTOTAL_API_KEY": "env-api-key"}):
+            result = get_vt_api_key()
+            assert result == "env-api-key"
+
+    def test_api_key_from_settings_fallback(self):
+        """Test API key loaded from settings when env not set."""
+        from redops.modules.intel.virustotal_intel import get_vt_api_key
+
+        with patch.dict("os.environ", {}, clear=True):
+            with patch("redops.cli.settings.get_api_key_direct", return_value="settings-key"):
+                result = get_vt_api_key()
+                assert result == "settings-key"
+
+    def test_settings_fallback_exception(self):
+        """Test that settings exception returns None."""
+        from redops.modules.intel.virustotal_intel import get_vt_api_key
+
+        with patch.dict("os.environ", {}, clear=True):
+            with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Settings error")):
+                result = get_vt_api_key()
+                assert result is None
+
+    def test_no_api_key_anywhere(self):
+        """Test returns None when no API key configured."""
+        from redops.modules.intel.virustotal_intel import get_vt_api_key
+
+        with patch.dict("os.environ", {}, clear=True):
+            with patch("redops.cli.settings.get_api_key_direct", return_value=None):
+                result = get_vt_api_key()
+                assert result is None
+
+
+class TestMakeVTRequest:
+    """Tests for _make_vt_request function."""
+
+    def test_import_error_returns_none(self):
+        """Test that import error returns None."""
+        def mock_import(name, *args, **kwargs):
+            if name == "requests":
+                raise ImportError("No module named 'requests'")
+            return original_import(name, *args, **kwargs)
+
+        import builtins
+        original_import = builtins.__import__
+
+        from importlib import reload
+        import redops.modules.intel.virustotal_intel as vt_mod
+
+        try:
+            builtins.__import__ = mock_import
+            reload(vt_mod)
+            result = vt_mod._make_vt_request("domains/test.com", "test-key")
+            assert result is None
+        finally:
+            builtins.__import__ = original_import
+            reload(vt_mod)
+
+    def test_successful_request(self):
+        """Test successful 200 response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"data": {"attributes": {"reputation": 0}}}
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.virustotal_intel as vt_mod
+            reload(vt_mod)
+
+            result = vt_mod._make_vt_request("domains/test.com", "test-key")
+            assert result == {"data": {"attributes": {"reputation": 0}}}
+
+    def test_404_response(self):
+        """Test 404 not found response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.virustotal_intel as vt_mod
+            reload(vt_mod)
+
+            result = vt_mod._make_vt_request("domains/nonexistent.com", "test-key")
+            assert result == {"error": "not_found"}
+
+    def test_other_status_code_response(self):
+        """Test other HTTP status code response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.virustotal_intel as vt_mod
+            reload(vt_mod)
+
+            result = vt_mod._make_vt_request("domains/test.com", "test-key")
+            assert result == {"error": "HTTP 429"}
+
+    def test_request_exception(self):
+        """Test request exception handling."""
+        mock_requests = MagicMock()
+        mock_requests.get.side_effect = Exception("Connection error")
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.virustotal_intel as vt_mod
+            reload(vt_mod)
+
+            result = vt_mod._make_vt_request("domains/test.com", "test-key")
+            assert result == {"error": "Connection error"}
+
+
+class TestQueryVTDomainEdgeCases:
+    """Edge case tests for query_vt_domain."""
+
+    def test_requests_not_available(self):
+        """Test when requests library returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=None):
+                result = query_vt_domain(ctx)
+
+        data = result.get("virustotal_domain")
+        assert "requests library not available" in data["error"]
+
+    def test_domain_with_dns_records(self):
+        """Test domain query with DNS records."""
+        ctx = Context(target="example.com")
+
+        mock_response = {
+            "data": {
+                "attributes": {
+                    "reputation": 0,
+                    "last_analysis_stats": {"malicious": 0, "suspicious": 0, "harmless": 85},
+                    "last_dns_records": [
+                        {"type": "A", "value": "93.184.216.34"},
+                        {"type": "AAAA", "value": "2606:2800:220:1:248:1893:25c8:1946"},
+                    ],
+                }
+            }
+        }
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+                result = query_vt_domain(ctx)
+
+        data = result.get("virustotal_domain")
+        assert data["error"] is None
+        assert len(data["report"]["dns_records"]) == 2
+
+
+class TestQueryVTIPEdgeCases:
+    """Edge case tests for query_vt_ip."""
+
+    def test_domain_resolution_failure(self):
+        """Test handling of domain resolution failure."""
+        ctx = Context(target="nonexistent.invalid.domain")
+
+        with patch("socket.gethostbyname", side_effect=Exception("DNS resolution failed")):
+            result = query_vt_ip(ctx)
+
+        # Should return early, no data added
+        assert "virustotal_ip" not in result.data
+
+    def test_no_api_key(self):
+        """Test when API key not configured."""
+        ctx = Context(target="8.8.8.8")
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None):
+            result = query_vt_ip(ctx)
+
+        data = result.get("virustotal_ip")
+        assert data is not None
+        assert "not configured" in data["error"]
+
+    def test_requests_not_available(self):
+        """Test when requests library returns None."""
+        ctx = Context(target="8.8.8.8")
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=None):
+                result = query_vt_ip(ctx)
+
+        data = result.get("virustotal_ip")
+        assert "requests library not available" in data["error"]
+
+    def test_error_in_response(self):
+        """Test when error key in response."""
+        ctx = Context(target="8.8.8.8")
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value={"error": "not_found"}):
+                result = query_vt_ip(ctx)
+
+        data = result.get("virustotal_ip")
+        assert data["error"] == "not_found"
+
+
+class TestQueryVTURLEdgeCases:
+    """Edge case tests for query_vt_url."""
+
+    def test_no_api_key(self):
+        """Test when API key not configured."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None):
+            result = query_vt_url(ctx)
+
+        data = result.get("virustotal_url")
+        assert data is not None
+        assert "not configured" in data["error"]
+
+    def test_requests_not_available(self):
+        """Test when requests library returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=None):
+                result = query_vt_url(ctx)
+
+        data = result.get("virustotal_url")
+        assert "requests library not available" in data["error"]
+
+    def test_other_error_in_response(self):
+        """Test when other error key in response."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value={"error": "HTTP 429"}):
+                result = query_vt_url(ctx)
+
+        data = result.get("virustotal_url")
+        assert data["error"] == "HTTP 429"
+
+    def test_url_with_http_prefix(self):
+        """Test URL already has http prefix."""
+        ctx = Context(target="http://example.com/page")
+
+        mock_response = {
+            "data": {
+                "attributes": {
+                    "reputation": 0,
+                    "last_analysis_stats": {"malicious": 0},
+                }
+            }
+        }
+
+        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+                result = query_vt_url(ctx)
+
+        data = result.get("virustotal_url")
+        # URL should use the existing http:// prefix, not add https://
+        assert data["url"] == "http://example.com/page"
