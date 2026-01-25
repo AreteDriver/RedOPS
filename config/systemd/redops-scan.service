@@ -1,0 +1,32 @@
+[Unit]
+Description=RedOPS Security Scan
+Documentation=https://github.com/AreteDriver/RedOPS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=redops
+Group=redops
+WorkingDirectory=/opt/redops
+Environment=PATH=/opt/redops/venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+
+# Load API keys from environment file
+EnvironmentFile=-/etc/redops/env
+
+# Run the scan with the configured preset
+ExecStart=/opt/redops/venv/bin/redops scan %i --preset ${REDOPS_PRESET:-quick} --output-dir /var/lib/redops/output
+
+# Notifications (optional - configure webhook URL in /etc/redops/env)
+ExecStartPost=-/opt/redops/scripts/notify.sh
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/redops
+
+[Install]
+WantedBy=multi-user.target

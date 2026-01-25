@@ -1,0 +1,38 @@
+# RedOPS Cron Examples
+# Edit with: crontab -e
+
+# ============================================
+# Basic Examples
+# ============================================
+
+# Quick scan every day at 2 AM
+0 2 * * * /opt/redops/venv/bin/redops scan example.com --preset quick --output-dir /var/lib/redops/output >> /var/log/redops/scan.log 2>&1
+
+# Full scan every Sunday at 3 AM
+0 3 * * 0 /opt/redops/venv/bin/redops scan example.com --preset full --output-dir /var/lib/redops/output >> /var/log/redops/scan.log 2>&1
+
+# AI-enhanced scan (requires API key) on first of month
+0 4 1 * * ANTHROPIC_API_KEY=your-key /opt/redops/venv/bin/redops scan example.com --preset ai_enhanced --output-dir /var/lib/redops/output >> /var/log/redops/scan.log 2>&1
+
+# ============================================
+# Multiple Targets
+# ============================================
+
+# Scan multiple domains
+0 2 * * * /opt/redops/venv/bin/redops scan domain1.com --preset quick -o /var/lib/redops/output/domain1 >> /var/log/redops/scan.log 2>&1
+15 2 * * * /opt/redops/venv/bin/redops scan domain2.com --preset quick -o /var/lib/redops/output/domain2 >> /var/log/redops/scan.log 2>&1
+30 2 * * * /opt/redops/venv/bin/redops scan domain3.com --preset quick -o /var/lib/redops/output/domain3 >> /var/log/redops/scan.log 2>&1
+
+# ============================================
+# With Notifications
+# ============================================
+
+# Scan with Slack notification
+0 2 * * * /opt/redops/venv/bin/redops scan example.com --preset quick -o /var/lib/redops/output && SLACK_WEBHOOK_URL=https://hooks.slack.com/... /opt/redops/scripts/notify.sh >> /var/log/redops/scan.log 2>&1
+
+# ============================================
+# Cleanup old reports (keep last 30 days)
+# ============================================
+0 0 * * * find /var/lib/redops/output -name "*.json" -mtime +30 -delete
+0 0 * * * find /var/lib/redops/output -name "*.md" -mtime +30 -delete
+0 0 * * * find /var/lib/redops/output -name "*.html" -mtime +30 -delete

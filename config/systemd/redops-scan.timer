@@ -1,0 +1,19 @@
+[Unit]
+Description=RedOPS Scheduled Security Scan
+Documentation=https://github.com/AreteDriver/RedOPS
+
+[Timer]
+# Run daily at 2:00 AM
+OnCalendar=*-*-* 02:00:00
+
+# Randomize start time by up to 30 minutes to avoid thundering herd
+RandomizedDelaySec=1800
+
+# Run immediately if last run was missed (e.g., system was off)
+Persistent=true
+
+# Don't run if system just booted
+OnBootSec=5min
+
+[Install]
+WantedBy=timers.target
