@@ -312,3 +312,400 @@ class TestAnalyzeHIBPIntel:
 
         intel = result.get("hibp_intel")
         assert intel["domain"]["error"] == "rate_limited"
+
+
+class TestGetHIBPApiKey:
+    """Tests for get_hibp_api_key function."""
+
+    def test_from_environment(self):
+        """Test getting API key from environment variable."""
+        from redops.modules.intel.hibp_intel import get_hibp_api_key
+
+        with patch.dict("os.environ", {"HIBP_API_KEY": "env-test-key"}):
+            key = get_hibp_api_key()
+
+        assert key == "env-test-key"
+
+    def test_from_settings(self):
+        """Test getting API key from settings when env not set."""
+        from redops.modules.intel.hibp_intel import get_hibp_api_key
+
+        with patch.dict("os.environ", {}, clear=False):
+            # Make sure HIBP_API_KEY is not in env
+            import os
+            os.environ.pop("HIBP_API_KEY", None)
+
+            with patch("redops.cli.settings.get_api_key_direct", return_value="settings-key"):
+                key = get_hibp_api_key()
+
+        assert key == "settings-key"
+
+    def test_settings_import_error(self):
+        """Test when settings import fails."""
+        from redops.modules.intel.hibp_intel import get_hibp_api_key
+
+        with patch.dict("os.environ", {}, clear=False):
+            import os
+            os.environ.pop("HIBP_API_KEY", None)
+
+            with patch("redops.cli.settings.get_api_key_direct", side_effect=ImportError):
+                key = get_hibp_api_key()
+
+        assert key is None
+
+    def test_settings_exception(self):
+        """Test when settings raises exception."""
+        from redops.modules.intel.hibp_intel import get_hibp_api_key
+
+        with patch.dict("os.environ", {}, clear=False):
+            import os
+            os.environ.pop("HIBP_API_KEY", None)
+
+            with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Error")):
+                key = get_hibp_api_key()
+
+        assert key is None
+
+
+class TestMakeHIBPRequest:
+    """Tests for _make_hibp_request function."""
+
+    def test_requests_not_available(self):
+        """Test when requests library not available."""
+        from redops.modules.intel.hibp_intel import _make_hibp_request
+
+        with patch.dict("sys.modules", {"requests": None}):
+            with patch("builtins.__import__", side_effect=ImportError):
+                result = _make_hibp_request("breaches")
+
+        assert result is None
+
+    def test_successful_request(self):
+        """Test successful API request."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [{"Name": "Test"}]
+        mock_requests.get.return_value = mock_response
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            result = hibp_mod._make_hibp_request("breaches")
+
+        assert result == [{"Name": "Test"}]
+
+    def test_not_found_response(self):
+        """Test 404 response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_requests.get.return_value = mock_response
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            result = hibp_mod._make_hibp_request("breaches")
+
+        assert result == {"result": "not_found"}
+
+    def test_unauthorized_response(self):
+        """Test 401 response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        mock_requests.get.return_value = mock_response
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            result = hibp_mod._make_hibp_request("breaches")
+
+        assert result == {"error": "api_key_required"}
+
+    def test_forbidden_response(self):
+        """Test 403 response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 403
+        mock_requests.get.return_value = mock_response
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            result = hibp_mod._make_hibp_request("breaches")
+
+        assert result == {"error": "forbidden"}
+
+    def test_rate_limited_response(self):
+        """Test 429 response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_requests.get.return_value = mock_response
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            result = hibp_mod._make_hibp_request("breaches")
+
+        assert result == {"error": "rate_limited"}
+
+    def test_other_error_response(self):
+        """Test other HTTP error response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_requests.get.return_value = mock_response
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            result = hibp_mod._make_hibp_request("breaches")
+
+        assert result == {"error": "HTTP 500"}
+
+    def test_request_exception(self):
+        """Test request exception handling."""
+        mock_requests = MagicMock()
+        mock_requests.get.side_effect = Exception("Connection error")
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            result = hibp_mod._make_hibp_request("breaches")
+
+        assert result == {"error": "Connection error"}
+
+    def test_with_api_key(self):
+        """Test request with API key header."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = []
+        mock_requests.get.return_value = mock_response
+
+        with patch.dict("sys.modules", {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hibp_intel as hibp_mod
+            reload(hibp_mod)
+            hibp_mod._make_hibp_request("breaches", api_key="test-key")
+
+        # Verify API key header was set
+        call_kwargs = mock_requests.get.call_args[1]
+        assert "hibp-api-key" in call_kwargs["headers"]
+        assert call_kwargs["headers"]["hibp-api-key"] == "test-key"
+
+
+class TestQueryHIBPBreachesAdvanced:
+    """Additional tests for query_hibp_breaches."""
+
+    def test_requests_not_available(self):
+        """Test when _make_hibp_request returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=None):
+            result = query_hibp_breaches(ctx)
+
+        data = result.get("hibp_breaches")
+        assert data["error"] == "requests library not available"
+
+    def test_error_response(self):
+        """Test when API returns error."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"error": "rate_limited"}):
+            result = query_hibp_breaches(ctx)
+
+        data = result.get("hibp_breaches")
+        assert data["error"] == "rate_limited"
+
+
+class TestQueryHIBPDomainAdvanced:
+    """Additional tests for query_hibp_domain."""
+
+    def test_requests_not_available(self):
+        """Test when _make_hibp_request returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=None):
+                result = query_hibp_domain(ctx)
+
+        data = result.get("hibp_domain")
+        assert data["error"] == "requests library not available"
+
+    def test_error_response(self):
+        """Test when API returns error."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"error": "forbidden"}):
+                result = query_hibp_domain(ctx)
+
+        data = result.get("hibp_domain")
+        assert data["error"] == "forbidden"
+
+    def test_with_url_target(self):
+        """Test with URL as target."""
+        ctx = Context(target="https://example.com/path")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=[]):
+                result = query_hibp_domain(ctx)
+
+        data = result.get("hibp_domain")
+        assert data["domain"] == "example.com"
+
+
+class TestQueryHIBPEmailAdvanced:
+    """Additional tests for query_hibp_email."""
+
+    def test_no_api_key(self):
+        """Test when API key not configured."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value=None):
+            result = query_hibp_email(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_email")
+        assert data is not None
+        assert "API key" in data["error"]
+
+    def test_requests_not_available(self):
+        """Test when _make_hibp_request returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=None):
+                result = query_hibp_email(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_email")
+        assert data["error"] == "requests library not available"
+
+    def test_error_response(self):
+        """Test when API returns error."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"error": "rate_limited"}):
+                result = query_hibp_email(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_email")
+        assert data["error"] == "rate_limited"
+
+    def test_not_found_response(self):
+        """Test when email not found in breaches."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"result": "not_found"}):
+                result = query_hibp_email(ctx, {"email": "secure@example.com"})
+
+        data = result.get("hibp_email")
+        assert data["breaches"] == []
+
+
+class TestQueryHIBPPastesAdvanced:
+    """Additional tests for query_hibp_pastes."""
+
+    def test_no_api_key(self):
+        """Test when API key not configured."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value=None):
+            result = query_hibp_pastes(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_pastes")
+        assert data is not None
+        assert "API key" in data["error"]
+
+    def test_requests_not_available(self):
+        """Test when _make_hibp_request returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=None):
+                result = query_hibp_pastes(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_pastes")
+        assert data["error"] == "requests library not available"
+
+    def test_error_response(self):
+        """Test when API returns error."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"error": "forbidden"}):
+                result = query_hibp_pastes(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_pastes")
+        assert data["error"] == "forbidden"
+
+    def test_not_found_response(self):
+        """Test when email not found in pastes."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"result": "not_found"}):
+                result = query_hibp_pastes(ctx, {"email": "secure@example.com"})
+
+        data = result.get("hibp_pastes")
+        assert data["pastes"] == []
+
+
+class TestAnalyzeHIBPIntelAdvanced:
+    """Additional tests for analyze_hibp_intel."""
+
+    def test_no_target(self):
+        """Test analysis with no target."""
+        ctx = Context(target=None)
+
+        result = analyze_hibp_intel(ctx)
+
+        intel = result.get("hibp_intel")
+        assert intel is not None
+        assert intel["target"] is None
+
+    def test_string_accounts_in_response(self):
+        """Test when breached accounts are strings (not dicts)."""
+        ctx = Context(target="example.com")
+
+        # Some responses have accounts as strings
+        mock_domain_response = [
+            "Breach1",
+            "Breach2",
+            "Breach3",
+        ]
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=mock_domain_response):
+                result = analyze_hibp_intel(ctx)
+
+        intel = result.get("hibp_intel")
+        assert intel is not None
+        assert intel["summary"]["breached_accounts"] == 3
+        assert intel["summary"]["unique_breaches"] == 3
+
+    def test_mixed_accounts_format(self):
+        """Test with mixed account formats."""
+        ctx = Context(target="example.com")
+
+        mock_domain_response = [
+            {"Email": "user1@example.com", "Breaches": ["Breach1"]},
+            "Breach2",  # String format
+        ]
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=mock_domain_response):
+                result = analyze_hibp_intel(ctx)
+
+        intel = result.get("hibp_intel")
+        assert intel["summary"]["breached_accounts"] == 2
