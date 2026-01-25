@@ -13,32 +13,48 @@ on:
 
 permissions:
   contents: write
+  id-token: write  # Required for PyPI trusted publishing
 
 jobs:
-  release:
-    name: Create Release
+  build:
+    name: Build Package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Install build dependencies
+        run: pip install --upgrade pip build
 
-      - name: Build artifacts
-        run: |
-          pip install build
-          if [ -f pyproject.toml ] || [ -f setup.py ]; then
-            python -m build
-          fi
+      - name: Build package
+        run: python -m build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
       - name: Generate changelog
         id: changelog
@@ -50,17 +66,46 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/*
+          files: dist/*
           body: |
             ## What's Changed
             ${{ steps.changelog.outputs.CHANGELOG }}
 
             ## Installation
             ```bash
-            pip install <package-name>
+            pip install redops
+
+            # With AI features
+            pip install redops[ai]
+
+            # With all features
+            pip install redops[all]
+            ```
+
+            ## Docker
+            ```bash
+            docker pull ghcr.io/aretedriver/redops:${{ github.ref_name }}
             ```
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/redops/
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Uses trusted publishing (OIDC) - no API token needed
+        # Configure at: https://pypi.org/manage/project/redops/settings/publishing/
