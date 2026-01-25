@@ -1,6 +1,5 @@
 """Tests for the Reporting modules."""
 
-import pytest
 import json
 from pathlib import Path
 from redops.core.context import Context
@@ -9,14 +8,11 @@ from redops.modules.reporting.markdown_report import (
     generate_technical_report,
     generate_full_report,
     build_executive_summary,
-    build_technical_report,
     build_mitre_matrix_markdown,
     build_risk_heatmap_markdown,
     build_attack_paths_markdown,
     build_scenarios_markdown,
     build_likelihood_impact_matrix,
-    build_recommendations_section,
-    build_technical_details_section,
     group_findings_by_category,
     calculate_overall_risk_level,
     RISK_INDICATORS,
@@ -24,13 +20,11 @@ from redops.modules.reporting.markdown_report import (
 )
 from redops.modules.reporting.html_report import (
     generate_html,
-    build_html_content,
     build_stats_overview,
     build_risk_section,
     build_mitre_matrix_html,
     build_attack_paths_html,
     build_scenarios_html,
-    build_detailed_findings_html,
     RISK_COLORS,
 )
 from redops.modules.reporting.export import (
@@ -53,6 +47,7 @@ from redops.modules.reporting.export import (
 # Markdown Report Tests
 # ============================================================================
 
+
 class TestBuildExecutiveSummary:
     """Tests for build_executive_summary function."""
 
@@ -68,11 +63,14 @@ class TestBuildExecutiveSummary:
     def test_summary_with_risks(self):
         """Test summary with risk data."""
         ctx = Context(target="test.io")
-        ctx.add("risks", [
-            {"title": "Critical Issue", "level": "critical"},
-            {"title": "High Issue", "level": "high"},
-            {"title": "Medium Issue", "level": "medium"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"title": "Critical Issue", "level": "critical"},
+                {"title": "High Issue", "level": "high"},
+                {"title": "Medium Issue", "level": "medium"},
+            ],
+        )
 
         summary = build_executive_summary(ctx)
 
@@ -83,10 +81,13 @@ class TestBuildExecutiveSummary:
     def test_summary_with_attack_paths(self):
         """Test summary with attack paths."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {"name": "Path 1", "likelihood": 4, "impact": 5},
-            {"name": "Path 2", "likelihood": 3, "impact": 3},
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {"name": "Path 1", "likelihood": 4, "impact": 5},
+                {"name": "Path 2", "likelihood": 3, "impact": 3},
+            ],
+        )
 
         summary = build_executive_summary(ctx)
 
@@ -97,11 +98,14 @@ class TestBuildExecutiveSummary:
         """Test summary with MITRE techniques."""
         ctx = Context(target="test.io")
         ctx.add("mitre_techniques_used", ["T1595", "T1190", "T1078"])
-        ctx.add("mitre_summary", {
-            "total_techniques": 3,
-            "tactics_covered": 2,
-            "coverage_percentage": 14.3,
-        })
+        ctx.add(
+            "mitre_summary",
+            {
+                "total_techniques": 3,
+                "tactics_covered": 2,
+                "coverage_percentage": 14.3,
+            },
+        )
 
         summary = build_executive_summary(ctx)
 
@@ -111,10 +115,13 @@ class TestBuildExecutiveSummary:
     def test_summary_with_scenarios(self):
         """Test summary with threat scenarios."""
         ctx = Context(target="test.io")
-        ctx.add("scenarios", [
-            {"name": "Scenario 1", "risk_level": "HIGH"},
-            {"name": "Scenario 2", "risk_level": "MEDIUM"},
-        ])
+        ctx.add(
+            "scenarios",
+            [
+                {"name": "Scenario 1", "risk_level": "HIGH"},
+                {"name": "Scenario 2", "risk_level": "MEDIUM"},
+            ],
+        )
 
         summary = build_executive_summary(ctx)
 
@@ -167,10 +174,16 @@ class TestBuildMitreMatrixMarkdown:
     def test_matrix_with_techniques(self):
         """Test with MITRE techniques."""
         ctx = Context(target="test.io")
-        ctx.add("mitre_mapping", {
-            "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
-            "T1190": {"name": "Exploit Public-Facing App", "tactic": "Initial Access"},
-        })
+        ctx.add(
+            "mitre_mapping",
+            {
+                "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
+                "T1190": {
+                    "name": "Exploit Public-Facing App",
+                    "tactic": "Initial Access",
+                },
+            },
+        )
         ctx.add("mitre_techniques_used", ["T1595", "T1190"])
 
         result = build_mitre_matrix_markdown(ctx)
@@ -182,9 +195,12 @@ class TestBuildMitreMatrixMarkdown:
     def test_matrix_table_format(self):
         """Test that output is in table format."""
         ctx = Context(target="test.io")
-        ctx.add("mitre_mapping", {
-            "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
-        })
+        ctx.add(
+            "mitre_mapping",
+            {
+                "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
+            },
+        )
 
         result = build_mitre_matrix_markdown(ctx)
 
@@ -386,7 +402,10 @@ class TestGenerateTechnicalReport:
     def test_includes_mitre(self, tmp_path):
         """Test that MITRE section is included."""
         ctx = Context(target="example.com")
-        ctx.add("mitre_mapping", {"T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"}})
+        ctx.add(
+            "mitre_mapping",
+            {"T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"}},
+        )
 
         result = generate_technical_report(ctx, params={"output_dir": str(tmp_path)})
 
@@ -421,10 +440,13 @@ class TestGenerateFullReport:
         ctx.add("mitre_mapping", {"T1595": {}})
         ctx.add("risks", [{"title": "Test", "level": "high"}])
 
-        result = generate_full_report(ctx, params={
-            "output_dir": str(tmp_path),
-            "include_mitre": False,
-        })
+        result = generate_full_report(
+            ctx,
+            params={
+                "output_dir": str(tmp_path),
+                "include_mitre": False,
+            },
+        )
 
         content = result.data["full_report_content"]
         assert "MITRE ATT&CK Coverage" not in content
@@ -433,6 +455,7 @@ class TestGenerateFullReport:
 # ============================================================================
 # HTML Report Tests
 # ============================================================================
+
 
 class TestBuildStatsOverview:
     """Tests for build_stats_overview function."""
@@ -474,7 +497,9 @@ class TestBuildRiskSection:
 
     def test_risk_table(self):
         """Test risk table generation."""
-        risks = [{"title": "Test Risk", "level": "high", "score": 15, "description": "Test"}]
+        risks = [
+            {"title": "Test Risk", "level": "high", "score": 15, "description": "Test"}
+        ]
         result = build_risk_section(risks)
 
         assert "<table>" in result
@@ -495,9 +520,12 @@ class TestBuildMitreMatrixHtml:
     def test_matrix_grid(self):
         """Test MITRE matrix grid generation."""
         ctx = Context(target="test.io")
-        ctx.add("mitre_mapping", {
-            "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
-        })
+        ctx.add(
+            "mitre_mapping",
+            {
+                "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
+            },
+        )
 
         result = build_mitre_matrix_html(ctx)
 
@@ -605,6 +633,7 @@ class TestGenerateHtml:
 # Export Tests
 # ============================================================================
 
+
 class TestExportJson:
     """Tests for export_json function."""
 
@@ -639,7 +668,9 @@ class TestExportCsv:
         ctx = Context(target="example.com")
         ctx.add("risks", [{"title": "Test", "level": "high"}])
 
-        result = export_csv(ctx, params={"output_dir": str(tmp_path), "data_key": "risks"})
+        result = export_csv(
+            ctx, params={"output_dir": str(tmp_path), "data_key": "risks"}
+        )
 
         assert "risks_csv_path" in result.data
         output_path = Path(result.data["risks_csv_path"])
@@ -649,7 +680,9 @@ class TestExportCsv:
         """Test warning when no data to export."""
         ctx = Context(target="example.com")
 
-        result = export_csv(ctx, params={"output_dir": str(tmp_path), "data_key": "missing"})
+        result = export_csv(
+            ctx, params={"output_dir": str(tmp_path), "data_key": "missing"}
+        )
 
         warning_logs = result.get_logs(level="WARNING")
         assert len(warning_logs) > 0
@@ -661,9 +694,12 @@ class TestExportStix:
     def test_creates_bundle(self, tmp_path):
         """Test that STIX bundle is created."""
         ctx = Context(target="example.com")
-        ctx.add("mitre_mapping", {
-            "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
-        })
+        ctx.add(
+            "mitre_mapping",
+            {
+                "T1595": {"name": "Active Scanning", "tactic": "Reconnaissance"},
+            },
+        )
 
         result = export_stix(ctx, params={"output_dir": str(tmp_path)})
 
@@ -708,7 +744,7 @@ class TestCreateStixAttackPattern:
         result = create_stix_attack_pattern(
             "T1595",
             {"name": "Active Scanning", "tactic": "Reconnaissance"},
-            "2024-01-01T00:00:00.000Z"
+            "2024-01-01T00:00:00.000Z",
         )
 
         assert result["type"] == "attack-pattern"
@@ -721,7 +757,7 @@ class TestCreateStixAttackPattern:
         result = create_stix_attack_pattern(
             "T1595",
             {"name": "Test", "tactic": "Reconnaissance"},
-            "2024-01-01T00:00:00.000Z"
+            "2024-01-01T00:00:00.000Z",
         )
 
         refs = result["external_references"]
@@ -737,7 +773,7 @@ class TestCreateStixVulnerability:
         """Test basic vulnerability creation."""
         result = create_stix_vulnerability(
             {"title": "Test Vuln", "description": "Test", "level": "high"},
-            "2024-01-01T00:00:00.000Z"
+            "2024-01-01T00:00:00.000Z",
         )
 
         assert result["type"] == "vulnerability"
@@ -751,8 +787,7 @@ class TestCreateStixIndicator:
     def test_basic_indicator(self):
         """Test basic indicator creation."""
         result = create_stix_indicator(
-            {"title": "Test Finding", "description": "Test"},
-            "2024-01-01T00:00:00.000Z"
+            {"title": "Test Finding", "description": "Test"}, "2024-01-01T00:00:00.000Z"
         )
 
         assert result["type"] == "indicator"
@@ -762,8 +797,7 @@ class TestCreateStixIndicator:
     def test_empty_title_returns_none(self):
         """Test that empty title returns None."""
         result = create_stix_indicator(
-            {"description": "No title"},
-            "2024-01-01T00:00:00.000Z"
+            {"description": "No title"}, "2024-01-01T00:00:00.000Z"
         )
 
         assert result is None
@@ -777,7 +811,9 @@ class TestExportFromTemplate:
         ctx = Context(target="example.com")
         template = "Target: {target}\nDate: {date}"
 
-        result = export_from_template(ctx, template, params={"output_dir": str(tmp_path)})
+        result = export_from_template(
+            ctx, template, params={"output_dir": str(tmp_path)}
+        )
 
         assert "template_export_path" in result.data
         content = Path(result.data["template_export_path"]).read_text()
@@ -786,13 +822,18 @@ class TestExportFromTemplate:
     def test_risk_variables(self, tmp_path):
         """Test risk count variables in template."""
         ctx = Context(target="example.com")
-        ctx.add("risks", [
-            {"level": "critical"},
-            {"level": "high"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"level": "critical"},
+                {"level": "high"},
+            ],
+        )
         template = "Critical: {critical_risks}, High: {high_risks}"
 
-        result = export_from_template(ctx, template, params={"output_dir": str(tmp_path)})
+        result = export_from_template(
+            ctx, template, params={"output_dir": str(tmp_path)}
+        )
 
         content = Path(result.data["template_export_path"]).read_text()
         assert "Critical: 1" in content
@@ -847,6 +888,7 @@ class TestExportAll:
 # Constants Tests
 # ============================================================================
 
+
 class TestConstants:
     """Tests for module constants."""
 
@@ -862,7 +904,9 @@ class TestConstants:
         """Test MITRE tactics order."""
         assert "Reconnaissance" in MITRE_TACTICS_ORDER
         assert "Impact" in MITRE_TACTICS_ORDER
-        assert MITRE_TACTICS_ORDER.index("Reconnaissance") < MITRE_TACTICS_ORDER.index("Impact")
+        assert MITRE_TACTICS_ORDER.index("Reconnaissance") < MITRE_TACTICS_ORDER.index(
+            "Impact"
+        )
 
     def test_risk_colors(self):
         """Test risk colors are defined."""
@@ -879,6 +923,7 @@ class TestConstants:
 # Integration Tests
 # ============================================================================
 
+
 class TestReportingIntegration:
     """Integration tests for reporting modules."""
 
@@ -887,32 +932,54 @@ class TestReportingIntegration:
         ctx = Context(target="integration-test.io")
 
         # Add comprehensive data
-        ctx.add("risks", [
-            {"title": "SQL Injection", "level": "critical", "description": "Database vulnerable"},
-            {"title": "XSS", "level": "high", "description": "Script injection"},
-        ])
-        ctx.add("attack_paths", [
+        ctx.add(
+            "risks",
+            [
+                {
+                    "title": "SQL Injection",
+                    "level": "critical",
+                    "description": "Database vulnerable",
+                },
+                {"title": "XSS", "level": "high", "description": "Script injection"},
+            ],
+        )
+        ctx.add(
+            "attack_paths",
+            [
+                {
+                    "name": "Web Application Attack",
+                    "likelihood": 4,
+                    "impact": 5,
+                    "steps": ["Entry", "Exploit", "Exfiltrate"],
+                    "mitre_techniques": ["T1190", "T1059"],
+                }
+            ],
+        )
+        ctx.add(
+            "mitre_mapping",
             {
-                "name": "Web Application Attack",
-                "likelihood": 4,
-                "impact": 5,
-                "steps": ["Entry", "Exploit", "Exfiltrate"],
-                "mitre_techniques": ["T1190", "T1059"],
-            }
-        ])
-        ctx.add("mitre_mapping", {
-            "T1190": {"name": "Exploit Public-Facing Application", "tactic": "Initial Access"},
-            "T1059": {"name": "Command and Scripting Interpreter", "tactic": "Execution"},
-        })
+                "T1190": {
+                    "name": "Exploit Public-Facing Application",
+                    "tactic": "Initial Access",
+                },
+                "T1059": {
+                    "name": "Command and Scripting Interpreter",
+                    "tactic": "Execution",
+                },
+            },
+        )
         ctx.add("mitre_techniques_used", ["T1190", "T1059"])
-        ctx.add("scenarios", [
-            {
-                "name": "Data Breach Scenario",
-                "threat_actor": {"name": "Organized Crime"},
-                "objective": "Data theft",
-                "risk_level": "HIGH",
-            }
-        ])
+        ctx.add(
+            "scenarios",
+            [
+                {
+                    "name": "Data Breach Scenario",
+                    "threat_actor": {"name": "Organized Crime"},
+                    "objective": "Data theft",
+                    "risk_level": "HIGH",
+                }
+            ],
+        )
 
         # Generate all reports
         result = generate_full_report(ctx, params={"output_dir": str(tmp_path)})

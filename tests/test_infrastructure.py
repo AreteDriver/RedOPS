@@ -1,6 +1,5 @@
 """Tests for recon/infrastructure module."""
 
-import pytest
 from redops.modules.recon.infrastructure import (
     CloudProvider,
     CDNProvider,
@@ -14,7 +13,6 @@ from redops.modules.recon.infrastructure import (
     AZURE_INDICATORS,
     GCP_INDICATORS,
     CLOUDFLARE_INDICATORS,
-    AKAMAI_INDICATORS,
     WEB_SERVER_SIGNATURES,
     APPLICATION_SIGNATURES,
     DNS_PROVIDERS,
@@ -25,9 +23,7 @@ from redops.modules.recon.infrastructure import (
     detect_cloud_providers,
     check_cloud_provider,
     detect_cdn_providers,
-    check_cdn_provider,
     fingerprint_services,
-    check_service_signature,
     analyze_dns_infrastructure,
     analyze_certificates,
     detect_security_features,
@@ -354,12 +350,15 @@ class TestAnalyzeInfrastructure:
     def test_with_aws_headers(self):
         """Test with AWS headers."""
         ctx = Context(target="example.com")
-        ctx.add("tech_stack", {
-            "headers": {
-                "x-amz-request-id": "ABC123",
-                "server": "AmazonS3",
-            }
-        })
+        ctx.add(
+            "tech_stack",
+            {
+                "headers": {
+                    "x-amz-request-id": "ABC123",
+                    "server": "AmazonS3",
+                }
+            },
+        )
 
         result = analyze_infrastructure(ctx)
         infra = result.get("infrastructure")
@@ -371,12 +370,15 @@ class TestAnalyzeInfrastructure:
     def test_with_cloudflare_headers(self):
         """Test with Cloudflare headers."""
         ctx = Context(target="example.com")
-        ctx.add("tech_stack", {
-            "headers": {
-                "cf-ray": "ABC123-IAD",
-                "cf-cache-status": "HIT",
-            }
-        })
+        ctx.add(
+            "tech_stack",
+            {
+                "headers": {
+                    "cf-ray": "ABC123-IAD",
+                    "cf-cache-status": "HIT",
+                }
+            },
+        )
 
         result = analyze_infrastructure(ctx)
         infra = result.get("infrastructure")
@@ -388,11 +390,14 @@ class TestAnalyzeInfrastructure:
     def test_with_nginx_server(self):
         """Test with nginx server header."""
         ctx = Context(target="example.com")
-        ctx.add("tech_stack", {
-            "headers": {
-                "server": "nginx/1.18.0",
-            }
-        })
+        ctx.add(
+            "tech_stack",
+            {
+                "headers": {
+                    "server": "nginx/1.18.0",
+                }
+            },
+        )
 
         result = analyze_infrastructure(ctx)
         infra = result.get("infrastructure")
@@ -440,12 +445,15 @@ class TestCollectDNSFromContext:
     def test_from_domain_profile(self):
         """Test collecting from domain_profile."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "dns_records": {
-                "A": ["1.2.3.4"],
-                "NS": ["ns1.example.com"],
-            }
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "dns_records": {
+                    "A": ["1.2.3.4"],
+                    "NS": ["ns1.example.com"],
+                }
+            },
+        )
 
         dns = collect_dns_from_context(ctx)
         assert "A" in dns
@@ -465,9 +473,9 @@ class TestCollectURLsFromContext:
     def test_from_subdomains(self):
         """Test collecting from subdomains."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "subdomains": ["www.example.com", "api.example.com"]
-        })
+        ctx.add(
+            "domain_profile", {"subdomains": ["www.example.com", "api.example.com"]}
+        )
 
         urls = collect_urls_from_context(ctx)
         assert any("www.example.com" in url for url in urls)
@@ -528,9 +536,7 @@ class TestCheckCloudProvider:
         """Test AWS header detection."""
         headers = {"x-amz-request-id": "ABC123"}
         detection = check_cloud_provider(
-            CloudProvider.AWS,
-            AWS_INDICATORS,
-            headers, {}, [], "example.com"
+            CloudProvider.AWS, AWS_INDICATORS, headers, {}, [], "example.com"
         )
 
         assert detection is not None
@@ -541,9 +547,7 @@ class TestCheckCloudProvider:
         """Test AWS DNS detection."""
         dns = {"CNAME": ["bucket.s3.amazonaws.com"]}
         detection = check_cloud_provider(
-            CloudProvider.AWS,
-            AWS_INDICATORS,
-            {}, dns, [], "example.com"
+            CloudProvider.AWS, AWS_INDICATORS, {}, dns, [], "example.com"
         )
 
         assert detection is not None
@@ -676,11 +680,13 @@ class TestAnalyzeCertificates:
 
     def test_with_certificate(self):
         """Test with certificate data."""
-        certs = [{
-            "issuer": "Let's Encrypt",
-            "san": ["example.com", "www.example.com"],
-            "organization": "Example Inc",
-        }]
+        certs = [
+            {
+                "issuer": "Let's Encrypt",
+                "san": ["example.com", "www.example.com"],
+                "organization": "Example Inc",
+            }
+        ]
         analysis = analyze_certificates(certs)
 
         assert "Let's Encrypt" in analysis["issuers"]
@@ -715,7 +721,7 @@ class TestDetectSecurityFeatures:
                 "has_spf": True,
                 "has_dkim": True,
                 "has_dmarc": True,
-            }
+            },
         }
 
         features = detect_security_features(headers, infra)
@@ -849,13 +855,20 @@ class TestIdentifyCloudFromDomain:
 
     def test_aws_domain(self):
         """Test AWS domain detection."""
-        assert identify_cloud_from_domain("bucket.s3.amazonaws.com") == CloudProvider.AWS
+        assert (
+            identify_cloud_from_domain("bucket.s3.amazonaws.com") == CloudProvider.AWS
+        )
         assert identify_cloud_from_domain("app.cloudfront.net") == CloudProvider.AWS
 
     def test_azure_domain(self):
         """Test Azure domain detection."""
-        assert identify_cloud_from_domain("myapp.azurewebsites.net") == CloudProvider.AZURE
-        assert identify_cloud_from_domain("storage.blob.core.windows.net") == CloudProvider.AZURE
+        assert (
+            identify_cloud_from_domain("myapp.azurewebsites.net") == CloudProvider.AZURE
+        )
+        assert (
+            identify_cloud_from_domain("storage.blob.core.windows.net")
+            == CloudProvider.AZURE
+        )
 
     def test_gcp_domain(self):
         """Test GCP domain detection."""
@@ -971,21 +984,27 @@ class TestIntegration:
     def test_full_analysis(self):
         """Test full infrastructure analysis."""
         ctx = Context(target="example.com")
-        ctx.add("tech_stack", {
-            "headers": {
-                "server": "nginx/1.18.0",
-                "x-amz-request-id": "ABC123",
-                "cf-ray": "DEF456-IAD",
-                "strict-transport-security": "max-age=31536000",
-            }
-        })
-        ctx.add("domain_profile", {
-            "dns_records": {
-                "NS": ["ns1.cloudflare.com", "ns2.cloudflare.com"],
-                "TXT": ["v=spf1 include:_spf.google.com ~all"],
+        ctx.add(
+            "tech_stack",
+            {
+                "headers": {
+                    "server": "nginx/1.18.0",
+                    "x-amz-request-id": "ABC123",
+                    "cf-ray": "DEF456-IAD",
+                    "strict-transport-security": "max-age=31536000",
+                }
             },
-            "subdomains": ["www.example.com", "api.example.com"],
-        })
+        )
+        ctx.add(
+            "domain_profile",
+            {
+                "dns_records": {
+                    "NS": ["ns1.cloudflare.com", "ns2.cloudflare.com"],
+                    "TXT": ["v=spf1 include:_spf.google.com ~all"],
+                },
+                "subdomains": ["www.example.com", "api.example.com"],
+            },
+        )
 
         result = analyze_infrastructure(ctx)
         infra = result.get("infrastructure")
@@ -998,5 +1017,7 @@ class TestIntegration:
 
         # Summary should be generated
         assert infra["summary"]["infrastructure_type"] in [
-            "cloud_with_cdn", "cloud_native", "cdn_fronted"
+            "cloud_with_cdn",
+            "cloud_native",
+            "cdn_fronted",
         ]

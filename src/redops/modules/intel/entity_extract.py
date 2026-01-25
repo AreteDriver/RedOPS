@@ -74,52 +74,38 @@ class ExtractedEntities:
 PATTERNS = {
     # Email addresses
     "email": re.compile(
-        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
-        re.IGNORECASE
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", re.IGNORECASE
     ),
-
     # URLs (http/https)
-    "url": re.compile(
-        r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+[^\s]*",
-        re.IGNORECASE
-    ),
-
+    "url": re.compile(r"https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+[^\s]*", re.IGNORECASE),
     # Domain names (simplified, excludes common false positives)
     "domain": re.compile(
         r"\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:com|org|net|edu|gov|mil|io|co|dev|app|xyz|info|biz|us|uk|de|fr|jp|cn|ru|br|in|au|ca|nl|se|no|fi|dk|es|it|pl|cz|at|ch|be|ie|nz|za|mx|ar|cl|co\.uk|com\.au|co\.nz|co\.za)\b",
-        re.IGNORECASE
+        re.IGNORECASE,
     ),
-
     # IPv4 addresses
     "ipv4": re.compile(
         r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
     ),
-
     # IPv6 addresses (simplified)
     "ipv6": re.compile(
         r"\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b|"
         r"\b(?:[0-9a-fA-F]{1,4}:){1,7}:\b|"
         r"\b(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}\b"
     ),
-
     # Phone numbers (US format and international)
     "phone": re.compile(
         r"\b(?:\+?1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b|"
         r"\b\+?[1-9]\d{1,14}\b"
     ),
-
     # MD5 hashes (32 hex chars)
     "md5": re.compile(r"\b[a-fA-F0-9]{32}\b"),
-
     # SHA1 hashes (40 hex chars)
     "sha1": re.compile(r"\b[a-fA-F0-9]{40}\b"),
-
     # SHA256 hashes (64 hex chars)
     "sha256": re.compile(r"\b[a-fA-F0-9]{64}\b"),
-
     # Social media handles (@username)
     "social": re.compile(r"@[A-Za-z0-9_]{1,30}\b"),
-
     # Credit card numbers (basic patterns, masked)
     "credit_card": re.compile(
         r"\b(?:4[0-9]{12}(?:[0-9]{3})?|"  # Visa
@@ -127,7 +113,6 @@ PATTERNS = {
         r"3[47][0-9]{13}|"  # Amex
         r"6(?:011|5[0-9]{2})[0-9]{12})\b"  # Discover
     ),
-
     # AWS Access Key IDs
     "aws_key": re.compile(r"\b(?:AKIA|ABIA|ACCA|ASIA)[A-Z0-9]{16}\b"),
 }
@@ -171,33 +156,40 @@ def extract_entities(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
         if text:
             source_entities = extract_from_text(str(text))
             entities.merge(source_entities)
-            ctx.log(f"Extracted from {source_name}: {source_entities.total_count()} entities", level="DEBUG")
+            ctx.log(
+                f"Extracted from {source_name}: {source_entities.total_count()} entities",
+                level="DEBUG",
+            )
 
     # Create findings for sensitive entities
     if entities.credit_cards:
-        findings.append(Finding(
-            module="intel.entity_extract",
-            title="Credit Card Numbers Detected",
-            description=f"Found {len(entities.credit_cards)} potential credit card numbers in data.",
-            severity=RiskLevel.CRITICAL,
-            data={
-                "count": len(entities.credit_cards),
-                "recommendation": "Review and remove any exposed payment card data",
-            },
-        ))
+        findings.append(
+            Finding(
+                module="intel.entity_extract",
+                title="Credit Card Numbers Detected",
+                description=f"Found {len(entities.credit_cards)} potential credit card numbers in data.",
+                severity=RiskLevel.CRITICAL,
+                data={
+                    "count": len(entities.credit_cards),
+                    "recommendation": "Review and remove any exposed payment card data",
+                },
+            )
+        )
 
     if entities.aws_keys:
-        findings.append(Finding(
-            module="intel.entity_extract",
-            title="AWS Access Keys Detected",
-            description=f"Found {len(entities.aws_keys)} AWS access key IDs in data.",
-            severity=RiskLevel.CRITICAL,
-            data={
-                "count": len(entities.aws_keys),
-                "keys": list(entities.aws_keys),
-                "recommendation": "Rotate these credentials immediately",
-            },
-        ))
+        findings.append(
+            Finding(
+                module="intel.entity_extract",
+                title="AWS Access Keys Detected",
+                description=f"Found {len(entities.aws_keys)} AWS access key IDs in data.",
+                severity=RiskLevel.CRITICAL,
+                data={
+                    "count": len(entities.aws_keys),
+                    "keys": list(entities.aws_keys),
+                    "recommendation": "Rotate these credentials immediately",
+                },
+            )
+        )
 
     # Add entities to context
     entity_dict = entities.to_dict()
@@ -205,7 +197,8 @@ def extract_entities(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     if sensitive_only:
         # Only include potentially sensitive entities
         entity_dict = {
-            k: v for k, v in entity_dict.items()
+            k: v
+            for k, v in entity_dict.items()
             if k in ["emails", "credit_cards", "aws_keys", "phone_numbers"]
         }
 
@@ -216,18 +209,26 @@ def extract_entities(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
         ctx.add(f"finding_entity_{i}", finding.model_dump())
 
     # Add summary
-    ctx.add("entity_summary", {
-        "total_entities": entities.total_count(),
-        "by_type": {k: len(v) for k, v in entity_dict.items()},
-        "sensitive_findings": len(findings),
-    })
+    ctx.add(
+        "entity_summary",
+        {
+            "total_entities": entities.total_count(),
+            "by_type": {k: len(v) for k, v in entity_dict.items()},
+            "sensitive_findings": len(findings),
+        },
+    )
 
-    ctx.log(f"Entity extraction completed: {entities.total_count()} entities found", level="INFO")
+    ctx.log(
+        f"Entity extraction completed: {entities.total_count()} entities found",
+        level="INFO",
+    )
 
     return ctx
 
 
-def collect_text_sources(ctx: Context, include_findings: bool = True) -> List[Tuple[str, str]]:
+def collect_text_sources(
+    ctx: Context, include_findings: bool = True
+) -> List[Tuple[str, str]]:
     """
     Collect text sources from context for entity extraction.
 
@@ -413,25 +414,47 @@ def clean_entities(entities: ExtractedEntities) -> ExtractedEntities:
         Cleaned entities
     """
     # Remove private/local IPs if extracting from public data
-    private_ip_prefixes = ("10.", "172.16.", "172.17.", "172.18.", "172.19.",
-                           "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
-                           "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
-                           "172.30.", "172.31.", "192.168.", "127.", "0.")
+    private_ip_prefixes = (
+        "10.",
+        "172.16.",
+        "172.17.",
+        "172.18.",
+        "172.19.",
+        "172.20.",
+        "172.21.",
+        "172.22.",
+        "172.23.",
+        "172.24.",
+        "172.25.",
+        "172.26.",
+        "172.27.",
+        "172.28.",
+        "172.29.",
+        "172.30.",
+        "172.31.",
+        "192.168.",
+        "127.",
+        "0.",
+    )
 
     entities.ipv4_addresses = {
-        ip for ip in entities.ipv4_addresses
-        if not ip.startswith(private_ip_prefixes)
+        ip for ip in entities.ipv4_addresses if not ip.startswith(private_ip_prefixes)
     }
 
     # Remove common false positive domains
-    false_positive_domains = {"example.com", "example.org", "example.net",
-                              "localhost", "test.com", "domain.com"}
+    false_positive_domains = {
+        "example.com",
+        "example.org",
+        "example.net",
+        "localhost",
+        "test.com",
+        "domain.com",
+    }
     entities.domains -= false_positive_domains
 
     # Remove version-like MD5s (e.g., 00000000000000000000000000000000)
     entities.md5_hashes = {
-        h for h in entities.md5_hashes
-        if not all(c == h[0] for c in h)
+        h for h in entities.md5_hashes if not all(c == h[0] for c in h)
     }
 
     return entities
@@ -456,7 +479,9 @@ def extract_iocs(text: str) -> Dict[str, List[str]]:
         "domains": sorted(entities.domains),
         "urls": sorted(entities.urls),
         "emails": sorted(entities.emails),
-        "hashes": sorted(entities.md5_hashes | entities.sha1_hashes | entities.sha256_hashes),
+        "hashes": sorted(
+            entities.md5_hashes | entities.sha1_hashes | entities.sha256_hashes
+        ),
     }
 
 
@@ -511,6 +536,11 @@ def get_entity_summary(entities: ExtractedEntities) -> Dict[str, Any]:
         "by_type": {k: len(v) for k, v in entity_dict.items() if v},
         "has_sensitive": bool(entities.credit_cards or entities.aws_keys),
         "has_pii": bool(entities.emails or entities.phone_numbers),
-        "has_iocs": bool(entities.ipv4_addresses or entities.domains or
-                        entities.md5_hashes or entities.sha1_hashes or entities.sha256_hashes),
+        "has_iocs": bool(
+            entities.ipv4_addresses
+            or entities.domains
+            or entities.md5_hashes
+            or entities.sha1_hashes
+            or entities.sha256_hashes
+        ),
     }

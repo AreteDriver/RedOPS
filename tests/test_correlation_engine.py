@@ -1,6 +1,5 @@
 """Tests for analysis/correlation_engine module."""
 
-import pytest
 from redops.modules.analysis.correlation_engine import (
     CorrelationType,
     CorrelationStrength,
@@ -292,7 +291,7 @@ class TestCorrelateFindings:
     def test_empty_context(self):
         """Test with empty context."""
         ctx = Context(target="example.com")
-        result = correlate_findings(ctx, {})
+        correlate_findings(ctx, {})
 
         corr_data = ctx.get("correlations", {})
         assert "findings" in corr_data
@@ -301,14 +300,25 @@ class TestCorrelateFindings:
     def test_with_exposure_data(self):
         """Test with exposure data."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "exposures": [
-                {"title": "Exposed API", "severity": "high", "description": "Public API"},
-                {"title": "Open Port", "severity": "medium", "description": "Port 22"},
-            ]
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "exposures": [
+                    {
+                        "title": "Exposed API",
+                        "severity": "high",
+                        "description": "Public API",
+                    },
+                    {
+                        "title": "Open Port",
+                        "severity": "medium",
+                        "description": "Port 22",
+                    },
+                ]
+            },
+        )
 
-        result = correlate_findings(ctx, {})
+        correlate_findings(ctx, {})
         corr_data = ctx.get("correlations", {})
 
         assert len(corr_data["findings"]) == 2
@@ -316,14 +326,17 @@ class TestCorrelateFindings:
     def test_min_confidence_filter(self):
         """Test minimum confidence filtering."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "exposures": [
-                {"title": "Finding 1", "severity": "high"},
-                {"title": "Finding 2", "severity": "high"},
-            ]
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "exposures": [
+                    {"title": "Finding 1", "severity": "high"},
+                    {"title": "Finding 2", "severity": "high"},
+                ]
+            },
+        )
 
-        result = correlate_findings(ctx, {"min_confidence": 0.9})
+        correlate_findings(ctx, {"min_confidence": 0.9})
         corr_data = ctx.get("correlations", {})
 
         # High confidence filter should reduce correlations
@@ -345,11 +358,18 @@ class TestExtractFindingsFromContext:
     def test_from_exposure_scan(self):
         """Test extraction from exposure scan."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "exposures": [
-                {"title": "Test Exposure", "severity": "high", "description": "Test"},
-            ]
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "exposures": [
+                    {
+                        "title": "Test Exposure",
+                        "severity": "high",
+                        "description": "Test",
+                    },
+                ]
+            },
+        )
 
         findings = extract_findings_from_context(ctx)
 
@@ -359,11 +379,14 @@ class TestExtractFindingsFromContext:
     def test_from_threat_intel(self):
         """Test extraction from threat intel."""
         ctx = Context(target="example.com")
-        ctx.add("threat_intel", {
-            "iocs": [
-                {"type": "ip", "value": "1.2.3.4", "severity": "high"},
-            ]
-        })
+        ctx.add(
+            "threat_intel",
+            {
+                "iocs": [
+                    {"type": "ip", "value": "1.2.3.4", "severity": "high"},
+                ]
+            },
+        )
 
         findings = extract_findings_from_context(ctx)
 
@@ -373,11 +396,14 @@ class TestExtractFindingsFromContext:
     def test_from_compliance(self):
         """Test extraction from compliance."""
         ctx = Context(target="example.com")
-        ctx.add("compliance", {
-            "gaps": [
-                {"title": "Missing MFA", "priority": "high"},
-            ]
-        })
+        ctx.add(
+            "compliance",
+            {
+                "gaps": [
+                    {"title": "Missing MFA", "priority": "high"},
+                ]
+            },
+        )
 
         findings = extract_findings_from_context(ctx)
 
@@ -396,8 +422,18 @@ class TestCorrelateTemporal:
     def test_no_timestamps(self):
         """Test with findings without timestamps."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1"),
-            Finding(id="F2", source_module="test", category=FindingCategory.VULNERABILITY, title="T2"),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T2",
+            ),
         ]
         correlations = correlate_temporal(findings, 24)
         assert len(correlations) == 0
@@ -406,12 +442,18 @@ class TestCorrelateTemporal:
         """Test temporal correlation detection."""
         findings = [
             Finding(
-                id="F1", source_module="test", category=FindingCategory.VULNERABILITY,
-                title="T1", timestamp="2025-01-01T10:00:00Z"
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+                timestamp="2025-01-01T10:00:00Z",
             ),
             Finding(
-                id="F2", source_module="test", category=FindingCategory.VULNERABILITY,
-                title="T2", timestamp="2025-01-01T11:00:00Z"
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T2",
+                timestamp="2025-01-01T11:00:00Z",
             ),
         ]
         correlations = correlate_temporal(findings, 24)
@@ -432,12 +474,18 @@ class TestCorrelateEntities:
         """Test entity correlation with shared entities."""
         findings = [
             Finding(
-                id="F1", source_module="test", category=FindingCategory.VULNERABILITY,
-                title="T1", entities=["1.2.3.4", "example.com"]
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+                entities=["1.2.3.4", "example.com"],
             ),
             Finding(
-                id="F2", source_module="test", category=FindingCategory.EXPOSURE,
-                title="T2", entities=["1.2.3.4", "other.com"]
+                id="F2",
+                source_module="test",
+                category=FindingCategory.EXPOSURE,
+                title="T2",
+                entities=["1.2.3.4", "other.com"],
             ),
         ]
         correlations = correlate_entities(findings, ["ip_address"])
@@ -448,8 +496,20 @@ class TestCorrelateEntities:
     def test_no_shared_entities(self):
         """Test with no shared entities."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1", entities=["a"]),
-            Finding(id="F2", source_module="test", category=FindingCategory.VULNERABILITY, title="T2", entities=["b"]),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+                entities=["a"],
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T2",
+                entities=["b"],
+            ),
         ]
         correlations = correlate_entities(findings, ["ip_address"])
 
@@ -468,12 +528,18 @@ class TestCorrelateAttributes:
         """Test attribute correlation."""
         findings = [
             Finding(
-                id="F1", source_module="test", category=FindingCategory.VULNERABILITY,
-                title="T1", attributes={"port": 22, "protocol": "ssh"}
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+                attributes={"port": 22, "protocol": "ssh"},
             ),
             Finding(
-                id="F2", source_module="test", category=FindingCategory.VULNERABILITY,
-                title="T2", attributes={"port": 22, "protocol": "tcp"}
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T2",
+                attributes={"port": 22, "protocol": "tcp"},
             ),
         ]
         correlations = correlate_attributes(findings)
@@ -494,12 +560,18 @@ class TestCorrelateCausal:
         """Test causal correlation detection."""
         findings = [
             Finding(
-                id="F1", source_module="test", category=FindingCategory.RECONNAISSANCE,
-                title="Subdomain found", entities=["sub.example.com"]
+                id="F1",
+                source_module="test",
+                category=FindingCategory.RECONNAISSANCE,
+                title="Subdomain found",
+                entities=["sub.example.com"],
             ),
             Finding(
-                id="F2", source_module="test", category=FindingCategory.VULNERABILITY,
-                title="Vuln on subdomain", entities=["sub.example.com"]
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="Vuln on subdomain",
+                entities=["sub.example.com"],
             ),
         ]
         correlations = correlate_causal(findings)
@@ -520,12 +592,18 @@ class TestDetectAttackPatterns:
         """Test credential stuffing pattern detection."""
         findings = [
             Finding(
-                id="F1", source_module="test", category=FindingCategory.CREDENTIAL,
-                title="Leaked password", description="dark_web exposure"
+                id="F1",
+                source_module="test",
+                category=FindingCategory.CREDENTIAL,
+                title="Leaked password",
+                description="dark_web exposure",
             ),
             Finding(
-                id="F2", source_module="test", category=FindingCategory.EXPOSURE,
-                title="Credential reuse", description="password_reuse detected"
+                id="F2",
+                source_module="test",
+                category=FindingCategory.EXPOSURE,
+                title="Credential reuse",
+                description="password_reuse detected",
             ),
         ]
         correlations = detect_attack_patterns(findings)
@@ -545,15 +623,27 @@ class TestClusterFindings:
     def test_basic_clustering(self):
         """Test basic clustering."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1"),
-            Finding(id="F2", source_module="test", category=FindingCategory.VULNERABILITY, title="T2"),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T2",
+            ),
         ]
         correlations = [
             Correlation(
-                id="C1", finding_ids=["F1", "F2"],
+                id="C1",
+                finding_ids=["F1", "F2"],
                 correlation_type=CorrelationType.ENTITY,
                 strength=CorrelationStrength.STRONG,
-                confidence=0.8, reason="Test"
+                confidence=0.8,
+                reason="Test",
             )
         ]
 
@@ -573,14 +663,26 @@ class TestGenerateInsights:
 
     def test_pattern_insight(self):
         """Test pattern insight generation."""
-        findings = [Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1")]
+        findings = [
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            )
+        ]
         correlations = [
             Correlation(
-                id="C1", finding_ids=["F1"],
+                id="C1",
+                finding_ids=["F1"],
                 correlation_type=CorrelationType.PATTERN,
                 strength=CorrelationStrength.STRONG,
-                confidence=0.9, reason="Pattern match",
-                metadata={"pattern_name": "Test Pattern", "pattern_description": "Test"}
+                confidence=0.9,
+                reason="Pattern match",
+                metadata={
+                    "pattern_name": "Test Pattern",
+                    "pattern_description": "Test",
+                },
             )
         ]
 
@@ -603,15 +705,27 @@ class TestBuildCorrelationGraph:
     def test_basic_graph(self):
         """Test basic graph building."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1"),
-            Finding(id="F2", source_module="test", category=FindingCategory.EXPOSURE, title="T2"),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.EXPOSURE,
+                title="T2",
+            ),
         ]
         correlations = [
             Correlation(
-                id="C1", finding_ids=["F1", "F2"],
+                id="C1",
+                finding_ids=["F1", "F2"],
                 correlation_type=CorrelationType.ENTITY,
                 strength=CorrelationStrength.STRONG,
-                confidence=0.8, reason="Test"
+                confidence=0.8,
+                reason="Test",
             )
         ]
 
@@ -634,15 +748,22 @@ class TestGenerateCorrelationSummary:
     def test_with_data(self):
         """Test with data."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY,
-                    title="T1", severity=FindingSeverity.HIGH),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+                severity=FindingSeverity.HIGH,
+            ),
         ]
         correlations = [
             Correlation(
-                id="C1", finding_ids=["F1"],
+                id="C1",
+                finding_ids=["F1"],
                 correlation_type=CorrelationType.ENTITY,
                 strength=CorrelationStrength.STRONG,
-                confidence=0.8, reason="Test"
+                confidence=0.8,
+                reason="Test",
             )
         ]
 
@@ -658,8 +779,18 @@ class TestGenerateCorrelationId:
     def test_deterministic(self):
         """Test ID is deterministic."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1"),
-            Finding(id="F2", source_module="test", category=FindingCategory.VULNERABILITY, title="T2"),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T2",
+            ),
         ]
 
         id1 = generate_correlation_id(findings, "test")
@@ -669,7 +800,14 @@ class TestGenerateCorrelationId:
 
     def test_format(self):
         """Test ID format."""
-        findings = [Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1")]
+        findings = [
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            )
+        ]
         corr_id = generate_correlation_id(findings, "test")
 
         assert corr_id.startswith("COR-")
@@ -790,10 +928,22 @@ class TestDeduplicateCorrelations:
     def test_removes_duplicates(self):
         """Test duplicate removal."""
         correlations = [
-            Correlation(id="C1", finding_ids=[], correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.8, reason="Test"),
-            Correlation(id="C1", finding_ids=[], correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.8, reason="Test"),
+            Correlation(
+                id="C1",
+                finding_ids=[],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.8,
+                reason="Test",
+            ),
+            Correlation(
+                id="C1",
+                finding_ids=[],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.8,
+                reason="Test",
+            ),
         ]
 
         unique = deduplicate_correlations(correlations)
@@ -807,7 +957,12 @@ class TestGenerateClusterRecommendations:
     def test_vulnerability_recommendations(self):
         """Test vulnerability recommendations."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1")
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            )
         ]
         recs = generate_cluster_recommendations(findings, FindingCategory.VULNERABILITY)
 
@@ -817,8 +972,13 @@ class TestGenerateClusterRecommendations:
     def test_critical_priority(self):
         """Test critical findings get priority."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY,
-                    title="T1", severity=FindingSeverity.CRITICAL)
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+                severity=FindingSeverity.CRITICAL,
+            )
         ]
         recs = generate_cluster_recommendations(findings, FindingCategory.VULNERABILITY)
 
@@ -887,9 +1047,14 @@ class TestFindRelatedFindings:
     def test_finds_related(self):
         """Test finding related findings."""
         correlations = [
-            Correlation(id="C1", finding_ids=["F1", "F2", "F3"],
-                        correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.8, reason="Test")
+            Correlation(
+                id="C1",
+                finding_ids=["F1", "F2", "F3"],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.8,
+                reason="Test",
+            )
         ]
 
         related = find_related_findings("F1", correlations)
@@ -905,12 +1070,22 @@ class TestGetFindingCorrelations:
     def test_gets_correlations(self):
         """Test getting correlations for a finding."""
         correlations = [
-            Correlation(id="C1", finding_ids=["F1", "F2"],
-                        correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.8, reason="Test"),
-            Correlation(id="C2", finding_ids=["F2", "F3"],
-                        correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.8, reason="Test"),
+            Correlation(
+                id="C1",
+                finding_ids=["F1", "F2"],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.8,
+                reason="Test",
+            ),
+            Correlation(
+                id="C2",
+                finding_ids=["F2", "F3"],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.8,
+                reason="Test",
+            ),
         ]
 
         result = get_finding_correlations("F1", correlations)
@@ -925,12 +1100,22 @@ class TestCalculateFindingCentrality:
     def test_high_centrality(self):
         """Test high centrality calculation."""
         correlations = [
-            Correlation(id="C1", finding_ids=["F1", "F2", "F3"],
-                        correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.8, reason="Test"),
-            Correlation(id="C2", finding_ids=["F1", "F4"],
-                        correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.9, reason="Test"),
+            Correlation(
+                id="C1",
+                finding_ids=["F1", "F2", "F3"],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.8,
+                reason="Test",
+            ),
+            Correlation(
+                id="C2",
+                finding_ids=["F1", "F4"],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.9,
+                reason="Test",
+            ),
         ]
 
         centrality = calculate_finding_centrality("F1", correlations)
@@ -951,13 +1136,28 @@ class TestGetHighCentralityFindings:
     def test_returns_sorted(self):
         """Test returns sorted by centrality."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1"),
-            Finding(id="F2", source_module="test", category=FindingCategory.VULNERABILITY, title="T2"),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T2",
+            ),
         ]
         correlations = [
-            Correlation(id="C1", finding_ids=["F1", "F2"],
-                        correlation_type=CorrelationType.ENTITY,
-                        strength=CorrelationStrength.STRONG, confidence=0.8, reason="Test"),
+            Correlation(
+                id="C1",
+                finding_ids=["F1", "F2"],
+                correlation_type=CorrelationType.ENTITY,
+                strength=CorrelationStrength.STRONG,
+                confidence=0.8,
+                reason="Test",
+            ),
         ]
 
         result = get_high_centrality_findings(findings, correlations, top_n=5)
@@ -1009,8 +1209,18 @@ class TestMergeFindings:
     def test_no_duplicates(self):
         """Test with no duplicates."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY, title="T1"),
-            Finding(id="F2", source_module="test", category=FindingCategory.EXPOSURE, title="T2"),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="T1",
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.EXPOSURE,
+                title="T2",
+            ),
         ]
 
         merged = merge_findings(findings)
@@ -1020,10 +1230,20 @@ class TestMergeFindings:
     def test_keep_highest_severity(self):
         """Test keeping highest severity."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY,
-                    title="Same Title", severity=FindingSeverity.LOW),
-            Finding(id="F2", source_module="test", category=FindingCategory.VULNERABILITY,
-                    title="Same Title", severity=FindingSeverity.HIGH),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="Same Title",
+                severity=FindingSeverity.LOW,
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="Same Title",
+                severity=FindingSeverity.HIGH,
+            ),
         ]
 
         merged = merge_findings(findings, merge_strategy="keep_highest_severity")
@@ -1034,10 +1254,20 @@ class TestMergeFindings:
     def test_keep_first(self):
         """Test keeping first."""
         findings = [
-            Finding(id="F1", source_module="test", category=FindingCategory.VULNERABILITY,
-                    title="Same Title", severity=FindingSeverity.LOW),
-            Finding(id="F2", source_module="test", category=FindingCategory.VULNERABILITY,
-                    title="Same Title", severity=FindingSeverity.HIGH),
+            Finding(
+                id="F1",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="Same Title",
+                severity=FindingSeverity.LOW,
+            ),
+            Finding(
+                id="F2",
+                source_module="test",
+                category=FindingCategory.VULNERABILITY,
+                title="Same Title",
+                severity=FindingSeverity.HIGH,
+            ),
         ]
 
         merged = merge_findings(findings, merge_strategy="keep_first")
@@ -1054,27 +1284,43 @@ class TestIntegration:
         ctx = Context(target="example.com")
 
         # Add findings from multiple sources
-        ctx.add("exposure_scan", {
-            "exposures": [
-                {"title": "Exposed API", "severity": "high", "description": "API key at 192.168.1.1"},
-            ]
-        })
-        ctx.add("threat_intel", {
-            "iocs": [
-                {"type": "ip", "value": "192.168.1.1", "severity": "critical"},
-            ]
-        })
-        ctx.add("compliance", {
-            "gaps": [
-                {"title": "Missing encryption", "priority": "medium"},
-            ]
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "exposures": [
+                    {
+                        "title": "Exposed API",
+                        "severity": "high",
+                        "description": "API key at 192.168.1.1",
+                    },
+                ]
+            },
+        )
+        ctx.add(
+            "threat_intel",
+            {
+                "iocs": [
+                    {"type": "ip", "value": "192.168.1.1", "severity": "critical"},
+                ]
+            },
+        )
+        ctx.add(
+            "compliance",
+            {
+                "gaps": [
+                    {"title": "Missing encryption", "priority": "medium"},
+                ]
+            },
+        )
 
         # Run correlation
-        result = correlate_findings(ctx, {
-            "enable_patterns": True,
-            "enable_clustering": True,
-        })
+        correlate_findings(
+            ctx,
+            {
+                "enable_patterns": True,
+                "enable_clustering": True,
+            },
+        )
 
         corr_data = ctx.get("correlations", {})
 
@@ -1094,24 +1340,36 @@ class TestIntegration:
         ctx = Context(target="example.com")
 
         # Add findings matching credential stuffing pattern
-        ctx.add("exposure_scan", {
-            "exposures": [
-                {"title": "Leaked credentials", "severity": "critical",
-                 "description": "Found on dark_web marketplace"},
-            ]
-        })
-        ctx.add("code_artifacts", {
-            "secrets": [
-                {"type": "password", "value": "exposed123", "context": "password_reuse detected"},
-            ]
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "exposures": [
+                    {
+                        "title": "Leaked credentials",
+                        "severity": "critical",
+                        "description": "Found on dark_web marketplace",
+                    },
+                ]
+            },
+        )
+        ctx.add(
+            "code_artifacts",
+            {
+                "secrets": [
+                    {
+                        "type": "password",
+                        "value": "exposed123",
+                        "context": "password_reuse detected",
+                    },
+                ]
+            },
+        )
 
-        result = correlate_findings(ctx, {"enable_patterns": True})
+        correlate_findings(ctx, {"enable_patterns": True})
         corr_data = ctx.get("correlations", {})
 
         # Should detect credential stuffing pattern
         pattern_corrs = [
-            c for c in corr_data["correlations"]
-            if c["correlation_type"] == "pattern"
+            c for c in corr_data["correlations"] if c["correlation_type"] == "pattern"
         ]
         assert len(pattern_corrs) >= 1

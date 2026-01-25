@@ -1,6 +1,5 @@
 """Tests for compliance/compliance_map module."""
 
-import pytest
 from redops.modules.compliance.compliance_map import (
     ComplianceFramework,
     ControlStatus,
@@ -241,7 +240,8 @@ class TestPCIDSSControls:
     def test_critical_controls_marked(self):
         """Test critical controls are properly marked."""
         critical_controls = [
-            c for c in PCI_DSS_CONTROLS.values()
+            c
+            for c in PCI_DSS_CONTROLS.values()
             if c.priority == ControlPriority.CRITICAL
         ]
         assert len(critical_controls) >= 3
@@ -319,10 +319,10 @@ class TestAllControls:
     def test_control_count(self):
         """Test total control count."""
         expected = (
-            len(PCI_DSS_CONTROLS) +
-            len(HIPAA_CONTROLS) +
-            len(SOC2_CONTROLS) +
-            len(NIST_CSF_CONTROLS)
+            len(PCI_DSS_CONTROLS)
+            + len(HIPAA_CONTROLS)
+            + len(SOC2_CONTROLS)
+            + len(NIST_CSF_CONTROLS)
         )
         assert len(ALL_CONTROLS) == expected
 
@@ -377,9 +377,7 @@ class TestAssessCompliance:
     def test_multiple_frameworks(self):
         """Test assessment with multiple frameworks."""
         ctx = Context(target="example.com")
-        result = assess_compliance(ctx, {
-            "frameworks": ["pci_dss", "hipaa", "soc2"]
-        })
+        result = assess_compliance(ctx, {"frameworks": ["pci_dss", "hipaa", "soc2"]})
 
         assessment = result.get("compliance_assessment")
         assert len(assessment["reports"]) == 3
@@ -387,17 +385,22 @@ class TestAssessCompliance:
     def test_with_findings(self):
         """Test assessment with findings."""
         ctx = Context(target="example.com")
-        ctx.add("findings", [
-            {"title": "Weak Password Policy", "severity": "high"},
-            {"title": "Missing Encryption", "severity": "critical"},
-        ])
+        ctx.add(
+            "findings",
+            [
+                {"title": "Weak Password Policy", "severity": "high"},
+                {"title": "Missing Encryption", "severity": "critical"},
+            ],
+        )
 
         result = assess_compliance(ctx)
         assessment = result.get("compliance_assessment")
 
         # Should have gaps identified
         total_gaps = sum(r["non_compliant_count"] for r in assessment["reports"])
-        assert total_gaps > 0 or sum(r["partial_count"] for r in assessment["reports"]) > 0
+        assert (
+            total_gaps > 0 or sum(r["partial_count"] for r in assessment["reports"]) > 0
+        )
 
 
 class TestCollectFindingsFromContext:
@@ -412,10 +415,13 @@ class TestCollectFindingsFromContext:
     def test_findings_key(self):
         """Test collecting from findings key."""
         ctx = Context(target="example.com")
-        ctx.add("findings", [
-            {"title": "Finding 1"},
-            {"title": "Finding 2"},
-        ])
+        ctx.add(
+            "findings",
+            [
+                {"title": "Finding 1"},
+                {"title": "Finding 2"},
+            ],
+        )
 
         findings = collect_findings_from_context(ctx)
         assert len(findings) == 2
@@ -432,11 +438,14 @@ class TestCollectFindingsFromContext:
     def test_exposure_scan(self):
         """Test collecting from exposure_scan."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "findings": [
-                {"title": "Exposed Config"},
-            ]
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "findings": [
+                    {"title": "Exposed Config"},
+                ]
+            },
+        )
 
         findings = collect_findings_from_context(ctx)
         assert len(findings) == 1
@@ -690,7 +699,9 @@ class TestGeneratePriorityRemediations:
 
         assessments = [
             ControlAssessment(control=low_control, status=ControlStatus.NON_COMPLIANT),
-            ControlAssessment(control=critical_control, status=ControlStatus.NON_COMPLIANT),
+            ControlAssessment(
+                control=critical_control, status=ControlStatus.NON_COMPLIANT
+            ),
         ]
 
         remediations = generate_priority_remediations(assessments)
@@ -711,8 +722,18 @@ class TestCalculateOverallPosture:
     def test_strong_posture(self):
         """Test strong compliance posture."""
         reports = [
-            {"framework": "pci_dss", "overall_score": 95, "non_compliant_count": 1, "partial_count": 2},
-            {"framework": "hipaa", "overall_score": 92, "non_compliant_count": 1, "partial_count": 1},
+            {
+                "framework": "pci_dss",
+                "overall_score": 95,
+                "non_compliant_count": 1,
+                "partial_count": 2,
+            },
+            {
+                "framework": "hipaa",
+                "overall_score": 92,
+                "non_compliant_count": 1,
+                "partial_count": 1,
+            },
         ]
         posture = calculate_overall_posture(reports)
 
@@ -722,7 +743,12 @@ class TestCalculateOverallPosture:
     def test_weak_posture(self):
         """Test weak compliance posture."""
         reports = [
-            {"framework": "pci_dss", "overall_score": 40, "non_compliant_count": 10, "partial_count": 5},
+            {
+                "framework": "pci_dss",
+                "overall_score": 40,
+                "non_compliant_count": 10,
+                "partial_count": 5,
+            },
         ]
         posture = calculate_overall_posture(reports)
 
@@ -795,16 +821,14 @@ class TestGetControlsByCategory:
     def test_valid_category(self):
         """Test getting controls by category."""
         controls = get_controls_by_category(
-            ComplianceFramework.PCI_DSS,
-            "Authentication"
+            ComplianceFramework.PCI_DSS, "Authentication"
         )
         assert len(controls) >= 1
 
     def test_invalid_category(self):
         """Test with invalid category."""
         controls = get_controls_by_category(
-            ComplianceFramework.PCI_DSS,
-            "Invalid Category"
+            ComplianceFramework.PCI_DSS, "Invalid Category"
         )
         assert controls == []
 
@@ -815,8 +839,7 @@ class TestGetControlsByPriority:
     def test_critical_priority(self):
         """Test getting critical controls."""
         controls = get_controls_by_priority(
-            ComplianceFramework.PCI_DSS,
-            ControlPriority.CRITICAL
+            ComplianceFramework.PCI_DSS, ControlPriority.CRITICAL
         )
         assert len(controls) >= 1
         assert all(c.priority == ControlPriority.CRITICAL for c in controls)
@@ -824,8 +847,7 @@ class TestGetControlsByPriority:
     def test_high_priority(self):
         """Test getting high priority controls."""
         controls = get_controls_by_priority(
-            ComplianceFramework.PCI_DSS,
-            ControlPriority.HIGH
+            ComplianceFramework.PCI_DSS, ControlPriority.HIGH
         )
         assert len(controls) >= 1
 
@@ -947,13 +969,19 @@ class TestExportGapAnalysis:
     def test_export_sorted_by_priority(self):
         """Test gaps are sorted by priority."""
         critical = ComplianceControl(
-            id="CRIT.1", framework=ComplianceFramework.PCI_DSS,
-            title="Critical", description="", category="",
+            id="CRIT.1",
+            framework=ComplianceFramework.PCI_DSS,
+            title="Critical",
+            description="",
+            category="",
             priority=ControlPriority.CRITICAL,
         )
         low = ComplianceControl(
-            id="LOW.1", framework=ComplianceFramework.PCI_DSS,
-            title="Low", description="", category="",
+            id="LOW.1",
+            framework=ComplianceFramework.PCI_DSS,
+            title="Low",
+            description="",
+            category="",
             priority=ControlPriority.LOW,
         )
 
@@ -978,21 +1006,46 @@ class TestIntegration:
     def test_full_assessment_workflow(self):
         """Test full assessment workflow."""
         ctx = Context(target="example.com")
-        ctx.add("findings", [
-            {"title": "Weak Password Policy", "severity": "high", "category": "authentication"},
-            {"title": "Missing Encryption", "severity": "critical", "category": "encryption"},
-            {"title": "No Vulnerability Scanning", "severity": "high", "category": "vulnerability"},
-        ])
-        ctx.add("exposure_scan", {
-            "findings": [
-                {"title": "API Key Exposed", "severity": "critical", "category": "credentials"},
-            ]
-        })
+        ctx.add(
+            "findings",
+            [
+                {
+                    "title": "Weak Password Policy",
+                    "severity": "high",
+                    "category": "authentication",
+                },
+                {
+                    "title": "Missing Encryption",
+                    "severity": "critical",
+                    "category": "encryption",
+                },
+                {
+                    "title": "No Vulnerability Scanning",
+                    "severity": "high",
+                    "category": "vulnerability",
+                },
+            ],
+        )
+        ctx.add(
+            "exposure_scan",
+            {
+                "findings": [
+                    {
+                        "title": "API Key Exposed",
+                        "severity": "critical",
+                        "category": "credentials",
+                    },
+                ]
+            },
+        )
 
-        result = assess_compliance(ctx, {
-            "frameworks": ["pci_dss", "hipaa"],
-            "generate_recommendations": True,
-        })
+        result = assess_compliance(
+            ctx,
+            {
+                "frameworks": ["pci_dss", "hipaa"],
+                "generate_recommendations": True,
+            },
+        )
 
         assessment = result.get("compliance_assessment")
 

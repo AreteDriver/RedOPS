@@ -3,7 +3,6 @@
 from unittest.mock import patch, MagicMock
 import pytest
 from redops.core.context import Context
-from redops.core.models import RiskLevel
 from redops.modules.recon.tech_stack import (
     fingerprint,
     normalize_url,
@@ -189,11 +188,11 @@ class TestDetectTechnologies:
 
     def test_detect_multiple_technologies(self):
         """Test detecting multiple technologies."""
-        html = '''
+        html = """
         <script src="react.js"></script>
         <script src="jquery.min.js"></script>
         <link href="bootstrap.css">
-        '''
+        """
         techs = detect_technologies(html, {})
         assert "React" in techs
         assert "jQuery" in techs
@@ -279,7 +278,9 @@ class TestFingerprint:
         with patch("redops.modules.recon.tech_stack.make_request") as mock_request:
             mock_request.return_value = mock_response
 
-            with patch("redops.modules.recon.tech_stack.fetch_favicon_hash") as mock_favicon:
+            with patch(
+                "redops.modules.recon.tech_stack.fetch_favicon_hash"
+            ) as mock_favicon:
                 mock_favicon.return_value = None
 
                 with patch("redops.modules.recon.tech_stack.get_ssl_info") as mock_ssl:
@@ -305,7 +306,9 @@ class TestFingerprint:
         with patch("redops.modules.recon.tech_stack.make_request") as mock_request:
             mock_request.return_value = mock_response
 
-            with patch("redops.modules.recon.tech_stack.fetch_favicon_hash") as mock_favicon:
+            with patch(
+                "redops.modules.recon.tech_stack.fetch_favicon_hash"
+            ) as mock_favicon:
                 mock_favicon.return_value = None
 
                 with patch("redops.modules.recon.tech_stack.get_ssl_info") as mock_ssl:
@@ -315,7 +318,9 @@ class TestFingerprint:
                     result = fingerprint(ctx)
 
                     # Should have findings for missing security headers
-                    finding_keys = [k for k in result.data.keys() if k.startswith("finding_tech_")]
+                    finding_keys = [
+                        k for k in result.data.keys() if k.startswith("finding_tech_")
+                    ]
                     assert len(finding_keys) > 0
 
     def test_fingerprint_connection_error(self):
@@ -323,7 +328,9 @@ class TestFingerprint:
         with patch("redops.modules.recon.tech_stack.make_request") as mock_request:
             mock_request.return_value = None
 
-            with patch("redops.modules.recon.tech_stack.fetch_favicon_hash") as mock_favicon:
+            with patch(
+                "redops.modules.recon.tech_stack.fetch_favicon_hash"
+            ) as mock_favicon:
                 mock_favicon.return_value = None
 
                 with patch("redops.modules.recon.tech_stack.get_ssl_info") as mock_ssl:
@@ -346,18 +353,23 @@ class TestFingerprint:
         with patch("redops.modules.recon.tech_stack.make_request") as mock_request:
             mock_request.return_value = mock_response
 
-            with patch("redops.modules.recon.tech_stack.fetch_favicon_hash") as mock_favicon:
+            with patch(
+                "redops.modules.recon.tech_stack.fetch_favicon_hash"
+            ) as mock_favicon:
                 mock_favicon.return_value = None
 
                 with patch("redops.modules.recon.tech_stack.get_ssl_info") as mock_ssl:
                     mock_ssl.return_value = None
 
                     ctx = Context(target="default.com")
-                    result = fingerprint(ctx, params={
-                        "target": "custom.com",
-                        "timeout": 5,
-                        "verify_ssl": False,
-                    })
+                    result = fingerprint(
+                        ctx,
+                        params={
+                            "target": "custom.com",
+                            "timeout": 5,
+                            "verify_ssl": False,
+                        },
+                    )
 
                     # Should have used custom target
                     info_logs = result.get_logs(level="INFO")
@@ -396,7 +408,9 @@ class TestLogging:
         with patch("redops.modules.recon.tech_stack.make_request") as mock_request:
             mock_request.return_value = None
 
-            with patch("redops.modules.recon.tech_stack.fetch_favicon_hash") as mock_favicon:
+            with patch(
+                "redops.modules.recon.tech_stack.fetch_favicon_hash"
+            ) as mock_favicon:
                 mock_favicon.return_value = None
 
                 with patch("redops.modules.recon.tech_stack.get_ssl_info") as mock_ssl:
@@ -406,14 +420,18 @@ class TestLogging:
                     result = fingerprint(ctx)
 
                     info_logs = result.get_logs(level="INFO")
-                    assert any("fingerprinting" in log["message"].lower() for log in info_logs)
+                    assert any(
+                        "fingerprinting" in log["message"].lower() for log in info_logs
+                    )
 
     def test_fingerprint_logs_completion(self):
         """Test that fingerprinting logs completion message."""
         with patch("redops.modules.recon.tech_stack.make_request") as mock_request:
             mock_request.return_value = None
 
-            with patch("redops.modules.recon.tech_stack.fetch_favicon_hash") as mock_favicon:
+            with patch(
+                "redops.modules.recon.tech_stack.fetch_favicon_hash"
+            ) as mock_favicon:
                 mock_favicon.return_value = None
 
                 with patch("redops.modules.recon.tech_stack.get_ssl_info") as mock_ssl:
@@ -423,4 +441,6 @@ class TestLogging:
                     result = fingerprint(ctx)
 
                     info_logs = result.get_logs(level="INFO")
-                    assert any("completed" in log["message"].lower() for log in info_logs)
+                    assert any(
+                        "completed" in log["message"].lower() for log in info_logs
+                    )

@@ -5,11 +5,10 @@ Maps findings, risks, and attack paths to MITRE ATT&CK framework techniques.
 Provides tactical coverage analysis and detection recommendations.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Optional, Dict, Any, List, Set
 from dataclasses import dataclass, field
 from collections import defaultdict
 from redops.core.context import Context
-from redops.core.models import RiskLevel
 
 
 @dataclass
@@ -484,14 +483,20 @@ def map_to_mitre(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     ctx.add("mitre_tactic_coverage", tactic_coverage)
     ctx.add("mitre_detection_recommendations", detection_recommendations)
     ctx.add("findings_technique_mapping", findings_mapping)
-    ctx.add("mitre_summary", {
-        "total_techniques": len(mitre_mapping),
-        "tactics_covered": len([t for t, c in tactic_coverage.items() if c > 0]),
-        "total_tactics": len(MITRE_TACTICS),
-        "coverage_percentage": round(
-            len([t for t, c in tactic_coverage.items() if c > 0]) / len(MITRE_TACTICS) * 100, 1
-        ),
-    })
+    ctx.add(
+        "mitre_summary",
+        {
+            "total_techniques": len(mitre_mapping),
+            "tactics_covered": len([t for t, c in tactic_coverage.items() if c > 0]),
+            "total_tactics": len(MITRE_TACTICS),
+            "coverage_percentage": round(
+                len([t for t, c in tactic_coverage.items() if c > 0])
+                / len(MITRE_TACTICS)
+                * 100,
+                1,
+            ),
+        },
+    )
 
     ctx.log(f"Mapped {len(mitre_mapping)} MITRE ATT&CK techniques", level="INFO")
 
@@ -644,13 +649,21 @@ def generate_detection_recommendations(techniques: Set[str]) -> List[Dict[str, A
                 data_sources[ds].append(technique_id)
 
     # Generate recommendations
-    for data_source, technique_ids in sorted(data_sources.items(), key=lambda x: -len(x[1])):
-        recommendations.append({
-            "data_source": data_source,
-            "techniques_detected": sorted(technique_ids),
-            "priority": "high" if len(technique_ids) >= 3 else "medium" if len(technique_ids) >= 2 else "low",
-            "recommendation": f"Implement logging and monitoring for {data_source} to detect {len(technique_ids)} techniques.",
-        })
+    for data_source, technique_ids in sorted(
+        data_sources.items(), key=lambda x: -len(x[1])
+    ):
+        recommendations.append(
+            {
+                "data_source": data_source,
+                "techniques_detected": sorted(technique_ids),
+                "priority": "high"
+                if len(technique_ids) >= 3
+                else "medium"
+                if len(technique_ids) >= 2
+                else "low",
+                "recommendation": f"Implement logging and monitoring for {data_source} to detect {len(technique_ids)} techniques.",
+            }
+        )
 
     return recommendations
 
@@ -715,11 +728,13 @@ def get_mitigations_for_techniques(techniques: Set[str]) -> List[Dict[str, str]]
         if technique_id in MITRE_TECHNIQUES:
             technique = MITRE_TECHNIQUES[technique_id]
             if technique.mitigation:
-                mitigations.append({
-                    "technique_id": technique_id,
-                    "technique_name": technique.name,
-                    "mitigation": technique.mitigation,
-                })
+                mitigations.append(
+                    {
+                        "technique_id": technique_id,
+                        "technique_name": technique.name,
+                        "mitigation": technique.mitigation,
+                    }
+                )
 
     return mitigations
 

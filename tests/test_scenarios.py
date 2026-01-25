@@ -1,11 +1,9 @@
 """Tests for simulation/scenarios module."""
 
-import pytest
 from redops.modules.simulation.scenarios import (
     AttackScenario,
     THREAT_ACTORS,
     ATTACK_OBJECTIVES,
-    RECOMMENDATION_TEMPLATES,
     generate_scenarios,
     create_attack_scenario,
     determine_threat_actor,
@@ -44,7 +42,7 @@ class TestAttackScenario:
             assets_affected=[],
             recommendations=[],
             executive_summary="",
-            technical_details=""
+            technical_details="",
         )
         assert scenario.id == 1
         assert scenario.title == "Test Scenario"
@@ -54,50 +52,95 @@ class TestAttackScenario:
     def test_risk_score_property(self):
         """Test risk score calculation."""
         scenario = AttackScenario(
-            id=1, title="", summary="", threat_actor="", objective="",
-            likelihood=4, impact=5,
-            steps=[], mitre_techniques=[], assets_affected=[],
-            recommendations=[], executive_summary="", technical_details=""
+            id=1,
+            title="",
+            summary="",
+            threat_actor="",
+            objective="",
+            likelihood=4,
+            impact=5,
+            steps=[],
+            mitre_techniques=[],
+            assets_affected=[],
+            recommendations=[],
+            executive_summary="",
+            technical_details="",
         )
         assert scenario.risk_score == 20
 
     def test_risk_level_critical(self):
         """Test critical risk level."""
         scenario = AttackScenario(
-            id=1, title="", summary="", threat_actor="", objective="",
-            likelihood=5, impact=5,
-            steps=[], mitre_techniques=[], assets_affected=[],
-            recommendations=[], executive_summary="", technical_details=""
+            id=1,
+            title="",
+            summary="",
+            threat_actor="",
+            objective="",
+            likelihood=5,
+            impact=5,
+            steps=[],
+            mitre_techniques=[],
+            assets_affected=[],
+            recommendations=[],
+            executive_summary="",
+            technical_details="",
         )
         assert scenario.risk_level == "CRITICAL"
 
     def test_risk_level_high(self):
         """Test high risk level."""
         scenario = AttackScenario(
-            id=1, title="", summary="", threat_actor="", objective="",
-            likelihood=4, impact=4,
-            steps=[], mitre_techniques=[], assets_affected=[],
-            recommendations=[], executive_summary="", technical_details=""
+            id=1,
+            title="",
+            summary="",
+            threat_actor="",
+            objective="",
+            likelihood=4,
+            impact=4,
+            steps=[],
+            mitre_techniques=[],
+            assets_affected=[],
+            recommendations=[],
+            executive_summary="",
+            technical_details="",
         )
         assert scenario.risk_level == "HIGH"
 
     def test_risk_level_medium(self):
         """Test medium risk level."""
         scenario = AttackScenario(
-            id=1, title="", summary="", threat_actor="", objective="",
-            likelihood=3, impact=3,
-            steps=[], mitre_techniques=[], assets_affected=[],
-            recommendations=[], executive_summary="", technical_details=""
+            id=1,
+            title="",
+            summary="",
+            threat_actor="",
+            objective="",
+            likelihood=3,
+            impact=3,
+            steps=[],
+            mitre_techniques=[],
+            assets_affected=[],
+            recommendations=[],
+            executive_summary="",
+            technical_details="",
         )
         assert scenario.risk_level == "MEDIUM"
 
     def test_risk_level_low(self):
         """Test low risk level."""
         scenario = AttackScenario(
-            id=1, title="", summary="", threat_actor="", objective="",
-            likelihood=2, impact=2,
-            steps=[], mitre_techniques=[], assets_affected=[],
-            recommendations=[], executive_summary="", technical_details=""
+            id=1,
+            title="",
+            summary="",
+            threat_actor="",
+            objective="",
+            likelihood=2,
+            impact=2,
+            steps=[],
+            mitre_techniques=[],
+            assets_affected=[],
+            recommendations=[],
+            executive_summary="",
+            technical_details="",
         )
         assert scenario.risk_level == "LOW"
 
@@ -116,7 +159,7 @@ class TestAttackScenario:
             assets_affected=["asset1"],
             recommendations=["rec1"],
             executive_summary="exec",
-            technical_details="tech"
+            technical_details="tech",
         )
         result = scenario.to_dict()
 
@@ -182,16 +225,19 @@ class TestGenerateScenarios:
     def test_generate_with_attack_paths(self):
         """Test generation with attack paths."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {
-                "name": "Path 1",
-                "description": "Test path",
-                "steps": ["Step 1", "Step 2"],
-                "mitre_techniques": ["T1190"],
-                "likelihood": 4,
-                "impact": 4
-            }
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {
+                    "name": "Path 1",
+                    "description": "Test path",
+                    "steps": ["Step 1", "Step 2"],
+                    "mitre_techniques": ["T1190"],
+                    "likelihood": 4,
+                    "impact": 4,
+                }
+            ],
+        )
 
         result = generate_scenarios(ctx)
         scenarios = result.get("scenarios")
@@ -202,10 +248,19 @@ class TestGenerateScenarios:
     def test_max_scenarios_parameter(self):
         """Test max_scenarios parameter."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {"name": f"Path {i}", "steps": [], "mitre_techniques": [], "likelihood": 3, "impact": 3}
-            for i in range(10)
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {
+                    "name": f"Path {i}",
+                    "steps": [],
+                    "mitre_techniques": [],
+                    "likelihood": 3,
+                    "impact": 3,
+                }
+                for i in range(10)
+            ],
+        )
 
         result = generate_scenarios(ctx, {"max_scenarios": 3})
         scenarios = result.get("scenarios")
@@ -215,9 +270,18 @@ class TestGenerateScenarios:
     def test_scenario_summary_generated(self):
         """Test scenario summary generation."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {"name": "Path 1", "steps": [], "mitre_techniques": ["T1190"], "likelihood": 4, "impact": 4}
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {
+                    "name": "Path 1",
+                    "steps": [],
+                    "mitre_techniques": ["T1190"],
+                    "likelihood": 4,
+                    "impact": 4,
+                }
+            ],
+        )
 
         result = generate_scenarios(ctx)
         summary = result.get("scenario_summary")
@@ -238,7 +302,7 @@ class TestCreateAttackScenario:
             "steps": ["Recon", "Exploit", "Exfiltrate"],
             "mitre_techniques": ["T1595", "T1190"],
             "likelihood": 4,
-            "impact": 5
+            "impact": 5,
         }
 
         scenario = create_attack_scenario(1, attack_path, ctx)
@@ -251,7 +315,13 @@ class TestCreateAttackScenario:
     def test_include_executive_summary(self):
         """Test executive summary inclusion."""
         ctx = Context(target="test.io")
-        attack_path = {"name": "Test", "steps": [], "mitre_techniques": [], "likelihood": 3, "impact": 3}
+        attack_path = {
+            "name": "Test",
+            "steps": [],
+            "mitre_techniques": [],
+            "likelihood": 3,
+            "impact": 3,
+        }
 
         scenario = create_attack_scenario(1, attack_path, ctx, include_executive=True)
         assert scenario.executive_summary != ""
@@ -259,7 +329,13 @@ class TestCreateAttackScenario:
     def test_exclude_executive_summary(self):
         """Test executive summary exclusion."""
         ctx = Context(target="test.io")
-        attack_path = {"name": "Test", "steps": [], "mitre_techniques": [], "likelihood": 3, "impact": 3}
+        attack_path = {
+            "name": "Test",
+            "steps": [],
+            "mitre_techniques": [],
+            "likelihood": 3,
+            "impact": 3,
+        }
 
         scenario = create_attack_scenario(1, attack_path, ctx, include_executive=False)
         assert scenario.executive_summary == ""
@@ -436,10 +512,10 @@ class TestGenerateRecommendations:
     def test_finding_recommendations(self):
         """Test recommendations from findings."""
         ctx = Context(target="test.io")
-        ctx.add("finding_0", {
-            "title": "Test",
-            "data": {"recommendation": "Custom recommendation"}
-        })
+        ctx.add(
+            "finding_0",
+            {"title": "Test", "data": {"recommendation": "Custom recommendation"}},
+        )
 
         recommendations = generate_recommendations([], ctx)
         assert "Custom recommendation" in recommendations
@@ -452,11 +528,7 @@ class TestGenerateExecutiveSummary:
         """Test summary content."""
         actor = THREAT_ACTORS["opportunistic_attacker"]
         summary = generate_executive_summary(
-            "Test Attack",
-            actor,
-            "Data theft objective",
-            4, 5,
-            ["Asset 1", "Asset 2"]
+            "Test Attack", actor, "Data theft objective", 4, 5, ["Asset 1", "Asset 2"]
         )
 
         assert "CRITICAL" in summary  # 4*5=20
@@ -477,7 +549,12 @@ class TestGenerateTechnicalDetails:
     def test_attack_chain_section(self):
         """Test attack chain section."""
         steps = [
-            {"number": 1, "description": "Recon", "phase": "Reconnaissance", "technique": None}
+            {
+                "number": 1,
+                "description": "Recon",
+                "phase": "Reconnaissance",
+                "technique": None,
+            }
         ]
         ctx = Context(target="test.io")
 
@@ -506,19 +583,35 @@ class TestGenerateOverallSummary:
         """Test summary with scenarios."""
         scenarios = [
             AttackScenario(
-                id=1, title="", summary="", threat_actor="Actor A", objective="",
-                likelihood=4, impact=5,
-                steps=[], mitre_techniques=["T1190"],
-                assets_affected=[], recommendations=[],
-                executive_summary="", technical_details=""
+                id=1,
+                title="",
+                summary="",
+                threat_actor="Actor A",
+                objective="",
+                likelihood=4,
+                impact=5,
+                steps=[],
+                mitre_techniques=["T1190"],
+                assets_affected=[],
+                recommendations=[],
+                executive_summary="",
+                technical_details="",
             ),
             AttackScenario(
-                id=2, title="", summary="", threat_actor="Actor B", objective="",
-                likelihood=3, impact=3,
-                steps=[], mitre_techniques=["T1078"],
-                assets_affected=[], recommendations=[],
-                executive_summary="", technical_details=""
-            )
+                id=2,
+                title="",
+                summary="",
+                threat_actor="Actor B",
+                objective="",
+                likelihood=3,
+                impact=3,
+                steps=[],
+                mitre_techniques=["T1078"],
+                assets_affected=[],
+                recommendations=[],
+                executive_summary="",
+                technical_details="",
+            ),
         ]
         ctx = Context(target="test.io")
 
@@ -543,16 +636,34 @@ class TestPrioritizeScenarios:
         """Test sorting by risk score."""
         scenarios = [
             AttackScenario(
-                id=1, title="Low", summary="", threat_actor="", objective="",
-                likelihood=1, impact=1,
-                steps=[], mitre_techniques=[], assets_affected=[],
-                recommendations=[], executive_summary="", technical_details=""
+                id=1,
+                title="Low",
+                summary="",
+                threat_actor="",
+                objective="",
+                likelihood=1,
+                impact=1,
+                steps=[],
+                mitre_techniques=[],
+                assets_affected=[],
+                recommendations=[],
+                executive_summary="",
+                technical_details="",
             ),
             AttackScenario(
-                id=2, title="High", summary="", threat_actor="", objective="",
-                likelihood=5, impact=5,
-                steps=[], mitre_techniques=[], assets_affected=[],
-                recommendations=[], executive_summary="", technical_details=""
+                id=2,
+                title="High",
+                summary="",
+                threat_actor="",
+                objective="",
+                likelihood=5,
+                impact=5,
+                steps=[],
+                mitre_techniques=[],
+                assets_affected=[],
+                recommendations=[],
+                executive_summary="",
+                technical_details="",
             ),
         ]
 
@@ -572,7 +683,7 @@ class TestCreateScenarioNarrative:
             "steps": ["Step 1"],
             "mitre_techniques": [],
             "likelihood": 3,
-            "impact": 3
+            "impact": 3,
         }
         ctx = Context(target="test.io")
 
@@ -603,10 +714,7 @@ class TestGenerateNarrative:
     def test_with_dict_steps(self):
         """Test narrative with dict steps."""
         attack_path = {
-            "steps": [
-                {"description": "First step"},
-                {"action": "Second action"}
-            ]
+            "steps": [{"description": "First step"}, {"action": "Second action"}]
         }
         narrative = generate_narrative(attack_path)
 
@@ -619,10 +727,9 @@ class TestGetScenarioById:
     def test_get_existing_scenario(self):
         """Test getting existing scenario."""
         ctx = Context(target="test.io")
-        ctx.add("scenarios", [
-            {"id": 1, "title": "First"},
-            {"id": 2, "title": "Second"}
-        ])
+        ctx.add(
+            "scenarios", [{"id": 1, "title": "First"}, {"id": 2, "title": "Second"}]
+        )
 
         result = get_scenario_by_id(ctx, 2)
 
@@ -653,7 +760,7 @@ class TestExportScenariosMarkdown:
                 "objective": "Test Objective",
                 "executive_summary": "Summary here",
                 "recommendations": ["Rec 1", "Rec 2"],
-                "technical_details": "Details here"
+                "technical_details": "Details here",
             }
         ]
 
@@ -668,10 +775,22 @@ class TestExportScenariosMarkdown:
     def test_multiple_scenarios(self):
         """Test export with multiple scenarios."""
         scenarios = [
-            {"title": "First", "risk_level": "HIGH", "risk_score": 16,
-             "threat_actor": "", "objective": "", "recommendations": []},
-            {"title": "Second", "risk_level": "MEDIUM", "risk_score": 9,
-             "threat_actor": "", "objective": "", "recommendations": []},
+            {
+                "title": "First",
+                "risk_level": "HIGH",
+                "risk_score": 16,
+                "threat_actor": "",
+                "objective": "",
+                "recommendations": [],
+            },
+            {
+                "title": "Second",
+                "risk_level": "MEDIUM",
+                "risk_score": 9,
+                "threat_actor": "",
+                "objective": "",
+                "recommendations": [],
+            },
         ]
 
         md = export_scenarios_markdown(scenarios)

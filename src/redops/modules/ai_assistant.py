@@ -7,7 +7,7 @@ for security assessment findings using OpenAI or Anthropic APIs.
 
 import os
 import json
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from pathlib import Path
 
 
@@ -19,7 +19,7 @@ def load_config() -> Dict[str, Any]:
         config_path = Path(env_path)
 
     if config_path.exists():
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             return json.load(f)
     return {}
 
@@ -73,15 +73,16 @@ class AIAssistant:
         if self.provider == "openai":
             try:
                 import openai
+
                 self.client = openai.OpenAI(api_key=self.api_key)
             except ImportError:
                 raise ImportError(
-                    "OpenAI library not installed. "
-                    "Install with: pip install openai"
+                    "OpenAI library not installed. Install with: pip install openai"
                 )
         elif self.provider == "anthropic":
             try:
                 import anthropic
+
                 self.client = anthropic.Anthropic(api_key=self.api_key)
             except ImportError:
                 raise ImportError(
@@ -122,9 +123,7 @@ class AIAssistant:
             model=self.model,
             max_tokens=self.max_tokens,
             system=system_prompt or "You are a security analysis assistant.",
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+            messages=[{"role": "user", "content": prompt}],
         )
 
         return response.content[0].text
@@ -300,9 +299,7 @@ Identify attack techniques, potential threat actors, and MITRE ATT&CK mappings."
         return self._call_api(prompt, system_prompt)
 
     def generate_report_section(
-        self,
-        scan_data: Dict[str, Any],
-        section_type: str = "executive"
+        self, scan_data: Dict[str, Any], section_type: str = "executive"
     ) -> str:
         """
         Generate a specific section of a security report.
@@ -323,7 +320,7 @@ Identify attack techniques, potential threat actors, and MITRE ATT&CK mappings."
         }
 
         system_prompt = f"""You are writing a professional security assessment report.
-{section_prompts.get(section_type, section_prompts['executive'])}
+{section_prompts.get(section_type, section_prompts["executive"])}
 
 Use professional language, be specific about findings, and ensure the content
 is suitable for formal documentation."""
@@ -389,16 +386,18 @@ is suitable for formal documentation."""
 # Convenience functions for module integration
 def ai_analyze(ctx, params: Optional[Dict[str, Any]] = None):
     """Module wrapper for AI analysis."""
-    from redops.core.context import Context
 
     try:
         assistant = AIAssistant()
         analysis = assistant.analyze_findings(ctx.data)
-        ctx.add("ai_analysis", {
-            "analysis": analysis,
-            "provider": assistant.provider,
-            "model": assistant.model,
-        })
+        ctx.add(
+            "ai_analysis",
+            {
+                "analysis": analysis,
+                "provider": assistant.provider,
+                "model": assistant.model,
+            },
+        )
     except Exception as e:
         ctx.log(f"AI analysis failed: {e}", level="ERROR")
 
@@ -407,16 +406,18 @@ def ai_analyze(ctx, params: Optional[Dict[str, Any]] = None):
 
 def ai_summarize(ctx, params: Optional[Dict[str, Any]] = None):
     """Module wrapper for AI summarization."""
-    from redops.core.context import Context
 
     try:
         assistant = AIAssistant()
         summary = assistant.summarize(ctx.data)
-        ctx.add("ai_summary", {
-            "summary": summary,
-            "provider": assistant.provider,
-            "model": assistant.model,
-        })
+        ctx.add(
+            "ai_summary",
+            {
+                "summary": summary,
+                "provider": assistant.provider,
+                "model": assistant.model,
+            },
+        )
     except Exception as e:
         ctx.log(f"AI summarization failed: {e}", level="ERROR")
 
@@ -425,16 +426,18 @@ def ai_summarize(ctx, params: Optional[Dict[str, Any]] = None):
 
 def ai_recommend(ctx, params: Optional[Dict[str, Any]] = None):
     """Module wrapper for AI recommendations."""
-    from redops.core.context import Context
 
     try:
         assistant = AIAssistant()
         recommendations = assistant.suggest_remediations(ctx.data)
-        ctx.add("ai_recommendations", {
-            "recommendations": recommendations,
-            "provider": assistant.provider,
-            "model": assistant.model,
-        })
+        ctx.add(
+            "ai_recommendations",
+            {
+                "recommendations": recommendations,
+                "provider": assistant.provider,
+                "model": assistant.model,
+            },
+        )
     except Exception as e:
         ctx.log(f"AI recommendations failed: {e}", level="ERROR")
 

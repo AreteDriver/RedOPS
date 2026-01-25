@@ -1,6 +1,5 @@
 """Tests for simulation/attack_paths module."""
 
-import pytest
 from redops.modules.simulation.attack_paths import (
     AttackNode,
     AttackChain,
@@ -30,11 +29,7 @@ class TestAttackNode:
 
     def test_basic_creation(self):
         """Test basic node creation."""
-        node = AttackNode(
-            id="node1",
-            node_type="subdomain",
-            label="api.example.com"
-        )
+        node = AttackNode(id="node1", node_type="subdomain", label="api.example.com")
         assert node.id == "node1"
         assert node.node_type == "subdomain"
         assert node.label == "api.example.com"
@@ -50,7 +45,7 @@ class TestAttackNode:
             label="SQL Injection",
             risk_contribution=5.0,
             is_target=True,
-            data={"severity": "critical"}
+            data={"severity": "critical"},
         )
         assert node.risk_contribution == 5.0
         assert node.is_target
@@ -63,9 +58,7 @@ class TestAttackChain:
     def test_basic_creation(self):
         """Test basic chain creation."""
         chain = AttackChain(
-            path=["entry", "middle", "target"],
-            entry_point="entry",
-            target="target"
+            path=["entry", "middle", "target"], entry_point="entry", target="target"
         )
         assert len(chain.path) == 3
         assert chain.entry_point == "entry"
@@ -80,7 +73,7 @@ class TestAttackChain:
             target="target",
             total_risk=15.0,
             steps=[{"description": "Step 1"}, {"description": "Step 2"}],
-            mitre_techniques=["T1190", "T1068"]
+            mitre_techniques=["T1190", "T1068"],
         )
         attack_path = chain.to_attack_path(name="Test Path")
 
@@ -92,11 +85,7 @@ class TestAttackChain:
 
     def test_to_attack_path_default_name(self):
         """Test default name generation."""
-        chain = AttackChain(
-            path=["a", "b"],
-            entry_point="a",
-            target="b"
-        )
+        chain = AttackChain(path=["a", "b"], entry_point="a", target="b")
         attack_path = chain.to_attack_path()
         assert "a" in attack_path.name
         assert "b" in attack_path.name
@@ -116,17 +105,34 @@ class TestAnalyzePaths:
     def test_analyze_paths_with_graph(self):
         """Test with actual graph data."""
         ctx = Context(target="test.io")
-        ctx.add("graph", {
-            "nodes": [
-                {"id": "domain:test.io", "type": "domain", "label": "test.io", "data": {"is_target": True}},
-                {"id": "subdomain:api.test.io", "type": "subdomain", "label": "api.test.io"},
-                {"id": "risk:0", "type": "risk", "label": "SQL Injection", "data": {"severity": "critical"}},
-            ],
-            "edges": [
-                {"source": "domain:test.io", "target": "subdomain:api.test.io"},
-                {"source": "subdomain:api.test.io", "target": "risk:0"},
-            ],
-        })
+        ctx.add(
+            "graph",
+            {
+                "nodes": [
+                    {
+                        "id": "domain:test.io",
+                        "type": "domain",
+                        "label": "test.io",
+                        "data": {"is_target": True},
+                    },
+                    {
+                        "id": "subdomain:api.test.io",
+                        "type": "subdomain",
+                        "label": "api.test.io",
+                    },
+                    {
+                        "id": "risk:0",
+                        "type": "risk",
+                        "label": "SQL Injection",
+                        "data": {"severity": "critical"},
+                    },
+                ],
+                "edges": [
+                    {"source": "domain:test.io", "target": "subdomain:api.test.io"},
+                    {"source": "subdomain:api.test.io", "target": "risk:0"},
+                ],
+            },
+        )
 
         result = analyze_paths(ctx)
         assert "attack_paths" in result.data
@@ -135,19 +141,25 @@ class TestAnalyzePaths:
     def test_analyze_paths_parameters(self):
         """Test with custom parameters."""
         ctx = Context(target="test.io")
-        ctx.add("graph", {
-            "nodes": [
-                {"id": "d1", "type": "domain", "label": "test.io", "data": {"is_target": True}},
-                {"id": "r1", "type": "risk", "label": "risk"},
-            ],
-            "edges": [{"source": "d1", "target": "r1"}],
-        })
+        ctx.add(
+            "graph",
+            {
+                "nodes": [
+                    {
+                        "id": "d1",
+                        "type": "domain",
+                        "label": "test.io",
+                        "data": {"is_target": True},
+                    },
+                    {"id": "r1", "type": "risk", "label": "risk"},
+                ],
+                "edges": [{"source": "d1", "target": "r1"}],
+            },
+        )
 
-        result = analyze_paths(ctx, {
-            "max_paths": 5,
-            "max_depth": 3,
-            "min_risk_score": 1
-        })
+        result = analyze_paths(
+            ctx, {"max_paths": 5, "max_depth": 3, "min_risk_score": 1}
+        )
         assert "attack_paths" in result.data
 
 
@@ -179,7 +191,11 @@ class TestIdentifyEntryPoints:
     def test_web_technology_entry_points(self):
         """Test web technology entry point detection."""
         nodes = {
-            "tech:nginx": {"id": "tech:nginx", "type": "technology", "label": "nginx 1.20"},
+            "tech:nginx": {
+                "id": "tech:nginx",
+                "type": "technology",
+                "label": "nginx 1.20",
+            },
             "tech:react": {"id": "tech:react", "type": "technology", "label": "React"},
         }
         ctx = Context(target="test.io")
@@ -192,7 +208,12 @@ class TestIdentifyEntryPoints:
     def test_target_domain_is_entry_point(self):
         """Test that target domain is an entry point."""
         nodes = {
-            "domain:test.io": {"id": "domain:test.io", "type": "domain", "label": "test.io", "data": {"is_target": True}},
+            "domain:test.io": {
+                "id": "domain:test.io",
+                "type": "domain",
+                "label": "test.io",
+                "data": {"is_target": True},
+            },
         }
         ctx = Context(target="test.io")
 
@@ -206,7 +227,12 @@ class TestIdentifyTargets:
     def test_risk_nodes_are_targets(self):
         """Test that risk nodes are targets."""
         nodes = {
-            "risk:0": {"id": "risk:0", "type": "risk", "label": "Vulnerability", "data": {}},
+            "risk:0": {
+                "id": "risk:0",
+                "type": "risk",
+                "label": "Vulnerability",
+                "data": {},
+            },
         }
         ctx = Context(target="test.io")
 
@@ -216,7 +242,12 @@ class TestIdentifyTargets:
     def test_high_severity_findings_are_targets(self):
         """Test that high severity findings are targets."""
         nodes = {
-            "finding:0": {"id": "finding:0", "type": "finding", "label": "Critical Issue", "data": {"severity": "critical"}},
+            "finding:0": {
+                "id": "finding:0",
+                "type": "finding",
+                "label": "Critical Issue",
+                "data": {"severity": "critical"},
+            },
         }
         ctx = Context(target="test.io")
 
@@ -240,7 +271,11 @@ class TestIdentifyTargets:
     def test_email_nodes_are_targets(self):
         """Test that email nodes are targets."""
         nodes = {
-            "email:admin@test.io": {"id": "email:admin@test.io", "type": "email", "label": "admin@test.io"},
+            "email:admin@test.io": {
+                "id": "email:admin@test.io",
+                "type": "email",
+                "label": "admin@test.io",
+            },
         }
         ctx = Context(target="test.io")
 
@@ -262,7 +297,9 @@ class TestFindAttackChains:
         entry_points = {"a"}
         targets = {"c"}
 
-        chains = find_attack_chains(nodes, adjacency, entry_points, targets, max_depth=5)
+        chains = find_attack_chains(
+            nodes, adjacency, entry_points, targets, max_depth=5
+        )
         assert len(chains) == 1
         assert chains[0].path == ["a", "b", "c"]
 
@@ -282,7 +319,9 @@ class TestFindAttackChains:
         entry_points = {"entry"}
         targets = {"target"}
 
-        chains = find_attack_chains(nodes, adjacency, entry_points, targets, max_depth=5)
+        chains = find_attack_chains(
+            nodes, adjacency, entry_points, targets, max_depth=5
+        )
         assert len(chains) == 2
 
     def test_no_chain_when_same_entry_target(self):
@@ -292,7 +331,9 @@ class TestFindAttackChains:
         entry_points = {"a"}
         targets = {"a"}
 
-        chains = find_attack_chains(nodes, adjacency, entry_points, targets, max_depth=5)
+        chains = find_attack_chains(
+            nodes, adjacency, entry_points, targets, max_depth=5
+        )
         assert len(chains) == 0
 
 
@@ -316,7 +357,7 @@ class TestDFSFindPaths:
 
     def test_max_depth_limit(self):
         """Test max depth limitation."""
-        adjacency = {str(i): [str(i+1)] for i in range(10)}
+        adjacency = {str(i): [str(i + 1)] for i in range(10)}
         paths = dfs_find_paths(adjacency, "0", "9", max_depth=3)
 
         assert len(paths) == 0  # Path is too long
@@ -398,7 +439,13 @@ class TestScoreAttackChains:
             "risk": {"type": "risk", "label": "vulnerability"},
         }
         chains = [
-            AttackChain(path=["entry", "risk"], entry_point="entry", target="risk", steps=[], mitre_techniques=[])
+            AttackChain(
+                path=["entry", "risk"],
+                entry_point="entry",
+                target="risk",
+                steps=[],
+                mitre_techniques=[],
+            )
         ]
 
         scored = score_attack_chains(chains, nodes)
@@ -409,12 +456,14 @@ class TestScoreAttackChains:
         nodes = {str(i): {"type": "subdomain", "label": f"node{i}"} for i in range(6)}
 
         short_chain = AttackChain(
-            path=["0", "1"],
-            entry_point="0", target="1", steps=[], mitre_techniques=[]
+            path=["0", "1"], entry_point="0", target="1", steps=[], mitre_techniques=[]
         )
         long_chain = AttackChain(
             path=["0", "1", "2", "3", "4", "5"],
-            entry_point="0", target="5", steps=[], mitre_techniques=[]
+            entry_point="0",
+            target="5",
+            steps=[],
+            mitre_techniques=[],
         )
 
         chains = [long_chain, short_chain]
@@ -432,7 +481,10 @@ class TestScoreAttackChains:
         }
         chain = AttackChain(
             path=["entry", "vuln"],
-            entry_point="entry", target="vuln", steps=[], mitre_techniques=[]
+            entry_point="entry",
+            target="vuln",
+            steps=[],
+            mitre_techniques=[],
         )
 
         scored = score_attack_chains([chain], nodes)
@@ -449,7 +501,7 @@ class TestGeneratePathDescription:
             entry_point="entry",
             target="target",
             total_risk=15.0,
-            mitre_techniques=["T1190"]
+            mitre_techniques=["T1190"],
         )
         nodes = {
             "entry": {"label": "www.test.io"},
@@ -477,23 +529,31 @@ class TestIdentifyCriticalNodes:
             ]
         }
         chains = [
-            AttackChain(path=["entry1", "chokepoint", "target"], entry_point="entry1", target="target"),
-            AttackChain(path=["entry2", "chokepoint", "target"], entry_point="entry2", target="target"),
+            AttackChain(
+                path=["entry1", "chokepoint", "target"],
+                entry_point="entry1",
+                target="target",
+            ),
+            AttackChain(
+                path=["entry2", "chokepoint", "target"],
+                entry_point="entry2",
+                target="target",
+            ),
         ]
 
         critical = identify_critical_nodes(graph_data, chains)
 
         # Chokepoint appears in both paths
-        chokepoint_node = next((c for c in critical if c["node_id"] == "chokepoint"), None)
+        chokepoint_node = next(
+            (c for c in critical if c["node_id"] == "chokepoint"), None
+        )
         assert chokepoint_node is not None
         assert chokepoint_node["path_count"] == 2
 
     def test_no_critical_nodes_single_path(self):
         """Test with single path (no shared nodes)."""
         graph_data = {"nodes": [{"id": "a"}, {"id": "b"}]}
-        chains = [
-            AttackChain(path=["a", "b"], entry_point="a", target="b")
-        ]
+        chains = [AttackChain(path=["a", "b"], entry_point="a", target="b")]
 
         critical = identify_critical_nodes(graph_data, chains)
         # Nodes appearing only once aren't critical
@@ -506,9 +566,30 @@ class TestRankAttackPaths:
     def test_rank_by_risk_score(self):
         """Test ranking by risk score."""
         paths = [
-            AttackPath(name="Low", description="", steps=[], likelihood=1, impact=1, mitre_techniques=[]),
-            AttackPath(name="High", description="", steps=[], likelihood=5, impact=5, mitre_techniques=[]),
-            AttackPath(name="Medium", description="", steps=[], likelihood=3, impact=3, mitre_techniques=[]),
+            AttackPath(
+                name="Low",
+                description="",
+                steps=[],
+                likelihood=1,
+                impact=1,
+                mitre_techniques=[],
+            ),
+            AttackPath(
+                name="High",
+                description="",
+                steps=[],
+                likelihood=5,
+                impact=5,
+                mitre_techniques=[],
+            ),
+            AttackPath(
+                name="Medium",
+                description="",
+                steps=[],
+                likelihood=3,
+                impact=3,
+                mitre_techniques=[],
+            ),
         ]
 
         ranked = rank_attack_paths(paths)
@@ -523,17 +604,21 @@ class TestGetAttackSurfaceSummary:
     def test_summary_with_data(self):
         """Test summary generation with data."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {"likelihood": 4, "impact": 5},
-            {"likelihood": 3, "impact": 3},
-        ])
-        ctx.add("critical_nodes", [
-            {"node_id": "node1", "path_count": 3}
-        ])
-        ctx.add("attack_path_summary", {
-            "entry_points": ["entry1", "entry2"],
-            "targets": ["target1"],
-        })
+        ctx.add(
+            "attack_paths",
+            [
+                {"likelihood": 4, "impact": 5},
+                {"likelihood": 3, "impact": 3},
+            ],
+        )
+        ctx.add("critical_nodes", [{"node_id": "node1", "path_count": 3}])
+        ctx.add(
+            "attack_path_summary",
+            {
+                "entry_points": ["entry1", "entry2"],
+                "targets": ["target1"],
+            },
+        )
 
         summary = get_attack_surface_summary(ctx)
         assert summary["total_attack_paths"] == 2

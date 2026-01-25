@@ -1,6 +1,5 @@
 """Tests for reporting/executive_report module."""
 
-import pytest
 from redops.modules.reporting.executive_report import (
     ReportType,
     Audience,
@@ -23,10 +22,8 @@ from redops.modules.reporting.executive_report import (
     generate_recommendations,
     generate_recommendation_description,
     calculate_executive_metrics,
-    generate_trend_summary,
     get_key_findings,
     get_top_risks,
-    get_top_risks_from_findings,
     generate_executive_brief,
     generate_next_steps,
     generate_appendix,
@@ -309,7 +306,7 @@ class TestGenerateExecutiveReport:
     def test_empty_context(self):
         """Test with empty context."""
         ctx = Context(target="example.com")
-        result = generate_executive_report(ctx, {})
+        generate_executive_report(ctx, {})
 
         report = ctx.get("executive_report", {})
         assert "executive_summary" in report
@@ -318,14 +315,17 @@ class TestGenerateExecutiveReport:
     def test_with_findings(self):
         """Test with findings in context."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "exposures": [
-                {"title": "Exposed API", "severity": "high"},
-                {"title": "Open Port", "severity": "medium"},
-            ]
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "exposures": [
+                    {"title": "Exposed API", "severity": "high"},
+                    {"title": "Open Port", "severity": "medium"},
+                ]
+            },
+        )
 
-        result = generate_executive_report(ctx, {})
+        generate_executive_report(ctx, {})
         report = ctx.get("executive_report", {})
 
         assert report["executive_summary"]["target"] == "example.com"
@@ -334,13 +334,16 @@ class TestGenerateExecutiveReport:
     def test_with_compliance(self):
         """Test with compliance data."""
         ctx = Context(target="example.com")
-        ctx.add("compliance", {
-            "gaps": [{"title": "Missing MFA", "priority": "high"}],
-            "controls_assessed": 50,
-            "controls_passing": 45,
-        })
+        ctx.add(
+            "compliance",
+            {
+                "gaps": [{"title": "Missing MFA", "priority": "high"}],
+                "controls_assessed": 50,
+                "controls_passing": 45,
+            },
+        )
 
-        result = generate_executive_report(ctx, {})
+        generate_executive_report(ctx, {})
         report = ctx.get("executive_report", {})
 
         assert "compliance_report" in report
@@ -360,9 +363,7 @@ class TestExtractFindingsForReport:
     def test_from_exposure(self):
         """Test extraction from exposure scan."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "exposures": [{"title": "Test", "severity": "high"}]
-        })
+        ctx.add("exposure_scan", {"exposures": [{"title": "Test", "severity": "high"}]})
 
         findings = extract_findings_for_report(ctx)
 
@@ -498,7 +499,12 @@ class TestGenerateRecommendations:
     def test_critical_findings_get_recommendations(self):
         """Test critical findings generate recommendations."""
         findings = [
-            {"id": "F1", "title": "Critical Vuln", "severity": "critical", "category": "vulnerability"},
+            {
+                "id": "F1",
+                "title": "Critical Vuln",
+                "severity": "critical",
+                "category": "vulnerability",
+            },
         ]
 
         recommendations = generate_recommendations(findings, {}, {})
@@ -510,14 +516,22 @@ class TestGenerateRecommendations:
         """Test recommendations are sorted."""
         findings = [
             {"id": "F1", "title": "Low", "severity": "low", "category": "misc"},
-            {"id": "F2", "title": "Critical", "severity": "critical", "category": "vulnerability"},
+            {
+                "id": "F2",
+                "title": "Critical",
+                "severity": "critical",
+                "category": "vulnerability",
+            },
         ]
 
         recommendations = generate_recommendations(findings, {}, {})
 
         if len(recommendations) >= 2:
             priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-            assert priority_order[recommendations[0].priority] <= priority_order[recommendations[1].priority]
+            assert (
+                priority_order[recommendations[0].priority]
+                <= priority_order[recommendations[1].priority]
+            )
 
 
 class TestGenerateRecommendationDescription:
@@ -577,7 +591,12 @@ class TestGetKeyFindings:
         """Test findings are sorted by severity."""
         findings = [
             {"id": "1", "title": "Low", "severity": "low", "category": "misc"},
-            {"id": "2", "title": "Critical", "severity": "critical", "category": "vuln"},
+            {
+                "id": "2",
+                "title": "Critical",
+                "severity": "critical",
+                "category": "vuln",
+            },
             {"id": "3", "title": "Medium", "severity": "medium", "category": "misc"},
         ]
 
@@ -587,7 +606,9 @@ class TestGetKeyFindings:
 
     def test_respects_limit(self):
         """Test limit is respected."""
-        findings = [{"id": str(i), "title": f"F{i}", "severity": "medium"} for i in range(10)]
+        findings = [
+            {"id": str(i), "title": f"F{i}", "severity": "medium"} for i in range(10)
+        ]
 
         key = get_key_findings(findings, limit=3)
 
@@ -618,7 +639,12 @@ class TestGetTopRisks:
     def test_calculated_from_findings(self):
         """Test calculating from findings."""
         findings = [
-            {"id": "F1", "title": "High Risk", "severity": "critical", "category": "credential"},
+            {
+                "id": "F1",
+                "title": "High Risk",
+                "severity": "critical",
+                "category": "credential",
+            },
         ]
         dashboard = RiskDashboard(
             overall_score=50,
@@ -668,8 +694,16 @@ class TestGenerateNextSteps:
     def test_with_critical_recs(self):
         """Test with critical recommendations."""
         recommendations = [
-            Recommendation(id="R1", title="T1", description="D1", priority="critical",
-                          category="vuln", business_impact="", effort="high", timeline="immediate"),
+            Recommendation(
+                id="R1",
+                title="T1",
+                description="D1",
+                priority="critical",
+                category="vuln",
+                business_impact="",
+                effort="high",
+                timeline="immediate",
+            ),
         ]
         dashboard = RiskDashboard(
             overall_score=80,
@@ -795,7 +829,12 @@ class TestFormatForAudience:
         report = {
             "executive_summary": {"key": "value"},
             "risk_dashboard": {"overall_score": 50, "risk_level": "medium"},
-            "recommendations": [{"title": "R1"}, {"title": "R2"}, {"title": "R3"}, {"title": "R4"}],
+            "recommendations": [
+                {"title": "R1"},
+                {"title": "R2"},
+                {"title": "R3"},
+                {"title": "R4"},
+            ],
             "appendix": {"data": "lots"},
         }
 
@@ -830,7 +869,13 @@ class TestGenerateHtmlSummary:
                 "title": "Test Report",
                 "generated_at": "2025-01-01",
                 "executive_brief": "Brief text",
-                "key_findings": [{"title": "Finding 1", "severity": "high", "business_impact": "Impact"}],
+                "key_findings": [
+                    {
+                        "title": "Finding 1",
+                        "severity": "high",
+                        "business_impact": "Impact",
+                    }
+                ],
             },
             "risk_dashboard": {
                 "overall_score": 50,
@@ -857,7 +902,13 @@ class TestGenerateMarkdownSummary:
                 "generated_at": "2025-01-01",
                 "target": "example.com",
                 "executive_brief": "Brief text",
-                "key_findings": [{"title": "Finding 1", "severity": "high", "business_impact": "Impact"}],
+                "key_findings": [
+                    {
+                        "title": "Finding 1",
+                        "severity": "high",
+                        "business_impact": "Impact",
+                    }
+                ],
                 "next_steps": ["Step 1", "Step 2"],
             },
             "risk_dashboard": {
@@ -865,7 +916,9 @@ class TestGenerateMarkdownSummary:
                 "risk_level": "medium",
                 "risk_by_severity": {"critical": 0, "high": 1},
             },
-            "recommendations": [{"title": "Rec 1", "priority": "high", "timeline": "1 week"}],
+            "recommendations": [
+                {"title": "Rec 1", "priority": "high", "timeline": "1 week"}
+            ],
         }
 
         md = generate_markdown_summary(report)
@@ -943,26 +996,35 @@ class TestIntegration:
         ctx = Context(target="example.com")
 
         # Add data from multiple sources
-        ctx.add("exposure_scan", {
-            "exposures": [
-                {"title": "Exposed Database", "severity": "critical"},
-                {"title": "Open Admin Panel", "severity": "high"},
-            ]
-        })
-        ctx.add("compliance", {
-            "gaps": [{"title": "Missing Encryption", "priority": "high"}],
-            "controls_assessed": 50,
-            "controls_passing": 45,
-        })
-        ctx.add("correlations", {
-            "findings": [],
-            "correlations": [],
-            "clusters": [],
-            "insights": [],
-        })
+        ctx.add(
+            "exposure_scan",
+            {
+                "exposures": [
+                    {"title": "Exposed Database", "severity": "critical"},
+                    {"title": "Open Admin Panel", "severity": "high"},
+                ]
+            },
+        )
+        ctx.add(
+            "compliance",
+            {
+                "gaps": [{"title": "Missing Encryption", "priority": "high"}],
+                "controls_assessed": 50,
+                "controls_passing": 45,
+            },
+        )
+        ctx.add(
+            "correlations",
+            {
+                "findings": [],
+                "correlations": [],
+                "clusters": [],
+                "insights": [],
+            },
+        )
 
         # Generate report
-        result = generate_executive_report(ctx, {})
+        generate_executive_report(ctx, {})
         report = ctx.get("executive_report", {})
 
         # Verify complete structure
@@ -982,9 +1044,7 @@ class TestIntegration:
     def test_multi_format_output(self):
         """Test generating multiple output formats."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "exposures": [{"title": "Test", "severity": "high"}]
-        })
+        ctx.add("exposure_scan", {"exposures": [{"title": "Test", "severity": "high"}]})
 
         generate_executive_report(ctx, {})
         report = ctx.get("executive_report", {})

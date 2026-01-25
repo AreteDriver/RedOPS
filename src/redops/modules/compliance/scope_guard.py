@@ -70,7 +70,9 @@ def validate_scope(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
     """
     params = params or {}
     # Prefer config from context (passed via CLI), fall back to params, then default
-    config = ctx.config if ctx.config is not None else params.get("config", default_config)
+    config = (
+        ctx.config if ctx.config is not None else params.get("config", default_config)
+    )
 
     target = ctx.target
 

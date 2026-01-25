@@ -49,7 +49,7 @@ class TestCluster:
             label="severity:high",
             items=[0, 1, 2],
             centroid={"avg": 10},
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
         result = cluster.to_dict()
 
@@ -214,8 +214,14 @@ class TestClusterByTextSimilarity:
     def test_similar_items_clustered(self):
         """Test that similar items are clustered together."""
         items = [
-            {"title": "SQL injection vulnerability found", "description": "Input not sanitized"},
-            {"title": "SQL injection in login form", "description": "User input not validated"},
+            {
+                "title": "SQL injection vulnerability found",
+                "description": "Input not sanitized",
+            },
+            {
+                "title": "SQL injection in login form",
+                "description": "User input not validated",
+            },
             {"title": "Missing HTTPS", "description": "Site uses HTTP"},
         ]
         clusters = cluster_by_text_similarity(items, threshold=0.3, min_cluster_size=2)
@@ -312,10 +318,7 @@ class TestClusterRisksByScore:
 
     def test_missing_score(self):
         """Test handling missing score field."""
-        risks = [
-            {"title": "No score"},
-            {"title": "Has score", "score": 15}
-        ]
+        risks = [{"title": "No score"}, {"title": "Has score", "score": 15}]
         clusters = cluster_risks_by_score(risks)
         # Items without score should go to info (0-3)
         assert len(clusters) >= 1
@@ -441,21 +444,18 @@ class TestClusterFindings:
     def test_cluster_findings_with_data(self):
         """Test clustering with findings data."""
         ctx = Context(target="test.io")
-        ctx.add("finding_0", {
-            "title": "SQL Injection",
-            "severity": "high",
-            "module": "scanner"
-        })
-        ctx.add("finding_1", {
-            "title": "SQL Injection variant",
-            "severity": "high",
-            "module": "scanner"
-        })
-        ctx.add("finding_2", {
-            "title": "Missing HTTPS",
-            "severity": "medium",
-            "module": "network"
-        })
+        ctx.add(
+            "finding_0",
+            {"title": "SQL Injection", "severity": "high", "module": "scanner"},
+        )
+        ctx.add(
+            "finding_1",
+            {"title": "SQL Injection variant", "severity": "high", "module": "scanner"},
+        )
+        ctx.add(
+            "finding_2",
+            {"title": "Missing HTTPS", "severity": "medium", "module": "network"},
+        )
 
         result = cluster_findings(ctx)
         clusters = result.get("clusters")
@@ -468,13 +468,16 @@ class TestClusterFindings:
     def test_cluster_findings_with_tech_stack(self):
         """Test clustering with technology stack."""
         ctx = Context(target="test.io")
-        ctx.add("tech_stack", {
-            "technologies": [
-                {"name": "React"},
-                {"name": "nginx"},
-                {"name": "PostgreSQL"}
-            ]
-        })
+        ctx.add(
+            "tech_stack",
+            {
+                "technologies": [
+                    {"name": "React"},
+                    {"name": "nginx"},
+                    {"name": "PostgreSQL"},
+                ]
+            },
+        )
 
         result = cluster_findings(ctx)
         clusters = result.get("clusters")
@@ -484,11 +487,14 @@ class TestClusterFindings:
     def test_cluster_findings_with_risks(self):
         """Test clustering with risk data."""
         ctx = Context(target="test.io")
-        ctx.add("risks", [
-            {"title": "Risk 1", "score": 20},
-            {"title": "Risk 2", "score": 15},
-            {"title": "Risk 3", "score": 5},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"title": "Risk 1", "score": 20},
+                {"title": "Risk 2", "score": 15},
+                {"title": "Risk 3", "score": 5},
+            ],
+        )
 
         result = cluster_findings(ctx)
         clusters = result.get("clusters")

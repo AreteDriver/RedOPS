@@ -1,6 +1,5 @@
 """Tests for the Risk Scoring module."""
 
-import pytest
 from redops.core.context import Context
 from redops.core.models import Risk, RiskLevel, RiskCategory
 from redops.modules.intel.risk_scoring import (
@@ -77,7 +76,7 @@ class TestIdentifyRiskType:
             "finding_tech_0",
             "Missing Security Header: Strict-Transport-Security",
             "HSTS header is not present",
-            {}
+            {},
         )
         assert risk_type == "missing_hsts"
 
@@ -87,7 +86,7 @@ class TestIdentifyRiskType:
             "finding_tech_0",
             "Missing Security Header: Content-Security-Policy",
             "CSP prevents XSS attacks",
-            {}
+            {},
         )
         assert risk_type == "missing_csp"
 
@@ -97,7 +96,7 @@ class TestIdentifyRiskType:
             "finding_no_spf",
             "Missing SPF Record for example.com",
             "No SPF record found",
-            {}
+            {},
         )
         assert risk_type == "missing_spf"
 
@@ -107,7 +106,7 @@ class TestIdentifyRiskType:
             "finding_axfr",
             "Zone Transfer Allowed",
             "DNS zone transfer is permitted",
-            {}
+            {},
         )
         assert risk_type == "zone_transfer_allowed"
 
@@ -117,17 +116,14 @@ class TestIdentifyRiskType:
             "finding_version",
             "Server Version Disclosure",
             "Server is disclosing version information",
-            {}
+            {},
         )
         assert risk_type == "server_version_disclosure"
 
     def test_identify_wordpress(self):
         """Test identifying WordPress detection."""
         risk_type = identify_risk_type(
-            "finding_tech",
-            "WordPress Detected",
-            "WordPress CMS is running",
-            {}
+            "finding_tech", "WordPress Detected", "WordPress CMS is running", {}
         )
         assert risk_type == "wordpress_detected"
 
@@ -137,7 +133,7 @@ class TestIdentifyRiskType:
             "finding_subdomains",
             "Discovered Subdomains",
             "Found active subdomains",
-            {"subdomains": [{"subdomain": "dev.example.com"}]}
+            {"subdomains": [{"subdomain": "dev.example.com"}]},
         )
         assert risk_type == "dev_staging_exposed"
 
@@ -148,17 +144,14 @@ class TestIdentifyRiskType:
             "finding_subdomains",
             "Discovered Subdomains",
             "Found many subdomains",
-            {"subdomains": subdomains}
+            {"subdomains": subdomains},
         )
         assert risk_type == "excessive_subdomains"
 
     def test_no_matching_risk_type(self):
         """Test when no risk type matches."""
         risk_type = identify_risk_type(
-            "finding_info",
-            "DNS A Records",
-            "Found IP addresses",
-            {}
+            "finding_info", "DNS A Records", "Found IP addresses", {}
         )
         assert risk_type is None
 
@@ -200,7 +193,7 @@ class TestScoreFinding:
             "title": "Missing Security Header: Strict-Transport-Security",
             "description": "HSTS is not present",
             "severity": "medium",
-            "data": {}
+            "data": {},
         }
 
         risks = score_finding("finding_tech_0", finding_data, ctx)
@@ -216,7 +209,7 @@ class TestScoreFinding:
             "title": "Unknown High Risk",
             "description": "Something bad",
             "severity": "high",
-            "data": {}
+            "data": {},
         }
 
         risks = score_finding("finding_unknown", finding_data, ctx)
@@ -232,7 +225,7 @@ class TestScoreFinding:
             "title": "Critical Issue",
             "description": "Very bad",
             "severity": "critical",
-            "data": {}
+            "data": {},
         }
 
         risks = score_finding("finding_critical", finding_data, ctx)
@@ -247,7 +240,7 @@ class TestScoreFinding:
             "title": "DNS A Records",
             "description": "Found IP addresses",
             "severity": "info",
-            "data": {}
+            "data": {},
         }
 
         risks = score_finding("finding_dns", finding_data, ctx)
@@ -261,11 +254,14 @@ class TestCheckImplicitRisks:
     def test_implicit_missing_dmarc(self):
         """Test detecting missing DMARC implicitly."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "domain": "example.com",
-            "has_dmarc": False,
-            "has_spf": True,
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "domain": "example.com",
+                "has_dmarc": False,
+                "has_spf": True,
+            },
+        )
 
         risks = check_implicit_risks(ctx)
 
@@ -275,11 +271,14 @@ class TestCheckImplicitRisks:
     def test_no_implicit_risk_when_dmarc_present(self):
         """Test no DMARC risk when DMARC is present."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "domain": "example.com",
-            "has_dmarc": True,
-            "has_spf": True,
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "domain": "example.com",
+                "has_dmarc": True,
+                "has_spf": True,
+            },
+        )
 
         risks = check_implicit_risks(ctx)
 
@@ -400,9 +399,27 @@ class TestGetRemediationPlan:
     def test_remediation_plan_groups_by_priority(self):
         """Test that plan groups risks by priority."""
         risks = [
-            Risk(title="Critical", description="Fix now", likelihood=5, impact=5, category=RiskCategory.OWASP),
-            Risk(title="Medium", description="Fix soon", likelihood=3, impact=3, category=RiskCategory.EXPOSURE),
-            Risk(title="Low", description="Fix later", likelihood=2, impact=2, category=RiskCategory.OPERATIONAL),
+            Risk(
+                title="Critical",
+                description="Fix now",
+                likelihood=5,
+                impact=5,
+                category=RiskCategory.OWASP,
+            ),
+            Risk(
+                title="Medium",
+                description="Fix soon",
+                likelihood=3,
+                impact=3,
+                category=RiskCategory.EXPOSURE,
+            ),
+            Risk(
+                title="Low",
+                description="Fix later",
+                likelihood=2,
+                impact=2,
+                category=RiskCategory.OPERATIONAL,
+            ),
         ]
 
         plan = get_remediation_plan(risks)
@@ -420,7 +437,7 @@ class TestGetRemediationPlan:
                 description="Do something about it",
                 likelihood=4,
                 impact=4,
-                category=RiskCategory.OWASP
+                category=RiskCategory.OWASP,
             )
         ]
 
@@ -446,12 +463,15 @@ class TestScoreRisks:
     def test_score_risks_with_findings(self):
         """Test scoring context with findings."""
         ctx = Context(target="example.com")
-        ctx.add("finding_tech_0", {
-            "title": "Missing Security Header: Content-Security-Policy",
-            "description": "CSP prevents XSS",
-            "severity": "medium",
-            "data": {}
-        })
+        ctx.add(
+            "finding_tech_0",
+            {
+                "title": "Missing Security Header: Content-Security-Policy",
+                "description": "CSP prevents XSS",
+                "severity": "medium",
+                "data": {},
+            },
+        )
         ctx.add("domain_profile", {"has_dmarc": False})
 
         result = score_risks(ctx)
@@ -462,12 +482,15 @@ class TestScoreRisks:
     def test_score_risks_filters_info(self):
         """Test that INFO risks are filtered by default."""
         ctx = Context(target="example.com")
-        ctx.add("finding_info", {
-            "title": "Some Info",
-            "description": "Just info",
-            "severity": "info",
-            "data": {}
-        })
+        ctx.add(
+            "finding_info",
+            {
+                "title": "Some Info",
+                "description": "Just info",
+                "severity": "info",
+                "data": {},
+            },
+        )
 
         result = score_risks(ctx)
 
@@ -479,12 +502,15 @@ class TestScoreRisks:
         """Test including INFO risks when requested."""
         ctx = Context(target="example.com")
         # Add a finding that will match a rule with low score
-        ctx.add("finding_tech_0", {
-            "title": "Missing Security Header: X-Content-Type-Options",
-            "description": "nosniff not present",
-            "severity": "low",
-            "data": {}
-        })
+        ctx.add(
+            "finding_tech_0",
+            {
+                "title": "Missing Security Header: X-Content-Type-Options",
+                "description": "nosniff not present",
+                "severity": "low",
+                "data": {},
+            },
+        )
 
         result = score_risks(ctx, params={"include_info": True})
 
@@ -495,12 +521,15 @@ class TestScoreRisks:
     def test_score_risks_logs_warnings_for_high_risks(self):
         """Test that high/critical risks generate warnings."""
         ctx = Context(target="example.com")
-        ctx.add("finding_critical", {
-            "title": "Zone Transfer Allowed",
-            "description": "AXFR permitted",
-            "severity": "high",
-            "data": {}
-        })
+        ctx.add(
+            "finding_critical",
+            {
+                "title": "Zone Transfer Allowed",
+                "description": "AXFR permitted",
+                "severity": "high",
+                "data": {},
+            },
+        )
 
         result = score_risks(ctx)
 
@@ -512,12 +541,15 @@ class TestScoreRisks:
     def test_score_risks_creates_summary(self):
         """Test that risk summary is created."""
         ctx = Context(target="example.com")
-        ctx.add("finding_tech_0", {
-            "title": "Missing Security Header: Strict-Transport-Security",
-            "description": "HSTS missing",
-            "severity": "medium",
-            "data": {}
-        })
+        ctx.add(
+            "finding_tech_0",
+            {
+                "title": "Missing Security Header: Strict-Transport-Security",
+                "description": "HSTS missing",
+                "severity": "medium",
+                "data": {},
+            },
+        )
 
         result = score_risks(ctx)
 
@@ -541,10 +573,14 @@ class TestRiskRulesIntegrity:
     def test_all_rules_have_valid_scores(self):
         """Test that all risk rules have valid likelihood/impact scores."""
         for rule_name, rule in RISK_RULES.items():
-            assert 1 <= rule["likelihood"] <= 5, f"Rule {rule_name} has invalid likelihood"
+            assert 1 <= rule["likelihood"] <= 5, (
+                f"Rule {rule_name} has invalid likelihood"
+            )
             assert 1 <= rule["impact"] <= 5, f"Rule {rule_name} has invalid impact"
 
     def test_all_rules_have_valid_category(self):
         """Test that all risk rules have valid categories."""
         for rule_name, rule in RISK_RULES.items():
-            assert isinstance(rule["category"], RiskCategory), f"Rule {rule_name} has invalid category"
+            assert isinstance(rule["category"], RiskCategory), (
+                f"Rule {rule_name} has invalid category"
+            )

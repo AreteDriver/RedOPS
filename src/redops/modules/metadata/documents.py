@@ -74,7 +74,9 @@ def extract_metadata(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     include_hidden_check = params.get("include_hidden_check", True)
 
     if not file_path and not directory:
-        ctx.log("No file or directory specified for metadata extraction", level="WARNING")
+        ctx.log(
+            "No file or directory specified for metadata extraction", level="WARNING"
+        )
         return ctx
 
     metadata_results: List[DocumentMetadata] = []
@@ -115,20 +117,31 @@ def extract_metadata(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     files_with_author = sum(1 for r in metadata_results if r.author)
     files_with_warnings = sum(1 for r in metadata_results if r.warnings)
 
-    ctx.log(f"Metadata extraction completed: {len(metadata_results)} files processed", level="INFO")
+    ctx.log(
+        f"Metadata extraction completed: {len(metadata_results)} files processed",
+        level="INFO",
+    )
     if files_with_author > 0:
-        ctx.log(f"Found {files_with_author} files with author information", level="INFO")
+        ctx.log(
+            f"Found {files_with_author} files with author information", level="INFO"
+        )
     if files_with_warnings > 0:
-        ctx.log(f"Found {files_with_warnings} files with hidden content warnings", level="WARNING")
+        ctx.log(
+            f"Found {files_with_warnings} files with hidden content warnings",
+            level="WARNING",
+        )
 
     # Add summary
-    ctx.add("document_summary", {
-        "total_files": len(metadata_results),
-        "files_with_author": files_with_author,
-        "files_with_warnings": files_with_warnings,
-        "total_findings": len(findings),
-        "by_type": count_by_type(metadata_results),
-    })
+    ctx.add(
+        "document_summary",
+        {
+            "total_files": len(metadata_results),
+            "files_with_author": files_with_author,
+            "files_with_warnings": files_with_warnings,
+            "total_findings": len(findings),
+            "by_type": count_by_type(metadata_results),
+        },
+    )
 
     return ctx
 
@@ -159,7 +172,9 @@ def scan_directory_for_documents(directory: str, recursive: bool = True) -> List
     return sorted(document_files)
 
 
-def extract_from_file(file_path: str, include_hidden_check: bool = True) -> Optional[DocumentMetadata]:
+def extract_from_file(
+    file_path: str, include_hidden_check: bool = True
+) -> Optional[DocumentMetadata]:
     """
     Extract metadata from a single document file.
 
@@ -193,7 +208,9 @@ def extract_from_file(file_path: str, include_hidden_check: bool = True) -> Opti
             filename=path.name,
             file_type=file_type,
             metadata={},
-            warnings=["Legacy .doc format not fully supported; convert to .docx for analysis"],
+            warnings=[
+                "Legacy .doc format not fully supported; convert to .docx for analysis"
+            ],
         )
     else:
         # Other formats - basic metadata only
@@ -296,7 +313,9 @@ def extract_pdf_metadata(file_path: str) -> Optional[DocumentMetadata]:
     )
 
 
-def extract_docx_metadata(file_path: str, include_hidden_check: bool = True) -> Optional[DocumentMetadata]:
+def extract_docx_metadata(
+    file_path: str, include_hidden_check: bool = True
+) -> Optional[DocumentMetadata]:
     """
     Extract metadata from a Word (.docx) file.
 
@@ -314,7 +333,9 @@ def extract_docx_metadata(file_path: str, include_hidden_check: bool = True) -> 
             filename=path.name,
             file_type=".docx",
             metadata={},
-            warnings=["python-docx not available - install with: pip install python-docx"],
+            warnings=[
+                "python-docx not available - install with: pip install python-docx"
+            ],
         )
 
     metadata: Dict[str, Any] = {}
@@ -406,7 +427,9 @@ def check_docx_for_hidden_data(doc) -> List[str]:
             try:
                 rev_count = int(doc.core_properties.revision)
                 if rev_count > 10:
-                    warnings.append(f"High revision count ({rev_count}) - document has been edited many times")
+                    warnings.append(
+                        f"High revision count ({rev_count}) - document has been edited many times"
+                    )
             except (ValueError, TypeError):
                 pass
 
@@ -471,7 +494,9 @@ def check_for_hidden_data(file_path: str) -> List[str]:
     return []
 
 
-def analyze_document_for_findings(doc_meta: DocumentMetadata, file_path: str) -> List[Finding]:
+def analyze_document_for_findings(
+    doc_meta: DocumentMetadata, file_path: str
+) -> List[Finding]:
     """
     Analyze document metadata and create security findings.
 

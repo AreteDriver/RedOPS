@@ -641,7 +641,9 @@ class TestExtractMetadata:
 
     def test_extract_with_findings(self):
         """Test that findings are added to context."""
-        with patch("redops.modules.metadata.documents.extract_from_file") as mock_extract:
+        with patch(
+            "redops.modules.metadata.documents.extract_from_file"
+        ) as mock_extract:
             mock_extract.return_value = DocumentMetadata(
                 filename="test.pdf",
                 file_type=".pdf",
@@ -657,7 +659,9 @@ class TestExtractMetadata:
                 result = extract_metadata(ctx)
 
                 # Check for findings in context
-                finding_keys = [k for k in result.data.keys() if k.startswith("finding_doc_")]
+                finding_keys = [
+                    k for k in result.data.keys() if k.startswith("finding_doc_")
+                ]
                 assert len(finding_keys) >= 1
 
 

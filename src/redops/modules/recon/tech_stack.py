@@ -69,136 +69,132 @@ SECURITY_HEADERS = {
 TECH_PATTERNS = {
     # Frontend frameworks
     "React": [
-        r'react(?:\.min)?\.js',
-        r'react-dom',
-        r'data-reactroot',
-        r'__REACT_DEVTOOLS',
-        r'_reactRootContainer',
+        r"react(?:\.min)?\.js",
+        r"react-dom",
+        r"data-reactroot",
+        r"__REACT_DEVTOOLS",
+        r"_reactRootContainer",
     ],
     "Vue.js": [
-        r'vue(?:\.min)?\.js',
-        r'data-v-[a-f0-9]+',
-        r'__VUE__',
-        r'Vue\.component',
+        r"vue(?:\.min)?\.js",
+        r"data-v-[a-f0-9]+",
+        r"__VUE__",
+        r"Vue\.component",
     ],
     "Angular": [
-        r'angular(?:\.min)?\.js',
-        r'ng-app',
-        r'ng-controller',
-        r'ng-version',
-        r'\[\(ngModel\)\]',
+        r"angular(?:\.min)?\.js",
+        r"ng-app",
+        r"ng-controller",
+        r"ng-version",
+        r"\[\(ngModel\)\]",
     ],
     "jQuery": [
-        r'jquery(?:\.min)?\.js',
-        r'jQuery\s*\(',
-        r'\$\s*\(\s*document\s*\)',
+        r"jquery(?:\.min)?\.js",
+        r"jQuery\s*\(",
+        r"\$\s*\(\s*document\s*\)",
     ],
     "Bootstrap": [
-        r'bootstrap(?:\.min)?\.(?:js|css)',
+        r"bootstrap(?:\.min)?\.(?:js|css)",
         r'class="[^"]*\b(?:container|row|col-)',
     ],
     "Tailwind CSS": [
-        r'tailwind(?:css)?(?:\.min)?\.css',
+        r"tailwind(?:css)?(?:\.min)?\.css",
         r'class="[^"]*\b(?:flex|grid|p-\d|m-\d|text-)',
     ],
-
     # CMS
     "WordPress": [
-        r'wp-content',
-        r'wp-includes',
-        r'wp-json',
+        r"wp-content",
+        r"wp-includes",
+        r"wp-json",
         r'<meta name="generator" content="WordPress',
     ],
     "Drupal": [
-        r'Drupal\.settings',
-        r'/sites/default/files',
+        r"Drupal\.settings",
+        r"/sites/default/files",
         r'<meta name="Generator" content="Drupal',
     ],
     "Joomla": [
-        r'/media/jui/',
+        r"/media/jui/",
         r'<meta name="generator" content="Joomla',
-        r'option=com_',
+        r"option=com_",
     ],
     "Shopify": [
-        r'cdn\.shopify\.com',
-        r'Shopify\.theme',
-        r'myshopify\.com',
+        r"cdn\.shopify\.com",
+        r"Shopify\.theme",
+        r"myshopify\.com",
     ],
-
     # Backend frameworks
     "Django": [
-        r'csrfmiddlewaretoken',
-        r'__admin_media_prefix__',
-        r'django',
+        r"csrfmiddlewaretoken",
+        r"__admin_media_prefix__",
+        r"django",
     ],
     "Ruby on Rails": [
-        r'csrf-token',
-        r'data-turbolinks',
-        r'rails-ujs',
-        r'X-CSRF-Token',
+        r"csrf-token",
+        r"data-turbolinks",
+        r"rails-ujs",
+        r"X-CSRF-Token",
     ],
     "Laravel": [
-        r'laravel_session',
-        r'XSRF-TOKEN',
-        r'laravel',
+        r"laravel_session",
+        r"XSRF-TOKEN",
+        r"laravel",
     ],
     "Express.js": [
-        r'X-Powered-By:\s*Express',
+        r"X-Powered-By:\s*Express",
     ],
     "ASP.NET": [
-        r'__VIEWSTATE',
-        r'__EVENTVALIDATION',
-        r'asp\.net',
-        r'X-AspNet-Version',
+        r"__VIEWSTATE",
+        r"__EVENTVALIDATION",
+        r"asp\.net",
+        r"X-AspNet-Version",
     ],
-
     # Analytics & tracking
     "Google Analytics": [
-        r'google-analytics\.com/analytics\.js',
-        r'googletagmanager\.com',
-        r'gtag\(',
-        r'_gaq\.push',
+        r"google-analytics\.com/analytics\.js",
+        r"googletagmanager\.com",
+        r"gtag\(",
+        r"_gaq\.push",
     ],
     "Google Tag Manager": [
-        r'googletagmanager\.com/gtm\.js',
-        r'GTM-[A-Z0-9]+',
+        r"googletagmanager\.com/gtm\.js",
+        r"GTM-[A-Z0-9]+",
     ],
     "Facebook Pixel": [
-        r'connect\.facebook\.net',
-        r'fbq\(',
-        r'facebook\.com/tr',
+        r"connect\.facebook\.net",
+        r"fbq\(",
+        r"facebook\.com/tr",
     ],
-
     # CDNs
     "Cloudflare": [
-        r'cloudflare',
-        r'cf-ray',
-        r'__cfduid',
+        r"cloudflare",
+        r"cf-ray",
+        r"__cfduid",
     ],
     "Fastly": [
-        r'fastly',
-        r'X-Served-By:.*cache-',
+        r"fastly",
+        r"X-Served-By:.*cache-",
     ],
     "Akamai": [
-        r'akamai',
-        r'X-Akamai-',
+        r"akamai",
+        r"X-Akamai-",
     ],
 }
 
 # Web server patterns from Server header
 SERVER_PATTERNS = {
-    r'nginx/?(\d+\.[\d.]+)?': 'nginx',
-    r'Apache/?(\d+\.[\d.]+)?': 'Apache',
-    r'Microsoft-IIS/?(\d+\.[\d.]+)?': 'IIS',
-    r'LiteSpeed': 'LiteSpeed',
-    r'cloudflare': 'Cloudflare',
-    r'gws': 'Google Web Server',
-    r'openresty/?(\d+\.[\d.]+)?': 'OpenResty',
-    r'gunicorn/?(\d+\.[\d.]+)?': 'Gunicorn',
-    r'uvicorn': 'Uvicorn',
-    r'Werkzeug/?(\d+\.[\d.]+)?': 'Werkzeug (Flask)',
-    r'Kestrel': 'Kestrel (ASP.NET)',
-    r'Caddy': 'Caddy',
+    r"nginx/?(\d+\.[\d.]+)?": "nginx",
+    r"Apache/?(\d+\.[\d.]+)?": "Apache",
+    r"Microsoft-IIS/?(\d+\.[\d.]+)?": "IIS",
+    r"LiteSpeed": "LiteSpeed",
+    r"cloudflare": "Cloudflare",
+    r"gws": "Google Web Server",
+    r"openresty/?(\d+\.[\d.]+)?": "OpenResty",
+    r"gunicorn/?(\d+\.[\d.]+)?": "Gunicorn",
+    r"uvicorn": "Uvicorn",
+    r"Werkzeug/?(\d+\.[\d.]+)?": "Werkzeug (Flask)",
+    r"Kestrel": "Kestrel (ASP.NET)",
+    r"Caddy": "Caddy",
 }
 
 
@@ -235,7 +231,10 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
         return ctx
 
     if not REQUESTS_AVAILABLE:
-        ctx.log("requests library not available - install with: pip install requests", level="WARNING")
+        ctx.log(
+            "requests library not available - install with: pip install requests",
+            level="WARNING",
+        )
         ctx.add("tech_stack", TechStack().model_dump())
         return ctx
 
@@ -260,7 +259,12 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
 
     # Make HTTP request
     try:
-        response = make_request(url, timeout=timeout, follow_redirects=follow_redirects, verify_ssl=verify_ssl)
+        response = make_request(
+            url,
+            timeout=timeout,
+            follow_redirects=follow_redirects,
+            verify_ssl=verify_ssl,
+        )
 
         if response:
             # Analyze headers
@@ -280,7 +284,10 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
             # Check for missing security headers
             missing_security = check_security_headers(dict(response.headers))
             if missing_security:
-                ctx.log(f"Missing security headers: {list(missing_security.keys())}", level="WARNING")
+                ctx.log(
+                    f"Missing security headers: {list(missing_security.keys())}",
+                    level="WARNING",
+                )
 
                 for header, info in missing_security.items():
                     finding = Finding(
@@ -288,7 +295,10 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
                         title=f"Missing Security Header: {header}",
                         description=f"{info['description']}. This header is not present.",
                         severity=info["severity"],
-                        data={"header": header, "recommendation": f"Add {header} header"},
+                        data={
+                            "header": header,
+                            "recommendation": f"Add {header} header",
+                        },
                     )
                     findings.append(finding)
 
@@ -298,12 +308,16 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
                 detected_techs.update(html_techs)
 
                 if html_techs:
-                    ctx.log(f"Detected technologies from HTML: {html_techs}", level="INFO")
+                    ctx.log(
+                        f"Detected technologies from HTML: {html_techs}", level="INFO"
+                    )
 
             # Store response info
             tech_stack.fingerprints["status_code"] = response.status_code
             tech_stack.fingerprints["content_length"] = len(response.content)
-            tech_stack.fingerprints["content_type"] = response.headers.get("Content-Type", "")
+            tech_stack.fingerprints["content_type"] = response.headers.get(
+                "Content-Type", ""
+            )
 
     except SSLError as e:
         ctx.log(f"SSL error connecting to {url}: {e}", level="WARNING")
@@ -334,8 +348,20 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     frameworks = []
     libraries = []
     for tech in detected_techs:
-        if tech in ["React", "Vue.js", "Angular", "Django", "Ruby on Rails", "Laravel",
-                    "Express.js", "ASP.NET", "WordPress", "Drupal", "Joomla", "Shopify"]:
+        if tech in [
+            "React",
+            "Vue.js",
+            "Angular",
+            "Django",
+            "Ruby on Rails",
+            "Laravel",
+            "Express.js",
+            "ASP.NET",
+            "WordPress",
+            "Drupal",
+            "Joomla",
+            "Shopify",
+        ]:
             frameworks.append(tech)
         else:
             libraries.append(tech)
@@ -359,7 +385,9 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
         findings.append(finding)
 
     # Check for version disclosure (potential vulnerability)
-    version_disclosure = check_version_disclosure(tech_stack.headers, tech_stack.web_server)
+    version_disclosure = check_version_disclosure(
+        tech_stack.headers, tech_stack.web_server
+    )
     if version_disclosure:
         ctx.log(f"Version disclosure detected: {version_disclosure}", level="WARNING")
         finding = Finding(
@@ -376,7 +404,10 @@ def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
         ctx.add(f"finding_tech_{i}_{target}", finding.model_dump())
 
     ctx.add("tech_stack", tech_stack.model_dump())
-    ctx.log(f"Tech stack fingerprinting completed: {len(detected_techs)} technologies detected", level="INFO")
+    ctx.log(
+        f"Tech stack fingerprinting completed: {len(detected_techs)} technologies detected",
+        level="INFO",
+    )
 
     return ctx
 
@@ -399,10 +430,7 @@ def normalize_url(target: str) -> str:
 
 
 def make_request(
-    url: str,
-    timeout: int = 10,
-    follow_redirects: bool = True,
-    verify_ssl: bool = True
+    url: str, timeout: int = 10, follow_redirects: bool = True, verify_ssl: bool = True
 ) -> Optional[Any]:
     """
     Make an HTTP request to a URL.
@@ -480,7 +508,9 @@ def analyze_headers(headers: Dict[str, str]) -> Dict[str, Any]:
             match = re.search(pattern, server_value, re.IGNORECASE)
             if match:
                 version = match.group(1) if match.lastindex else ""
-                analysis["server"] = f"{server_name}/{version}" if version else server_name
+                analysis["server"] = (
+                    f"{server_name}/{version}" if version else server_name
+                )
                 break
         if analysis["server"] == "Unknown":
             analysis["server"] = server_value
@@ -541,7 +571,9 @@ def detect_technologies(html: str, headers: Dict[str, str]) -> List[str]:
     return detected
 
 
-def fetch_favicon_hash(url: str, timeout: int = 10, verify_ssl: bool = True) -> Optional[Tuple[str, Optional[str]]]:
+def fetch_favicon_hash(
+    url: str, timeout: int = 10, verify_ssl: bool = True
+) -> Optional[Tuple[str, Optional[str]]]:
     """
     Fetch and hash the favicon for fingerprinting.
 
@@ -643,7 +675,9 @@ def get_ssl_info(target: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def check_version_disclosure(headers: Dict[str, str], web_server: Optional[str]) -> List[str]:
+def check_version_disclosure(
+    headers: Dict[str, str], web_server: Optional[str]
+) -> List[str]:
     """
     Check for version disclosure in headers and server string.
 

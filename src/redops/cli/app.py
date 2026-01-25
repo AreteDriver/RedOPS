@@ -18,7 +18,7 @@ import json
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 from redops.core.context import Context
@@ -26,6 +26,7 @@ from redops.core.context import Context
 
 class OutputFormat(Enum):
     """Output format options."""
+
     JSON = "json"
     HTML = "html"
     MARKDOWN = "markdown"
@@ -35,6 +36,7 @@ class OutputFormat(Enum):
 
 class Verbosity(Enum):
     """Verbosity levels."""
+
     QUIET = 0
     NORMAL = 1
     VERBOSE = 2
@@ -43,6 +45,7 @@ class Verbosity(Enum):
 
 class ScanPreset(Enum):
     """Scan preset configurations."""
+
     QUICK = "quick"
     RECON = "recon"
     FULL = "full"
@@ -56,6 +59,7 @@ class ScanPreset(Enum):
 @dataclass
 class CLIConfig:
     """CLI configuration."""
+
     verbosity: Verbosity = Verbosity.NORMAL
     output_format: OutputFormat = OutputFormat.TEXT
     output_dir: str = "./output"
@@ -68,6 +72,7 @@ class CLIConfig:
 @dataclass
 class ScanResult:
     """Result of a scan operation."""
+
     success: bool
     target: str
     preset: str
@@ -107,8 +112,11 @@ SCAN_PRESETS = {
         "name": "Reconnaissance",
         "description": "Comprehensive reconnaissance and discovery",
         "modules": [
-            "domain_profile", "tech_stack", "social_osint",
-            "exposure_scan", "infrastructure",
+            "domain_profile",
+            "tech_stack",
+            "social_osint",
+            "exposure_scan",
+            "infrastructure",
         ],
         "estimated_time": "5-10 minutes",
     },
@@ -116,9 +124,15 @@ SCAN_PRESETS = {
         "name": "Full Assessment",
         "description": "Complete security assessment with all modules",
         "modules": [
-            "domain_profile", "tech_stack", "social_osint",
-            "exposure_scan", "infrastructure", "threat_intel",
-            "compliance", "correlation", "executive_report",
+            "domain_profile",
+            "tech_stack",
+            "social_osint",
+            "exposure_scan",
+            "infrastructure",
+            "threat_intel",
+            "compliance",
+            "correlation",
+            "executive_report",
         ],
         "estimated_time": "15-30 minutes",
     },
@@ -126,7 +140,9 @@ SCAN_PRESETS = {
         "name": "Compliance Check",
         "description": "Compliance-focused assessment",
         "modules": [
-            "domain_profile", "exposure_scan", "compliance",
+            "domain_profile",
+            "exposure_scan",
+            "compliance",
             "executive_report",
         ],
         "estimated_time": "5-10 minutes",
@@ -135,7 +151,9 @@ SCAN_PRESETS = {
         "name": "Infrastructure Analysis",
         "description": "Cloud and infrastructure focused",
         "modules": [
-            "domain_profile", "tech_stack", "infrastructure",
+            "domain_profile",
+            "tech_stack",
+            "infrastructure",
             "exposure_scan",
         ],
         "estimated_time": "3-5 minutes",
@@ -144,7 +162,9 @@ SCAN_PRESETS = {
         "name": "Threat Intelligence",
         "description": "Threat indicator analysis",
         "modules": [
-            "domain_profile", "threat_intel", "exposure_scan",
+            "domain_profile",
+            "threat_intel",
+            "exposure_scan",
             "correlation",
         ],
         "estimated_time": "5-10 minutes",
@@ -153,8 +173,11 @@ SCAN_PRESETS = {
         "name": "Executive Report",
         "description": "Generate executive-ready report",
         "modules": [
-            "domain_profile", "exposure_scan", "compliance",
-            "correlation", "executive_report",
+            "domain_profile",
+            "exposure_scan",
+            "compliance",
+            "correlation",
+            "executive_report",
         ],
         "estimated_time": "10-15 minutes",
     },
@@ -162,9 +185,16 @@ SCAN_PRESETS = {
         "name": "AI-Enhanced Assessment",
         "description": "Full assessment with AI-powered analysis (requires API key)",
         "modules": [
-            "domain_profile", "tech_stack", "exposure_scan",
-            "infrastructure", "threat_intel", "compliance",
-            "correlation", "ai_analyze", "ai_recommend", "executive_report",
+            "domain_profile",
+            "tech_stack",
+            "exposure_scan",
+            "infrastructure",
+            "threat_intel",
+            "compliance",
+            "correlation",
+            "ai_analyze",
+            "ai_recommend",
+            "executive_report",
         ],
         "estimated_time": "20-30 minutes",
     },
@@ -244,6 +274,7 @@ AVAILABLE_MODULES = {
 # CLI Commands
 # ============================================================================
 
+
 def cmd_scan(args: argparse.Namespace, config: CLIConfig) -> int:
     """Execute a security scan."""
     target = args.target
@@ -315,7 +346,7 @@ def cmd_report(args: argparse.Namespace, config: CLIConfig) -> int:
 
     # Load scan data
     try:
-        with open(input_file, 'r') as f:
+        with open(input_file, "r") as f:
             scan_data = json.load(f)
     except FileNotFoundError:
         print_error(f"Input file not found: {input_file}")
@@ -330,7 +361,7 @@ def cmd_report(args: argparse.Namespace, config: CLIConfig) -> int:
     # Output
     if output_file:
         Path(output_file).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             f.write(report)
         print_success(f"Report saved to: {output_file}")
     else:
@@ -429,6 +460,7 @@ def cmd_config(args: argparse.Namespace, config: CLIConfig) -> int:
 def cmd_settings(args: argparse.Namespace, config: CLIConfig) -> int:
     """Open interactive settings menu."""
     from redops.cli.settings import run_settings_menu
+
     return run_settings_menu(quiet=config.quiet)
 
 
@@ -459,6 +491,7 @@ def cmd_apikey(args: argparse.Namespace, config: CLIConfig) -> int:
         else:
             # Prompt for key securely
             import getpass
+
             key = getpass.getpass(f"Enter API key for {provider}: ")
 
         if not key:
@@ -507,7 +540,9 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
         assistant = AIAssistant()
     except Exception as e:
         print_error(f"Failed to initialize AI assistant: {e}")
-        print_info("Make sure you have configured an API key using 'redops settings' or 'redops apikey set'")
+        print_info(
+            "Make sure you have configured an API key using 'redops settings' or 'redops apikey set'"
+        )
         return 1
 
     if action == "analyze":
@@ -518,7 +553,7 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
             return 1
 
         try:
-            with open(input_file, 'r') as f:
+            with open(input_file, "r") as f:
                 scan_data = json.load(f)
         except Exception as e:
             print_error(f"Failed to read input file: {e}")
@@ -541,7 +576,7 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
         context_data = None
         if context_file:
             try:
-                with open(context_file, 'r') as f:
+                with open(context_file, "r") as f:
                     context_data = json.load(f)
             except Exception:
                 pass
@@ -560,7 +595,7 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
             return 1
 
         try:
-            with open(input_file, 'r') as f:
+            with open(input_file, "r") as f:
                 scan_data = json.load(f)
         except Exception as e:
             print_error(f"Failed to read input file: {e}")
@@ -580,7 +615,7 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
             return 1
 
         try:
-            with open(input_file, 'r') as f:
+            with open(input_file, "r") as f:
                 scan_data = json.load(f)
         except Exception as e:
             print_error(f"Failed to read input file: {e}")
@@ -611,14 +646,14 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
             if not user_input:
                 continue
 
-            if user_input.lower() in ('exit', 'quit'):
+            if user_input.lower() in ("exit", "quit"):
                 print("Goodbye!")
                 break
 
-            if user_input.lower().startswith('load '):
+            if user_input.lower().startswith("load "):
                 filepath = user_input[5:].strip()
                 try:
-                    with open(filepath, 'r') as f:
+                    with open(filepath, "r") as f:
                         context_data = json.load(f)
                     print(f"Loaded context from: {filepath}")
                 except Exception as e:
@@ -636,11 +671,15 @@ def cmd_version(args: argparse.Namespace, config: CLIConfig) -> int:
     from redops.main import __version__
 
     if config.output_format == OutputFormat.JSON:
-        print(json.dumps({
-            "name": "RedOPS",
-            "version": __version__,
-            "python": sys.version.split()[0],
-        }))
+        print(
+            json.dumps(
+                {
+                    "name": "RedOPS",
+                    "version": __version__,
+                    "python": sys.version.split()[0],
+                }
+            )
+        )
     else:
         print(f"RedOPS version {__version__}")
         print(f"Python {sys.version.split()[0]}")
@@ -652,11 +691,8 @@ def cmd_version(args: argparse.Namespace, config: CLIConfig) -> int:
 # Execution Functions
 # ============================================================================
 
-def execute_scan(
-    target: str,
-    modules: List[str],
-    config: CLIConfig
-) -> ScanResult:
+
+def execute_scan(target: str, modules: List[str], config: CLIConfig) -> ScanResult:
     """Execute a scan with specified modules."""
     errors = []
     modules_run = []
@@ -679,6 +715,7 @@ def execute_scan(
                 errors.append(f"{module_name}: {str(e)}")
                 if config.verbosity == Verbosity.DEBUG:
                     import traceback
+
                     traceback.print_exc()
 
         # Count findings
@@ -743,78 +780,91 @@ def run_module(ctx: Context, module_name: str, config: CLIConfig) -> Context:
 def run_domain_profile(ctx: Context, config: CLIConfig) -> Context:
     """Run domain profile module."""
     from redops.modules.recon.domains import analyze_domain
+
     return analyze_domain(ctx, {})
 
 
 def run_tech_stack(ctx: Context, config: CLIConfig) -> Context:
     """Run tech stack module."""
     from redops.modules.recon.tech_stack import detect_technologies
+
     return detect_technologies(ctx, {})
 
 
 def run_exposure_scan(ctx: Context, config: CLIConfig) -> Context:
     """Run exposure scan module."""
     from redops.modules.recon.exposure_scan import scan_exposures
+
     return scan_exposures(ctx, {})
 
 
 def run_infrastructure(ctx: Context, config: CLIConfig) -> Context:
     """Run infrastructure analysis module."""
     from redops.modules.recon.infrastructure import analyze_infrastructure
+
     return analyze_infrastructure(ctx, {})
 
 
 def run_threat_intel(ctx: Context, config: CLIConfig) -> Context:
     """Run threat intel module."""
     from redops.modules.intel.threat_intel import analyze_threat_intel
+
     return analyze_threat_intel(ctx, {})
 
 
 def run_compliance(ctx: Context, config: CLIConfig) -> Context:
     """Run compliance module."""
     from redops.modules.compliance.compliance_map import assess_compliance
+
     return assess_compliance(ctx, {})
 
 
 def run_correlation(ctx: Context, config: CLIConfig) -> Context:
     """Run correlation engine."""
     from redops.modules.analysis.correlation_engine import correlate_findings
+
     return correlate_findings(ctx, {})
 
 
 def run_executive_report(ctx: Context, config: CLIConfig) -> Context:
     """Run executive report module."""
     from redops.modules.reporting.executive_report import generate_executive_report
+
     return generate_executive_report(ctx, {})
 
 
 def run_social_osint(ctx: Context, config: CLIConfig) -> Context:
     """Run social OSINT module."""
     from redops.modules.recon.social_osint import gather_social_intel
+
     return gather_social_intel(ctx, {})
 
 
 def run_risk_scoring(ctx: Context, config: CLIConfig) -> Context:
     """Run risk scoring module."""
     from redops.modules.corp_assessment.risk_scoring import score_risks
+
     return score_risks(ctx, {})
 
 
 def run_ai_analyze(ctx: Context, config: CLIConfig) -> Context:
     """Run AI analysis module."""
     from redops.modules.ai_assistant import ai_analyze
+
     return ai_analyze(ctx, {})
 
 
 def run_ai_summarize(ctx: Context, config: CLIConfig) -> Context:
     """Run AI summarization module."""
     from redops.modules.ai_assistant import ai_summarize
+
     return ai_summarize(ctx, {})
 
 
 def run_ai_recommend(ctx: Context, config: CLIConfig) -> Context:
     """Run AI recommendations module."""
     from redops.modules.ai_assistant import ai_recommend
+
     return ai_recommend(ctx, {})
 
 
@@ -848,11 +898,13 @@ def save_scan_output(ctx: Context, config: CLIConfig) -> List[str]:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    target_safe = ctx.target.replace(".", "_").replace("/", "_") if ctx.target else "unknown"
+    target_safe = (
+        ctx.target.replace(".", "_").replace("/", "_") if ctx.target else "unknown"
+    )
 
     # Save JSON data
     json_file = output_dir / f"scan_{target_safe}_{timestamp}.json"
-    with open(json_file, 'w') as f:
+    with open(json_file, "w") as f:
         json.dump(ctx.data, f, indent=2, default=str)
     output_files.append(str(json_file))
 
@@ -860,7 +912,7 @@ def save_scan_output(ctx: Context, config: CLIConfig) -> List[str]:
     exec_report = ctx.get("executive_report", {})
     if exec_report:
         report_file = output_dir / f"report_{target_safe}_{timestamp}.json"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             json.dump(exec_report, f, indent=2, default=str)
         output_files.append(str(report_file))
 
@@ -868,9 +920,7 @@ def save_scan_output(ctx: Context, config: CLIConfig) -> List[str]:
 
 
 def generate_report(
-    scan_data: Dict[str, Any],
-    report_type: str,
-    config: CLIConfig
+    scan_data: Dict[str, Any], report_type: str, config: CLIConfig
 ) -> str:
     """Generate a report from scan data."""
     if report_type == "executive":
@@ -906,7 +956,9 @@ def generate_executive_text_report(data: Dict[str, Any]) -> str:
     lines.append("KEY FINDINGS")
     lines.append("-" * 40)
     for finding in summary.get("key_findings", [])[:5]:
-        lines.append(f"  [{finding.get('severity', '').upper()}] {finding.get('title', '')}")
+        lines.append(
+            f"  [{finding.get('severity', '').upper()}] {finding.get('title', '')}"
+        )
 
     lines.append("")
     lines.append("RECOMMENDATIONS")
@@ -945,10 +997,12 @@ def generate_summary_report(data: Dict[str, Any]) -> str:
 # Helper Functions
 # ============================================================================
 
+
 def get_config_path() -> Path:
     """Get the configuration file path."""
     # Check environment variable first
     import os
+
     env_path = os.environ.get("REDOPS_CONFIG")
     if env_path:
         return Path(env_path)
@@ -989,6 +1043,7 @@ def get_default_config() -> Dict[str, Any]:
 # ============================================================================
 # Output Formatting
 # ============================================================================
+
 
 def print_header(title: str):
     """Print a header."""
@@ -1072,6 +1127,7 @@ def print_scan_results(result: ScanResult, config: CLIConfig):
 # Main Entry Point
 # ============================================================================
 
+
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser."""
     parser = argparse.ArgumentParser(
@@ -1096,38 +1152,65 @@ Examples:
     )
 
     # Global options
-    parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="Increase verbosity (can be repeated)")
-    parser.add_argument("-q", "--quiet", action="store_true",
-                        help="Suppress output except errors")
-    parser.add_argument("--no-color", action="store_true",
-                        help="Disable colored output")
-    parser.add_argument("-o", "--output-dir", default="./output",
-                        help="Output directory (default: ./output)")
-    parser.add_argument("-f", "--format",
-                        choices=["json", "html", "markdown", "text", "summary"],
-                        default="text", help="Output format")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase verbosity (can be repeated)",
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="store_true", help="Suppress output except errors"
+    )
+    parser.add_argument(
+        "--no-color", action="store_true", help="Disable colored output"
+    )
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        default="./output",
+        help="Output directory (default: ./output)",
+    )
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=["json", "html", "markdown", "text", "summary"],
+        default="text",
+        help="Output format",
+    )
     parser.add_argument("--config", "-c", help="Config file path")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show what would be done without executing")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be done without executing",
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Command")
 
     # Scan command
     scan_parser = subparsers.add_parser("scan", help="Run security scan")
     scan_parser.add_argument("target", help="Target to scan (domain, IP, etc.)")
-    scan_parser.add_argument("-p", "--preset",
-                            choices=[p.value for p in ScanPreset],
-                            default="quick", help="Scan preset")
-    scan_parser.add_argument("-m", "--modules",
-                            help="Comma-separated list of modules to run")
+    scan_parser.add_argument(
+        "-p",
+        "--preset",
+        choices=[p.value for p in ScanPreset],
+        default="quick",
+        help="Scan preset",
+    )
+    scan_parser.add_argument(
+        "-m", "--modules", help="Comma-separated list of modules to run"
+    )
 
     # Report command
     report_parser = subparsers.add_parser("report", help="Generate report")
     report_parser.add_argument("input", help="Input scan JSON file")
-    report_parser.add_argument("-t", "--type",
-                              choices=["executive", "technical", "summary", "json"],
-                              default="summary", help="Report type")
+    report_parser.add_argument(
+        "-t",
+        "--type",
+        choices=["executive", "technical", "summary", "json"],
+        default="summary",
+        help="Report type",
+    )
     report_parser.add_argument("--output", help="Output file (default: stdout)")
 
     # Modules command
@@ -1138,36 +1221,41 @@ Examples:
 
     # Config command
     config_parser = subparsers.add_parser("config", help="Manage configuration")
-    config_parser.add_argument("action", choices=["show", "init", "path"],
-                              help="Config action")
-    config_parser.add_argument("--force", action="store_true",
-                              help="Force overwrite existing config")
+    config_parser.add_argument(
+        "action", choices=["show", "init", "path"], help="Config action"
+    )
+    config_parser.add_argument(
+        "--force", action="store_true", help="Force overwrite existing config"
+    )
 
     # Settings command (interactive menu)
     subparsers.add_parser("settings", help="Open interactive settings menu")
 
     # API Key management command
     apikey_parser = subparsers.add_parser("apikey", help="Manage API keys")
-    apikey_parser.add_argument("action", choices=["list", "set", "get", "remove"],
-                               help="API key action")
-    apikey_parser.add_argument("--provider", "-p",
-                               help="API provider name (openai, anthropic, shodan, etc.)")
-    apikey_parser.add_argument("--key", "-k",
-                               help="API key value (will prompt securely if not provided)")
-    apikey_parser.add_argument("--show", "-s", action="store_true",
-                               help="Show full API key (use with caution)")
+    apikey_parser.add_argument(
+        "action", choices=["list", "set", "get", "remove"], help="API key action"
+    )
+    apikey_parser.add_argument(
+        "--provider", "-p", help="API provider name (openai, anthropic, shodan, etc.)"
+    )
+    apikey_parser.add_argument(
+        "--key", "-k", help="API key value (will prompt securely if not provided)"
+    )
+    apikey_parser.add_argument(
+        "--show", "-s", action="store_true", help="Show full API key (use with caution)"
+    )
 
     # AI Assistant command
     ai_parser = subparsers.add_parser("ai", help="AI-assisted analysis")
-    ai_parser.add_argument("action",
-                           choices=["analyze", "explain", "suggest", "summarize", "chat"],
-                           help="AI action")
-    ai_parser.add_argument("--input", "-i",
-                           help="Input scan results file (JSON)")
-    ai_parser.add_argument("--query", "-q",
-                           help="Query or question for AI")
-    ai_parser.add_argument("--context", "-x",
-                           help="Additional context file (JSON)")
+    ai_parser.add_argument(
+        "action",
+        choices=["analyze", "explain", "suggest", "summarize", "chat"],
+        help="AI action",
+    )
+    ai_parser.add_argument("--input", "-i", help="Input scan results file (JSON)")
+    ai_parser.add_argument("--query", "-q", help="Query or question for AI")
+    ai_parser.add_argument("--context", "-x", help="Additional context file (JSON)")
 
     # Version command
     subparsers.add_parser("version", help="Show version")
@@ -1181,7 +1269,9 @@ def main(args: Optional[List[str]] = None) -> int:
     parsed = parser.parse_args(args)
 
     # Build config
-    verbosity = Verbosity.QUIET if parsed.quiet else Verbosity(min(parsed.verbose + 1, 3))
+    verbosity = (
+        Verbosity.QUIET if parsed.quiet else Verbosity(min(parsed.verbose + 1, 3))
+    )
     config = CLIConfig(
         verbosity=verbosity,
         output_format=OutputFormat(parsed.format),

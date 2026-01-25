@@ -13,6 +13,7 @@ def summarize(data: str, prompt: str = "Summarize the following security data:")
         if isinstance(data, str):
             try:
                 import json
+
                 data_dict = json.loads(data)
             except (json.JSONDecodeError, TypeError):
                 # Use as-is if not valid JSON
@@ -23,7 +24,7 @@ def summarize(data: str, prompt: str = "Summarize the following security data:")
         # Use AI to summarize
         return assistant.summarize(data_dict)
 
-    except (ImportError, ValueError) as e:
+    except (ImportError, ValueError):
         # Fallback: No AI configured, use simple truncation
         if len(data) > 400:
             return data[:400] + "..."
@@ -43,6 +44,7 @@ def analyze(data: str, prompt: str = "Analyze the following security data:") -> 
         if isinstance(data, str):
             try:
                 import json
+
                 data_dict = json.loads(data)
             except (json.JSONDecodeError, TypeError):
                 data_dict = {"raw_data": data}
@@ -68,6 +70,7 @@ def explain(query: str, context: str = None) -> str:
         if context:
             try:
                 import json
+
                 context_dict = json.loads(context)
             except (json.JSONDecodeError, TypeError):
                 context_dict = {"context": context}

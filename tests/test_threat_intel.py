@@ -1,6 +1,5 @@
 """Tests for intel/threat_intel module."""
 
-import pytest
 from redops.modules.intel.threat_intel import (
     IOCType,
     ThreatLevel,
@@ -257,6 +256,7 @@ class TestSuspiciousDomainPatterns:
     def test_dga_pattern(self):
         """Test DGA-like domain detection."""
         import re
+
         pattern, desc, level = SUSPICIOUS_DOMAIN_PATTERNS[0]
         # Long random domain
         assert re.search(pattern, "abcdefghijklmnopqrstuvwxyz12345.com")
@@ -264,6 +264,7 @@ class TestSuspiciousDomainPatterns:
     def test_phishing_pattern(self):
         """Test phishing pattern detection."""
         import re
+
         pattern, desc, level = SUSPICIOUS_DOMAIN_PATTERNS[1]
         assert re.search(pattern, "login-secure.example.com")
         assert re.search(pattern, "account-verify.test.com")
@@ -271,6 +272,7 @@ class TestSuspiciousDomainPatterns:
     def test_brand_impersonation(self):
         """Test brand impersonation detection."""
         import re
+
         pattern, desc, level = SUSPICIOUS_DOMAIN_PATTERNS[3]
         assert re.search(pattern, "paypal-secure.com")
         assert re.search(pattern, "microsoft-update.com")
@@ -444,7 +446,9 @@ class TestExtractIndicatorsFromContext:
         """Test hash extraction."""
         ctx = Context(target="example.com")
         ctx.add("data", "MD5: d41d8cd98f00b204e9800998ecf8427e")
-        ctx.add("sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        ctx.add(
+            "sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
 
         indicators = extract_indicators_from_context(ctx)
         assert len(indicators["hashes"]) >= 1
@@ -492,7 +496,10 @@ class TestCheckIpsAgainstIntel:
         """Test private IP detection."""
         matches = check_ips_against_intel(["192.168.1.1"])
         assert len(matches) >= 1
-        assert "private" in matches[0].ioc.tags or matches[0].ioc.threat_level == ThreatLevel.LOW
+        assert (
+            "private" in matches[0].ioc.tags
+            or matches[0].ioc.threat_level == ThreatLevel.LOW
+        )
 
     def test_loopback_ip(self):
         """Test loopback IP detection."""
@@ -544,9 +551,9 @@ class TestCheckHashesAgainstIntel:
 
     def test_sha256_hash(self):
         """Test SHA256 hash handling."""
-        matches = check_hashes_against_intel([
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-        ])
+        matches = check_hashes_against_intel(
+            ["e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"]
+        )
         assert isinstance(matches, list)
 
 
@@ -560,17 +567,15 @@ class TestAnalyzeDomainReputation:
 
     def test_tld_analysis(self):
         """Test TLD breakdown."""
-        analysis = analyze_domain_reputation([
-            "test.com", "example.com", "sample.org"
-        ])
+        analysis = analyze_domain_reputation(["test.com", "example.com", "sample.org"])
         assert analysis["by_tld"]["com"] == 2
         assert analysis["by_tld"]["org"] == 1
 
     def test_suspicious_detection(self):
         """Test suspicious domain counting."""
-        analysis = analyze_domain_reputation([
-            "clean.com", "login-verify.test.com", "normal.org"
-        ])
+        analysis = analyze_domain_reputation(
+            ["clean.com", "login-verify.test.com", "normal.org"]
+        )
         assert analysis["suspicious_count"] >= 1
         assert analysis["clean_count"] >= 1
 
@@ -585,9 +590,9 @@ class TestAnalyzeIpReputation:
 
     def test_private_public_count(self):
         """Test private/public counting."""
-        analysis = analyze_ip_reputation([
-            "192.168.1.1", "10.0.0.1", "8.8.8.8", "1.1.1.1"
-        ])
+        analysis = analyze_ip_reputation(
+            ["192.168.1.1", "10.0.0.1", "8.8.8.8", "1.1.1.1"]
+        )
         assert analysis["private_count"] == 2
         assert analysis["public_count"] == 2
 
@@ -609,17 +614,21 @@ class TestAnalyzeUrlPatterns:
 
     def test_protocol_count(self):
         """Test HTTPS/HTTP counting."""
-        analysis = analyze_url_patterns([
-            "https://secure.com", "http://insecure.com", "https://also-secure.com"
-        ])
+        analysis = analyze_url_patterns(
+            ["https://secure.com", "http://insecure.com", "https://also-secure.com"]
+        )
         assert analysis["https_count"] == 2
         assert analysis["http_count"] == 1
 
     def test_parameter_detection(self):
         """Test query parameter detection."""
-        analysis = analyze_url_patterns([
-            "https://test.com?id=1", "https://test.com/page", "https://test.com?foo=bar"
-        ])
+        analysis = analyze_url_patterns(
+            [
+                "https://test.com?id=1",
+                "https://test.com/page",
+                "https://test.com?foo=bar",
+            ]
+        )
         assert analysis["parameters_detected"] == 2
 
 
@@ -636,9 +645,9 @@ class TestIdentifyThreatActors:
     def test_ttp_matching(self):
         """Test TTP-based actor identification."""
         ctx = Context(target="example.com")
-        ctx.add("attack_paths", [
-            {"mitre_techniques": ["T1566", "T1059", "T1053", "T1071"]}
-        ])
+        ctx.add(
+            "attack_paths", [{"mitre_techniques": ["T1566", "T1059", "T1053", "T1071"]}]
+        )
         matches = []
         actors = identify_threat_actors(ctx, matches)
 
@@ -648,9 +657,9 @@ class TestIdentifyThreatActors:
     def test_tool_matching(self):
         """Test tool-based actor identification."""
         ctx = Context(target="example.com")
-        ctx.add("code_artifacts", {
-            "files": ["path/to/Mimikatz.exe", "cobalt_strike.dll"]
-        })
+        ctx.add(
+            "code_artifacts", {"files": ["path/to/Mimikatz.exe", "cobalt_strike.dll"]}
+        )
         matches = []
         actors = identify_threat_actors(ctx, matches)
 
@@ -674,7 +683,9 @@ class TestCalculateReputationScore:
             threat_level=ThreatLevel.CRITICAL,
             confidence=ConfidenceLevel.CONFIRMED,
         )
-        match = ThreatMatch(ioc=ioc, matched_value="test.com", context="", match_type="exact")
+        match = ThreatMatch(
+            ioc=ioc, matched_value="test.com", context="", match_type="exact"
+        )
 
         score = calculate_reputation_score([match])
         assert score >= 20  # Critical with confirmed confidence
@@ -684,7 +695,9 @@ class TestCalculateReputationScore:
         matches = []
         for level in [ThreatLevel.HIGH, ThreatLevel.MEDIUM, ThreatLevel.LOW]:
             ioc = IOC(type=IOCType.DOMAIN, value="test.com", threat_level=level)
-            matches.append(ThreatMatch(ioc=ioc, matched_value="", context="", match_type=""))
+            matches.append(
+                ThreatMatch(ioc=ioc, matched_value="", context="", match_type="")
+            )
 
         score = calculate_reputation_score(matches)
         assert score > 0
@@ -699,7 +712,9 @@ class TestCalculateReputationScore:
                 threat_level=ThreatLevel.CRITICAL,
                 confidence=ConfidenceLevel.CONFIRMED,
             )
-            matches.append(ThreatMatch(ioc=ioc, matched_value="", context="", match_type=""))
+            matches.append(
+                ThreatMatch(ioc=ioc, matched_value="", context="", match_type="")
+            )
 
         score = calculate_reputation_score(matches)
         assert score == 100.0
@@ -715,7 +730,9 @@ class TestGenerateRiskIndicators:
 
     def test_critical_indicator(self):
         """Test critical threat indicator."""
-        ioc = IOC(type=IOCType.DOMAIN, value="test.com", threat_level=ThreatLevel.CRITICAL)
+        ioc = IOC(
+            type=IOCType.DOMAIN, value="test.com", threat_level=ThreatLevel.CRITICAL
+        )
         match = ThreatMatch(ioc=ioc, matched_value="", context="", match_type="")
 
         indicators = generate_risk_indicators([match], {}, {})
@@ -839,7 +856,9 @@ class TestIdentifyHashType:
 
     def test_sha256(self):
         """Test SHA256 identification."""
-        result = identify_hash_type("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        result = identify_hash_type(
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
         assert result == IOCType.FILE_HASH_SHA256
 
     def test_invalid_hash(self):
@@ -995,7 +1014,9 @@ class TestValidateIoc:
 
     def test_valid_md5(self):
         """Test valid MD5 validation."""
-        is_valid, error = validate_ioc(IOCType.FILE_HASH_MD5, "d41d8cd98f00b204e9800998ecf8427e")
+        is_valid, error = validate_ioc(
+            IOCType.FILE_HASH_MD5, "d41d8cd98f00b204e9800998ecf8427e"
+        )
         assert is_valid
 
     def test_invalid_md5(self):
@@ -1060,9 +1081,7 @@ class TestIntegration:
         ctx = Context(target="suspicious-login.malicious.tk")
         ctx.add("urls", ["https://evil.com/gate.php"])
         ctx.add("ips", ["192.168.1.1", "10.0.0.1"])
-        ctx.add("attack_paths", [
-            {"mitre_techniques": ["T1566", "T1059"]}
-        ])
+        ctx.add("attack_paths", [{"mitre_techniques": ["T1566", "T1059"]}])
 
         result = analyze_threat_intel(ctx)
         intel = result.get("threat_intel")

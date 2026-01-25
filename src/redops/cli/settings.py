@@ -10,7 +10,7 @@ import os
 import json
 import getpass
 from pathlib import Path
-from typing import Optional, Dict, Any, List, Callable
+from typing import Optional, Dict, Any, List
 
 
 # Available API key providers
@@ -76,7 +76,7 @@ AI_PROVIDERS = {
 
 def clear_screen():
     """Clear the terminal screen."""
-    os.system('cls' if os.name == 'nt' else 'clear')
+    os.system("cls" if os.name == "nt" else "clear")
 
 
 def print_header(title: str):
@@ -117,7 +117,7 @@ def confirm(prompt: str, default: bool = False) -> bool:
     response = input(f"{prompt}{suffix}: ").strip().lower()
     if not response:
         return default
-    return response in ('y', 'yes')
+    return response in ("y", "yes")
 
 
 def mask_key(key: Optional[str]) -> str:
@@ -141,7 +141,7 @@ def load_config() -> Dict[str, Any]:
     """Load configuration from file."""
     config_path = get_config_path()
     if config_path.exists():
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             return json.load(f)
     return get_default_config()
 
@@ -150,7 +150,7 @@ def save_config(config: Dict[str, Any]) -> None:
     """Save configuration to file."""
     config_path = get_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         json.dump(config, f, indent=2)
 
 
@@ -246,10 +246,10 @@ class SettingsMenu:
                 print(f"  [{i}] {info['name']}: {status}")
 
             print()
-            print(f"  [A] Add/Update API Key")
-            print(f"  [R] Remove API Key")
-            print(f"  [T] Test API Key")
-            print(f"  [B] Back to Main Menu")
+            print("  [A] Add/Update API Key")
+            print("  [R] Remove API Key")
+            print("  [T] Test API Key")
+            print("  [B] Back to Main Menu")
             print()
 
             choice = get_input("Enter choice").upper()
@@ -293,7 +293,7 @@ class SettingsMenu:
         print()
         choice = get_input("Enter number (or 'cancel')")
 
-        if choice.lower() == 'cancel':
+        if choice.lower() == "cancel":
             return
 
         if choice.isdigit():
@@ -347,7 +347,7 @@ class SettingsMenu:
         print()
         choice = get_input("Enter number (or 'cancel')")
 
-        if choice.lower() == 'cancel':
+        if choice.lower() == "cancel":
             return
 
         if choice.isdigit():
@@ -380,7 +380,7 @@ class SettingsMenu:
         print()
         choice = get_input("Enter number (or 'cancel')")
 
-        if choice.lower() == 'cancel':
+        if choice.lower() == "cancel":
             return
 
         if choice.isdigit():
@@ -389,7 +389,9 @@ class SettingsMenu:
                 provider = providers[idx]
                 key = self._get_api_key(provider)
                 if not key:
-                    print(f"\nNo API key configured for {API_PROVIDERS[provider]['name']}.")
+                    print(
+                        f"\nNo API key configured for {API_PROVIDERS[provider]['name']}."
+                    )
                 else:
                     print(f"\nTesting {API_PROVIDERS[provider]['name']} API...")
                     result = self._test_provider(provider, key)
@@ -407,11 +409,13 @@ class SettingsMenu:
         try:
             if provider == "openai":
                 import openai
+
                 client = openai.OpenAI(api_key=key)
                 client.models.list()
                 return True
             elif provider == "anthropic":
                 import anthropic
+
                 client = anthropic.Anthropic(api_key=key)
                 # Simple test - just initialize the client
                 return True
@@ -480,7 +484,11 @@ class SettingsMenu:
         providers = list(AI_PROVIDERS.keys())
         for i, provider in enumerate(providers, 1):
             info = AI_PROVIDERS[provider]
-            current = " (current)" if self.config.get("ai", {}).get("provider") == provider else ""
+            current = (
+                " (current)"
+                if self.config.get("ai", {}).get("provider") == provider
+                else ""
+            )
             print(f"  [{i}] {info['name']}{current}")
 
         print()

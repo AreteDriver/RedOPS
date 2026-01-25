@@ -5,7 +5,7 @@ Analyzes findings from reconnaissance and assigns risk scores based on
 likelihood and impact. Maps findings to industry frameworks (OWASP, MITRE).
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List
 from redops.core.context import Context
 from redops.core.models import Risk, RiskLevel, RiskCategory
 
@@ -46,7 +46,6 @@ RISK_RULES: Dict[str, Dict[str, Any]] = {
         "mitre_id": None,
         "recommendation": "Add X-Content-Type-Options: nosniff header",
     },
-
     # DNS/Email Security Findings
     "missing_spf": {
         "likelihood": 4,
@@ -72,7 +71,6 @@ RISK_RULES: Dict[str, Dict[str, Any]] = {
         "mitre_id": "T1590.002",  # DNS
         "recommendation": "Restrict DNS zone transfers to authorized servers only",
     },
-
     # Version Disclosure
     "server_version_disclosure": {
         "likelihood": 4,
@@ -82,7 +80,6 @@ RISK_RULES: Dict[str, Dict[str, Any]] = {
         "mitre_id": "T1592",  # Gather Victim Host Information
         "recommendation": "Remove version information from server headers",
     },
-
     # Technology Risks
     "outdated_framework": {
         "likelihood": 3,
@@ -100,7 +97,6 @@ RISK_RULES: Dict[str, Dict[str, Any]] = {
         "mitre_id": "T1190",  # Exploit Public-Facing Application
         "recommendation": "Ensure WordPress core, themes, and plugins are up to date",
     },
-
     # SSL/TLS Risks
     "ssl_expiring_soon": {
         "likelihood": 4,
@@ -118,7 +114,6 @@ RISK_RULES: Dict[str, Dict[str, Any]] = {
         "mitre_id": None,
         "recommendation": "Disable weak cipher suites and enable TLS 1.2+",
     },
-
     # Subdomain Risks
     "excessive_subdomains": {
         "likelihood": 2,
@@ -197,9 +192,14 @@ def score_risks(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     # Log summary
     ctx.log(f"Risk scoring completed: {len(risks)} risks identified", level="INFO")
     if risk_summary["by_level"]["critical"] > 0:
-        ctx.log(f"CRITICAL risks found: {risk_summary['by_level']['critical']}", level="WARNING")
+        ctx.log(
+            f"CRITICAL risks found: {risk_summary['by_level']['critical']}",
+            level="WARNING",
+        )
     if risk_summary["by_level"]["high"] > 0:
-        ctx.log(f"HIGH risks found: {risk_summary['by_level']['high']}", level="WARNING")
+        ctx.log(
+            f"HIGH risks found: {risk_summary['by_level']['high']}", level="WARNING"
+        )
 
     return ctx
 
@@ -223,7 +223,9 @@ def extract_findings(ctx: Context) -> Dict[str, Dict[str, Any]]:
     return findings
 
 
-def score_finding(finding_key: str, finding_data: Dict[str, Any], ctx: Context) -> List[Risk]:
+def score_finding(
+    finding_key: str, finding_data: Dict[str, Any], ctx: Context
+) -> List[Risk]:
     """
     Score a single finding and create Risk objects.
 
@@ -281,10 +283,7 @@ def score_finding(finding_key: str, finding_data: Dict[str, Any], ctx: Context) 
 
 
 def identify_risk_type(
-    finding_key: str,
-    title: str,
-    description: str,
-    data: Dict[str, Any]
+    finding_key: str, title: str, description: str, data: Dict[str, Any]
 ) -> Optional[str]:
     """
     Identify the risk type from finding content.
@@ -334,7 +333,10 @@ def identify_risk_type(
         subdomains = data.get("subdomains", [])
         for sub in subdomains:
             sub_name = sub.get("subdomain", "") if isinstance(sub, dict) else str(sub)
-            if any(env in sub_name.lower() for env in ["dev", "staging", "test", "uat", "qa"]):
+            if any(
+                env in sub_name.lower()
+                for env in ["dev", "staging", "test", "uat", "qa"]
+            ):
                 return "dev_staging_exposed"
         if len(subdomains) > 20:
             return "excessive_subdomains"
@@ -384,6 +386,7 @@ def check_implicit_risks(ctx: Context) -> List[Risk]:
         if not_after:
             # Parse and check expiration
             from datetime import datetime
+
             try:
                 # Format: "Jan 15 12:00:00 2025 GMT"
                 expiry = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
@@ -516,8 +519,7 @@ def aggregate_risks(risks: List[Risk]) -> Dict[str, Any]:
 
     stats["average_score"] = round(total_score / len(risks), 2)
     stats["top_risks"] = [
-        {"title": r.title, "score": r.score, "level": r.level.value}
-        for r in risks[:5]
+        {"title": r.title, "score": r.score, "level": r.level.value} for r in risks[:5]
     ]
     stats["mitre_techniques"] = sorted(list(mitre_ids))
     stats["owasp_categories"] = sorted(list(owasp_ids))
@@ -554,53 +556,61 @@ def get_remediation_plan(risks: List[Risk]) -> List[Dict[str, Any]]:
     plan = []
 
     # Group by priority
-    critical_high = [r for r in risks if r.level in [RiskLevel.CRITICAL, RiskLevel.HIGH]]
+    critical_high = [
+        r for r in risks if r.level in [RiskLevel.CRITICAL, RiskLevel.HIGH]
+    ]
     medium = [r for r in risks if r.level == RiskLevel.MEDIUM]
     low = [r for r in risks if r.level == RiskLevel.LOW]
 
     if critical_high:
-        plan.append({
-            "priority": "Immediate",
-            "timeframe": "Within 24-48 hours",
-            "items": [
-                {
-                    "risk": r.title,
-                    "score": r.score,
-                    "action": r.description,
-                    "category": r.category.value if r.category else "general",
-                }
-                for r in critical_high
-            ],
-        })
+        plan.append(
+            {
+                "priority": "Immediate",
+                "timeframe": "Within 24-48 hours",
+                "items": [
+                    {
+                        "risk": r.title,
+                        "score": r.score,
+                        "action": r.description,
+                        "category": r.category.value if r.category else "general",
+                    }
+                    for r in critical_high
+                ],
+            }
+        )
 
     if medium:
-        plan.append({
-            "priority": "Short-term",
-            "timeframe": "Within 1-2 weeks",
-            "items": [
-                {
-                    "risk": r.title,
-                    "score": r.score,
-                    "action": r.description,
-                    "category": r.category.value if r.category else "general",
-                }
-                for r in medium
-            ],
-        })
+        plan.append(
+            {
+                "priority": "Short-term",
+                "timeframe": "Within 1-2 weeks",
+                "items": [
+                    {
+                        "risk": r.title,
+                        "score": r.score,
+                        "action": r.description,
+                        "category": r.category.value if r.category else "general",
+                    }
+                    for r in medium
+                ],
+            }
+        )
 
     if low:
-        plan.append({
-            "priority": "Long-term",
-            "timeframe": "Within 1-3 months",
-            "items": [
-                {
-                    "risk": r.title,
-                    "score": r.score,
-                    "action": r.description,
-                    "category": r.category.value if r.category else "general",
-                }
-                for r in low
-            ],
-        })
+        plan.append(
+            {
+                "priority": "Long-term",
+                "timeframe": "Within 1-3 months",
+                "items": [
+                    {
+                        "risk": r.title,
+                        "score": r.score,
+                        "action": r.description,
+                        "category": r.category.value if r.category else "general",
+                    }
+                    for r in low
+                ],
+            }
+        )
 
     return plan

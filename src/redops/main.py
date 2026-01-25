@@ -143,6 +143,7 @@ def main():
     For legacy pipeline-based execution, use run_pipeline() directly.
     """
     from redops.cli.app import main as cli_main
+
     sys.exit(cli_main())
 
 

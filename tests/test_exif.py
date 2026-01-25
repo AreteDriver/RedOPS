@@ -3,7 +3,7 @@
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from redops.core.context import Context
 from redops.core.models import ExifData, RiskLevel
 from redops.modules.metadata.exif import (
@@ -160,9 +160,7 @@ class TestIdentifySensitiveExif:
 
     def test_identify_gps(self):
         """Test identifying GPS coordinates."""
-        metadata = {
-            "gps_coordinates": {"latitude": 40.7, "longitude": -73.9}
-        }
+        metadata = {"gps_coordinates": {"latitude": 40.7, "longitude": -73.9}}
         result = identify_sensitive_exif(metadata)
         assert any("GPS" in r for r in result)
 
@@ -196,9 +194,7 @@ class TestAnalyzeExifForFindings:
         """Test that GPS creates HIGH severity finding."""
         exif_data = ExifData(
             filename="test.jpg",
-            metadata={
-                "gps_coordinates": {"latitude": 40.7, "longitude": -73.9}
-            },
+            metadata={"gps_coordinates": {"latitude": 40.7, "longitude": -73.9}},
             sensitive_fields=["GPSInfo"],
             warnings=[],
         )
@@ -317,6 +313,7 @@ class TestExtractExifFromFile:
         """Test extraction from a real image (no EXIF)."""
         # Create a simple test image
         from PIL import Image
+
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
             img = Image.new("RGB", (100, 100), color="red")
             img.save(f.name)
@@ -355,6 +352,7 @@ class TestExtractExif:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a test image
             from PIL import Image
+
             img_path = Path(tmpdir, "test.jpg")
             img = Image.new("RGB", (100, 100), color="blue")
             img.save(str(img_path))

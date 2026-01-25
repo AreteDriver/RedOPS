@@ -12,17 +12,17 @@ IMPORTANT: This module uses simulated/example threat data.
 Real implementations would integrate with actual threat feeds.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 import re
-import hashlib
 from redops.core.context import Context
 
 
 class IOCType(Enum):
     """Types of Indicators of Compromise."""
+
     IP_ADDRESS = "ip_address"
     DOMAIN = "domain"
     URL = "url"
@@ -42,6 +42,7 @@ class IOCType(Enum):
 
 class ThreatLevel(Enum):
     """Threat severity levels."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -51,6 +52,7 @@ class ThreatLevel(Enum):
 
 class ThreatCategory(Enum):
     """Categories of threats."""
+
     MALWARE = "malware"
     PHISHING = "phishing"
     BOTNET = "botnet"
@@ -69,6 +71,7 @@ class ThreatCategory(Enum):
 
 class ConfidenceLevel(Enum):
     """Confidence levels for threat intelligence."""
+
     CONFIRMED = "confirmed"
     HIGH = "high"
     MEDIUM = "medium"
@@ -79,6 +82,7 @@ class ConfidenceLevel(Enum):
 @dataclass
 class IOC:
     """Indicator of Compromise."""
+
     type: IOCType
     value: str
     threat_level: ThreatLevel = ThreatLevel.UNKNOWN
@@ -111,6 +115,7 @@ class IOC:
 @dataclass
 class ThreatActor:
     """Threat actor profile."""
+
     name: str
     aliases: List[str] = field(default_factory=list)
     description: str = ""
@@ -149,6 +154,7 @@ class ThreatActor:
 @dataclass
 class ThreatFeed:
     """Threat intelligence feed configuration."""
+
     name: str
     feed_type: str  # ip, domain, hash, mixed
     url: str = ""
@@ -176,6 +182,7 @@ class ThreatFeed:
 @dataclass
 class ThreatMatch:
     """Result of matching against threat intelligence."""
+
     ioc: IOC
     matched_value: str
     context: str  # Where the match was found
@@ -219,23 +226,55 @@ KNOWN_MALICIOUS_PATTERNS = {
 # Suspicious domain patterns
 SUSPICIOUS_DOMAIN_PATTERNS = [
     (r"^[a-z0-9]{30,}\.(?:com|net|org|info)$", "DGA-like domain", ThreatLevel.HIGH),
-    (r"^(?:login|secure|account|verify|update)-[a-z]+\.", "Phishing pattern", ThreatLevel.HIGH),
+    (
+        r"^(?:login|secure|account|verify|update)-[a-z]+\.",
+        "Phishing pattern",
+        ThreatLevel.HIGH,
+    ),
     (r"\.(?:tk|ml|ga|cf|gq)$", "Free TLD often abused", ThreatLevel.MEDIUM),
-    (r"(?:paypal|apple|microsoft|google|amazon|facebook)-[a-z]+\.", "Brand impersonation", ThreatLevel.CRITICAL),
-    (r"[0-9]{1,3}-[0-9]{1,3}-[0-9]{1,3}-[0-9]{1,3}\.", "IP-based domain", ThreatLevel.MEDIUM),
+    (
+        r"(?:paypal|apple|microsoft|google|amazon|facebook)-[a-z]+\.",
+        "Brand impersonation",
+        ThreatLevel.CRITICAL,
+    ),
+    (
+        r"[0-9]{1,3}-[0-9]{1,3}-[0-9]{1,3}-[0-9]{1,3}\.",
+        "IP-based domain",
+        ThreatLevel.MEDIUM,
+    ),
     (r"\.onion$", "Tor hidden service", ThreatLevel.MEDIUM),
-    (r"(?:malware|trojan|virus|hack|crack|warez)\.", "Suspicious keywords", ThreatLevel.HIGH),
+    (
+        r"(?:malware|trojan|virus|hack|crack|warez)\.",
+        "Suspicious keywords",
+        ThreatLevel.HIGH,
+    ),
 ]
 
 # Known malicious file hash patterns (example prefixes)
 KNOWN_MALWARE_INDICATORS = {
     "ransomware_extensions": [
-        ".locky", ".cryptolocker", ".cerber", ".wannacry", ".petya",
-        ".ryuk", ".maze", ".revil", ".conti", ".lockbit",
+        ".locky",
+        ".cryptolocker",
+        ".cerber",
+        ".wannacry",
+        ".petya",
+        ".ryuk",
+        ".maze",
+        ".revil",
+        ".conti",
+        ".lockbit",
     ],
     "suspicious_file_names": [
-        "mimikatz", "lazagne", "procdump", "pwdump", "hashdump",
-        "cobalt", "beacon", "meterpreter", "empire", "covenant",
+        "mimikatz",
+        "lazagne",
+        "procdump",
+        "pwdump",
+        "hashdump",
+        "cobalt",
+        "beacon",
+        "meterpreter",
+        "empire",
+        "covenant",
     ],
     "c2_patterns": [
         r"/gate\.php$",
@@ -348,7 +387,10 @@ THREAT_FEEDS = {
 # Main Functions
 # ============================================================================
 
-def analyze_threat_intel(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+
+def analyze_threat_intel(
+    ctx: Context, params: Optional[Dict[str, Any]] = None
+) -> Context:
     """
     Analyze context data against threat intelligence.
 
@@ -452,10 +494,17 @@ def analyze_threat_intel(ctx: Context, params: Optional[Dict[str, Any]] = None) 
 
     # Log findings
     if filtered_matches:
-        ctx.log(f"Found {len(filtered_matches)} threat intelligence matches", level="WARNING")
-        critical_count = sum(1 for m in filtered_matches if m.ioc.threat_level == ThreatLevel.CRITICAL)
+        ctx.log(
+            f"Found {len(filtered_matches)} threat intelligence matches",
+            level="WARNING",
+        )
+        critical_count = sum(
+            1 for m in filtered_matches if m.ioc.threat_level == ThreatLevel.CRITICAL
+        )
         if critical_count > 0:
-            ctx.log(f"CRITICAL: {critical_count} critical threat(s) detected", level="ERROR")
+            ctx.log(
+                f"CRITICAL: {critical_count} critical threat(s) detected", level="ERROR"
+            )
 
     return ctx
 
@@ -479,13 +528,15 @@ def extract_indicators_from_context(ctx: Context) -> Dict[str, List[str]]:
     }
 
     # Patterns for extraction
-    ip_pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
-    domain_pattern = r'\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}\b'
+    ip_pattern = r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+    domain_pattern = (
+        r"\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}\b"
+    )
     url_pattern = r'https?://[^\s<>"\']+(?:\.[^\s<>"\']+)*'
-    md5_pattern = r'\b[a-fA-F0-9]{32}\b'
-    sha1_pattern = r'\b[a-fA-F0-9]{40}\b'
-    sha256_pattern = r'\b[a-fA-F0-9]{64}\b'
-    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    md5_pattern = r"\b[a-fA-F0-9]{32}\b"
+    sha1_pattern = r"\b[a-fA-F0-9]{40}\b"
+    sha256_pattern = r"\b[a-fA-F0-9]{64}\b"
+    email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
 
     # Collect all text from context
     all_text = []
@@ -581,13 +632,15 @@ def check_domains_against_intel(domains: List[str]) -> List[ThreatMatch]:
                     tags=["suspicious_pattern"],
                     metadata={"pattern": pattern, "description": description},
                 )
-                matches.append(ThreatMatch(
-                    ioc=ioc,
-                    matched_value=domain,
-                    context="domain_check",
-                    match_type="pattern",
-                    score=_threat_level_to_score(threat_level),
-                ))
+                matches.append(
+                    ThreatMatch(
+                        ioc=ioc,
+                        matched_value=domain,
+                        context="domain_check",
+                        match_type="pattern",
+                        score=_threat_level_to_score(threat_level),
+                    )
+                )
                 break  # One match per domain
 
     return matches
@@ -617,13 +670,15 @@ def check_ips_against_intel(ips: List[str]) -> List[ThreatMatch]:
                 source="range_check",
                 tags=["private_ip", "internal"],
             )
-            matches.append(ThreatMatch(
-                ioc=ioc,
-                matched_value=ip,
-                context="ip_check",
-                match_type="range",
-                score=0.1,
-            ))
+            matches.append(
+                ThreatMatch(
+                    ioc=ioc,
+                    matched_value=ip,
+                    context="ip_check",
+                    match_type="range",
+                    score=0.1,
+                )
+            )
 
         # Check for bogon ranges
         if is_bogon_ip(ip):
@@ -636,13 +691,15 @@ def check_ips_against_intel(ips: List[str]) -> List[ThreatMatch]:
                 source="range_check",
                 tags=["bogon", "invalid"],
             )
-            matches.append(ThreatMatch(
-                ioc=ioc,
-                matched_value=ip,
-                context="ip_check",
-                match_type="range",
-                score=0.3,
-            ))
+            matches.append(
+                ThreatMatch(
+                    ioc=ioc,
+                    matched_value=ip,
+                    context="ip_check",
+                    match_type="range",
+                    score=0.3,
+                )
+            )
 
     return matches
 
@@ -675,13 +732,15 @@ def check_urls_against_intel(urls: List[str]) -> List[ThreatMatch]:
                     tags=["c2_pattern", "malware"],
                     metadata={"pattern": pattern},
                 )
-                matches.append(ThreatMatch(
-                    ioc=ioc,
-                    matched_value=url,
-                    context="url_check",
-                    match_type="pattern",
-                    score=0.8,
-                ))
+                matches.append(
+                    ThreatMatch(
+                        ioc=ioc,
+                        matched_value=url,
+                        context="url_check",
+                        match_type="pattern",
+                        score=0.8,
+                    )
+                )
                 break
 
         # Check for suspicious file downloads
@@ -696,13 +755,15 @@ def check_urls_against_intel(urls: List[str]) -> List[ThreatMatch]:
                     source="pattern_matching",
                     tags=["ransomware", "malicious_extension"],
                 )
-                matches.append(ThreatMatch(
-                    ioc=ioc,
-                    matched_value=url,
-                    context="url_check",
-                    match_type="extension",
-                    score=1.0,
-                ))
+                matches.append(
+                    ThreatMatch(
+                        ioc=ioc,
+                        matched_value=url,
+                        context="url_check",
+                        match_type="extension",
+                        score=1.0,
+                    )
+                )
                 break
 
     return matches
@@ -867,14 +928,15 @@ def analyze_url_patterns(urls: List[str]) -> Dict[str, Any]:
         if "." in path:
             ext = path.split(".")[-1].lower()[:10]
             if ext.isalpha():
-                analysis["file_extensions"][ext] = analysis["file_extensions"].get(ext, 0) + 1
+                analysis["file_extensions"][ext] = (
+                    analysis["file_extensions"].get(ext, 0) + 1
+                )
 
     return analysis
 
 
 def identify_threat_actors(
-    ctx: Context,
-    matches: List[ThreatMatch]
+    ctx: Context, matches: List[ThreatMatch]
 ) -> List[ThreatActor]:
     """
     Identify potential threat actors based on context and matches.
@@ -969,7 +1031,7 @@ def calculate_reputation_score(matches: List[ThreatMatch]) -> float:
 def generate_risk_indicators(
     matches: List[ThreatMatch],
     domain_analysis: Dict[str, Any],
-    ip_analysis: Dict[str, Any]
+    ip_analysis: Dict[str, Any],
 ) -> List[Dict[str, Any]]:
     """
     Generate risk indicators from analysis.
@@ -986,49 +1048,61 @@ def generate_risk_indicators(
 
     # From matches
     if matches:
-        critical_matches = [m for m in matches if m.ioc.threat_level == ThreatLevel.CRITICAL]
+        critical_matches = [
+            m for m in matches if m.ioc.threat_level == ThreatLevel.CRITICAL
+        ]
         if critical_matches:
-            indicators.append({
-                "indicator": "critical_threats_detected",
-                "severity": "critical",
-                "count": len(critical_matches),
-                "description": f"{len(critical_matches)} critical threat(s) detected",
-            })
+            indicators.append(
+                {
+                    "indicator": "critical_threats_detected",
+                    "severity": "critical",
+                    "count": len(critical_matches),
+                    "description": f"{len(critical_matches)} critical threat(s) detected",
+                }
+            )
 
         high_matches = [m for m in matches if m.ioc.threat_level == ThreatLevel.HIGH]
         if high_matches:
-            indicators.append({
-                "indicator": "high_threats_detected",
-                "severity": "high",
-                "count": len(high_matches),
-                "description": f"{len(high_matches)} high-severity threat(s) detected",
-            })
+            indicators.append(
+                {
+                    "indicator": "high_threats_detected",
+                    "severity": "high",
+                    "count": len(high_matches),
+                    "description": f"{len(high_matches)} high-severity threat(s) detected",
+                }
+            )
 
     # From domain analysis
     if domain_analysis.get("suspicious_count", 0) > 0:
-        indicators.append({
-            "indicator": "suspicious_domains",
-            "severity": "medium",
-            "count": domain_analysis["suspicious_count"],
-            "description": f"{domain_analysis['suspicious_count']} suspicious domain(s) detected",
-        })
+        indicators.append(
+            {
+                "indicator": "suspicious_domains",
+                "severity": "medium",
+                "count": domain_analysis["suspicious_count"],
+                "description": f"{domain_analysis['suspicious_count']} suspicious domain(s) detected",
+            }
+        )
 
     if domain_analysis.get("patterns_detected"):
-        indicators.append({
-            "indicator": "malicious_domain_patterns",
-            "severity": "high",
-            "patterns": domain_analysis["patterns_detected"],
-            "description": f"Detected patterns: {', '.join(domain_analysis['patterns_detected'][:3])}",
-        })
+        indicators.append(
+            {
+                "indicator": "malicious_domain_patterns",
+                "severity": "high",
+                "patterns": domain_analysis["patterns_detected"],
+                "description": f"Detected patterns: {', '.join(domain_analysis['patterns_detected'][:3])}",
+            }
+        )
 
     # From IP analysis
     if ip_analysis.get("bogon_count", 0) > 0:
-        indicators.append({
-            "indicator": "bogon_ips",
-            "severity": "medium",
-            "count": ip_analysis["bogon_count"],
-            "description": f"{ip_analysis['bogon_count']} bogon IP(s) detected",
-        })
+        indicators.append(
+            {
+                "indicator": "bogon_ips",
+                "severity": "medium",
+                "count": ip_analysis["bogon_count"],
+                "description": f"{ip_analysis['bogon_count']} bogon IP(s) detected",
+            }
+        )
 
     return indicators
 
@@ -1047,10 +1121,18 @@ def generate_intel_summary(intel_data: Dict[str, Any]) -> Dict[str, Any]:
 
     summary = {
         "total_matches": len(matches),
-        "critical_count": sum(1 for m in matches if m.get("ioc", {}).get("threat_level") == "critical"),
-        "high_count": sum(1 for m in matches if m.get("ioc", {}).get("threat_level") == "high"),
-        "medium_count": sum(1 for m in matches if m.get("ioc", {}).get("threat_level") == "medium"),
-        "low_count": sum(1 for m in matches if m.get("ioc", {}).get("threat_level") == "low"),
+        "critical_count": sum(
+            1 for m in matches if m.get("ioc", {}).get("threat_level") == "critical"
+        ),
+        "high_count": sum(
+            1 for m in matches if m.get("ioc", {}).get("threat_level") == "high"
+        ),
+        "medium_count": sum(
+            1 for m in matches if m.get("ioc", {}).get("threat_level") == "medium"
+        ),
+        "low_count": sum(
+            1 for m in matches if m.get("ioc", {}).get("threat_level") == "low"
+        ),
         "threat_actors_identified": len(intel_data.get("threat_actors", [])),
         "reputation_score": intel_data.get("reputation_score", 0),
         "risk_level": "low",
@@ -1075,6 +1157,7 @@ def generate_intel_summary(intel_data: Dict[str, Any]) -> Dict[str, Any]:
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def is_private_ip(ip: str) -> bool:
     """Check if IP is in private range."""
@@ -1204,7 +1287,7 @@ def create_ioc(
         threat_level=threat_level,
         categories=categories or [],
         confidence=ConfidenceLevel.UNVERIFIED,
-        first_seen=datetime.utcnow().isoformat(),
+        first_seen=datetime.now(timezone.utc).isoformat(),
         source=source,
         tags=tags or [],
     )
@@ -1305,7 +1388,7 @@ def validate_ioc(ioc_type: IOCType, value: str) -> Tuple[bool, str]:
 
 def _validate_ip(value: str) -> Tuple[bool, str]:
     """Validate IP address."""
-    pattern = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+    pattern = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
     if re.match(pattern, value):
         return True, ""
     return False, "Invalid IP address format"
@@ -1313,7 +1396,7 @@ def _validate_ip(value: str) -> Tuple[bool, str]:
 
 def _validate_domain(value: str) -> Tuple[bool, str]:
     """Validate domain name."""
-    pattern = r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
+    pattern = r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$"
     if re.match(pattern, value):
         return True, ""
     return False, "Invalid domain format"
@@ -1329,7 +1412,7 @@ def _validate_url(value: str) -> Tuple[bool, str]:
 
 def _validate_email(value: str) -> Tuple[bool, str]:
     """Validate email address."""
-    pattern = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'
+    pattern = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$"
     if re.match(pattern, value):
         return True, ""
     return False, "Invalid email format"
@@ -1346,7 +1429,7 @@ def _validate_hash(value: str, expected_length: int) -> Tuple[bool, str]:
 
 def _validate_cve(value: str) -> Tuple[bool, str]:
     """Validate CVE ID."""
-    pattern = r'^CVE-\d{4}-\d{4,}$'
+    pattern = r"^CVE-\d{4}-\d{4,}$"
     if re.match(pattern, value, re.IGNORECASE):
         return True, ""
     return False, "Invalid CVE format (expected CVE-YYYY-NNNNN)"
@@ -1366,7 +1449,7 @@ def enrich_ioc(ioc: IOC) -> IOC:
     """
     # Add timestamp if not present
     if not ioc.last_seen:
-        ioc.last_seen = datetime.utcnow().isoformat()
+        ioc.last_seen = datetime.now(timezone.utc).isoformat()
 
     # Add type-specific enrichment
     if ioc.type == IOCType.DOMAIN:
@@ -1383,7 +1466,11 @@ def enrich_ioc(ioc: IOC) -> IOC:
         if is_bogon_ip(ioc.value):
             ioc.tags.append("bogon")
 
-    elif ioc.type in [IOCType.FILE_HASH_MD5, IOCType.FILE_HASH_SHA1, IOCType.FILE_HASH_SHA256]:
+    elif ioc.type in [
+        IOCType.FILE_HASH_MD5,
+        IOCType.FILE_HASH_SHA1,
+        IOCType.FILE_HASH_SHA256,
+    ]:
         ioc.metadata["hash_type"] = ioc.type.value
 
     return ioc
