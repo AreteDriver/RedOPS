@@ -63,6 +63,12 @@ API_PROVIDERS = {
         "env_var": "GOOGLE_API_KEY",
         "url": "https://aistudio.google.com/app/apikey",
     },
+    "groq": {
+        "name": "Groq",
+        "description": "Fast inference for open models",
+        "env_var": "GROQ_API_KEY",
+        "url": "https://console.groq.com/keys",
+    },
 }
 
 # AI Provider options
@@ -100,6 +106,16 @@ AI_PROVIDERS = {
             "deepseek-r1",
         ],
         "default_model": "llama3.2",
+    },
+    "groq": {
+        "name": "Groq (Fast)",
+        "models": [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it",
+        ],
+        "default_model": "llama-3.3-70b-versatile",
     },
 }
 
@@ -194,6 +210,7 @@ def get_default_config() -> Dict[str, Any]:
             "openai": None,
             "anthropic": None,
             "google": None,
+            "groq": None,
             "shodan": None,
             "virustotal": None,
             "securitytrails": None,
@@ -404,7 +421,7 @@ class SettingsMenu:
         """Test an API key."""
         print()
         print("Select provider to test:")
-        providers = ["openai", "anthropic", "google"]  # AI providers with API keys
+        providers = ["openai", "anthropic", "google", "groq"]  # AI providers with API keys
         for i, provider in enumerate(providers, 1):
             info = API_PROVIDERS[provider]
             key = self._get_api_key(provider)
@@ -459,6 +476,13 @@ class SettingsMenu:
                 genai.configure(api_key=key)
                 # List models to verify key works
                 list(genai.list_models())
+                return True
+            elif provider == "groq":
+                from groq import Groq
+
+                client = Groq(api_key=key)
+                # List models to verify key works
+                client.models.list()
                 return True
         except ImportError:
             print(f"Required library for {provider} is not installed.")

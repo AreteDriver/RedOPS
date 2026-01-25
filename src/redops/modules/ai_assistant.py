@@ -114,6 +114,16 @@ class AIAssistant:
                     "Ollama library not installed. "
                     "Install with: pip install ollama"
                 )
+        elif self.provider == "groq":
+            try:
+                from groq import Groq
+
+                self.client = Groq(api_key=self.api_key)
+            except ImportError:
+                raise ImportError(
+                    "Groq library not installed. "
+                    "Install with: pip install groq"
+                )
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -127,6 +137,8 @@ class AIAssistant:
             return self._call_gemini(prompt, system_prompt)
         elif self.provider == "ollama":
             return self._call_ollama(prompt, system_prompt)
+        elif self.provider == "groq":
+            return self._call_groq(prompt, system_prompt)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -192,6 +204,22 @@ class AIAssistant:
         )
 
         return response["message"]["content"]
+
+    def _call_groq(self, prompt: str, system_prompt: str = None) -> str:
+        """Call Groq API (fast inference)."""
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+        )
+
+        return response.choices[0].message.content
 
     def analyze_findings(self, scan_data: Dict[str, Any]) -> str:
         """
