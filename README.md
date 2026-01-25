@@ -101,6 +101,20 @@ RedOPS implements a **modular pipeline architecture** that addresses cybersecuri
 
 **Value**: Eliminates hours of manual report writing while ensuring consistent, professional deliverables
 
+### 🤖 AI-Powered Analysis
+**Problem**: Interpreting security findings and generating actionable recommendations requires deep expertise
+**Solution**: Integrated AI assistants for analysis, explanation, and remediation guidance
+
+- **Finding Analysis**: AI-powered interpretation of scan results with risk prioritization
+- **Security Explanations**: Natural language explanations of vulnerabilities and concepts
+- **Remediation Suggestions**: Actionable fix recommendations with priority levels
+- **Executive Summaries**: AI-generated business-focused security briefings
+- **Interactive Chat**: Q&A interface for security questions with scan context
+
+**Supported Providers**: OpenAI (GPT-4o) and Anthropic (Claude)
+
+**Value**: Accelerates analysis and makes security insights accessible to technical and non-technical stakeholders
+
 ### 🛡️ Compliance & Governance
 **Problem**: Security assessments must operate within strict legal and ethical boundaries  
 **Solution**: Built-in scope validation and audit logging
@@ -185,8 +199,14 @@ cd RedOPS
 # Install in development mode
 pip install -e .
 
-# Or install with all optional dependencies
+# Install with full recon dependencies
 pip install -e ".[full]"
+
+# Install with AI features (OpenAI/Anthropic)
+pip install -e ".[ai]"
+
+# Install everything
+pip install -e ".[all]"
 ```
 
 ### Using pip
@@ -231,6 +251,38 @@ Reports are saved to the `./output` directory (or your specified `--output-dir`)
 - **`technical_report_*.md`** - Detailed findings for security teams
 - **`report_*.html`** - Styled HTML reports for presentations
 - **`data_*.json`** - Machine-readable data for integration with security platforms (SIEM, SOAR)
+
+### 4. AI-Powered Analysis
+
+```bash
+# Configure API key (one-time setup)
+redops apikey set -p anthropic  # or: -p openai
+
+# Explain security concepts
+redops ai explain -q "What is OWASP A03:2021 Injection?"
+
+# Analyze scan results with AI
+redops ai analyze -i output/data_scan.json
+
+# Get remediation suggestions
+redops ai suggest -i output/data_scan.json
+
+# Generate executive summary
+redops ai summarize -i output/data_scan.json
+
+# Interactive security Q&A
+redops ai chat
+
+# Override provider/model per-command
+redops ai explain -q "What is XSS?" -p anthropic -m claude-sonnet-4-20250514
+```
+
+### 5. Run AI-Enhanced Scans
+
+```bash
+# Full assessment with AI analysis (requires API key)
+redops scan example.com --preset ai_enhanced
+```
 
 ---
 
