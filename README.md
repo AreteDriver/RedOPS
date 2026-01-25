@@ -115,7 +115,7 @@ RedOPS implements a **modular pipeline architecture** that addresses cybersecuri
 - **Executive Summaries**: AI-generated business-focused security briefings
 - **Interactive Chat**: Q&A interface for security questions with scan context
 
-**Supported Providers**: OpenAI (GPT-4o) and Anthropic (Claude)
+**Supported Providers**: OpenAI (GPT-4o), Anthropic (Claude), Google Gemini, and Ollama (local models)
 
 **Value**: Accelerates analysis and makes security insights accessible to technical and non-technical stakeholders
 
@@ -260,7 +260,7 @@ Reports are saved to the `./output` directory (or your specified `--output-dir`)
 
 ```bash
 # Configure API key (one-time setup)
-redops apikey set -p anthropic  # or: -p openai
+redops apikey set -p anthropic  # or: -p openai, -p google
 
 # Explain security concepts
 redops ai explain -q "What is OWASP A03:2021 Injection?"
@@ -279,6 +279,8 @@ redops ai chat
 
 # Override provider/model per-command
 redops ai explain -q "What is XSS?" -p anthropic -m claude-sonnet-4-20250514
+redops ai explain -q "What is XSS?" -p gemini -m gemini-2.0-flash
+redops ai explain -q "What is XSS?" -p ollama -m llama3.2  # Local, no API key needed
 ```
 
 ### 5. Run AI-Enhanced Scans
