@@ -63,6 +63,12 @@ API_PROVIDERS = {
         "env_var": "HUNTER_API_KEY",
         "url": "https://hunter.io/api-keys",
     },
+    "hibp": {
+        "name": "Have I Been Pwned",
+        "description": "Breach data and credential exposure",
+        "env_var": "HIBP_API_KEY",
+        "url": "https://haveibeenpwned.com/API/Key",
+    },
     "google": {
         "name": "Google AI (Gemini)",
         "description": "Gemini models for AI assistance",

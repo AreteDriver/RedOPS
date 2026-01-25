@@ -237,6 +237,26 @@ AVAILABLE_MODULES = {
         "description": "Query Censys for host/cert intelligence (requires API key)",
         "category": "intel",
     },
+    "virustotal": {
+        "name": "VirusTotal Intelligence",
+        "description": "Query VirusTotal for domain/IP/URL analysis (requires API key)",
+        "category": "intel",
+    },
+    "securitytrails": {
+        "name": "SecurityTrails Intelligence",
+        "description": "Query SecurityTrails for DNS/subdomain intelligence (requires API key)",
+        "category": "intel",
+    },
+    "hunter": {
+        "name": "Hunter.io Intelligence",
+        "description": "Query Hunter.io for email discovery (requires API key)",
+        "category": "intel",
+    },
+    "hibp": {
+        "name": "Have I Been Pwned",
+        "description": "Query HIBP for breach data (requires API key)",
+        "category": "intel",
+    },
     "threat_intel": {
         "name": "Threat Intelligence",
         "description": "IOC analysis and threat correlation",
@@ -964,6 +984,10 @@ def run_module(ctx: Context, module_name: str, config: CLIConfig) -> Context:
         "infrastructure": run_infrastructure,
         "shodan": run_shodan,
         "censys": run_censys,
+        "virustotal": run_virustotal,
+        "securitytrails": run_securitytrails,
+        "hunter": run_hunter,
+        "hibp": run_hibp,
         "threat_intel": run_threat_intel,
         "compliance": run_compliance,
         "correlation": run_correlation,
@@ -1030,6 +1054,34 @@ def run_censys(ctx: Context, config: CLIConfig) -> Context:
     from redops.modules.intel.censys_intel import analyze_censys_intel
 
     return analyze_censys_intel(ctx, {})
+
+
+def run_virustotal(ctx: Context, config: CLIConfig) -> Context:
+    """Run VirusTotal intelligence module."""
+    from redops.modules.intel.virustotal_intel import analyze_virustotal_intel
+
+    return analyze_virustotal_intel(ctx, {})
+
+
+def run_securitytrails(ctx: Context, config: CLIConfig) -> Context:
+    """Run SecurityTrails intelligence module."""
+    from redops.modules.intel.securitytrails_intel import analyze_securitytrails_intel
+
+    return analyze_securitytrails_intel(ctx, {})
+
+
+def run_hunter(ctx: Context, config: CLIConfig) -> Context:
+    """Run Hunter.io intelligence module."""
+    from redops.modules.intel.hunter_intel import analyze_hunter_intel
+
+    return analyze_hunter_intel(ctx, {})
+
+
+def run_hibp(ctx: Context, config: CLIConfig) -> Context:
+    """Run Have I Been Pwned intelligence module."""
+    from redops.modules.intel.hibp_intel import analyze_hibp_intel
+
+    return analyze_hibp_intel(ctx, {})
 
 
 def run_compliance(ctx: Context, config: CLIConfig) -> Context:
@@ -1245,10 +1297,11 @@ def get_default_config() -> Dict[str, Any]:
             "openai": None,
             "anthropic": None,
             "shodan": None,
+            "censys": None,
             "virustotal": None,
             "securitytrails": None,
-            "censys": None,
             "hunter": None,
+            "hibp": None,
         },
         "ai": {
             "provider": "openai",

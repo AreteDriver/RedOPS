@@ -1,0 +1,314 @@
+"""Tests for Have I Been Pwned intelligence module."""
+
+import pytest
+from unittest.mock import patch, MagicMock
+
+from redops.core.context import Context
+from redops.modules.intel.hibp_intel import (
+    query_hibp_breaches,
+    query_hibp_domain,
+    query_hibp_email,
+    query_hibp_pastes,
+    analyze_hibp_intel,
+    _extract_domain,
+    HIBPBreach,
+    HIBPPaste,
+)
+
+
+class TestHelperFunctions:
+    """Tests for helper functions."""
+
+    def test_extract_domain(self):
+        """Test domain extraction."""
+        assert _extract_domain("https://example.com/path") == "example.com"
+        assert _extract_domain("http://sub.example.com:8080/") == "sub.example.com"
+        assert _extract_domain("example.com") == "example.com"
+
+
+class TestHIBPDataclasses:
+    """Tests for HIBP dataclasses."""
+
+    def test_hibp_breach_to_dict(self):
+        """Test HIBPBreach serialization."""
+        breach = HIBPBreach(
+            name="ExampleBreach",
+            title="Example Breach",
+            domain="example.com",
+            breach_date="2023-01-15",
+            pwn_count=1000000,
+            description="A data breach at Example Inc.",
+            data_classes=["Email addresses", "Passwords", "Names"],
+            is_verified=True,
+            is_sensitive=False,
+        )
+        data = breach.to_dict()
+
+        assert data["name"] == "ExampleBreach"
+        assert data["title"] == "Example Breach"
+        assert data["pwn_count"] == 1000000
+        assert "Email addresses" in data["data_classes"]
+        assert data["is_verified"] is True
+
+    def test_hibp_paste_to_dict(self):
+        """Test HIBPPaste serialization."""
+        paste = HIBPPaste(
+            source="Pastebin",
+            id="abc123",
+            title="Leaked Credentials",
+            date="2023-06-01",
+            email_count=500,
+        )
+        data = paste.to_dict()
+
+        assert data["source"] == "Pastebin"
+        assert data["id"] == "abc123"
+        assert data["email_count"] == 500
+
+
+class TestQueryHIBPBreaches:
+    """Tests for query_hibp_breaches (all breaches - no API key needed)."""
+
+    def test_successful_breaches_query(self):
+        """Test successful all-breaches query."""
+        ctx = Context(target="example.com")
+
+        mock_response = [
+            {
+                "Name": "Breach1",
+                "Title": "First Breach",
+                "Domain": "site1.com",
+                "BreachDate": "2020-01-01",
+                "PwnCount": 500000,
+                "DataClasses": ["Emails", "Passwords"],
+                "IsVerified": True,
+            },
+            {
+                "Name": "Breach2",
+                "Title": "Second Breach",
+                "Domain": "site2.com",
+                "BreachDate": "2021-06-15",
+                "PwnCount": 1000000,
+                "DataClasses": ["Emails"],
+                "IsVerified": True,
+            },
+        ]
+
+        with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=mock_response):
+            result = query_hibp_breaches(ctx)
+
+        data = result.get("hibp_breaches")
+        assert data is not None
+        assert data["error"] is None
+        assert len(data["breaches"]) == 2
+        assert data["breaches"][0]["name"] == "Breach1"
+
+    def test_filter_by_domain(self):
+        """Test filtering breaches by domain."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel._make_hibp_request") as mock_req:
+            mock_req.return_value = []
+            result = query_hibp_breaches(ctx, {"domain": "example.com"})
+
+            # Verify the domain filter was applied to the request
+            call_args = mock_req.call_args
+            assert "domain=example.com" in call_args[0][0]
+
+
+class TestQueryHIBPDomain:
+    """Tests for query_hibp_domain."""
+
+    def test_no_target(self):
+        """Test with no target."""
+        ctx = Context(target=None)
+        result = query_hibp_domain(ctx)
+
+        assert "hibp_domain" not in result.data
+
+    def test_no_api_key(self):
+        """Test when API key not configured."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value=None):
+            result = query_hibp_domain(ctx)
+
+        data = result.get("hibp_domain")
+        assert data is not None
+        assert "API key" in data["error"]
+
+    def test_successful_domain_query(self):
+        """Test successful domain breach query."""
+        ctx = Context(target="example.com")
+
+        mock_response = [
+            {"Email": "user1@example.com", "Breaches": ["Breach1", "Breach2"]},
+            {"Email": "user2@example.com", "Breaches": ["Breach1"]},
+            {"Email": "user3@example.com", "Breaches": ["Breach3"]},
+        ]
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=mock_response):
+                result = query_hibp_domain(ctx)
+
+        data = result.get("hibp_domain")
+        assert data is not None
+        assert data["error"] is None
+        assert len(data["breached_accounts"]) == 3
+
+    def test_no_breaches_found(self):
+        """Test domain with no breaches."""
+        ctx = Context(target="secure-domain.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"result": "not_found"}):
+                result = query_hibp_domain(ctx)
+
+        data = result.get("hibp_domain")
+        assert data["breached_accounts"] == []
+
+
+class TestQueryHIBPEmail:
+    """Tests for query_hibp_email."""
+
+    def test_no_email(self):
+        """Test with no email."""
+        ctx = Context(target="example.com")
+        result = query_hibp_email(ctx)
+
+        assert "hibp_email" not in result.data
+
+    def test_successful_email_query(self):
+        """Test successful email breach query."""
+        ctx = Context(target="example.com")
+
+        mock_response = [
+            {
+                "Name": "LinkedIn",
+                "Title": "LinkedIn",
+                "Domain": "linkedin.com",
+                "BreachDate": "2012-05-05",
+                "PwnCount": 164611595,
+                "DataClasses": ["Email addresses", "Passwords"],
+                "IsVerified": True,
+            },
+            {
+                "Name": "Adobe",
+                "Title": "Adobe",
+                "Domain": "adobe.com",
+                "BreachDate": "2013-10-04",
+                "PwnCount": 152445165,
+                "DataClasses": ["Email addresses", "Password hints", "Passwords"],
+                "IsVerified": True,
+            },
+        ]
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=mock_response):
+                result = query_hibp_email(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_email")
+        assert data is not None
+        assert data["email"] == "test@example.com"
+        assert len(data["breaches"]) == 2
+        assert data["breaches"][0]["name"] == "LinkedIn"
+
+
+class TestQueryHIBPPastes:
+    """Tests for query_hibp_pastes."""
+
+    def test_no_email(self):
+        """Test with no email."""
+        ctx = Context(target="example.com")
+        result = query_hibp_pastes(ctx)
+
+        assert "hibp_pastes" not in result.data
+
+    def test_successful_pastes_query(self):
+        """Test successful pastes query."""
+        ctx = Context(target="example.com")
+
+        mock_response = [
+            {
+                "Source": "Pastebin",
+                "Id": "abc123",
+                "Title": "Credential dump",
+                "Date": "2023-01-15T10:30:00Z",
+                "EmailCount": 250,
+            },
+            {
+                "Source": "Pastie",
+                "Id": "xyz789",
+                "Title": None,
+                "Date": "2022-06-01T14:00:00Z",
+                "EmailCount": 100,
+            },
+        ]
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=mock_response):
+                result = query_hibp_pastes(ctx, {"email": "test@example.com"})
+
+        data = result.get("hibp_pastes")
+        assert data is not None
+        assert data["email"] == "test@example.com"
+        assert len(data["pastes"]) == 2
+        assert data["pastes"][0]["source"] == "Pastebin"
+
+
+class TestAnalyzeHIBPIntel:
+    """Tests for analyze_hibp_intel."""
+
+    def test_comprehensive_analysis(self):
+        """Test comprehensive HIBP analysis."""
+        ctx = Context(target="example.com")
+
+        mock_domain_response = [
+            {"Email": "user1@example.com", "Breaches": ["Breach1", "Breach2"]},
+            {"Email": "user2@example.com", "Breaches": ["Breach1"]},
+        ]
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value=mock_domain_response):
+                result = analyze_hibp_intel(ctx)
+
+        intel = result.get("hibp_intel")
+        assert intel is not None
+        assert intel["summary"]["breached_accounts"] == 2
+        assert intel["summary"]["has_breaches"] is True
+        assert intel["summary"]["unique_breaches"] == 2
+
+    def test_no_breaches(self):
+        """Test analysis with no breaches."""
+        ctx = Context(target="secure.example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"result": "not_found"}):
+                result = analyze_hibp_intel(ctx)
+
+        intel = result.get("hibp_intel")
+        assert intel is not None
+        assert intel["summary"]["breached_accounts"] == 0
+        assert intel["summary"]["has_breaches"] is False
+
+    def test_no_api_key(self):
+        """Test analysis without API key."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value=None):
+            result = analyze_hibp_intel(ctx)
+
+        intel = result.get("hibp_intel")
+        assert intel is not None
+        assert intel["domain"]["error"] is not None
+
+    def test_rate_limited(self):
+        """Test handling rate limit error."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hibp_intel.get_hibp_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hibp_intel._make_hibp_request", return_value={"error": "rate_limited"}):
+                result = analyze_hibp_intel(ctx)
+
+        intel = result.get("hibp_intel")
+        assert intel["domain"]["error"] == "rate_limited"
