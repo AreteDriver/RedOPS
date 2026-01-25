@@ -8,10 +8,20 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
+
+from redops.web.websocket import (
+    manager as ws_manager,
+    emit_scan_started,
+    emit_scan_progress,
+    emit_module_start,
+    emit_module_end,
+    emit_scan_completed,
+    emit_scan_failed,
+)
 
 from redops.main import __version__
 
@@ -274,6 +284,49 @@ def create_app() -> FastAPI:
         """Serve the web dashboard."""
         return get_dashboard_html()
 
+    # WebSocket endpoint
+    @app.websocket("/ws")
+    async def websocket_endpoint(websocket: WebSocket):
+        """
+        WebSocket endpoint for real-time updates.
+
+        Clients receive events:
+        - scan_started: When a new scan begins
+        - scan_progress: Periodic progress updates
+        - scan_module_start/end: Module lifecycle events
+        - scan_completed: When scan finishes successfully
+        - scan_failed: When scan fails
+
+        Clients can send:
+        - {"action": "subscribe", "scan_id": "xxx"}: Subscribe to specific scan
+        - {"action": "unsubscribe", "scan_id": "xxx"}: Unsubscribe from scan
+        """
+        await ws_manager.connect(websocket)
+        try:
+            while True:
+                data = await websocket.receive_text()
+                try:
+                    import json
+                    message = json.loads(data)
+                    action = message.get("action")
+
+                    if action == "subscribe" and "scan_id" in message:
+                        ws_manager.subscribe_to_scan(websocket, message["scan_id"])
+                    elif action == "unsubscribe" and "scan_id" in message:
+                        ws_manager.unsubscribe_from_scan(websocket, message["scan_id"])
+
+                except (json.JSONDecodeError, KeyError):
+                    pass  # Ignore invalid messages
+
+        except WebSocketDisconnect:
+            ws_manager.disconnect(websocket)
+
+    # WebSocket stats endpoint
+    @app.get("/api/ws/stats", tags=["WebSocket"])
+    async def websocket_stats():
+        """Get WebSocket connection statistics."""
+        return ws_manager.get_stats()
+
     return app
 
 
@@ -284,6 +337,9 @@ async def run_scan_task(scan_id: str, request: ScanRequest):
     try:
         _scans[scan_id].status = "running"
         _scans[scan_id].progress = 0
+
+        # Emit scan started event
+        await emit_scan_started(scan_id, request.target, request.preset)
 
         # Simulate scan progress (replace with actual scan in production)
         from redops.core.context import Context
@@ -298,12 +354,22 @@ async def run_scan_task(scan_id: str, request: ScanRequest):
 
         for i, (name, module_fn) in enumerate(modules):
             _scans[scan_id].current_module = name
-            _scans[scan_id].progress = int((i / len(modules)) * 100)
+            progress = int((i / len(modules)) * 100)
+            _scans[scan_id].progress = progress
 
+            # Emit progress and module start
+            await emit_scan_progress(scan_id, progress, name)
+            await emit_module_start(scan_id, name)
+
+            success = True
             try:
                 ctx = module_fn(ctx)
             except Exception as e:
                 ctx.log(f"Module {name} failed: {e}", level="ERROR")
+                success = False
+
+            # Emit module end
+            await emit_module_end(scan_id, name, success)
 
             await asyncio.sleep(0.5)  # Yield to event loop
 
@@ -314,9 +380,13 @@ async def run_scan_task(scan_id: str, request: ScanRequest):
         _scans[scan_id].completed_at = datetime.utcnow().isoformat() + "Z"
         _scans[scan_id].current_module = None
 
+        # Emit completion
+        await emit_scan_completed(scan_id, len(ctx.data))
+
     except Exception as e:
         _scans[scan_id].status = "failed"
         _scans[scan_id].error = str(e)
+        await emit_scan_failed(scan_id, str(e))
 
 
 def get_dashboard_html() -> str:
@@ -341,6 +411,7 @@ def get_dashboard_html() -> str:
                     <span class="text-gray-500 text-sm" x-text="'v' + version"></span>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <span class="text-sm" :class="wsStatus === 'Connected' ? 'text-green-400' : 'text-yellow-400'" x-text="'WS: ' + wsStatus"></span>
                     <span class="text-sm text-gray-400" x-text="health"></span>
                 </div>
             </div>
@@ -431,19 +502,90 @@ def get_dashboard_html() -> str:
             return {
                 version: '',
                 health: 'Checking...',
+                wsStatus: 'Connecting...',
                 scans: [],
                 presets: [],
                 newScan: { target: '', preset: 'quick' },
                 scanning: false,
                 selectedScan: null,
                 results: null,
-                pollInterval: null,
+                ws: null,
 
                 async init() {
                     await this.checkHealth();
                     await this.loadPresets();
                     await this.loadScans();
-                    this.pollInterval = setInterval(() => this.loadScans(), 5000);
+                    this.connectWebSocket();
+                },
+
+                connectWebSocket() {
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    this.ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+                    this.ws.onopen = () => {
+                        this.wsStatus = 'Connected';
+                        console.log('WebSocket connected');
+                    };
+
+                    this.ws.onclose = () => {
+                        this.wsStatus = 'Disconnected';
+                        console.log('WebSocket disconnected, reconnecting in 3s...');
+                        setTimeout(() => this.connectWebSocket(), 3000);
+                    };
+
+                    this.ws.onerror = (e) => {
+                        console.error('WebSocket error:', e);
+                        this.wsStatus = 'Error';
+                    };
+
+                    this.ws.onmessage = (e) => {
+                        try {
+                            const event = JSON.parse(e.data);
+                            this.handleWSEvent(event);
+                        } catch (err) {
+                            console.error('Failed to parse WebSocket message:', err);
+                        }
+                    };
+                },
+
+                handleWSEvent(event) {
+                    console.log('WS Event:', event.event, event);
+
+                    // Find and update scan in list
+                    const scanIndex = this.scans.findIndex(s => s.scan_id === event.scan_id);
+
+                    switch (event.event) {
+                        case 'scan_started':
+                            // Reload scans to get the new one
+                            this.loadScans();
+                            break;
+
+                        case 'scan_progress':
+                            if (scanIndex >= 0) {
+                                this.scans[scanIndex].progress = event.data.progress;
+                                this.scans[scanIndex].current_module = event.data.current_module;
+                            }
+                            break;
+
+                        case 'scan_completed':
+                            if (scanIndex >= 0) {
+                                this.scans[scanIndex].status = 'completed';
+                                this.scans[scanIndex].progress = 100;
+                                this.scans[scanIndex].current_module = null;
+                            }
+                            break;
+
+                        case 'scan_failed':
+                            if (scanIndex >= 0) {
+                                this.scans[scanIndex].status = 'failed';
+                                this.scans[scanIndex].error = event.data.error;
+                            }
+                            break;
+
+                        case 'connection':
+                            console.log('WS connection confirmed:', event.data.message);
+                            break;
+                    }
                 },
 
                 async checkHealth() {
@@ -486,7 +628,7 @@ def get_dashboard_html() -> str:
                         });
                         if (res.ok) {
                             this.newScan.target = '';
-                            await this.loadScans();
+                            // WebSocket will notify us of the new scan
                         }
                     } catch (e) {
                         console.error('Failed to start scan:', e);
