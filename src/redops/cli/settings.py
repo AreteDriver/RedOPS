@@ -45,10 +45,16 @@ API_PROVIDERS = {
         "env_var": "SECURITYTRAILS_API_KEY",
         "url": "https://securitytrails.com/app/account/credentials",
     },
-    "censys": {
-        "name": "Censys",
-        "description": "Internet asset discovery",
-        "env_var": "CENSYS_API_KEY",
+    "censys_id": {
+        "name": "Censys API ID",
+        "description": "Censys API ID for internet asset discovery",
+        "env_var": "CENSYS_API_ID",
+        "url": "https://search.censys.io/account/api",
+    },
+    "censys_secret": {
+        "name": "Censys API Secret",
+        "description": "Censys API Secret for internet asset discovery",
+        "env_var": "CENSYS_API_SECRET",
         "url": "https://search.censys.io/account/api",
     },
     "hunter": {

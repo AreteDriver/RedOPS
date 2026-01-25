@@ -227,6 +227,16 @@ AVAILABLE_MODULES = {
         "description": "Cloud provider and CDN detection",
         "category": "recon",
     },
+    "shodan": {
+        "name": "Shodan Intelligence",
+        "description": "Query Shodan for host/port intelligence (requires API key)",
+        "category": "intel",
+    },
+    "censys": {
+        "name": "Censys Intelligence",
+        "description": "Query Censys for host/cert intelligence (requires API key)",
+        "category": "intel",
+    },
     "threat_intel": {
         "name": "Threat Intelligence",
         "description": "IOC analysis and threat correlation",
@@ -952,6 +962,8 @@ def run_module(ctx: Context, module_name: str, config: CLIConfig) -> Context:
         "tech_stack": run_tech_stack,
         "exposure_scan": run_exposure_scan,
         "infrastructure": run_infrastructure,
+        "shodan": run_shodan,
+        "censys": run_censys,
         "threat_intel": run_threat_intel,
         "compliance": run_compliance,
         "correlation": run_correlation,
@@ -1004,6 +1016,20 @@ def run_threat_intel(ctx: Context, config: CLIConfig) -> Context:
     from redops.modules.intel.threat_intel import analyze_threat_intel
 
     return analyze_threat_intel(ctx, {})
+
+
+def run_shodan(ctx: Context, config: CLIConfig) -> Context:
+    """Run Shodan intelligence module."""
+    from redops.modules.intel.shodan_intel import analyze_shodan_intel
+
+    return analyze_shodan_intel(ctx, {})
+
+
+def run_censys(ctx: Context, config: CLIConfig) -> Context:
+    """Run Censys intelligence module."""
+    from redops.modules.intel.censys_intel import analyze_censys_intel
+
+    return analyze_censys_intel(ctx, {})
 
 
 def run_compliance(ctx: Context, config: CLIConfig) -> Context:
