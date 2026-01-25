@@ -16,7 +16,7 @@ Report Types:
 from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 import hashlib
 from redops.core.context import Context
@@ -308,7 +308,7 @@ def generate_executive_report(
 
     # Generate report components
     report_id = generate_report_id(target)
-    generated_at = datetime.utcnow().isoformat() + "Z"
+    generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     # Calculate risk metrics
     risk_dashboard = calculate_risk_dashboard(findings, risk_data)
@@ -930,7 +930,7 @@ def generate_appendix(
 
 def generate_report_id(target: str) -> str:
     """Generate unique report ID."""
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     hash_input = f"{target}:{timestamp}"
     hash_val = hashlib.md5(hash_input.encode()).hexdigest()[:8]
     return f"RPT-{timestamp}-{hash_val.upper()}"

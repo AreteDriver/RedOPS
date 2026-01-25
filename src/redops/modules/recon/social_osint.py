@@ -10,7 +10,7 @@ No private data access, no authentication bypass, no terms of service violations
 
 from typing import Optional, Dict, Any, List, Set, Tuple
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import hashlib
 from redops.core.context import Context
@@ -772,7 +772,7 @@ def check_breach_simulated(email: str) -> Dict[str, Any]:
 
     result = {
         "email": email,
-        "checked_at": datetime.utcnow().isoformat(),
+        "checked_at": datetime.now(timezone.utc).isoformat(),
         "exposed": is_exposed,
         "breaches": [],
     }

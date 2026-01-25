@@ -5,7 +5,7 @@ Maintains detailed audit logs of all operations performed.
 """
 
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import json
 from redops.core.context import Context
@@ -30,7 +30,7 @@ def create_audit_entry(
         Audit log entry
     """
     return {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "action": action,
         "target": target,
         "user": user,

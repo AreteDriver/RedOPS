@@ -15,7 +15,7 @@ Real implementations would integrate with actual threat feeds.
 from typing import Optional, Dict, Any, List, Set, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import re
 import hashlib
 from redops.core.context import Context
@@ -1204,7 +1204,7 @@ def create_ioc(
         threat_level=threat_level,
         categories=categories or [],
         confidence=ConfidenceLevel.UNVERIFIED,
-        first_seen=datetime.utcnow().isoformat(),
+        first_seen=datetime.now(timezone.utc).isoformat(),
         source=source,
         tags=tags or [],
     )
@@ -1366,7 +1366,7 @@ def enrich_ioc(ioc: IOC) -> IOC:
     """
     # Add timestamp if not present
     if not ioc.last_seen:
-        ioc.last_seen = datetime.utcnow().isoformat()
+        ioc.last_seen = datetime.now(timezone.utc).isoformat()
 
     # Add type-specific enrichment
     if ioc.type == IOCType.DOMAIN:
