@@ -551,8 +551,51 @@ RedOPS implements a **modular pipeline architecture** designed for flexibility, 
 - **Modularity**: Each capability is isolated in independent modules
 - **Composability**: Modules can be chained into custom workflows
 - **Security-First**: Scope validation and audit logging are mandatory components
-- **Extensibility**: Add new modules without modifying core framework
+- **Extensibility**: Add new modules without modifying core framework, or use the plugin system
 - **Auditability**: Complete operation logging for compliance and debugging
+
+### Plugin System
+
+RedOPS includes a comprehensive plugin system for extending functionality:
+
+```bash
+# List installed plugins
+redops plugin list
+
+# Load a plugin from file
+redops plugin load --source ./my_plugin.py
+
+# Enable/disable plugins
+redops plugin enable --name my_plugin
+redops plugin disable --name my_plugin
+```
+
+**Plugin Types**:
+- `ModulePlugin` - Custom reconnaissance/analysis modules
+- `ReporterPlugin` - Custom report formatters
+- `EnricherPlugin` - Data enrichment
+- `HookPlugin` - Pipeline lifecycle hooks (before/after module, on error)
+
+Plugins can be placed in `~/.config/redops/plugins/` or `./plugins/` for auto-discovery.
+
+### Third-Party Intelligence
+
+RedOPS integrates with external threat intelligence APIs:
+
+| Service | Module | Description |
+|---------|--------|-------------|
+| **Shodan** | `shodan` | Host/port intelligence, vulnerabilities, banners |
+| **Censys** | `censys` | Certificate transparency, host discovery |
+
+```bash
+# Configure API keys
+redops apikey set --provider shodan
+redops apikey set --provider censys_id
+redops apikey set --provider censys_secret
+
+# Run intel modules
+redops scan example.com -m shodan,censys
+```
 
 ### Project Structure
 

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Plugin System Integration**
+  - Plugin CLI: `redops plugin list|load|enable|disable|info`
+  - Pipeline hooks: BEFORE_PIPELINE, AFTER_PIPELINE, BEFORE_MODULE, AFTER_MODULE, ON_ERROR
+  - Plugin-based modules via `plugin:name` references in pipelines
+  - Auto-discovery from `~/.config/redops/plugins/` and `./plugins/`
+
+- **Shodan Intelligence Module**
+  - Host information (ports, services, banners)
+  - DNS records and subdomain discovery
+  - Vulnerability detection (CVEs)
+  - Search capabilities
+
+- **Censys Intelligence Module**
+  - Host/IP information
+  - Certificate transparency data
+  - Certificate search
+  - ASN and organization data
+
 ## [1.2.0] - 2026-01-24
 
 ### Added
