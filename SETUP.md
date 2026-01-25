@@ -65,10 +65,49 @@ This installs additional dependencies:
 - dnspython (DNS enumeration)
 - requests (HTTP requests)
 - jinja2 (report templating)
-- scikit-learn, numpy, pandas (data analysis)
-- matplotlib, networkx (visualization)
+- fpdf2 (PDF report generation)
 
-### Method 3: Install from PyPI (when available)
+### Method 3: Install with AI Features
+
+For AI-powered analysis (requires API key):
+
+```bash
+pip install -e ".[ai]"
+```
+
+This installs:
+- anthropic (Claude AI)
+- openai (GPT models)
+
+### Method 4: Install Everything
+
+```bash
+pip install -e ".[all]"
+```
+
+### Method 5: Docker Installation
+
+```bash
+# Build image
+docker build -t redops .
+
+# Run container
+docker run --rm redops --help
+
+# Run with environment variables
+docker run --rm \
+  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  -v $(pwd)/output:/app/output \
+  redops scan example.com --preset quick
+```
+
+Using Docker Compose:
+
+```bash
+docker-compose run redops scan example.com --preset quick
+```
+
+### Method 6: Install from PyPI
 
 ```bash
 # Minimal installation
@@ -214,6 +253,45 @@ export REDOPS_VERBOSE="true"
 
 # Enable strict scope validation
 export REDOPS_STRICT_SCOPE="true"
+
+# AI API Keys (for AI-powered features)
+export ANTHROPIC_API_KEY="your-key-here"
+export OPENAI_API_KEY="your-key-here"
+
+# Notification Webhooks
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
+export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+```
+
+### API Key Configuration
+
+Configure AI API keys for AI-powered analysis:
+
+```bash
+# Interactive setup
+redops apikey set -p anthropic
+
+# List configured keys
+redops apikey list
+
+# Or use the settings menu
+redops settings
+```
+
+### Shell Completions
+
+Enable tab completion for bash or zsh:
+
+```bash
+# Bash
+source completions/redops.bash
+
+# Or add to ~/.bashrc
+echo 'source /path/to/RedOPS/completions/redops.bash' >> ~/.bashrc
+
+# Zsh - add to fpath
+fpath=(/path/to/RedOPS/completions $fpath)
+autoload -Uz compinit && compinit
 ```
 
 ### Scope Configuration
@@ -366,11 +444,61 @@ redops run config/pipelines/recon_pipeline.json yourdomain.com
 cat output/*.log
 ```
 
+## Scheduled Scans
+
+### Using systemd (Linux)
+
+```bash
+# Copy service and timer files
+sudo cp config/systemd/redops-scan.service /etc/systemd/system/
+sudo cp config/systemd/redops-scan.timer /etc/systemd/system/
+
+# Create environment file
+sudo mkdir -p /etc/redops
+sudo cp config/systemd/redops.env.example /etc/redops/env
+sudo nano /etc/redops/env  # Configure your settings
+
+# Enable and start timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now redops-scan.timer
+
+# Check status
+sudo systemctl status redops-scan.timer
+```
+
+### Using cron
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add daily scan at 2 AM
+0 2 * * * /path/to/venv/bin/redops scan example.com --preset quick -o /var/lib/redops/output
+```
+
+See `config/cron.example` for more examples.
+
+## Notifications
+
+Configure notifications to receive scan results:
+
+```bash
+# Set webhook URLs
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
+export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+
+# Notifications are sent automatically after scheduled scans
+# Or use the notification script manually
+./scripts/notify.sh
+```
+
 ## Next Steps
 
 - Review available [pipelines](config/pipelines/)
 - Read the [API documentation](README.md#module-system)
 - Explore [example usage scenarios](README.md#practical-examples)
+- Configure [AI features](#api-key-configuration) for enhanced analysis
+- Set up [scheduled scans](#scheduled-scans) for continuous monitoring
 - Join the community and contribute
 
 ---

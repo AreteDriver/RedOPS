@@ -1,0 +1,169 @@
+.TH REDOPS 1 "January 2025" "RedOPS 1.0.0" "User Commands"
+.SH NAME
+redops \- Professional Cybersecurity Intelligence & Attack Surface Management Platform
+.SH SYNOPSIS
+.B redops
+[\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR]
+.SH DESCRIPTION
+.B RedOPS
+is a modular security assessment framework for authorized penetration testing,
+red team engagements, and security audits. It provides automated reconnaissance,
+threat intelligence, and AI-powered analysis capabilities.
+.PP
+\fBIMPORTANT:\fR RedOPS is designed for authorized security assessments only.
+Always obtain proper authorization before scanning any target.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show help message and exit.
+.TP
+.BR \-v ", " \-\-verbose
+Increase verbosity (can be repeated).
+.TP
+.BR \-q ", " \-\-quiet
+Suppress output except errors.
+.TP
+.BR \-\-no\-color
+Disable colored output.
+.TP
+.BR \-o ", " \-\-output\-dir " " \fIDIR\fR
+Output directory (default: ./output).
+.TP
+.BR \-f ", " \-\-format " " \fIFORMAT\fR
+Output format: json, html, markdown, text, summary.
+.TP
+.BR \-\-config " " \fIFILE\fR
+Path to configuration file.
+.TP
+.BR \-\-dry\-run
+Show what would be done without executing.
+.SH COMMANDS
+.SS scan
+Run a security scan on a target.
+.PP
+.B redops scan
+\fITARGET\fR [\fB\-\-preset\fR \fIPRESET\fR] [\fB\-\-modules\fR \fIMODULES\fR]
+.PP
+Presets: quick, recon, full, compliance, infrastructure, threat_intel, executive, ai_enhanced
+.SS report
+Generate a report from scan results.
+.PP
+.B redops report
+\fB\-i\fR \fIFILE\fR [\fB\-\-type\fR executive|technical|summary]
+.SS modules
+List available scan modules.
+.PP
+.B redops modules
+.SS presets
+List available scan presets.
+.PP
+.B redops presets
+.SS ai
+AI-assisted analysis commands.
+.PP
+.B redops ai
+\fIACTION\fR [\fB\-q\fR \fIQUERY\fR] [\fB\-i\fR \fIFILE\fR] [\fB\-p\fR \fIPROVIDER\fR]
+.PP
+Actions: analyze, explain, suggest, summarize, chat
+.SS apikey
+Manage API keys.
+.PP
+.B redops apikey
+\fIACTION\fR [\fB\-p\fR \fIPROVIDER\fR]
+.PP
+Actions: list, set, get, remove
+.SS settings
+Open interactive settings menu.
+.SS config
+Manage configuration.
+.PP
+.B redops config
+show|init|path
+.SS version
+Show version information.
+.SH EXAMPLES
+.TP
+Quick scan a domain:
+.B redops scan example.com \-\-preset quick
+.TP
+Full security assessment:
+.B redops scan example.com \-\-preset full \-o ./reports
+.TP
+AI-enhanced scan (requires API key):
+.B redops scan example.com \-\-preset ai_enhanced
+.TP
+Explain a security concept:
+.B redops ai explain \-q "What is SQL injection?"
+.TP
+Analyze scan results with AI:
+.B redops ai analyze \-i scan_results.json
+.TP
+Configure API key:
+.B redops apikey set \-p anthropic
+.SH ENVIRONMENT
+.TP
+.B ANTHROPIC_API_KEY
+API key for Anthropic Claude AI models.
+.TP
+.B OPENAI_API_KEY
+API key for OpenAI GPT models.
+.TP
+.B REDOPS_OUTPUT_DIR
+Default output directory.
+.TP
+.B REDOPS_VERBOSE
+Enable verbose output (true/false).
+.TP
+.B REDOPS_STRICT_SCOPE
+Enable strict scope validation (true/false).
+.TP
+.B SLACK_WEBHOOK_URL
+Slack webhook for notifications.
+.TP
+.B DISCORD_WEBHOOK_URL
+Discord webhook for notifications.
+.SH FILES
+.TP
+.I ~/.config/redops/config.json
+User configuration file.
+.TP
+.I config/pipelines/*.json
+Pipeline definition files.
+.TP
+.I completions/redops.bash
+Bash completion script.
+.TP
+.I completions/redops.zsh
+Zsh completion script.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+General error.
+.TP
+.B 2
+Configuration or scope error.
+.SH SECURITY
+RedOPS includes several security features:
+.IP \(bu 2
+Scope validation to prevent unauthorized scanning
+.IP \(bu 2
+Audit logging for compliance
+.IP \(bu 2
+Non-root Docker execution
+.IP \(bu 2
+Safe-by-default configuration
+.SH BUGS
+Report bugs at: https://github.com/AreteDriver/RedOPS/issues
+.SH AUTHOR
+RedOPS Contributors
+.SH COPYRIGHT
+MIT License. See LICENSE file for details.
+.SH SEE ALSO
+.BR nmap (1),
+.BR nikto (1),
+.BR sqlmap (1)
+.PP
+Full documentation: https://github.com/AreteDriver/RedOPS
