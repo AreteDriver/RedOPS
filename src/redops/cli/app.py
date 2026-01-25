@@ -719,6 +719,115 @@ def cmd_version(args: argparse.Namespace, config: CLIConfig) -> int:
     return 0
 
 
+def cmd_history(args: argparse.Namespace, config: CLIConfig) -> int:
+    """View and manage scan history."""
+    from redops.core.scan_history import get_history_db
+
+    action = args.action
+    db = get_history_db()
+
+    if action == "list":
+        scans = db.list_scans(
+            target=args.target,
+            status=args.status,
+            limit=args.limit,
+        )
+
+        if config.output_format == OutputFormat.JSON:
+            print(json.dumps([s.to_dict() for s in scans], indent=2))
+        else:
+            if not scans:
+                print("No scans found.")
+                return 0
+
+            print(f"{'ID':>5}  {'Status':<10}  {'Target':<30}  {'Findings':>8}  {'Date'}")
+            print("-" * 75)
+            for scan in scans:
+                date = scan.started_at[:10] if scan.started_at else "N/A"
+                target = (scan.target[:28] + "..") if len(scan.target) > 30 else scan.target
+                print(f"{scan.id:>5}  {scan.status:<10}  {target:<30}  {scan.findings_count:>8}  {date}")
+
+    elif action == "show":
+        if not args.id:
+            print_error("Scan ID required. Use --id <scan_id>")
+            return 1
+
+        scan = db.get_scan(args.id)
+        if not scan:
+            print_error(f"Scan {args.id} not found")
+            return 1
+
+        findings = db.get_findings(args.id)
+
+        if config.output_format == OutputFormat.JSON:
+            output = scan.to_dict()
+            output["findings"] = [f.to_dict() for f in findings]
+            print(json.dumps(output, indent=2))
+        else:
+            print(f"Scan #{scan.id}")
+            print(f"  Target: {scan.target}")
+            print(f"  Preset: {scan.preset}")
+            print(f"  Status: {scan.status}")
+            print(f"  Started: {scan.started_at or 'N/A'}")
+            print(f"  Completed: {scan.completed_at or 'N/A'}")
+            print(f"  Duration: {scan.duration_seconds:.1f}s")
+            print(f"  Modules: {', '.join(scan.modules_run) or 'N/A'}")
+            print(f"  Findings: {scan.findings_count}")
+            if scan.risk_score is not None:
+                print(f"  Risk Score: {scan.risk_score:.1f}")
+            if scan.error:
+                print(f"  Error: {scan.error}")
+
+            if findings:
+                print()
+                print("Findings:")
+                for finding in findings:
+                    print(f"  [{finding.severity.upper()}] {finding.title}")
+                    if finding.description:
+                        desc = finding.description[:80]
+                        if len(finding.description) > 80:
+                            desc += "..."
+                        print(f"    {desc}")
+
+    elif action == "delete":
+        if not args.id:
+            print_error("Scan ID required. Use --id <scan_id>")
+            return 1
+
+        if db.delete_scan(args.id):
+            print_success(f"Scan {args.id} deleted")
+        else:
+            print_error(f"Scan {args.id} not found")
+            return 1
+
+    elif action == "stats":
+        stats = db.get_stats()
+
+        if config.output_format == OutputFormat.JSON:
+            print(json.dumps(stats, indent=2))
+        else:
+            print("Scan History Statistics")
+            print("-" * 40)
+            print(f"Total Scans: {stats['total_scans']}")
+            print(f"Completed: {stats['completed_scans']}")
+            print(f"Failed: {stats['failed_scans']}")
+            print(f"Total Findings: {stats['total_findings']}")
+            print()
+            print("Findings by Severity:")
+            for sev, count in stats.get("findings_by_severity", {}).items():
+                print(f"  {sev}: {count}")
+            print()
+            print("Recent Targets:")
+            for target in stats.get("recent_targets", []):
+                print(f"  - {target}")
+
+    elif action == "cleanup":
+        deleted = db.cleanup_old(days=args.days)
+        print_success(f"Deleted {deleted} scans older than {args.days} days")
+
+    return 0
+
+
 def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
     """Manage plugins."""
     from redops.core.plugin_system import (
@@ -1544,6 +1653,30 @@ Examples:
     # Version command
     subparsers.add_parser("version", help="Show version")
 
+    # History command
+    history_parser = subparsers.add_parser("history", help="View scan history")
+    history_parser.add_argument(
+        "action",
+        choices=["list", "show", "delete", "stats", "cleanup"],
+        help="History action",
+    )
+    history_parser.add_argument(
+        "--id", type=int, help="Scan ID (for show, delete)"
+    )
+    history_parser.add_argument(
+        "--target", "-t", help="Filter by target (for list)"
+    )
+    history_parser.add_argument(
+        "--status", "-s", choices=["pending", "running", "completed", "failed"],
+        help="Filter by status (for list)"
+    )
+    history_parser.add_argument(
+        "--limit", "-n", type=int, default=20, help="Number of results (for list)"
+    )
+    history_parser.add_argument(
+        "--days", type=int, default=30, help="Age threshold in days (for cleanup)"
+    )
+
     # Plugin management command
     plugin_parser = subparsers.add_parser("plugin", help="Manage plugins")
     plugin_parser.add_argument(
@@ -1591,6 +1724,7 @@ def main(args: Optional[List[str]] = None) -> int:
         "apikey": cmd_apikey,
         "ai": cmd_ai,
         "version": cmd_version,
+        "history": cmd_history,
         "plugin": cmd_plugin,
     }
 
