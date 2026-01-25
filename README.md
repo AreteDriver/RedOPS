@@ -115,7 +115,7 @@ RedOPS implements a **modular pipeline architecture** that addresses cybersecuri
 - **Executive Summaries**: AI-generated business-focused security briefings
 - **Interactive Chat**: Q&A interface for security questions with scan context
 
-**Supported Providers**: OpenAI (GPT-4o), Anthropic (Claude), Google Gemini, and Ollama (local models)
+**Supported Providers**: OpenAI, Anthropic, Google Gemini, Groq, and Ollama (local)
 
 **Value**: Accelerates analysis and makes security insights accessible to technical and non-technical stakeholders
 
@@ -280,6 +280,7 @@ redops ai chat
 # Override provider/model per-command
 redops ai explain -q "What is XSS?" -p anthropic -m claude-sonnet-4-20250514
 redops ai explain -q "What is XSS?" -p gemini -m gemini-2.0-flash
+redops ai explain -q "What is XSS?" -p groq -m llama-3.3-70b-versatile  # Fast inference
 redops ai explain -q "What is XSS?" -p ollama -m llama3.2  # Local, no API key needed
 ```
 
@@ -289,6 +290,48 @@ redops ai explain -q "What is XSS?" -p ollama -m llama3.2  # Local, no API key n
 # Full assessment with AI analysis (requires API key)
 redops scan example.com --preset ai_enhanced
 ```
+
+### 6. Web Dashboard
+
+```bash
+# Install web dependencies
+pip install redops[web]
+
+# Start the web server
+redops-web
+
+# Access dashboard at http://localhost:8000
+# API docs at http://localhost:8000/api/docs
+```
+
+**Features:**
+- REST API for programmatic access
+- Real-time scan progress tracking
+- Interactive results viewer
+- AI analysis integration
+
+### 7. Claude Code Integration (MCP)
+
+RedOPS can be used directly from Claude Code via the Model Context Protocol.
+
+**Setup:**
+```bash
+# Add to ~/.claude.json
+{
+    "mcpServers": {
+        "redops": {
+            "command": "redops-mcp"
+        }
+    }
+}
+```
+
+**Available tools in Claude Code:**
+- `redops_scan` - Run security reconnaissance
+- `redops_explain` - Get AI explanations of security concepts
+- `redops_analyze` - Analyze scan results
+- `redops_suggest` - Get remediation suggestions
+- `redops_summarize` - Generate executive summaries
 
 ---
 
