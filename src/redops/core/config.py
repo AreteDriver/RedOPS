@@ -4,7 +4,7 @@ Configuration management for RedOps.
 Handles loading configuration from files and environment variables.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import json
 import os
@@ -37,12 +37,58 @@ class ModuleConfig(BaseModel):
     user_agent: str = "RedOps/1.0 (OSINT Framework)"
 
 
+class AIConfig(BaseModel):
+    """Configuration for AI assistance features."""
+
+    provider: str = "openai"  # openai, anthropic, local
+    model: str = "gpt-4o-mini"  # default model
+    max_tokens: int = 2048
+    temperature: float = 0.7
+    enabled: bool = True
+
+
+class APIKeysConfig(BaseModel):
+    """Configuration for API keys (stored securely)."""
+
+    openai: Optional[str] = None
+    anthropic: Optional[str] = None
+    shodan: Optional[str] = None
+    virustotal: Optional[str] = None
+    securitytrails: Optional[str] = None
+    censys: Optional[str] = None
+    hunter: Optional[str] = None
+
+    def get_key(self, provider: str) -> Optional[str]:
+        """Get API key for a provider, checking environment variables first."""
+        # Check environment variable first (e.g., OPENAI_API_KEY)
+        env_key = os.getenv(f"{provider.upper()}_API_KEY")
+        if env_key:
+            return env_key
+        # Fall back to stored config
+        return getattr(self, provider, None)
+
+    def set_key(self, provider: str, key: str) -> None:
+        """Set API key for a provider."""
+        if hasattr(self, provider):
+            setattr(self, provider, key)
+
+    def mask_key(self, key: Optional[str]) -> str:
+        """Return masked version of API key for display."""
+        if not key:
+            return "(not set)"
+        if len(key) <= 8:
+            return "*" * len(key)
+        return key[:4] + "*" * (len(key) - 8) + key[-4:]
+
+
 class RedOpsConfig(BaseModel):
     """Main configuration for RedOps."""
 
     scope: ScopeConfig = Field(default_factory=ScopeConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
     modules: ModuleConfig = Field(default_factory=ModuleConfig)
+    api_keys: APIKeysConfig = Field(default_factory=APIKeysConfig)
+    ai: AIConfig = Field(default_factory=AIConfig)
     custom: Dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
@@ -82,6 +128,13 @@ class RedOpsConfig(BaseModel):
                 os.getenv("REDOPS_STRICT_SCOPE").lower() == "true"
             )
 
+        # Load AI provider from environment
+        if os.getenv("REDOPS_AI_PROVIDER"):
+            config.ai.provider = os.getenv("REDOPS_AI_PROVIDER")
+
+        if os.getenv("REDOPS_AI_MODEL"):
+            config.ai.model = os.getenv("REDOPS_AI_MODEL")
+
         return config
 
     def to_file(self, path: Path) -> None:
@@ -93,6 +146,14 @@ class RedOpsConfig(BaseModel):
         """
         with open(path, "w") as f:
             json.dump(self.model_dump(), f, indent=2)
+
+    def get_api_key(self, provider: str) -> Optional[str]:
+        """Get API key for a provider."""
+        return self.api_keys.get_key(provider)
+
+    def set_api_key(self, provider: str, key: str) -> None:
+        """Set API key for a provider."""
+        self.api_keys.set_key(provider, key)
 
 
 # Default configuration instance (loads from environment variables)

@@ -50,6 +50,7 @@ class ScanPreset(Enum):
     INFRASTRUCTURE = "infrastructure"
     THREAT_INTEL = "threat_intel"
     EXECUTIVE = "executive"
+    AI_ENHANCED = "ai_enhanced"
 
 
 @dataclass
@@ -157,6 +158,16 @@ SCAN_PRESETS = {
         ],
         "estimated_time": "10-15 minutes",
     },
+    ScanPreset.AI_ENHANCED: {
+        "name": "AI-Enhanced Assessment",
+        "description": "Full assessment with AI-powered analysis (requires API key)",
+        "modules": [
+            "domain_profile", "tech_stack", "exposure_scan",
+            "infrastructure", "threat_intel", "compliance",
+            "correlation", "ai_analyze", "ai_recommend", "executive_report",
+        ],
+        "estimated_time": "20-30 minutes",
+    },
 }
 
 # Available modules
@@ -210,6 +221,21 @@ AVAILABLE_MODULES = {
         "name": "Risk Scoring",
         "description": "Calculate risk scores for findings",
         "category": "analysis",
+    },
+    "ai_analyze": {
+        "name": "AI Analysis",
+        "description": "AI-powered analysis of findings (requires API key)",
+        "category": "ai",
+    },
+    "ai_summarize": {
+        "name": "AI Summary",
+        "description": "AI-generated executive summary (requires API key)",
+        "category": "ai",
+    },
+    "ai_recommend": {
+        "name": "AI Recommendations",
+        "description": "AI-generated remediation suggestions (requires API key)",
+        "category": "ai",
     },
 }
 
@@ -400,6 +426,211 @@ def cmd_config(args: argparse.Namespace, config: CLIConfig) -> int:
     return 0
 
 
+def cmd_settings(args: argparse.Namespace, config: CLIConfig) -> int:
+    """Open interactive settings menu."""
+    from redops.cli.settings import run_settings_menu
+    return run_settings_menu(quiet=config.quiet)
+
+
+def cmd_apikey(args: argparse.Namespace, config: CLIConfig) -> int:
+    """Manage API keys."""
+    from redops.cli.settings import (
+        set_api_key_direct,
+        get_api_key_direct,
+        list_api_keys,
+        API_PROVIDERS,
+        mask_key,
+    )
+
+    action = args.action
+
+    if action == "list":
+        list_api_keys()
+
+    elif action == "set":
+        provider = args.provider
+        if not provider:
+            print_error("Provider is required. Use --provider <name>")
+            print(f"Available providers: {', '.join(API_PROVIDERS.keys())}")
+            return 1
+
+        if args.key:
+            key = args.key
+        else:
+            # Prompt for key securely
+            import getpass
+            key = getpass.getpass(f"Enter API key for {provider}: ")
+
+        if not key:
+            print_error("API key cannot be empty")
+            return 1
+
+        if set_api_key_direct(provider, key):
+            return 0
+        return 1
+
+    elif action == "get":
+        provider = args.provider
+        if not provider:
+            print_error("Provider is required. Use --provider <name>")
+            return 1
+
+        key = get_api_key_direct(provider)
+        if key:
+            if args.show:
+                print(key)
+            else:
+                print(f"{provider}: {mask_key(key)}")
+        else:
+            print(f"{provider}: (not set)")
+
+    elif action == "remove":
+        provider = args.provider
+        if not provider:
+            print_error("Provider is required. Use --provider <name>")
+            return 1
+
+        set_api_key_direct(provider, None)
+        print_success(f"API key for {provider} removed.")
+
+    return 0
+
+
+def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
+    """AI-assisted analysis commands."""
+    from redops.modules.ai_assistant import AIAssistant
+
+    action = args.action
+
+    # Initialize AI assistant
+    try:
+        assistant = AIAssistant()
+    except Exception as e:
+        print_error(f"Failed to initialize AI assistant: {e}")
+        print_info("Make sure you have configured an API key using 'redops settings' or 'redops apikey set'")
+        return 1
+
+    if action == "analyze":
+        # Analyze scan results
+        input_file = args.input
+        if not input_file:
+            print_error("Input file required. Use --input <file>")
+            return 1
+
+        try:
+            with open(input_file, 'r') as f:
+                scan_data = json.load(f)
+        except Exception as e:
+            print_error(f"Failed to read input file: {e}")
+            return 1
+
+        if not config.quiet:
+            print_info("Analyzing scan results with AI...")
+
+        result = assistant.analyze_findings(scan_data)
+        print(result)
+
+    elif action == "explain":
+        # Explain a finding or concept
+        query = args.query
+        if not query:
+            print_error("Query required. Use --query <text>")
+            return 1
+
+        context_file = args.context
+        context_data = None
+        if context_file:
+            try:
+                with open(context_file, 'r') as f:
+                    context_data = json.load(f)
+            except Exception:
+                pass
+
+        if not config.quiet:
+            print_info("Getting AI explanation...")
+
+        result = assistant.explain(query, context=context_data)
+        print(result)
+
+    elif action == "suggest":
+        # Get remediation suggestions
+        input_file = args.input
+        if not input_file:
+            print_error("Input file required. Use --input <file>")
+            return 1
+
+        try:
+            with open(input_file, 'r') as f:
+                scan_data = json.load(f)
+        except Exception as e:
+            print_error(f"Failed to read input file: {e}")
+            return 1
+
+        if not config.quiet:
+            print_info("Generating remediation suggestions...")
+
+        result = assistant.suggest_remediations(scan_data)
+        print(result)
+
+    elif action == "summarize":
+        # Summarize scan results
+        input_file = args.input
+        if not input_file:
+            print_error("Input file required. Use --input <file>")
+            return 1
+
+        try:
+            with open(input_file, 'r') as f:
+                scan_data = json.load(f)
+        except Exception as e:
+            print_error(f"Failed to read input file: {e}")
+            return 1
+
+        if not config.quiet:
+            print_info("Generating AI summary...")
+
+        result = assistant.summarize(scan_data)
+        print(result)
+
+    elif action == "chat":
+        # Interactive chat mode
+        if not config.quiet:
+            print_header("AI Assistant Chat")
+            print("Type 'exit' or 'quit' to end the session.")
+            print("Type 'load <file>' to load scan data for context.")
+            print()
+
+        context_data = None
+        while True:
+            try:
+                user_input = input("You: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\nExiting chat.")
+                break
+
+            if not user_input:
+                continue
+
+            if user_input.lower() in ('exit', 'quit'):
+                print("Goodbye!")
+                break
+
+            if user_input.lower().startswith('load '):
+                filepath = user_input[5:].strip()
+                try:
+                    with open(filepath, 'r') as f:
+                        context_data = json.load(f)
+                    print(f"Loaded context from: {filepath}")
+                except Exception as e:
+                    print(f"Error loading file: {e}")
+                continue
+
+            response = assistant.chat(user_input, context=context_data)
+            print(f"\nAssistant: {response}\n")
+
+    return 0
+
+
 def cmd_version(args: argparse.Namespace, config: CLIConfig) -> int:
     """Show version information."""
     from redops.main import __version__
@@ -496,6 +727,9 @@ def run_module(ctx: Context, module_name: str, config: CLIConfig) -> Context:
         "executive_report": run_executive_report,
         "social_osint": run_social_osint,
         "risk_scoring": run_risk_scoring,
+        "ai_analyze": run_ai_analyze,
+        "ai_summarize": run_ai_summarize,
+        "ai_recommend": run_ai_recommend,
     }
 
     runner = module_runners.get(module_name)
@@ -564,6 +798,24 @@ def run_risk_scoring(ctx: Context, config: CLIConfig) -> Context:
     """Run risk scoring module."""
     from redops.modules.corp_assessment.risk_scoring import score_risks
     return score_risks(ctx, {})
+
+
+def run_ai_analyze(ctx: Context, config: CLIConfig) -> Context:
+    """Run AI analysis module."""
+    from redops.modules.ai_assistant import ai_analyze
+    return ai_analyze(ctx, {})
+
+
+def run_ai_summarize(ctx: Context, config: CLIConfig) -> Context:
+    """Run AI summarization module."""
+    from redops.modules.ai_assistant import ai_summarize
+    return ai_summarize(ctx, {})
+
+
+def run_ai_recommend(ctx: Context, config: CLIConfig) -> Context:
+    """Run AI recommendations module."""
+    from redops.modules.ai_assistant import ai_recommend
+    return ai_recommend(ctx, {})
 
 
 def count_findings(ctx: Context) -> int:
@@ -716,9 +968,20 @@ def get_default_config() -> Dict[str, Any]:
             "enabled": list(AVAILABLE_MODULES.keys()),
         },
         "api_keys": {
-            "shodan": "",
-            "virustotal": "",
-            "securitytrails": "",
+            "openai": None,
+            "anthropic": None,
+            "shodan": None,
+            "virustotal": None,
+            "securitytrails": None,
+            "censys": None,
+            "hunter": None,
+        },
+        "ai": {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "max_tokens": 2048,
+            "temperature": 0.7,
+            "enabled": True,
         },
     }
 
@@ -823,6 +1086,12 @@ Examples:
   redops report scan_output.json -t executive
   redops modules                             # List modules
   redops presets                             # List presets
+  redops settings                            # Open settings menu
+  redops apikey set -p openai                # Set OpenAI API key
+  redops apikey list                         # List configured API keys
+  redops ai analyze -i scan.json             # AI analysis of scan
+  redops ai chat                             # Interactive AI chat
+  redops ai explain -q "What is XSS?"        # AI explanation
         """,
     )
 
@@ -874,6 +1143,32 @@ Examples:
     config_parser.add_argument("--force", action="store_true",
                               help="Force overwrite existing config")
 
+    # Settings command (interactive menu)
+    subparsers.add_parser("settings", help="Open interactive settings menu")
+
+    # API Key management command
+    apikey_parser = subparsers.add_parser("apikey", help="Manage API keys")
+    apikey_parser.add_argument("action", choices=["list", "set", "get", "remove"],
+                               help="API key action")
+    apikey_parser.add_argument("--provider", "-p",
+                               help="API provider name (openai, anthropic, shodan, etc.)")
+    apikey_parser.add_argument("--key", "-k",
+                               help="API key value (will prompt securely if not provided)")
+    apikey_parser.add_argument("--show", "-s", action="store_true",
+                               help="Show full API key (use with caution)")
+
+    # AI Assistant command
+    ai_parser = subparsers.add_parser("ai", help="AI-assisted analysis")
+    ai_parser.add_argument("action",
+                           choices=["analyze", "explain", "suggest", "summarize", "chat"],
+                           help="AI action")
+    ai_parser.add_argument("--input", "-i",
+                           help="Input scan results file (JSON)")
+    ai_parser.add_argument("--query", "-q",
+                           help="Query or question for AI")
+    ai_parser.add_argument("--context", "-x",
+                           help="Additional context file (JSON)")
+
     # Version command
     subparsers.add_parser("version", help="Show version")
 
@@ -904,6 +1199,9 @@ def main(args: Optional[List[str]] = None) -> int:
         "modules": cmd_modules,
         "presets": cmd_presets,
         "config": cmd_config,
+        "settings": cmd_settings,
+        "apikey": cmd_apikey,
+        "ai": cmd_ai,
         "version": cmd_version,
     }
 
