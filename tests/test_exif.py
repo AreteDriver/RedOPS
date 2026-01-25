@@ -461,3 +461,439 @@ class TestSensitiveTags:
         assert "Make" in SENSITIVE_TAGS
         assert "Model" in SENSITIVE_TAGS
         assert "BodySerialNumber" in SENSITIVE_TAGS
+
+
+class TestPillowNotAvailable:
+    """Tests for when Pillow is not available."""
+
+    def test_extract_exif_without_pillow(self):
+        """Test extract_exif when Pillow not available."""
+        from unittest.mock import patch
+
+        ctx = Context(target="/some/directory")
+
+        with patch("redops.modules.metadata.exif.PILLOW_AVAILABLE", False):
+            result = extract_exif(ctx)
+
+        warnings = result.get_logs(level="WARNING")
+        assert any("Pillow not available" in log["message"] for log in warnings)
+        assert result.data.get("exif_data") == []
+
+    def test_extract_exif_from_file_without_pillow(self):
+        """Test extract_exif_from_file when Pillow not available."""
+        from unittest.mock import patch
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+            f.write(b"fake image data")
+
+            with patch("redops.modules.metadata.exif.PILLOW_AVAILABLE", False):
+                result = extract_exif_from_file(f.name)
+
+            assert result is None
+
+    def test_strip_exif_without_pillow(self):
+        """Test strip_exif when Pillow not available."""
+        from unittest.mock import patch
+
+        with patch("redops.modules.metadata.exif.PILLOW_AVAILABLE", False):
+            result = strip_exif("/some/image.jpg")
+
+        assert result is False
+
+
+class TestExtractExifSingleFile:
+    """Tests for single file extraction with findings."""
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_extract_single_file_with_findings(self):
+        """Test extracting EXIF from a single file generates findings."""
+        from PIL import Image
+        from unittest.mock import patch, MagicMock
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a test image
+            img_path = Path(tmpdir, "test.jpg")
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(str(img_path))
+
+            # Mock extract_exif_from_file to return data with GPS
+            mock_exif = ExifData(
+                filename="test.jpg",
+                metadata={
+                    "gps_coordinates": {"latitude": 40.7, "longitude": -73.9},
+                    "Make": "Canon",
+                },
+                sensitive_fields=["GPSInfo", "Make"],
+                warnings=[],
+            )
+
+            ctx = Context()
+            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif):
+                result = extract_exif(ctx, {"file_path": str(img_path)})
+
+            # Should have exif_data and findings
+            assert "exif_data" in result.data
+            # Findings should be added with finding_exif_N keys
+            finding_keys = [k for k in result.data if k.startswith("finding_exif_")]
+            assert len(finding_keys) > 0
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_extract_logs_gps_warning(self):
+        """Test that extraction logs GPS warning."""
+        from PIL import Image
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            img_path = Path(tmpdir, "test.jpg")
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(str(img_path))
+
+            mock_exif = ExifData(
+                filename="test.jpg",
+                metadata={"gps_coordinates": {"latitude": 40.7, "longitude": -73.9}},
+                sensitive_fields=["GPSInfo"],
+                warnings=[],
+            )
+
+            ctx = Context()
+            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif):
+                result = extract_exif(ctx, {"file_path": str(img_path)})
+
+            warnings = result.get_logs(level="WARNING")
+            assert any("GPS coordinates" in log["message"] for log in warnings)
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_extract_logs_sensitive_data(self):
+        """Test that extraction logs sensitive data info."""
+        from PIL import Image
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            img_path = Path(tmpdir, "test.jpg")
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(str(img_path))
+
+            mock_exif = ExifData(
+                filename="test.jpg",
+                metadata={"Make": "Canon", "Model": "EOS 5D"},
+                sensitive_fields=["Make", "Model"],
+                warnings=[],
+            )
+
+            ctx = Context()
+            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif):
+                result = extract_exif(ctx, {"file_path": str(img_path)})
+
+            info_logs = result.get_logs(level="INFO")
+            assert any("sensitive metadata" in log["message"] for log in info_logs)
+
+
+class TestExtractExifFromFileEdgeCases:
+    """Edge case tests for extract_exif_from_file."""
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_extract_with_exif_and_gps(self):
+        """Test extraction with EXIF data including GPS."""
+        from PIL import Image
+        from unittest.mock import patch, MagicMock
+
+        # Create a mock image object with _getexif method
+        mock_img = MagicMock()
+        mock_img.format = "JPEG"
+        mock_img.mode = "RGB"
+        mock_img.width = 100
+        mock_img.height = 100
+        mock_img._getexif.return_value = {
+            271: "Canon",  # Make
+            272: "EOS 5D",  # Model
+            34853: {  # GPSInfo
+                1: "N",
+                2: (40, 44, 55.0),
+                3: "W",
+                4: (73, 59, 11.0),
+            },
+        }
+        mock_img.__enter__ = MagicMock(return_value=mock_img)
+        mock_img.__exit__ = MagicMock(return_value=False)
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+            # Create actual image so file exists
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(f.name)
+
+            with patch("redops.modules.metadata.exif.Image.open", return_value=mock_img):
+                result = extract_exif_from_file(f.name)
+
+            assert result is not None
+            assert "gps_coordinates" in result.metadata
+            assert "GPSInfo" in result.sensitive_fields
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_extract_with_sensitive_tags(self):
+        """Test extraction identifies sensitive tags."""
+        from PIL import Image
+        from unittest.mock import patch, MagicMock
+
+        # Create a mock image object
+        mock_img = MagicMock()
+        mock_img.format = "JPEG"
+        mock_img.mode = "RGB"
+        mock_img.width = 100
+        mock_img.height = 100
+        mock_img._getexif.return_value = {
+            271: "Canon",  # Make - sensitive
+            315: "John Doe",  # Artist - sensitive
+        }
+        mock_img.__enter__ = MagicMock(return_value=mock_img)
+        mock_img.__exit__ = MagicMock(return_value=False)
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(f.name)
+
+            with patch("redops.modules.metadata.exif.Image.open", return_value=mock_img):
+                result = extract_exif_from_file(f.name)
+
+            assert result is not None
+            assert "Make" in result.sensitive_fields or "Artist" in result.sensitive_fields
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_extract_with_exception(self):
+        """Test extraction handles exception gracefully."""
+        from PIL import Image
+        from unittest.mock import patch
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(f.name)
+
+            # Mock Image.open to raise an exception after getting basic info
+            original_open = Image.open
+
+            def mock_open(path):
+                img = original_open(path)
+                # Make _getexif raise an exception
+                img._getexif = lambda: (_ for _ in ()).throw(Exception("EXIF read error"))
+                return img
+
+            with patch.object(Image, "open", side_effect=mock_open):
+                result = extract_exif_from_file(f.name)
+
+            # Should return ExifData with warnings
+            assert result is not None
+            assert len(result.warnings) > 0
+            assert any("Error" in w for w in result.warnings)
+
+
+class TestParseGpsInfoEdgeCases:
+    """Edge case tests for parse_gps_info."""
+
+    def test_parse_gps_with_altitude_below_sea_level(self):
+        """Test parsing GPS with altitude below sea level."""
+        gps_info = {
+            1: "N",
+            2: (40, 44, 55.0),
+            3: "W",
+            4: (73, 59, 11.0),
+            5: 1,  # Altitude ref (1 = below sea level)
+            6: 50.0,  # Altitude
+        }
+        result = parse_gps_info(gps_info)
+
+        assert result is not None
+        assert "altitude" in result
+        assert result["altitude"] == -50.0  # Negative because below sea level
+
+    def test_parse_gps_exception_returns_none(self):
+        """Test that parse exception returns None."""
+        from unittest.mock import patch
+
+        # Force dms_to_decimal to raise an exception
+        with patch("redops.modules.metadata.exif.dms_to_decimal", side_effect=Exception("Conversion error")):
+            gps_info = {
+                1: "N",
+                2: (40, 44, 55.0),
+                3: "W",
+                4: (73, 59, 11.0),
+            }
+            result = parse_gps_info(gps_info)
+            assert result is None
+
+
+class TestConvertExifValueEdgeCases:
+    """Edge case tests for convert_exif_value."""
+
+    def test_convert_bytes_with_decode_error(self):
+        """Test converting bytes that fail to decode."""
+        # Invalid UTF-8 bytes
+        invalid_bytes = b"\xff\xfe\x00\x01"
+        result = convert_exif_value(invalid_bytes)
+        # Should still return a string (with replacement characters)
+        assert isinstance(result, str)
+
+    def test_convert_unknown_type_to_string(self):
+        """Test converting unknown type falls back to str()."""
+        # Create a custom object that isn't a basic type
+        class CustomObject:
+            def __str__(self):
+                return "custom_object_string"
+
+        obj = CustomObject()
+        result = convert_exif_value(obj)
+        assert result == "custom_object_string"
+
+    def test_convert_none_value(self):
+        """Test converting None returns None."""
+        result = convert_exif_value(None)
+        assert result is None
+
+    def test_convert_bool_value(self):
+        """Test converting boolean - bool has numerator/denominator so treated as ratio."""
+        # In Python, bool is a subclass of int and has numerator/denominator
+        # True.numerator = 1, True.denominator = 1
+        # So convert_exif_value treats it as a ratio and returns 1.0
+        assert convert_exif_value(True) == 1.0
+        assert convert_exif_value(False) == 0.0
+
+
+class TestStripExifEdgeCases:
+    """Edge case tests for strip_exif."""
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_strip_exif_exception(self):
+        """Test strip_exif handles exception."""
+        from unittest.mock import patch
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+            # Write invalid image data
+            f.write(b"not a valid image")
+
+            # This should fail and return False
+            result = strip_exif(f.name)
+            assert result is False
+
+
+class TestGetExifSummaryEdgeCases:
+    """Edge case tests for get_exif_summary."""
+
+    def test_summary_counts_files_with_exif(self):
+        """Test summary correctly counts files with EXIF."""
+        results = [
+            ExifData(
+                filename="test1.jpg",
+                metadata={
+                    "format": "JPEG",
+                    "mode": "RGB",
+                    "size": {"width": 100, "height": 100},
+                    "Make": "Canon",
+                    "Model": "EOS",
+                },  # More than 3 fields = has EXIF
+                sensitive_fields=["Make"],
+                warnings=[],
+            ),
+            ExifData(
+                filename="test2.jpg",
+                metadata={"format": "JPEG", "mode": "RGB"},  # Only basic info
+                sensitive_fields=[],
+                warnings=[],
+            ),
+        ]
+
+        summary = get_exif_summary(results)
+
+        assert summary["files_with_exif"] == 1
+
+    def test_summary_tracks_software(self):
+        """Test summary tracks software used."""
+        results = [
+            ExifData(
+                filename="test1.jpg",
+                metadata={"Software": "Adobe Photoshop"},
+                sensitive_fields=["Software"],
+                warnings=[],
+            ),
+            ExifData(
+                filename="test2.jpg",
+                metadata={"Software": "Adobe Photoshop"},
+                sensitive_fields=["Software"],
+                warnings=[],
+            ),
+            ExifData(
+                filename="test3.jpg",
+                metadata={"Software": "GIMP 2.10"},
+                sensitive_fields=["Software"],
+                warnings=[],
+            ),
+        ]
+
+        summary = get_exif_summary(results)
+
+        assert "Adobe Photoshop" in summary["software_used"]
+        assert summary["software_used"]["Adobe Photoshop"] == 2
+        assert "GIMP 2.10" in summary["software_used"]
+        assert summary["software_used"]["GIMP 2.10"] == 1
+
+
+class TestExtractExifWithDatetimeParsing:
+    """Tests for datetime parsing in EXIF extraction."""
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_extract_with_datetime_tags(self):
+        """Test extraction parses datetime tags."""
+        from PIL import Image
+        from unittest.mock import patch, MagicMock
+
+        mock_img = MagicMock()
+        mock_img.format = "JPEG"
+        mock_img.mode = "RGB"
+        mock_img.width = 100
+        mock_img.height = 100
+        mock_img._getexif.return_value = {
+            306: "2024:01:15 10:30:00",  # DateTime
+            36867: "2024:01:15 10:29:55",  # DateTimeOriginal
+            36868: "2024:01:15 10:29:55",  # DateTimeDigitized
+        }
+        mock_img.__enter__ = MagicMock(return_value=mock_img)
+        mock_img.__exit__ = MagicMock(return_value=False)
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(f.name)
+
+            with patch("redops.modules.metadata.exif.Image.open", return_value=mock_img):
+                result = extract_exif_from_file(f.name)
+
+            assert result is not None
+            # Datetime tags should be present
+            assert "DateTime" in result.metadata or "DateTimeOriginal" in result.metadata
+
+
+class TestExtractExifDirectoryWithWarnings:
+    """Tests for directory extraction with warnings filtering."""
+
+    @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
+    def test_exclude_files_with_warnings(self):
+        """Test excluding files with warnings when include_warnings=False."""
+        from PIL import Image
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create test images
+            img_path = Path(tmpdir, "test.jpg")
+            img = Image.new("RGB", (100, 100), color="red")
+            img.save(str(img_path))
+
+            # Mock to return result with warnings
+            mock_exif_with_warning = ExifData(
+                filename="test.jpg",
+                metadata={},
+                sensitive_fields=[],
+                warnings=["No EXIF data found"],
+            )
+
+            ctx = Context(target=tmpdir)
+            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif_with_warning):
+                result = extract_exif(ctx, {"include_warnings": False})
+
+            # Should not include the file since it has warnings
+            assert result.data["exif_summary"]["total_files"] == 0
