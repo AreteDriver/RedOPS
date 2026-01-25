@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  redops:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: redops:latest
+    container_name: redops
+    volumes:
+      # Mount output directory for reports
+      - ./output:/app/output
+      # Mount custom pipelines (optional)
+      - ./config/pipelines:/app/config/pipelines:ro
+    environment:
+      # AI API keys (set in .env file or export before running)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # Optional: Shodan, VirusTotal, etc.
+      - SHODAN_API_KEY=${SHODAN_API_KEY:-}
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY:-}
+    # Override command for interactive use
+    # command: ["scan", "example.com", "--preset", "quick"]
+    stdin_open: true
+    tty: true
+
+  # Development service with mounted source
+  redops-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: redops:dev
+    container_name: redops-dev
+    volumes:
+      - ./src:/app/src:ro
+      - ./output:/app/output
+      - ./config:/app/config:ro
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    profiles:
+      - dev
+    stdin_open: true
+    tty: true
