@@ -253,7 +253,9 @@ def profile_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
             profile["has_dmarc"] = txt_analysis["dmarc"] is not None
 
             if txt_analysis["spf"]:
-                ctx.log(f"SPF record found: {txt_analysis['spf'][:80]}...", level="INFO")
+                ctx.log(
+                    f"SPF record found: {txt_analysis['spf'][:80]}...", level="INFO"
+                )
             else:
                 ctx.log("No SPF record found - email spoofing risk", level="WARNING")
                 finding = Finding(
@@ -266,7 +268,7 @@ def profile_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
                 ctx.add(f"finding_no_spf_{domain}", finding.model_dump())
 
             if txt_analysis["dmarc"]:
-                ctx.log(f"DMARC record found", level="INFO")
+                ctx.log("DMARC record found", level="INFO")
 
             if txt_analysis["verification_records"]:
                 services = [v[0] for v in txt_analysis["verification_records"]]
@@ -296,7 +298,9 @@ def enumerate_dns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     """
     params = params or {}
     domain = params.get("domain") or ctx.target
-    record_types = params.get("record_types", ["A", "AAAA", "MX", "TXT", "NS", "SOA", "CNAME"])
+    record_types = params.get(
+        "record_types", ["A", "AAAA", "MX", "TXT", "NS", "SOA", "CNAME"]
+    )
 
     if not domain:
         ctx.log("No domain specified for DNS enumeration", level="WARNING")
@@ -317,7 +321,10 @@ def enumerate_dns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     dns_data["total_records"] = total_records
 
     ctx.add("dns_enumeration", dns_data)
-    ctx.log(f"DNS enumeration completed for {domain}: {total_records} total records", level="INFO")
+    ctx.log(
+        f"DNS enumeration completed for {domain}: {total_records} total records",
+        level="INFO",
+    )
 
     return ctx
 
@@ -355,16 +362,51 @@ def discover_subdomains(
     ctx.log(f"Discovering subdomains for: {domain}", level="INFO")
 
     # Common subdomain prefixes to check
-    common_prefixes = params.get("wordlist", [
-        "www", "mail", "ftp", "smtp", "pop", "imap",
-        "webmail", "remote", "vpn", "admin", "portal",
-        "api", "dev", "staging", "test", "beta",
-        "app", "mobile", "m", "cdn", "static",
-        "blog", "shop", "store", "support", "help",
-        "docs", "wiki", "git", "gitlab", "github",
-        "jenkins", "ci", "build", "deploy",
-        "ns1", "ns2", "dns", "dns1", "dns2",
-    ])
+    common_prefixes = params.get(
+        "wordlist",
+        [
+            "www",
+            "mail",
+            "ftp",
+            "smtp",
+            "pop",
+            "imap",
+            "webmail",
+            "remote",
+            "vpn",
+            "admin",
+            "portal",
+            "api",
+            "dev",
+            "staging",
+            "test",
+            "beta",
+            "app",
+            "mobile",
+            "m",
+            "cdn",
+            "static",
+            "blog",
+            "shop",
+            "store",
+            "support",
+            "help",
+            "docs",
+            "wiki",
+            "git",
+            "gitlab",
+            "github",
+            "jenkins",
+            "ci",
+            "build",
+            "deploy",
+            "ns1",
+            "ns2",
+            "dns",
+            "dns1",
+            "dns2",
+        ],
+    )
 
     discovered = []
 
@@ -372,10 +414,12 @@ def discover_subdomains(
         subdomain = f"{prefix}.{domain}"
         records = get_dns_records(subdomain, "A")
         if records:
-            discovered.append({
-                "subdomain": subdomain,
-                "ip_addresses": records,
-            })
+            discovered.append(
+                {
+                    "subdomain": subdomain,
+                    "ip_addresses": records,
+                }
+            )
             ctx.log(f"Found subdomain: {subdomain} -> {records}", level="INFO")
 
     ctx.add("subdomains", discovered)
@@ -395,7 +439,9 @@ def discover_subdomains(
     return ctx
 
 
-def check_zone_transfer(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def check_zone_transfer(
+    ctx: Context, params: Optional[Dict[str, Any]] = None
+) -> Context:
     """
     Check if DNS zone transfer (AXFR) is allowed.
 
@@ -418,7 +464,9 @@ def check_zone_transfer(ctx: Context, params: Optional[Dict[str, Any]] = None) -
 
     if not DNS_AVAILABLE:
         ctx.log("dnspython required for zone transfer check", level="WARNING")
-        ctx.add("zone_transfer", {"status": "skipped", "reason": "dnspython not available"})
+        ctx.add(
+            "zone_transfer", {"status": "skipped", "reason": "dnspython not available"}
+        )
         return ctx
 
     ctx.log(f"Checking zone transfer for: {domain}", level="INFO")
@@ -446,13 +494,18 @@ def check_zone_transfer(ctx: Context, params: Optional[Dict[str, Any]] = None) -
             records_count = len(list(zone.iterate_rdatasets()))
             zone_transfer_results["vulnerable"] = True
             zone_transfer_results["records_exposed"] = records_count
-            zone_transfer_results["nameservers_checked"].append({
-                "nameserver": ns_clean,
-                "vulnerable": True,
-                "records_count": records_count,
-            })
+            zone_transfer_results["nameservers_checked"].append(
+                {
+                    "nameserver": ns_clean,
+                    "vulnerable": True,
+                    "records_count": records_count,
+                }
+            )
 
-            ctx.log(f"ZONE TRANSFER ALLOWED on {ns_clean}! Exposed {records_count} records", level="WARNING")
+            ctx.log(
+                f"ZONE TRANSFER ALLOWED on {ns_clean}! Exposed {records_count} records",
+                level="WARNING",
+            )
 
             finding = Finding(
                 module="recon.domains",
@@ -465,10 +518,12 @@ def check_zone_transfer(ctx: Context, params: Optional[Dict[str, Any]] = None) -
 
         except Exception:
             # Zone transfer denied (expected/secure behavior)
-            zone_transfer_results["nameservers_checked"].append({
-                "nameserver": ns_clean,
-                "vulnerable": False,
-            })
+            zone_transfer_results["nameservers_checked"].append(
+                {
+                    "nameserver": ns_clean,
+                    "vulnerable": False,
+                }
+            )
             ctx.log(f"Zone transfer denied on {ns_clean} (secure)", level="DEBUG")
 
     ctx.add("zone_transfer", zone_transfer_results)

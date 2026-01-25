@@ -19,6 +19,7 @@ from redops.core.context import Context
 @dataclass
 class Platform:
     """Represents a social/professional platform."""
+
     name: str
     url_pattern: str
     category: str  # social, professional, code, forum, other
@@ -40,6 +41,7 @@ class Platform:
 @dataclass
 class UserProfile:
     """Represents a discovered user profile."""
+
     username: str
     platform: str
     url: str
@@ -62,6 +64,7 @@ class UserProfile:
 @dataclass
 class BreachInfo:
     """Information about a data breach."""
+
     name: str
     date: str
     data_types: List[str]
@@ -82,6 +85,7 @@ class BreachInfo:
 @dataclass
 class EmailPattern:
     """Represents an email pattern for a domain."""
+
     pattern: str  # e.g., "first.last", "flast", "firstl"
     example: str
     confidence: float = 0.0
@@ -322,7 +326,9 @@ def gather_osint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
         osint_data["breach_results"] = breach_results
         exposed_count = sum(1 for r in breach_results if r.get("exposed"))
         if exposed_count > 0:
-            ctx.log(f"Found {exposed_count} potentially exposed emails", level="WARNING")
+            ctx.log(
+                f"Found {exposed_count} potentially exposed emails", level="WARNING"
+            )
 
     # Generate findings
     findings = generate_osint_findings(osint_data)
@@ -426,7 +432,9 @@ def generate_usernames_from_name(name: str) -> Set[str]:
     name = name.strip()
 
     # Clean name - remove titles, suffixes
-    name = re.sub(r'\b(Mr|Mrs|Ms|Dr|Jr|Sr|III|II|IV)\b\.?', '', name, flags=re.IGNORECASE)
+    name = re.sub(
+        r"\b(Mr|Mrs|Ms|Dr|Jr|Sr|III|II|IV)\b\.?", "", name, flags=re.IGNORECASE
+    )
     name = name.strip()
 
     # Split into parts
@@ -445,25 +453,25 @@ def generate_usernames_from_name(name: str) -> Set[str]:
     last = parts[-1].lower()
 
     # Remove non-alphanumeric
-    first = re.sub(r'[^a-z0-9]', '', first)
-    last = re.sub(r'[^a-z0-9]', '', last)
+    first = re.sub(r"[^a-z0-9]", "", first)
+    last = re.sub(r"[^a-z0-9]", "", last)
 
     if not first or not last:
         return set()
 
     # Common username patterns
     patterns = [
-        f"{first}{last}",           # johndoe
-        f"{first}.{last}",          # john.doe
-        f"{first}_{last}",          # john_doe
-        f"{first}-{last}",          # john-doe
-        f"{first[0]}{last}",        # jdoe
-        f"{first}{last[0]}",        # johnd
-        f"{last}{first}",           # doejohn
-        f"{last}{first[0]}",        # doej
-        f"{first[0]}{last[0]}",     # jd (if long enough parts)
-        first,                       # john
-        last,                        # doe
+        f"{first}{last}",  # johndoe
+        f"{first}.{last}",  # john.doe
+        f"{first}_{last}",  # john_doe
+        f"{first}-{last}",  # john-doe
+        f"{first[0]}{last}",  # jdoe
+        f"{first}{last[0]}",  # johnd
+        f"{last}{first}",  # doejohn
+        f"{last}{first[0]}",  # doej
+        f"{first[0]}{last[0]}",  # jd (if long enough parts)
+        first,  # john
+        last,  # doe
     ]
 
     # Add number variations
@@ -494,7 +502,7 @@ def extract_username_from_email(email: str) -> Optional[str]:
     local_part = email.split("@")[0]
 
     # Remove common prefixes/suffixes
-    local_part = re.sub(r'[+.].*$', '', local_part)  # Remove + and . suffixes
+    local_part = re.sub(r"[+.].*$", "", local_part)  # Remove + and . suffixes
 
     if is_valid_username(local_part):
         return local_part.lower()
@@ -516,18 +524,31 @@ def is_valid_username(username: str) -> bool:
         return False
     if len(username) < 3 or len(username) > 30:
         return False
-    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$', username):
+    if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$", username):
         return False
     # Exclude common non-usernames
-    excluded = {'the', 'and', 'for', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out'}
+    excluded = {
+        "the",
+        "and",
+        "for",
+        "not",
+        "you",
+        "all",
+        "can",
+        "had",
+        "her",
+        "was",
+        "one",
+        "our",
+        "out",
+    }
     if username.lower() in excluded:
         return False
     return True
 
 
 def correlate_usernames_to_platforms(
-    usernames: Set[str],
-    platform_keys: Optional[List[str]] = None
+    usernames: Set[str], platform_keys: Optional[List[str]] = None
 ) -> Tuple[List[UserProfile], List[Dict[str, Any]]]:
     """
     Correlate usernames across platforms.
@@ -565,11 +586,13 @@ def correlate_usernames_to_platforms(
                 user_platforms.append(platform.name)
 
         if user_platforms:
-            correlations.append({
-                "username": username,
-                "platforms": user_platforms,
-                "platform_count": len(user_platforms),
-            })
+            correlations.append(
+                {
+                    "username": username,
+                    "platforms": user_platforms,
+                    "platform_count": len(user_platforms),
+                }
+            )
 
     return profiles, correlations
 
@@ -599,8 +622,8 @@ def calculate_username_confidence(username: str, platform: Platform) -> float:
         score += 0.1
 
     # Variety factor
-    has_numbers = bool(re.search(r'\d', username))
-    has_special = bool(re.search(r'[._-]', username))
+    has_numbers = bool(re.search(r"\d", username))
+    has_special = bool(re.search(r"[._-]", username))
     if has_numbers:
         score += 0.1
     if has_special:
@@ -648,13 +671,13 @@ def extract_emails_from_context(ctx: Context) -> Set[str]:
             emails.add(email.lower())
 
     # Filter valid emails
-    email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
     return {e for e in emails if email_pattern.match(e)}
 
 
 def is_domain(target: str) -> bool:
     """Check if target looks like a domain."""
-    domain_pattern = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    domain_pattern = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
     return bool(domain_pattern.match(target))
 
 
@@ -680,19 +703,19 @@ def analyze_email_patterns(domain: str) -> List[EmailPattern]:
         )
         # Assign confidence based on pattern prevalence
         confidence = 0.8 - (EMAIL_PATTERNS.index((pattern_name, template)) * 0.05)
-        patterns.append(EmailPattern(
-            pattern=pattern_name,
-            example=example,
-            confidence=max(0.3, confidence),
-        ))
+        patterns.append(
+            EmailPattern(
+                pattern=pattern_name,
+                example=example,
+                confidence=max(0.3, confidence),
+            )
+        )
 
     return patterns
 
 
 def generate_email_permutations(
-    first_name: str,
-    last_name: str,
-    domain: str
+    first_name: str, last_name: str, domain: str
 ) -> List[str]:
     """
     Generate email permutations for a person at a domain.
@@ -712,8 +735,8 @@ def generate_email_permutations(
         return []
 
     # Remove non-alpha characters
-    first = re.sub(r'[^a-z]', '', first)
-    last = re.sub(r'[^a-z]', '', last)
+    first = re.sub(r"[^a-z]", "", first)
+    last = re.sub(r"[^a-z]", "", last)
 
     permutations = []
     for _, template in EMAIL_PATTERNS:
@@ -782,7 +805,9 @@ def check_breach_simulated(email: str) -> Dict[str, Any]:
         hash_int = int(email_hash[:8], 16)
 
         if hash_int % 3 == 0:
-            result["breaches"].append(KNOWN_BREACH_PATTERNS["credential_dump"].to_dict())
+            result["breaches"].append(
+                KNOWN_BREACH_PATTERNS["credential_dump"].to_dict()
+            )
         if hash_int % 5 == 0:
             result["breaches"].append(KNOWN_BREACH_PATTERNS["social_network"].to_dict())
         if hash_int % 7 == 0:
@@ -845,53 +870,57 @@ def generate_osint_findings(osint_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     # Username exposure finding
     if osint_data.get("correlations"):
         high_exposure = [
-            c for c in osint_data["correlations"]
-            if c.get("platform_count", 0) >= 5
+            c for c in osint_data["correlations"] if c.get("platform_count", 0) >= 5
         ]
         if high_exposure:
-            findings.append({
-                "title": "High Username Exposure Detected",
-                "description": f"{len(high_exposure)} username(s) found on 5+ platforms",
-                "severity": "medium",
-                "category": "Information Disclosure",
-                "data": {
-                    "usernames": [c["username"] for c in high_exposure],
-                },
-            })
+            findings.append(
+                {
+                    "title": "High Username Exposure Detected",
+                    "description": f"{len(high_exposure)} username(s) found on 5+ platforms",
+                    "severity": "medium",
+                    "category": "Information Disclosure",
+                    "data": {
+                        "usernames": [c["username"] for c in high_exposure],
+                    },
+                }
+            )
 
     # Breach exposure finding
     breach_results = osint_data.get("breach_results", [])
     exposed_emails = [r for r in breach_results if r.get("exposed")]
     if exposed_emails:
         severity = "high" if len(exposed_emails) >= 3 else "medium"
-        findings.append({
-            "title": "Email Addresses Found in Data Breaches",
-            "description": f"{len(exposed_emails)} email(s) potentially exposed in breaches",
-            "severity": severity,
-            "category": "Credential Exposure",
-            "data": {
-                "exposed_emails": [e["email"] for e in exposed_emails],
-            },
-        })
+        findings.append(
+            {
+                "title": "Email Addresses Found in Data Breaches",
+                "description": f"{len(exposed_emails)} email(s) potentially exposed in breaches",
+                "severity": severity,
+                "category": "Credential Exposure",
+                "data": {
+                    "exposed_emails": [e["email"] for e in exposed_emails],
+                },
+            }
+        )
 
     # Email pattern finding
     if osint_data.get("email_patterns"):
-        findings.append({
-            "title": "Email Pattern Identified",
-            "description": f"Common email patterns identified for target domain",
-            "severity": "info",
-            "category": "Information Disclosure",
-            "data": {
-                "patterns": osint_data["email_patterns"][:3],
-            },
-        })
+        findings.append(
+            {
+                "title": "Email Pattern Identified",
+                "description": "Common email patterns identified for target domain",
+                "severity": "info",
+                "category": "Information Disclosure",
+                "data": {
+                    "patterns": osint_data["email_patterns"][:3],
+                },
+            }
+        )
 
     return findings
 
 
 def discover_employees(
-    ctx: Context,
-    params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: Optional[Dict[str, Any]] = None
 ) -> Context:
     """
     Discover potential employees from context data.
@@ -915,33 +944,43 @@ def discover_employees(
     code_artifacts = ctx.get("code_artifacts", {})
     for author in code_artifacts.get("git_authors", []):
         if isinstance(author, dict):
-            employees.append({
-                "name": author.get("name", "Unknown"),
-                "email": author.get("email"),
-                "source": "git_history",
-                "role": "developer",
-            })
+            employees.append(
+                {
+                    "name": author.get("name", "Unknown"),
+                    "email": author.get("email"),
+                    "source": "git_history",
+                    "role": "developer",
+                }
+            )
 
     # Document metadata - authors
     doc_metadata = ctx.get("document_metadata", {})
     for author in doc_metadata.get("authors", []):
         if isinstance(author, str):
-            employees.append({
-                "name": author,
-                "source": "document_metadata",
-                "role": "unknown",
-            })
+            employees.append(
+                {
+                    "name": author,
+                    "source": "document_metadata",
+                    "role": "unknown",
+                }
+            )
 
     # Entities - persons
     entities = ctx.get("entities", {})
     for person in entities.get("persons", []):
-        name = person.get("name", person.get("value")) if isinstance(person, dict) else str(person)
+        name = (
+            person.get("name", person.get("value"))
+            if isinstance(person, dict)
+            else str(person)
+        )
         if name:
-            employees.append({
-                "name": name,
-                "source": "entity_extraction",
-                "role": "unknown",
-            })
+            employees.append(
+                {
+                    "name": name,
+                    "source": "entity_extraction",
+                    "role": "unknown",
+                }
+            )
 
     # Deduplicate by name
     seen_names = set()
@@ -995,7 +1034,9 @@ def get_platform_by_name(name: str) -> Optional[Platform]:
     return None
 
 
-def generate_profile_urls(username: str, platforms: Optional[List[str]] = None) -> List[Dict[str, str]]:
+def generate_profile_urls(
+    username: str, platforms: Optional[List[str]] = None
+) -> List[Dict[str, str]]:
     """
     Generate profile URLs for a username across platforms.
 
@@ -1013,10 +1054,12 @@ def generate_profile_urls(username: str, platforms: Optional[List[str]] = None) 
     for key in platforms:
         platform = PLATFORMS.get(key)
         if platform and platform.is_valid_username(username):
-            urls.append({
-                "platform": platform.name,
-                "url": platform.format_url(username),
-                "category": platform.category,
-            })
+            urls.append(
+                {
+                    "platform": platform.name,
+                    "url": platform.format_url(username),
+                    "category": platform.category,
+                }
+            )
 
     return urls

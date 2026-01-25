@@ -8,7 +8,7 @@ IMPORTANT: This module operates on PUBLIC information only.
 Pattern-based analysis without active scanning.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import re
@@ -18,6 +18,7 @@ from redops.core.models import Finding
 
 class ExposureSeverity(Enum):
     """Severity levels for exposure findings."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -27,6 +28,7 @@ class ExposureSeverity(Enum):
 
 class ExposureCategory(Enum):
     """Categories of exposure."""
+
     SOURCE_CODE = "source_code"
     CONFIGURATION = "configuration"
     CREDENTIALS = "credentials"
@@ -43,6 +45,7 @@ class ExposureCategory(Enum):
 @dataclass
 class ExposurePattern:
     """Pattern for detecting exposed resources."""
+
     name: str
     pattern: str  # Regex pattern
     category: ExposureCategory
@@ -59,6 +62,7 @@ class ExposurePattern:
 @dataclass
 class ExposureFinding:
     """Represents an exposure finding."""
+
     title: str
     category: ExposureCategory
     severity: ExposureSeverity
@@ -422,15 +426,15 @@ INFRASTRUCTURE_PATTERNS = [
 
 # Combine all patterns
 ALL_PATTERNS = (
-    SOURCE_CODE_PATTERNS +
-    CONFIG_PATTERNS +
-    CREDENTIAL_PATTERNS +
-    BACKUP_PATTERNS +
-    DEBUG_PATTERNS +
-    CLOUD_PATTERNS +
-    API_PATTERNS +
-    ADMIN_PATTERNS +
-    INFRASTRUCTURE_PATTERNS
+    SOURCE_CODE_PATTERNS
+    + CONFIG_PATTERNS
+    + CREDENTIAL_PATTERNS
+    + BACKUP_PATTERNS
+    + DEBUG_PATTERNS
+    + CLOUD_PATTERNS
+    + API_PATTERNS
+    + ADMIN_PATTERNS
+    + INFRASTRUCTURE_PATTERNS
 )
 
 
@@ -449,7 +453,6 @@ SENSITIVE_FILES = {
     "application.yml": ("Spring configuration", ExposureSeverity.HIGH),
     "database.yml": ("Database configuration", ExposureSeverity.HIGH),
     "secrets.yml": ("Secrets file", ExposureSeverity.CRITICAL),
-
     # Credential files
     ".htpasswd": ("Apache password file", ExposureSeverity.CRITICAL),
     ".netrc": ("FTP credentials", ExposureSeverity.CRITICAL),
@@ -457,7 +460,6 @@ SENSITIVE_FILES = {
     ".pypirc": ("PyPI credentials", ExposureSeverity.CRITICAL),
     "credentials.json": ("Credentials file", ExposureSeverity.CRITICAL),
     "service-account.json": ("Service account key", ExposureSeverity.CRITICAL),
-
     # Key files
     "id_rsa": ("SSH private key", ExposureSeverity.CRITICAL),
     "id_rsa.pub": ("SSH public key", ExposureSeverity.LOW),
@@ -465,19 +467,16 @@ SENSITIVE_FILES = {
     ".pem": ("PEM certificate/key", ExposureSeverity.HIGH),
     ".key": ("Private key", ExposureSeverity.CRITICAL),
     ".p12": ("PKCS12 certificate", ExposureSeverity.HIGH),
-
     # Backup files
     "backup.sql": ("Database backup", ExposureSeverity.CRITICAL),
     "dump.sql": ("Database dump", ExposureSeverity.CRITICAL),
     "database.sql": ("Database export", ExposureSeverity.CRITICAL),
     ".sql.gz": ("Compressed SQL backup", ExposureSeverity.CRITICAL),
-
     # Version control
     ".git/config": ("Git configuration", ExposureSeverity.HIGH),
     ".git/HEAD": ("Git HEAD reference", ExposureSeverity.HIGH),
     ".gitignore": ("Git ignore file", ExposureSeverity.LOW),
     ".svn/entries": ("SVN metadata", ExposureSeverity.HIGH),
-
     # Debug/Development
     "phpinfo.php": ("PHP info page", ExposureSeverity.MEDIUM),
     "info.php": ("PHP info page", ExposureSeverity.MEDIUM),
@@ -499,7 +498,6 @@ COMMON_EXPOSED_PATHS = [
     "/.svn/",
     "/.svn/entries",
     "/.hg/",
-
     # Configuration
     "/.env",
     "/config.php",
@@ -507,7 +505,6 @@ COMMON_EXPOSED_PATHS = [
     "/settings.py",
     "/wp-config.php",
     "/web.config",
-
     # Backups
     "/backup/",
     "/backups/",
@@ -515,7 +512,6 @@ COMMON_EXPOSED_PATHS = [
     "/database/",
     "/dump.sql",
     "/backup.zip",
-
     # Debug
     "/debug/",
     "/phpinfo.php",
@@ -523,27 +519,23 @@ COMMON_EXPOSED_PATHS = [
     "/test.php",
     "/server-status",
     "/server-info",
-
     # Admin
     "/admin/",
     "/administrator/",
     "/wp-admin/",
     "/phpmyadmin/",
     "/adminer.php",
-
     # API
     "/api/",
     "/graphql",
     "/swagger/",
     "/api-docs/",
-
     # Logs
     "/logs/",
     "/log/",
     "/error.log",
     "/access.log",
     "/debug.log",
-
     # Common sensitive
     "/robots.txt",
     "/sitemap.xml",
@@ -556,6 +548,7 @@ COMMON_EXPOSED_PATHS = [
 # ============================================================================
 # Main Functions
 # ============================================================================
+
 
 def scan_exposure(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
@@ -604,7 +597,9 @@ def scan_exposure(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     # Get categories to check
     categories = params.get("categories")
     if categories:
-        categories = [ExposureCategory(c) if isinstance(c, str) else c for c in categories]
+        categories = [
+            ExposureCategory(c) if isinstance(c, str) else c for c in categories
+        ]
 
     # Get minimum severity
     min_severity = params.get("min_severity", "info")
@@ -677,7 +672,9 @@ def scan_exposure(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     ctx.log(f"Exposure scan completed: {len(unique_findings)} findings", level="INFO")
 
     # Log high-severity findings
-    critical_count = sum(1 for f in unique_findings if f.severity == ExposureSeverity.CRITICAL)
+    critical_count = sum(
+        1 for f in unique_findings if f.severity == ExposureSeverity.CRITICAL
+    )
     high_count = sum(1 for f in unique_findings if f.severity == ExposureSeverity.HIGH)
     if critical_count > 0:
         ctx.log(f"CRITICAL: {critical_count} critical exposure(s) found", level="ERROR")
@@ -703,19 +700,21 @@ def analyze_domain_exposure(domain_profile: Dict[str, Any]) -> List[ExposureFind
         return findings
 
     # Check for exposed WHOIS information
-    registrant_name = domain_profile.get("registrant_name", "")
+    domain_profile.get("registrant_name", "")
     registrant_email = domain_profile.get("registrant_email", "")
 
     if registrant_email and not registrant_email.startswith("REDACTED"):
-        findings.append(ExposureFinding(
-            title="WHOIS Privacy Not Enabled",
-            category=ExposureCategory.INFRASTRUCTURE,
-            severity=ExposureSeverity.LOW,
-            description="Domain WHOIS information is publicly accessible",
-            evidence=[f"Registrant email: {registrant_email}"],
-            remediation="Enable WHOIS privacy protection through your registrar",
-            affected_assets=[domain_profile.get("domain", "")],
-        ))
+        findings.append(
+            ExposureFinding(
+                title="WHOIS Privacy Not Enabled",
+                category=ExposureCategory.INFRASTRUCTURE,
+                severity=ExposureSeverity.LOW,
+                description="Domain WHOIS information is publicly accessible",
+                evidence=[f"Registrant email: {registrant_email}"],
+                remediation="Enable WHOIS privacy protection through your registrar",
+                affected_assets=[domain_profile.get("domain", "")],
+            )
+        )
 
     # Check for internal domains in DNS
     dns_records = domain_profile.get("dns_records", {})
@@ -726,14 +725,16 @@ def analyze_domain_exposure(domain_profile: Dict[str, Any]) -> List[ExposureFind
                 # Check for internal IP patterns
                 for pattern in INFRASTRUCTURE_PATTERNS:
                     if pattern.matches(record_str):
-                        findings.append(ExposureFinding(
-                            title=pattern.name,
-                            category=pattern.category,
-                            severity=pattern.severity,
-                            description=f"{pattern.description} in {record_type} record",
-                            evidence=[f"{record_type}: {record_str}"],
-                            remediation=pattern.remediation,
-                        ))
+                        findings.append(
+                            ExposureFinding(
+                                title=pattern.name,
+                                category=pattern.category,
+                                severity=pattern.severity,
+                                description=f"{pattern.description} in {record_type} record",
+                                evidence=[f"{record_type}: {record_str}"],
+                                remediation=pattern.remediation,
+                            )
+                        )
                         break
 
     return findings
@@ -761,15 +762,17 @@ def analyze_tech_stack_exposure(tech_stack: Dict[str, Any]) -> List[ExposureFind
             name = tech.get("name", "")
             version = tech.get("version", "")
             if version and version != "unknown":
-                findings.append(ExposureFinding(
-                    title="Technology Version Disclosure",
-                    category=ExposureCategory.INFRASTRUCTURE,
-                    severity=ExposureSeverity.LOW,
-                    description=f"Technology version information exposed: {name} {version}",
-                    evidence=[f"{name}: {version}"],
-                    remediation="Configure servers to hide version information",
-                    metadata={"technology": name, "version": version},
-                ))
+                findings.append(
+                    ExposureFinding(
+                        title="Technology Version Disclosure",
+                        category=ExposureCategory.INFRASTRUCTURE,
+                        severity=ExposureSeverity.LOW,
+                        description=f"Technology version information exposed: {name} {version}",
+                        evidence=[f"{name}: {version}"],
+                        remediation="Configure servers to hide version information",
+                        metadata={"technology": name, "version": version},
+                    )
+                )
 
     # Check for debug headers
     headers = tech_stack.get("headers", {})
@@ -777,19 +780,23 @@ def analyze_tech_stack_exposure(tech_stack: Dict[str, Any]) -> List[ExposureFind
     for header in debug_headers:
         if header.lower() in [h.lower() for h in headers.keys()]:
             value = headers.get(header, "")
-            findings.append(ExposureFinding(
-                title="Debug/Information Header Exposed",
-                category=ExposureCategory.DEBUG,
-                severity=ExposureSeverity.LOW,
-                description=f"Informational header exposed: {header}",
-                evidence=[f"{header}: {value}"],
-                remediation=f"Remove or hide the {header} header in production",
-            ))
+            findings.append(
+                ExposureFinding(
+                    title="Debug/Information Header Exposed",
+                    category=ExposureCategory.DEBUG,
+                    severity=ExposureSeverity.LOW,
+                    description=f"Informational header exposed: {header}",
+                    evidence=[f"{header}: {value}"],
+                    remediation=f"Remove or hide the {header} header in production",
+                )
+            )
 
     return findings
 
 
-def analyze_code_artifacts_exposure(code_artifacts: Dict[str, Any]) -> List[ExposureFinding]:
+def analyze_code_artifacts_exposure(
+    code_artifacts: Dict[str, Any],
+) -> List[ExposureFinding]:
     """
     Analyze code artifacts for exposure indicators.
 
@@ -810,15 +817,17 @@ def analyze_code_artifacts_exposure(code_artifacts: Dict[str, Any]) -> List[Expo
         file_str = str(file_path).lower()
         for sensitive_file, (desc, severity) in SENSITIVE_FILES.items():
             if sensitive_file.lower() in file_str:
-                findings.append(ExposureFinding(
-                    title=f"Sensitive File in Repository: {sensitive_file}",
-                    category=ExposureCategory.CONFIGURATION,
-                    severity=severity,
-                    description=f"{desc} found in code repository",
-                    evidence=[str(file_path)],
-                    remediation="Remove sensitive files from version control",
-                    affected_assets=[str(file_path)],
-                ))
+                findings.append(
+                    ExposureFinding(
+                        title=f"Sensitive File in Repository: {sensitive_file}",
+                        category=ExposureCategory.CONFIGURATION,
+                        severity=severity,
+                        description=f"{desc} found in code repository",
+                        evidence=[str(file_path)],
+                        remediation="Remove sensitive files from version control",
+                        affected_assets=[str(file_path)],
+                    )
+                )
 
     # Check for hardcoded secrets in code
     secrets_found = code_artifacts.get("secrets", [])
@@ -826,15 +835,17 @@ def analyze_code_artifacts_exposure(code_artifacts: Dict[str, Any]) -> List[Expo
         if isinstance(secret, dict):
             secret_type = secret.get("type", "unknown")
             file_path = secret.get("file", "")
-            findings.append(ExposureFinding(
-                title=f"Hardcoded Secret: {secret_type}",
-                category=ExposureCategory.CREDENTIALS,
-                severity=ExposureSeverity.CRITICAL,
-                description=f"Hardcoded {secret_type} found in source code",
-                evidence=[f"File: {file_path}"],
-                remediation="Remove secrets from source code, use environment variables",
-                affected_assets=[file_path],
-            ))
+            findings.append(
+                ExposureFinding(
+                    title=f"Hardcoded Secret: {secret_type}",
+                    category=ExposureCategory.CREDENTIALS,
+                    severity=ExposureSeverity.CRITICAL,
+                    description=f"Hardcoded {secret_type} found in source code",
+                    evidence=[f"File: {file_path}"],
+                    remediation="Remove secrets from source code, use environment variables",
+                    affected_assets=[file_path],
+                )
+            )
 
     # Check git authors for email exposure
     git_authors = code_artifacts.get("git_authors", [])
@@ -844,15 +855,17 @@ def analyze_code_artifacts_exposure(code_artifacts: Dict[str, Any]) -> List[Expo
             emails_exposed.append(author["email"])
 
     if emails_exposed:
-        findings.append(ExposureFinding(
-            title="Developer Emails in Git History",
-            category=ExposureCategory.INFRASTRUCTURE,
-            severity=ExposureSeverity.LOW,
-            description="Developer email addresses exposed in git commit history",
-            evidence=emails_exposed[:5],
-            remediation="Consider using private email addresses for git commits",
-            metadata={"email_count": len(emails_exposed)},
-        ))
+        findings.append(
+            ExposureFinding(
+                title="Developer Emails in Git History",
+                category=ExposureCategory.INFRASTRUCTURE,
+                severity=ExposureSeverity.LOW,
+                description="Developer email addresses exposed in git commit history",
+                evidence=emails_exposed[:5],
+                remediation="Consider using private email addresses for git commits",
+                metadata={"email_count": len(emails_exposed)},
+            )
+        )
 
     return findings
 
@@ -875,26 +888,30 @@ def analyze_document_exposure(doc_metadata: Dict[str, Any]) -> List[ExposureFind
     # Check for internal paths in metadata
     internal_paths = doc_metadata.get("internal_paths", [])
     if internal_paths:
-        findings.append(ExposureFinding(
-            title="Internal Paths in Document Metadata",
-            category=ExposureCategory.INFRASTRUCTURE,
-            severity=ExposureSeverity.LOW,
-            description="Document metadata reveals internal file system paths",
-            evidence=internal_paths[:5],
-            remediation="Strip metadata from documents before publishing",
-        ))
+        findings.append(
+            ExposureFinding(
+                title="Internal Paths in Document Metadata",
+                category=ExposureCategory.INFRASTRUCTURE,
+                severity=ExposureSeverity.LOW,
+                description="Document metadata reveals internal file system paths",
+                evidence=internal_paths[:5],
+                remediation="Strip metadata from documents before publishing",
+            )
+        )
 
     # Check for usernames in metadata
     authors = doc_metadata.get("authors", [])
     if authors:
-        findings.append(ExposureFinding(
-            title="Author Information in Document Metadata",
-            category=ExposureCategory.INFRASTRUCTURE,
-            severity=ExposureSeverity.INFO,
-            description="Document metadata contains author information",
-            evidence=authors[:5] if isinstance(authors, list) else [str(authors)],
-            remediation="Strip author metadata from public documents if sensitive",
-        ))
+        findings.append(
+            ExposureFinding(
+                title="Author Information in Document Metadata",
+                category=ExposureCategory.INFRASTRUCTURE,
+                severity=ExposureSeverity.INFO,
+                description="Document metadata contains author information",
+                evidence=authors[:5] if isinstance(authors, list) else [str(authors)],
+                remediation="Strip author metadata from public documents if sensitive",
+            )
+        )
 
     return findings
 
@@ -934,14 +951,16 @@ def analyze_paths_in_context(ctx: Context) -> List[ExposureFinding]:
             matches = re.findall(pattern.pattern, combined_text, re.IGNORECASE)
             if matches:
                 unique_matches = list(set(matches[:5]))  # Limit evidence
-                findings.append(ExposureFinding(
-                    title=pattern.name,
-                    category=pattern.category,
-                    severity=pattern.severity,
-                    description=pattern.description,
-                    evidence=unique_matches,
-                    remediation=pattern.remediation,
-                ))
+                findings.append(
+                    ExposureFinding(
+                        title=pattern.name,
+                        category=pattern.category,
+                        severity=pattern.severity,
+                        description=pattern.description,
+                        evidence=unique_matches,
+                        remediation=pattern.remediation,
+                    )
+                )
 
     return findings
 
@@ -991,12 +1010,16 @@ def find_cloud_references(ctx: Context) -> List[Dict[str, Any]]:
 
     # Patterns for cloud services
     cloud_patterns = [
-        (r's3://([a-zA-Z0-9.-]+)', 'AWS S3', 'bucket'),
-        (r'([a-zA-Z0-9.-]+)\.s3\.amazonaws\.com', 'AWS S3', 'bucket'),
-        (r'([a-zA-Z0-9.-]+)\.blob\.core\.windows\.net', 'Azure Blob', 'container'),
-        (r'storage\.googleapis\.com/([a-zA-Z0-9._-]+)', 'Google Cloud Storage', 'bucket'),
-        (r'gs://([a-zA-Z0-9._-]+)', 'Google Cloud Storage', 'bucket'),
-        (r'([a-zA-Z0-9-]+)\.firebasestorage\.googleapis\.com', 'Firebase', 'bucket'),
+        (r"s3://([a-zA-Z0-9.-]+)", "AWS S3", "bucket"),
+        (r"([a-zA-Z0-9.-]+)\.s3\.amazonaws\.com", "AWS S3", "bucket"),
+        (r"([a-zA-Z0-9.-]+)\.blob\.core\.windows\.net", "Azure Blob", "container"),
+        (
+            r"storage\.googleapis\.com/([a-zA-Z0-9._-]+)",
+            "Google Cloud Storage",
+            "bucket",
+        ),
+        (r"gs://([a-zA-Z0-9._-]+)", "Google Cloud Storage", "bucket"),
+        (r"([a-zA-Z0-9-]+)\.firebasestorage\.googleapis\.com", "Firebase", "bucket"),
     ]
 
     # Search all context data
@@ -1016,12 +1039,14 @@ def find_cloud_references(ctx: Context) -> List[Dict[str, Any]]:
     for pattern, provider, resource_type in cloud_patterns:
         matches = re.findall(pattern, combined_text, re.IGNORECASE)
         for match in set(matches):
-            references.append({
-                "provider": provider,
-                "resource_type": resource_type,
-                "name": match,
-                "pattern_matched": pattern,
-            })
+            references.append(
+                {
+                    "provider": provider,
+                    "resource_type": resource_type,
+                    "name": match,
+                    "pattern_matched": pattern,
+                }
+            )
 
     return references
 
@@ -1051,15 +1076,17 @@ def generate_cloud_findings(cloud_refs: List[Dict[str, Any]]) -> List[ExposureFi
 
     for provider, refs in by_provider.items():
         names = [r["name"] for r in refs]
-        findings.append(ExposureFinding(
-            title=f"{provider} Resources Referenced",
-            category=ExposureCategory.CLOUD_STORAGE,
-            severity=ExposureSeverity.MEDIUM,
-            description=f"{len(refs)} {provider} resource(s) referenced in application",
-            evidence=names[:5],
-            remediation=f"Verify {provider} resource permissions are properly configured",
-            metadata={"provider": provider, "count": len(refs)},
-        ))
+        findings.append(
+            ExposureFinding(
+                title=f"{provider} Resources Referenced",
+                category=ExposureCategory.CLOUD_STORAGE,
+                severity=ExposureSeverity.MEDIUM,
+                description=f"{len(refs)} {provider} resource(s) referenced in application",
+                evidence=names[:5],
+                remediation=f"Verify {provider} resource permissions are properly configured",
+                metadata={"provider": provider, "count": len(refs)},
+            )
+        )
 
     return findings
 
@@ -1078,13 +1105,13 @@ def find_credential_exposures(ctx: Context) -> List[Dict[str, Any]]:
 
     # Credential patterns
     cred_patterns = [
-        (r'AKIA[0-9A-Z]{16}', 'AWS Access Key ID'),
-        (r'(?:password|passwd|pwd)\s*[=:]\s*[\'"]?([^\s\'"]+)', 'Password'),
-        (r'(?:api[_-]?key|apikey)\s*[=:]\s*[\'"]?([^\s\'"]+)', 'API Key'),
-        (r'(?:secret|token)\s*[=:]\s*[\'"]?([^\s\'"]+)', 'Secret/Token'),
-        (r'Bearer\s+[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+', 'JWT Token'),
-        (r'ghp_[a-zA-Z0-9]{36}', 'GitHub Personal Access Token'),
-        (r'sk-[a-zA-Z0-9]{48}', 'OpenAI API Key'),
+        (r"AKIA[0-9A-Z]{16}", "AWS Access Key ID"),
+        (r'(?:password|passwd|pwd)\s*[=:]\s*[\'"]?([^\s\'"]+)', "Password"),
+        (r'(?:api[_-]?key|apikey)\s*[=:]\s*[\'"]?([^\s\'"]+)', "API Key"),
+        (r'(?:secret|token)\s*[=:]\s*[\'"]?([^\s\'"]+)', "Secret/Token"),
+        (r"Bearer\s+[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+", "JWT Token"),
+        (r"ghp_[a-zA-Z0-9]{36}", "GitHub Personal Access Token"),
+        (r"sk-[a-zA-Z0-9]{48}", "OpenAI API Key"),
     ]
 
     # Search all context data
@@ -1106,16 +1133,20 @@ def find_credential_exposures(ctx: Context) -> List[Dict[str, Any]]:
             else:
                 masked = "****"
 
-            exposures.append({
-                "type": cred_type,
-                "masked_value": masked,
-                "pattern_matched": pattern,
-            })
+            exposures.append(
+                {
+                    "type": cred_type,
+                    "masked_value": masked,
+                    "pattern_matched": pattern,
+                }
+            )
 
     return exposures
 
 
-def generate_credential_findings(cred_exposures: List[Dict[str, Any]]) -> List[ExposureFinding]:
+def generate_credential_findings(
+    cred_exposures: List[Dict[str, Any]],
+) -> List[ExposureFinding]:
     """
     Generate findings from credential exposures.
 
@@ -1140,15 +1171,17 @@ def generate_credential_findings(cred_exposures: List[Dict[str, Any]]) -> List[E
 
     for cred_type, exps in by_type.items():
         masked_values = [e["masked_value"] for e in exps]
-        findings.append(ExposureFinding(
-            title=f"{cred_type} Exposure Detected",
-            category=ExposureCategory.CREDENTIALS,
-            severity=ExposureSeverity.CRITICAL,
-            description=f"{len(exps)} potential {cred_type} value(s) found",
-            evidence=masked_values[:3],
-            remediation=f"Rotate affected {cred_type} immediately and remove from source",
-            metadata={"credential_type": cred_type, "count": len(exps)},
-        ))
+        findings.append(
+            ExposureFinding(
+                title=f"{cred_type} Exposure Detected",
+                category=ExposureCategory.CREDENTIALS,
+                severity=ExposureSeverity.CRITICAL,
+                description=f"{len(exps)} potential {cred_type} value(s) found",
+                evidence=masked_values[:3],
+                remediation=f"Rotate affected {cred_type} immediately and remove from source",
+                metadata={"credential_type": cred_type, "count": len(exps)},
+            )
+        )
 
     return findings
 
@@ -1168,39 +1201,47 @@ def identify_public_assets_from_context(ctx: Context) -> List[Dict[str, Any]]:
     # From domain profile
     domain_profile = ctx.get("domain_profile", {})
     if domain_profile.get("domain"):
-        assets.append({
-            "type": "domain",
-            "name": domain_profile["domain"],
-            "source": "domain_profile",
-        })
+        assets.append(
+            {
+                "type": "domain",
+                "name": domain_profile["domain"],
+                "source": "domain_profile",
+            }
+        )
 
     # From subdomains
     subdomains = domain_profile.get("subdomains", [])
     for subdomain in subdomains:
-        assets.append({
-            "type": "subdomain",
-            "name": subdomain,
-            "source": "domain_enumeration",
-        })
+        assets.append(
+            {
+                "type": "subdomain",
+                "name": subdomain,
+                "source": "domain_enumeration",
+            }
+        )
 
     # From tech stack (URLs)
     tech_stack = ctx.get("tech_stack", {})
     urls = tech_stack.get("urls", [])
     for url in urls:
-        assets.append({
-            "type": "url",
-            "name": url,
-            "source": "tech_stack",
-        })
+        assets.append(
+            {
+                "type": "url",
+                "name": url,
+                "source": "tech_stack",
+            }
+        )
 
     # From APIs
     apis = tech_stack.get("apis", [])
     for api in apis:
-        assets.append({
-            "type": "api",
-            "name": api,
-            "source": "tech_stack",
-        })
+        assets.append(
+            {
+                "type": "api",
+                "name": api,
+                "source": "tech_stack",
+            }
+        )
 
     return assets
 
@@ -1224,13 +1265,17 @@ def find_sensitive_files_in_context(ctx: Context) -> List[Dict[str, Any]]:
     for file_path in files:
         file_str = str(file_path).lower()
         for sensitive_file, (desc, severity) in SENSITIVE_FILES.items():
-            if sensitive_file.lower() in file_str or file_str.endswith(sensitive_file.lower()):
-                sensitive.append({
-                    "file": str(file_path),
-                    "type": sensitive_file,
-                    "description": desc,
-                    "severity": severity.value,
-                })
+            if sensitive_file.lower() in file_str or file_str.endswith(
+                sensitive_file.lower()
+            ):
+                sensitive.append(
+                    {
+                        "file": str(file_path),
+                        "type": sensitive_file,
+                        "description": desc,
+                        "severity": severity.value,
+                    }
+                )
                 break
 
     return sensitive
@@ -1310,6 +1355,7 @@ def generate_exposure_summary(findings: List[ExposureFinding]) -> Dict[str, Any]
 # Helper Functions
 # ============================================================================
 
+
 def identify_public_assets(target: str) -> List[Dict[str, Any]]:
     """
     Identify public-facing assets for a target.
@@ -1323,25 +1369,38 @@ def identify_public_assets(target: str) -> List[Dict[str, Any]]:
     assets = []
 
     # Add the target itself
-    assets.append({
-        "type": "domain",
-        "name": target,
-        "source": "target",
-    })
+    assets.append(
+        {
+            "type": "domain",
+            "name": target,
+            "source": "target",
+        }
+    )
 
     # Common subdomains to check
     common_subdomains = [
-        "www", "api", "app", "admin", "mail", "blog",
-        "dev", "staging", "test", "cdn", "assets",
+        "www",
+        "api",
+        "app",
+        "admin",
+        "mail",
+        "blog",
+        "dev",
+        "staging",
+        "test",
+        "cdn",
+        "assets",
     ]
 
     for sub in common_subdomains:
-        assets.append({
-            "type": "potential_subdomain",
-            "name": f"{sub}.{target}",
-            "source": "enumeration",
-            "verified": False,
-        })
+        assets.append(
+            {
+                "type": "potential_subdomain",
+                "name": f"{sub}.{target}",
+                "source": "enumeration",
+                "verified": False,
+            }
+        )
 
     return assets
 
@@ -1360,17 +1419,19 @@ def check_information_leakage(target: str) -> List[Finding]:
 
     # Generate potential exposed paths
     for path in COMMON_EXPOSED_PATHS:
-        findings.append(Finding(
-            module="exposure_scan",
-            title=f"Potential Exposed Path: {path}",
-            description=f"Common sensitive path that should be checked: {target}{path}",
-            severity="info",
-            data={
-                "category": "information_leakage",
-                "evidence": [f"{target}{path}"],
-                "remediation": "Verify this path is not publicly accessible",
-            },
-        ))
+        findings.append(
+            Finding(
+                module="exposure_scan",
+                title=f"Potential Exposed Path: {path}",
+                description=f"Common sensitive path that should be checked: {target}{path}",
+                severity="info",
+                data={
+                    "category": "information_leakage",
+                    "evidence": [f"{target}{path}"],
+                    "remediation": "Verify this path is not publicly accessible",
+                },
+            )
+        )
 
     return findings[:10]  # Limit results
 
@@ -1394,11 +1455,13 @@ def analyze_employee_profiles(company: str, limit: int = 10) -> List[Dict[str, A
     platforms = ["LinkedIn", "GitHub", "Twitter"]
 
     for platform in platforms:
-        profiles.append({
-            "platform": platform,
-            "search_pattern": f'"{company}" site:{platform.lower()}.com',
-            "note": "Use this pattern for manual OSINT",
-        })
+        profiles.append(
+            {
+                "platform": platform,
+                "search_pattern": f'"{company}" site:{platform.lower()}.com',
+                "note": "Use this pattern for manual OSINT",
+            }
+        )
 
     return profiles[:limit]
 

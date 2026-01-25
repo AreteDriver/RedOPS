@@ -5,7 +5,7 @@ Groups similar findings, artifacts, and data points using lightweight
 algorithms that don't require heavy ML dependencies.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Optional, Dict, Any, List, Set
 from dataclasses import dataclass, field
 from collections import defaultdict
 from redops.core.context import Context
@@ -89,7 +89,7 @@ def cluster_findings(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
             similarity_clusters = cluster_by_text_similarity(
                 findings,
                 threshold=similarity_threshold,
-                min_cluster_size=min_cluster_size
+                min_cluster_size=min_cluster_size,
             )
             results["similarity_clusters"] = [c.to_dict() for c in similarity_clusters]
 
@@ -111,11 +111,14 @@ def cluster_findings(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
 
     # Add summary
     total_clusters = sum(len(v) for v in results.values())
-    ctx.add("cluster_summary", {
-        "total_clusters": total_clusters,
-        "by_type": {k: len(v) for k, v in results.items()},
-        "findings_clustered": len(findings),
-    })
+    ctx.add(
+        "cluster_summary",
+        {
+            "total_clusters": total_clusters,
+            "by_type": {k: len(v) for k, v in results.items()},
+            "findings_clustered": len(findings),
+        },
+    )
 
     ctx.log(f"Clustering completed: {total_clusters} clusters created", level="INFO")
 
@@ -144,10 +147,7 @@ def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
     return findings
 
 
-def cluster_by_attribute(
-    items: List[Dict[str, Any]],
-    attribute: str
-) -> List[Cluster]:
+def cluster_by_attribute(items: List[Dict[str, Any]], attribute: str) -> List[Cluster]:
     """
     Cluster items by a specific attribute value.
 
@@ -174,7 +174,7 @@ def cluster_by_attribute(
             id=cluster_id,
             label=f"{attribute}:{value}",
             items=indices,
-            metadata={"attribute": attribute, "value": value}
+            metadata={"attribute": attribute, "value": value},
         )
         clusters.append(cluster)
 
@@ -182,9 +182,7 @@ def cluster_by_attribute(
 
 
 def cluster_by_text_similarity(
-    items: List[Dict[str, Any]],
-    threshold: float = 0.3,
-    min_cluster_size: int = 2
+    items: List[Dict[str, Any]], threshold: float = 0.3, min_cluster_size: int = 2
 ) -> List[Cluster]:
     """
     Cluster items by text similarity using Jaccard similarity.
@@ -244,13 +242,17 @@ def cluster_by_text_similarity(
             for idx in cluster_items[1:]:
                 common_words &= word_sets[idx]
 
-            label = " ".join(sorted(common_words)[:5]) if common_words else f"cluster_{cluster_id}"
+            label = (
+                " ".join(sorted(common_words)[:5])
+                if common_words
+                else f"cluster_{cluster_id}"
+            )
 
             cluster = Cluster(
                 id=cluster_id,
                 label=label,
                 items=cluster_items,
-                metadata={"similarity_threshold": threshold}
+                metadata={"similarity_threshold": threshold},
             )
             clusters.append(cluster)
             cluster_id += 1
@@ -270,9 +272,32 @@ def cluster_technologies(technologies: List[Any]) -> List[Cluster]:
     """
     # Define technology categories
     categories = {
-        "frontend": {"react", "vue", "angular", "svelte", "jquery", "bootstrap", "tailwind"},
-        "backend": {"django", "flask", "express", "rails", "spring", "laravel", "fastapi"},
-        "database": {"mysql", "postgresql", "mongodb", "redis", "elasticsearch", "sqlite"},
+        "frontend": {
+            "react",
+            "vue",
+            "angular",
+            "svelte",
+            "jquery",
+            "bootstrap",
+            "tailwind",
+        },
+        "backend": {
+            "django",
+            "flask",
+            "express",
+            "rails",
+            "spring",
+            "laravel",
+            "fastapi",
+        },
+        "database": {
+            "mysql",
+            "postgresql",
+            "mongodb",
+            "redis",
+            "elasticsearch",
+            "sqlite",
+        },
         "server": {"nginx", "apache", "iis", "tomcat", "gunicorn", "uwsgi"},
         "cms": {"wordpress", "drupal", "joomla", "shopify", "magento", "wix"},
         "cloud": {"aws", "azure", "gcp", "cloudflare", "heroku", "vercel"},
@@ -307,7 +332,7 @@ def cluster_technologies(technologies: List[Any]) -> List[Cluster]:
                 id=cluster_id,
                 label=f"tech:{category}",
                 items=indices,
-                metadata={"category": category}
+                metadata={"category": category},
             )
             clusters.append(cluster)
 
@@ -348,7 +373,7 @@ def cluster_risks_by_score(risks: List[Dict[str, Any]]) -> List[Cluster]:
                 id=cluster_id,
                 label=f"risk:{label}",
                 items=items,
-                metadata={"score_range": f"{min_score}-{max_score}"}
+                metadata={"score_range": f"{min_score}-{max_score}"},
             )
             clusters.append(cluster)
             cluster_id += 1
@@ -467,7 +492,7 @@ def cluster_by_similarity(
     items: List[Dict[str, Any]],
     similarity_func: str = "jaccard",
     threshold: float = 0.5,
-    text_key: str = "title"
+    text_key: str = "title",
 ) -> List[List[int]]:
     """
     Cluster items by similarity using specified function.
@@ -532,9 +557,7 @@ def cluster_by_similarity(
 
 
 def calculate_silhouette_score(
-    items: List[Dict[str, Any]],
-    clusters: List[List[int]],
-    similarity_func=None
+    items: List[Dict[str, Any]], clusters: List[List[int]], similarity_func=None
 ) -> float:
     """
     Calculate silhouette score for clustering quality.
@@ -558,6 +581,7 @@ def calculate_silhouette_score(
 
     # Default similarity function
     if similarity_func is None:
+
         def similarity_func(i1: Dict, i2: Dict) -> float:
             t1 = str(i1.get("title", ""))
             t2 = str(i2.get("title", ""))
@@ -582,22 +606,22 @@ def calculate_silhouette_score(
         if len(my_cluster_items) > 1:
             a_i = sum(
                 1 - similarity_func(items[i], items[j])
-                for j in my_cluster_items if j != i
+                for j in my_cluster_items
+                if j != i
             ) / (len(my_cluster_items) - 1)
         else:
             a_i = 0
 
         # Calculate b(i): minimum average distance to items in other clusters
-        b_i = float('inf')
+        b_i = float("inf")
         for cluster_idx, cluster in enumerate(clusters):
             if cluster_idx != my_cluster and len(cluster) > 0:
                 avg_dist = sum(
-                    1 - similarity_func(items[i], items[j])
-                    for j in cluster
+                    1 - similarity_func(items[i], items[j]) for j in cluster
                 ) / len(cluster)
                 b_i = min(b_i, avg_dist)
 
-        if b_i == float('inf'):
+        if b_i == float("inf"):
             b_i = 0
 
         # Calculate silhouette

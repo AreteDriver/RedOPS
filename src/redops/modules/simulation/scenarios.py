@@ -6,11 +6,10 @@ Produces executive summaries and technical details for different audiences.
 Non-exploitative, textual analysis only.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
-from dataclasses import dataclass, field
+from typing import Optional, Dict, Any, List
+from dataclasses import dataclass
 from collections import defaultdict
 from redops.core.context import Context
-from redops.core.models import RiskLevel
 
 
 @dataclass
@@ -186,8 +185,8 @@ def generate_scenarios(
 
     # Get attack paths from context
     attack_paths = ctx.get("attack_paths", [])
-    risks = ctx.get("risks", [])
-    mitre_mapping = ctx.get("mitre_mapping", {})
+    ctx.get("risks", [])
+    ctx.get("mitre_mapping", {})
 
     if not attack_paths:
         ctx.log("No attack paths available for scenario generation", level="WARNING")
@@ -330,11 +329,7 @@ def determine_threat_actor(techniques: List[str]) -> Dict[str, Any]:
     return THREAT_ACTORS["opportunistic_attacker"]
 
 
-def determine_objective(
-    steps: List[str],
-    techniques: List[str],
-    ctx: Context
-) -> str:
+def determine_objective(steps: List[str], techniques: List[str], ctx: Context) -> str:
     """
     Determine the attack objective based on steps and techniques.
 
@@ -364,7 +359,9 @@ def determine_objective(
             finding = ctx.get(key)
             if finding:
                 title = finding.get("title", "").lower()
-                if any(kw in title for kw in ["credential", "secret", "key", "password"]):
+                if any(
+                    kw in title for kw in ["credential", "secret", "key", "password"]
+                ):
                     return ATTACK_OBJECTIVES["credential_harvesting"]
                 if any(kw in title for kw in ["data", "database", "pii", "sensitive"]):
                     return ATTACK_OBJECTIVES["data_theft"]
@@ -408,8 +405,7 @@ def extract_affected_assets(attack_path: Dict[str, Any], ctx: Context) -> List[s
 
 
 def generate_detailed_steps(
-    steps: List[str],
-    techniques: List[str]
+    steps: List[str], techniques: List[str]
 ) -> List[Dict[str, Any]]:
     """
     Generate detailed step information.
@@ -514,7 +510,7 @@ def generate_executive_summary(
     objective: str,
     likelihood: int,
     impact: int,
-    assets: List[str]
+    assets: List[str],
 ) -> str:
     """
     Generate an executive summary for C-level stakeholders.
@@ -544,7 +540,7 @@ def generate_executive_summary(
 
 **Risk Level**: {risk_label} ({risk_score}/25)
 
-**Threat Profile**: This scenario represents a potential attack by a {threat_actor['name'].lower()}, motivated by {threat_actor.get('motivation', 'various factors')}.
+**Threat Profile**: This scenario represents a potential attack by a {threat_actor["name"].lower()}, motivated by {threat_actor.get("motivation", "various factors")}.
 
 **Business Impact**: If successful, this attack could result in {objective.lower()}. The likelihood of this attack occurring is rated {likelihood}/5, with a potential impact of {impact}/5.
 
@@ -556,9 +552,7 @@ def generate_executive_summary(
 
 
 def generate_technical_details(
-    steps: List[Dict[str, Any]],
-    techniques: List[str],
-    ctx: Context
+    steps: List[Dict[str, Any]], techniques: List[str], ctx: Context
 ) -> str:
     """
     Generate technical details for security teams.
@@ -613,8 +607,7 @@ def generate_technical_details(
 
 
 def generate_overall_summary(
-    scenarios: List[AttackScenario],
-    ctx: Context
+    scenarios: List[AttackScenario], ctx: Context
 ) -> Dict[str, Any]:
     """
     Generate an overall summary of all scenarios.
@@ -650,20 +643,16 @@ def generate_overall_summary(
         for tech in scenario.mitre_techniques:
             technique_counts[tech] += 1
 
-    top_techniques = sorted(
-        technique_counts.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )[:5]
+    top_techniques = sorted(technique_counts.items(), key=lambda x: x[1], reverse=True)[
+        :5
+    ]
 
     return {
         "total_scenarios": len(scenarios),
         "risk_distribution": dict(risk_distribution),
         "average_risk_score": sum(s.risk_score for s in scenarios) / len(scenarios),
         "top_threat_actors": sorted(
-            threat_actors.items(),
-            key=lambda x: x[1],
-            reverse=True
+            threat_actors.items(), key=lambda x: x[1], reverse=True
         ),
         "most_common_techniques": top_techniques,
         "critical_count": risk_distribution.get("CRITICAL", 0),
@@ -671,9 +660,7 @@ def generate_overall_summary(
     }
 
 
-def prioritize_scenarios(
-    scenarios: List[AttackScenario]
-) -> List[AttackScenario]:
+def prioritize_scenarios(scenarios: List[AttackScenario]) -> List[AttackScenario]:
     """
     Prioritize scenarios by risk score.
 

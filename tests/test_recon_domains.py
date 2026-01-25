@@ -1,6 +1,6 @@
 """Tests for the Recon Domains module."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import pytest
 from redops.core.context import Context
 from redops.modules.recon.domains import (
@@ -21,7 +21,9 @@ class TestGetDnsRecords:
 
     def test_get_dns_records_success(self):
         """Test successful DNS record retrieval."""
-        with patch("redops.modules.recon.domains._get_dns_records_dnspython") as mock_dns:
+        with patch(
+            "redops.modules.recon.domains._get_dns_records_dnspython"
+        ) as mock_dns:
             mock_dns.return_value = ["93.184.216.34"]
 
             records = get_dns_records("example.com", "A")
@@ -31,7 +33,9 @@ class TestGetDnsRecords:
 
     def test_get_dns_records_failure(self):
         """Test DNS record retrieval with failure."""
-        with patch("redops.modules.recon.domains._get_dns_records_dnspython") as mock_dns:
+        with patch(
+            "redops.modules.recon.domains._get_dns_records_dnspython"
+        ) as mock_dns:
             mock_dns.return_value = []
 
             records = get_dns_records("nonexistent.invalid", "A")
@@ -40,7 +44,9 @@ class TestGetDnsRecords:
 
     def test_get_dns_records_mx(self):
         """Test MX record retrieval."""
-        with patch("redops.modules.recon.domains._get_dns_records_dnspython") as mock_dns:
+        with patch(
+            "redops.modules.recon.domains._get_dns_records_dnspython"
+        ) as mock_dns:
             mock_dns.return_value = ["10 mail.example.com.", "20 mail2.example.com."]
 
             records = get_dns_records("example.com", "MX")
@@ -50,7 +56,9 @@ class TestGetDnsRecords:
 
     def test_get_dns_records_txt(self):
         """Test TXT record retrieval."""
-        with patch("redops.modules.recon.domains._get_dns_records_dnspython") as mock_dns:
+        with patch(
+            "redops.modules.recon.domains._get_dns_records_dnspython"
+        ) as mock_dns:
             mock_dns.return_value = ["v=spf1 include:_spf.google.com ~all"]
 
             records = get_dns_records("example.com", "TXT")
@@ -83,6 +91,7 @@ class TestGetAllDnsRecords:
     def test_get_all_records(self):
         """Test fetching all record types."""
         with patch("redops.modules.recon.domains.get_dns_records") as mock_dns:
+
             def side_effect(domain, rtype):
                 if rtype == "A":
                     return ["93.184.216.34"]
@@ -214,7 +223,9 @@ class TestProfileDomain:
             result = profile_domain(ctx)
 
             # Check for finding in context data
-            finding_keys = [key for key in result.data.keys() if key.startswith("finding_")]
+            finding_keys = [
+                key for key in result.data.keys() if key.startswith("finding_")
+            ]
             assert len(finding_keys) > 0
 
     def test_profile_domain_missing_spf_finding(self):
@@ -252,6 +263,7 @@ class TestEnumerateDns:
     def test_enumerate_dns_success(self):
         """Test successful DNS enumeration."""
         with patch("redops.modules.recon.domains.get_dns_records") as mock_dns:
+
             def side_effect(domain, rtype):
                 if rtype == "A":
                     return ["93.184.216.34", "93.184.216.35"]
@@ -320,6 +332,7 @@ class TestEnumerateDns:
     def test_enumerate_dns_total_records(self):
         """Test total records count."""
         with patch("redops.modules.recon.domains.get_dns_records") as mock_dns:
+
             def side_effect(domain, rtype):
                 if rtype == "A":
                     return ["1.1.1.1", "2.2.2.2"]
@@ -342,6 +355,7 @@ class TestDiscoverSubdomains:
     def test_discover_subdomains_success(self):
         """Test successful subdomain discovery."""
         with patch("redops.modules.recon.domains.get_dns_records") as mock_dns:
+
             def side_effect(subdomain, rtype):
                 if subdomain == "www.example.com":
                     return ["93.184.216.34"]
@@ -386,7 +400,7 @@ class TestDiscoverSubdomains:
             mock_dns.return_value = ["1.2.3.4"]
 
             ctx = Context(target="example.com")
-            result = discover_subdomains(ctx, params={"wordlist": ["custom1", "custom2"]})
+            discover_subdomains(ctx, params={"wordlist": ["custom1", "custom2"]})
 
             # Should only check custom prefixes
             assert mock_dns.call_count == 2
@@ -394,6 +408,7 @@ class TestDiscoverSubdomains:
     def test_discover_subdomains_creates_finding(self):
         """Test that finding subdomains creates a finding."""
         with patch("redops.modules.recon.domains.get_dns_records") as mock_dns:
+
             def side_effect(subdomain, rtype):
                 if subdomain == "www.example.com":
                     return ["1.2.3.4"]
@@ -440,10 +455,11 @@ class TestCheckZoneTransfer:
 
             # Re-import to get the patched version
             from redops.modules.recon import domains
+
             original = domains.DNS_AVAILABLE
             domains.DNS_AVAILABLE = False
 
-            result = check_zone_transfer(ctx)
+            check_zone_transfer(ctx)
 
             domains.DNS_AVAILABLE = original
 

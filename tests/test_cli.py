@@ -1,10 +1,8 @@
 """Tests for cli/app module."""
 
-import pytest
 import json
-import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from redops.cli.app import (
     OutputFormat,
     Verbosity,
@@ -20,18 +18,15 @@ from redops.cli.app import (
     cmd_config,
     cmd_version,
     execute_scan,
-    run_module,
     count_findings,
     save_scan_output,
     generate_report,
     generate_executive_text_report,
-    generate_summary_report,
     get_config_path,
     get_default_config,
     print_header,
     print_error,
     print_scan_summary,
-    print_scan_results,
     create_parser,
     main,
 )
@@ -158,7 +153,9 @@ class TestScanPresets:
         """Test preset modules exist in available modules."""
         for preset, info in SCAN_PRESETS.items():
             for module in info["modules"]:
-                assert module in AVAILABLE_MODULES, f"Module {module} in preset {preset} not available"
+                assert module in AVAILABLE_MODULES, (
+                    f"Module {module} in preset {preset} not available"
+                )
 
 
 class TestAvailableModules:
@@ -331,12 +328,8 @@ class TestCountFindings:
     def test_with_findings(self):
         """Test with findings."""
         ctx = Context(target="example.com")
-        ctx.add("exposure_scan", {
-            "exposures": [{"title": "Exp1"}, {"title": "Exp2"}]
-        })
-        ctx.add("threat_intel", {
-            "iocs": [{"value": "1.2.3.4"}]
-        })
+        ctx.add("exposure_scan", {"exposures": [{"title": "Exp1"}, {"title": "Exp2"}]})
+        ctx.add("threat_intel", {"iocs": [{"value": "1.2.3.4"}]})
 
         count = count_findings(ctx)
 
@@ -533,7 +526,9 @@ class TestCreateParser:
     def test_scan_with_modules(self):
         """Test scan with modules."""
         parser = create_parser()
-        args = parser.parse_args(["scan", "example.com", "-m", "domain_profile,exposure_scan"])
+        args = parser.parse_args(
+            ["scan", "example.com", "-m", "domain_profile,exposure_scan"]
+        )
 
         assert args.modules == "domain_profile,exposure_scan"
 
@@ -667,12 +662,16 @@ class TestCmdReport:
         """Test report generation from file."""
         # Create input file
         input_file = tmp_path / "scan.json"
-        input_file.write_text(json.dumps({
-            "exposure_scan": {"exposures": []},
-            "threat_intel": {"iocs": []},
-            "compliance": {"gaps": []},
-            "correlations": {"correlations": [], "insights": []},
-        }))
+        input_file.write_text(
+            json.dumps(
+                {
+                    "exposure_scan": {"exposures": []},
+                    "threat_intel": {"iocs": []},
+                    "compliance": {"gaps": []},
+                    "correlations": {"correlations": [], "insights": []},
+                }
+            )
+        )
 
         args = MagicMock()
         args.input = str(input_file)
@@ -692,12 +691,9 @@ class TestIntegration:
 
     def test_full_scan_flow_dry_run(self, capsys):
         """Test full scan flow in dry run mode."""
-        result = main([
-            "--dry-run",
-            "-f", "text",
-            "scan", "example.com",
-            "--preset", "full"
-        ])
+        result = main(
+            ["--dry-run", "-f", "text", "scan", "example.com", "--preset", "full"]
+        )
 
         assert result == 0
         captured = capsys.readouterr()

@@ -13,7 +13,7 @@ Maps security findings to compliance frameworks including:
 Provides gap analysis, compliance scoring, and remediation prioritization.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 from enum import Enum
 from redops.core.context import Context
@@ -21,6 +21,7 @@ from redops.core.context import Context
 
 class ComplianceFramework(Enum):
     """Supported compliance frameworks."""
+
     PCI_DSS = "pci_dss"
     HIPAA = "hipaa"
     SOC2 = "soc2"
@@ -32,6 +33,7 @@ class ComplianceFramework(Enum):
 
 class ControlStatus(Enum):
     """Status of a compliance control."""
+
     COMPLIANT = "compliant"
     PARTIAL = "partial"
     NON_COMPLIANT = "non_compliant"
@@ -41,6 +43,7 @@ class ControlStatus(Enum):
 
 class ControlPriority(Enum):
     """Priority level for controls."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -50,13 +53,16 @@ class ControlPriority(Enum):
 @dataclass
 class ComplianceControl:
     """A compliance control/requirement."""
+
     id: str
     framework: ComplianceFramework
     title: str
     description: str
     category: str
     priority: ControlPriority = ControlPriority.MEDIUM
-    related_controls: List[str] = field(default_factory=list)  # Cross-framework mappings
+    related_controls: List[str] = field(
+        default_factory=list
+    )  # Cross-framework mappings
     evidence_types: List[str] = field(default_factory=list)
     automation_possible: bool = True
 
@@ -78,6 +84,7 @@ class ComplianceControl:
 @dataclass
 class ControlAssessment:
     """Assessment result for a control."""
+
     control: ComplianceControl
     status: ControlStatus
     findings: List[str] = field(default_factory=list)
@@ -104,6 +111,7 @@ class ControlAssessment:
 @dataclass
 class ComplianceReport:
     """Compliance assessment report."""
+
     framework: ComplianceFramework
     target: str
     assessments: List[ControlAssessment] = field(default_factory=list)
@@ -167,7 +175,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.AC-3", "ISO.A.13.1.3"],
         evidence_types=["network_segmentation", "firewall_rules"],
     ),
-
     # Requirement 2: Secure Configurations
     "2.1": ComplianceControl(
         id="2.1",
@@ -189,7 +196,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.CM-6", "ISO.A.12.6.1"],
         evidence_types=["system_config", "hardening_scan"],
     ),
-
     # Requirement 3: Protect Stored Account Data
     "3.1": ComplianceControl(
         id="3.1",
@@ -211,7 +217,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.SC-28", "ISO.A.10.1.1"],
         evidence_types=["data_flow_diagram", "storage_audit"],
     ),
-
     # Requirement 4: Protect Cardholder Data in Transit
     "4.1": ComplianceControl(
         id="4.1",
@@ -223,7 +228,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.SC-8", "ISO.A.10.1.1"],
         evidence_types=["tls_config", "encryption_policy"],
     ),
-
     # Requirement 5: Protect from Malware
     "5.1": ComplianceControl(
         id="5.1",
@@ -245,7 +249,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.SI-3", "ISO.A.12.2.1"],
         evidence_types=["av_logs", "endpoint_protection"],
     ),
-
     # Requirement 6: Secure Systems and Software
     "6.1": ComplianceControl(
         id="6.1",
@@ -277,7 +280,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.RA-5", "ISO.A.12.6.1"],
         evidence_types=["vuln_scan", "patch_management"],
     ),
-
     # Requirement 7: Restrict Access
     "7.1": ComplianceControl(
         id="7.1",
@@ -299,7 +301,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.AC-2", "ISO.A.9.2.1"],
         evidence_types=["access_matrix", "user_provisioning"],
     ),
-
     # Requirement 8: Identify Users and Authenticate Access
     "8.1": ComplianceControl(
         id="8.1",
@@ -331,7 +332,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.IA-5", "ISO.A.9.4.3"],
         evidence_types=["mfa_config", "password_policy"],
     ),
-
     # Requirement 10: Log and Monitor Access
     "10.1": ComplianceControl(
         id="10.1",
@@ -353,7 +353,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.AU-2", "ISO.A.12.4.1"],
         evidence_types=["audit_logs", "log_review"],
     ),
-
     # Requirement 11: Test Security Regularly
     "11.1": ComplianceControl(
         id="11.1",
@@ -375,7 +374,6 @@ PCI_DSS_CONTROLS = {
         related_controls=["NIST.RA-5", "ISO.A.12.6.1"],
         evidence_types=["vuln_scan_results", "pentest_report"],
     ),
-
     # Requirement 12: Support Information Security with Policies
     "12.1": ComplianceControl(
         id="12.1",
@@ -455,7 +453,6 @@ HIPAA_CONTROLS = {
         related_controls=["NIST.CP-1", "ISO.A.17.1.1"],
         evidence_types=["contingency_plan", "backup_procedures"],
     ),
-
     # Physical Safeguards
     "164.310(a)(1)": ComplianceControl(
         id="164.310(a)(1)",
@@ -487,7 +484,6 @@ HIPAA_CONTROLS = {
         related_controls=["NIST.MP-6", "ISO.A.8.3.2"],
         evidence_types=["media_disposal_policy", "disposal_logs"],
     ),
-
     # Technical Safeguards
     "164.312(a)(1)": ComplianceControl(
         id="164.312(a)(1)",
@@ -667,7 +663,6 @@ SOC2_CONTROLS = {
         related_controls=["NIST.RA-3", "ISO.A.6.1.2"],
         evidence_types=["risk_treatment", "mitigation_plan"],
     ),
-
     # Availability
     "A1.1": ComplianceControl(
         id="A1.1",
@@ -689,7 +684,6 @@ SOC2_CONTROLS = {
         related_controls=["NIST.PE-14", "ISO.A.11.1.4"],
         evidence_types=["environmental_controls", "dr_plan"],
     ),
-
     # Confidentiality
     "C1.1": ComplianceControl(
         id="C1.1",
@@ -759,7 +753,6 @@ NIST_CSF_CONTROLS = {
         related_controls=["ISO.A.6.1.2"],
         evidence_types=["threat_assessment", "threat_intel"],
     ),
-
     # Protect
     "PR.AC-1": ComplianceControl(
         id="PR.AC-1",
@@ -821,7 +814,6 @@ NIST_CSF_CONTROLS = {
         related_controls=["PCI.6.3", "ISO.A.12.6.1"],
         evidence_types=["vuln_management_plan", "patch_policy"],
     ),
-
     # Detect
     "DE.AE-1": ComplianceControl(
         id="DE.AE-1",
@@ -853,7 +845,6 @@ NIST_CSF_CONTROLS = {
         related_controls=["PCI.5.2", "ISO.A.12.2.1"],
         evidence_types=["av_config", "malware_detection"],
     ),
-
     # Respond
     "RS.RP-1": ComplianceControl(
         id="RS.RP-1",
@@ -875,7 +866,6 @@ NIST_CSF_CONTROLS = {
         related_controls=["ISO.A.16.1.1"],
         evidence_types=["ir_roles", "communication_plan"],
     ),
-
     # Recover
     "RC.RP-1": ComplianceControl(
         id="RC.RP-1",
@@ -900,61 +890,50 @@ FINDING_KEYWORD_MAP = {
     "authentication": ["PCI.8.3", "HIPAA.164.312(d)", "NIST.PR.AC-1"],
     "mfa": ["PCI.8.3", "HIPAA.164.312(d)"],
     "2fa": ["PCI.8.3", "HIPAA.164.312(d)"],
-
     # Encryption related
     "encryption": ["PCI.4.1", "HIPAA.164.312(e)(1)", "NIST.PR.DS-1", "NIST.PR.DS-2"],
     "tls": ["PCI.4.1", "HIPAA.164.312(e)(1)", "NIST.PR.DS-2"],
     "ssl": ["PCI.4.1", "HIPAA.164.312(e)(1)", "NIST.PR.DS-2"],
     "cryptograph": ["PCI.4.1", "HIPAA.164.312(e)(1)"],
-
     # Access control related
     "access control": ["PCI.7.1", "HIPAA.164.312(a)(1)", "SOC2.CC6.1", "NIST.PR.AC-4"],
     "authorization": ["PCI.7.2", "HIPAA.164.308(a)(4)", "SOC2.CC6.1"],
     "privilege": ["PCI.7.2", "NIST.PR.AC-4"],
     "rbac": ["PCI.7.2", "NIST.PR.AC-4"],
-
     # Vulnerability related
     "vulnerability": ["PCI.6.3", "PCI.11.3", "SOC2.CC6.6", "NIST.ID.RA-1"],
     "patch": ["PCI.6.3", "NIST.PR.IP-12"],
     "cve": ["PCI.6.3", "SOC2.CC6.6", "NIST.ID.RA-1"],
     "exploit": ["PCI.6.3", "SOC2.CC6.6"],
-
     # Logging/Monitoring related
     "log": ["PCI.10.1", "PCI.10.2", "HIPAA.164.312(b)", "SOC2.CC7.2", "NIST.DE.CM-1"],
     "audit": ["PCI.10.2", "HIPAA.164.312(b)", "SOC2.CC4.1"],
     "monitor": ["PCI.10.1", "SOC2.CC7.2", "NIST.DE.CM-1"],
     "siem": ["PCI.10.2", "SOC2.CC7.2", "NIST.DE.CM-1"],
-
     # Malware related
     "malware": ["PCI.5.1", "PCI.5.2", "NIST.DE.CM-4"],
     "antivirus": ["PCI.5.2", "NIST.DE.CM-4"],
     "ransomware": ["PCI.5.2", "NIST.DE.CM-4"],
-
     # Network related
     "firewall": ["PCI.1.1", "PCI.1.2", "NIST.PR.AC-4"],
     "network": ["PCI.1.3", "NIST.DE.AE-1", "NIST.DE.CM-1"],
     "segmentation": ["PCI.1.3"],
-
     # Data protection related
     "data protection": ["PCI.3.1", "HIPAA.164.312(c)(1)", "SOC2.C1.1", "NIST.PR.DS-1"],
     "data retention": ["PCI.3.1", "SOC2.C1.2"],
     "data classification": ["SOC2.C1.1", "NIST.ID.AM-1"],
-
     # Incident response related
     "incident": ["HIPAA.164.308(a)(6)", "NIST.RS.RP-1"],
     "breach": ["HIPAA.164.308(a)(6)", "NIST.RS.RP-1"],
     "response": ["HIPAA.164.308(a)(6)", "NIST.RS.RP-1"],
-
     # Configuration related
     "configuration": ["PCI.2.1", "PCI.2.2", "NIST.PR.IP-1"],
     "hardening": ["PCI.2.2", "NIST.PR.IP-1"],
     "baseline": ["PCI.2.2", "NIST.PR.IP-1"],
-
     # Backup/Recovery related
     "backup": ["HIPAA.164.308(a)(7)", "SOC2.A1.2", "NIST.RC.RP-1"],
     "recovery": ["HIPAA.164.308(a)(7)", "NIST.RC.RP-1"],
     "disaster": ["HIPAA.164.308(a)(7)", "NIST.RC.RP-1"],
-
     # Secure development
     "secure development": ["PCI.6.1", "PCI.6.2"],
     "code review": ["PCI.6.2"],
@@ -979,10 +958,8 @@ ALL_CONTROLS.update({f"NIST.{k}": v for k, v in NIST_CSF_CONTROLS.items()})
 # Main Functions
 # ============================================================================
 
-def assess_compliance(
-    ctx: Context,
-    params: Optional[Dict[str, Any]] = None
-) -> Context:
+
+def assess_compliance(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Assess compliance against specified frameworks.
 
@@ -1038,14 +1015,20 @@ def assess_compliance(
         all_assessments.extend(report.assessments)
 
     # Identify cross-framework gaps
-    compliance_data["cross_framework_gaps"] = identify_cross_framework_gaps(all_assessments)
+    compliance_data["cross_framework_gaps"] = identify_cross_framework_gaps(
+        all_assessments
+    )
 
     # Generate priority remediations
     if params.get("generate_recommendations", True):
-        compliance_data["priority_remediations"] = generate_priority_remediations(all_assessments)
+        compliance_data["priority_remediations"] = generate_priority_remediations(
+            all_assessments
+        )
 
     # Calculate overall posture
-    compliance_data["overall_posture"] = calculate_overall_posture(compliance_data["reports"])
+    compliance_data["overall_posture"] = calculate_overall_posture(
+        compliance_data["reports"]
+    )
 
     # Add to context
     ctx.add("compliance_assessment", compliance_data)
@@ -1055,7 +1038,7 @@ def assess_compliance(
         ctx.log(
             f"{report['framework'].upper()}: {report['overall_score']:.1f}% compliant "
             f"({report['non_compliant_count']} gaps)",
-            level="INFO"
+            level="INFO",
         )
 
     return ctx
@@ -1075,8 +1058,12 @@ def collect_findings_from_context(ctx: Context) -> List[Dict[str, Any]]:
 
     # Collect from various context keys
     finding_keys = [
-        "findings", "risks", "vulnerabilities", "exposure_findings",
-        "threat_intel", "attack_paths",
+        "findings",
+        "risks",
+        "vulnerabilities",
+        "exposure_findings",
+        "threat_intel",
+        "attack_paths",
     ]
 
     for key in finding_keys:
@@ -1107,9 +1094,7 @@ def collect_findings_from_context(ctx: Context) -> List[Dict[str, Any]]:
 
 
 def assess_framework(
-    framework: ComplianceFramework,
-    findings: List[Dict[str, Any]],
-    target: str
+    framework: ComplianceFramework, findings: List[Dict[str, Any]], target: str
 ) -> ComplianceReport:
     """
     Assess compliance against a specific framework.
@@ -1131,13 +1116,17 @@ def assess_framework(
     # Assess each control
     assessments = []
     for control_id, control in controls.items():
-        assessment = assess_control(control, finding_control_map.get(control_id, []), findings)
+        assessment = assess_control(
+            control, finding_control_map.get(control_id, []), findings
+        )
         assessments.append(assessment)
 
     # Calculate statistics
     compliant = sum(1 for a in assessments if a.status == ControlStatus.COMPLIANT)
     partial = sum(1 for a in assessments if a.status == ControlStatus.PARTIAL)
-    non_compliant = sum(1 for a in assessments if a.status == ControlStatus.NON_COMPLIANT)
+    non_compliant = sum(
+        1 for a in assessments if a.status == ControlStatus.NON_COMPLIANT
+    )
     not_assessed = sum(1 for a in assessments if a.status == ControlStatus.NOT_ASSESSED)
 
     total_applicable = compliant + partial + non_compliant
@@ -1149,7 +1138,8 @@ def assess_framework(
 
     # Identify critical gaps
     critical_gaps = [
-        a.control.title for a in assessments
+        a.control.title
+        for a in assessments
         if a.status == ControlStatus.NON_COMPLIANT
         and a.control.priority == ControlPriority.CRITICAL
     ]
@@ -1174,7 +1164,9 @@ def assess_framework(
     )
 
 
-def get_controls_for_framework(framework: ComplianceFramework) -> Dict[str, ComplianceControl]:
+def get_controls_for_framework(
+    framework: ComplianceFramework,
+) -> Dict[str, ComplianceControl]:
     """
     Get controls for a specific framework.
 
@@ -1197,8 +1189,7 @@ def get_controls_for_framework(framework: ComplianceFramework) -> Dict[str, Comp
 
 
 def map_findings_to_controls(
-    findings: List[Dict[str, Any]],
-    framework: ComplianceFramework
+    findings: List[Dict[str, Any]], framework: ComplianceFramework
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     Map findings to compliance controls.
@@ -1220,11 +1211,13 @@ def map_findings_to_controls(
 
     for finding in findings:
         # Get finding text for keyword matching
-        finding_text = " ".join([
-            str(finding.get("title", "")),
-            str(finding.get("description", "")),
-            str(finding.get("category", "")),
-        ]).lower()
+        finding_text = " ".join(
+            [
+                str(finding.get("title", "")),
+                str(finding.get("description", "")),
+                str(finding.get("category", "")),
+            ]
+        ).lower()
 
         # Match keywords to controls
         matched_controls = set()
@@ -1246,7 +1239,7 @@ def map_findings_to_controls(
 def assess_control(
     control: ComplianceControl,
     mapped_findings: List[Dict[str, Any]],
-    all_findings: List[Dict[str, Any]]
+    all_findings: List[Dict[str, Any]],
 ) -> ControlAssessment:
     """
     Assess a single control.
@@ -1280,10 +1273,10 @@ def assess_control(
             gaps.append(f"High-severity issues need remediation for {control.title}")
         elif "medium" in severities:
             status = ControlStatus.PARTIAL
-            gaps.append(f"Medium-severity issues identified")
+            gaps.append("Medium-severity issues identified")
         else:
             status = ControlStatus.PARTIAL
-            gaps.append(f"Minor issues identified")
+            gaps.append("Minor issues identified")
 
         # Generate remediation based on control category
         remediation = generate_control_remediation(control, mapped_findings)
@@ -1300,8 +1293,7 @@ def assess_control(
 
 
 def generate_control_remediation(
-    control: ComplianceControl,
-    findings: List[Dict[str, Any]]
+    control: ComplianceControl, findings: List[Dict[str, Any]]
 ) -> List[str]:
     """
     Generate remediation recommendations for a control.
@@ -1364,7 +1356,9 @@ def generate_control_remediation(
     return remediation[:3]
 
 
-def identify_cross_framework_gaps(assessments: List[ControlAssessment]) -> List[Dict[str, Any]]:
+def identify_cross_framework_gaps(
+    assessments: List[ControlAssessment],
+) -> List[Dict[str, Any]]:
     """
     Identify gaps that affect multiple frameworks.
 
@@ -1390,18 +1384,22 @@ def identify_cross_framework_gaps(assessments: List[ControlAssessment]) -> List[
     for related_id, related_assessments in control_groups.items():
         frameworks = set(a.control.framework.value for a in related_assessments)
         if len(frameworks) >= 2:
-            gaps.append({
-                "related_control": related_id,
-                "affected_frameworks": list(frameworks),
-                "affected_controls": [a.control.id for a in related_assessments],
-                "description": f"Gap affecting {len(frameworks)} frameworks",
-                "priority": "high" if len(frameworks) >= 3 else "medium",
-            })
+            gaps.append(
+                {
+                    "related_control": related_id,
+                    "affected_frameworks": list(frameworks),
+                    "affected_controls": [a.control.id for a in related_assessments],
+                    "description": f"Gap affecting {len(frameworks)} frameworks",
+                    "priority": "high" if len(frameworks) >= 3 else "medium",
+                }
+            )
 
     return sorted(gaps, key=lambda x: len(x["affected_frameworks"]), reverse=True)[:10]
 
 
-def generate_priority_remediations(assessments: List[ControlAssessment]) -> List[Dict[str, Any]]:
+def generate_priority_remediations(
+    assessments: List[ControlAssessment],
+) -> List[Dict[str, Any]]:
     """
     Generate prioritized remediation recommendations.
 
@@ -1422,25 +1420,28 @@ def generate_priority_remediations(assessments: List[ControlAssessment]) -> List
     }
 
     non_compliant = [
-        a for a in assessments
+        a
+        for a in assessments
         if a.status in [ControlStatus.NON_COMPLIANT, ControlStatus.PARTIAL]
     ]
 
     sorted_assessments = sorted(
         non_compliant,
-        key=lambda x: (priority_order.get(x.control.priority, 4), x.status.value)
+        key=lambda x: (priority_order.get(x.control.priority, 4), x.status.value),
     )
 
     for assessment in sorted_assessments[:15]:
-        remediations.append({
-            "control_id": assessment.control.id,
-            "framework": assessment.control.framework.value,
-            "title": assessment.control.title,
-            "priority": assessment.control.priority.value,
-            "status": assessment.status.value,
-            "remediation_steps": assessment.remediation,
-            "related_controls": assessment.control.related_controls,
-        })
+        remediations.append(
+            {
+                "control_id": assessment.control.id,
+                "framework": assessment.control.framework.value,
+                "title": assessment.control.title,
+                "priority": assessment.control.priority.value,
+                "status": assessment.status.value,
+                "remediation_steps": assessment.remediation,
+                "related_controls": assessment.control.related_controls,
+            }
+        )
 
     return remediations
 
@@ -1486,6 +1487,7 @@ def calculate_overall_posture(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def get_framework(name: str) -> Optional[ComplianceFramework]:
     """
@@ -1551,8 +1553,7 @@ def get_related_controls(control_id: str) -> List[ComplianceControl]:
 
 
 def get_controls_by_category(
-    framework: ComplianceFramework,
-    category: str
+    framework: ComplianceFramework, category: str
 ) -> List[ComplianceControl]:
     """
     Get controls by category within a framework.
@@ -1569,8 +1570,7 @@ def get_controls_by_category(
 
 
 def get_controls_by_priority(
-    framework: ComplianceFramework,
-    priority: ControlPriority
+    framework: ComplianceFramework, priority: ControlPriority
 ) -> List[ComplianceControl]:
     """
     Get controls by priority within a framework.
@@ -1628,8 +1628,7 @@ def get_framework_categories(framework: ComplianceFramework) -> List[str]:
 
 
 def calculate_category_score(
-    assessments: List[ControlAssessment],
-    category: str
+    assessments: List[ControlAssessment], category: str
 ) -> float:
     """
     Calculate compliance score for a specific category.
@@ -1642,14 +1641,15 @@ def calculate_category_score(
         Score (0-100)
     """
     category_assessments = [
-        a for a in assessments
-        if a.control.category.lower() == category.lower()
+        a for a in assessments if a.control.category.lower() == category.lower()
     ]
 
     if not category_assessments:
         return 0.0
 
-    compliant = sum(1 for a in category_assessments if a.status == ControlStatus.COMPLIANT)
+    compliant = sum(
+        1 for a in category_assessments if a.status == ControlStatus.COMPLIANT
+    )
     partial = sum(1 for a in category_assessments if a.status == ControlStatus.PARTIAL)
     total = len(category_assessments)
 
@@ -1670,16 +1670,18 @@ def export_gap_analysis(report: ComplianceReport) -> Dict[str, Any]:
 
     for assessment in report.assessments:
         if assessment.status in [ControlStatus.NON_COMPLIANT, ControlStatus.PARTIAL]:
-            gaps.append({
-                "control_id": assessment.control.id,
-                "title": assessment.control.title,
-                "category": assessment.control.category,
-                "priority": assessment.control.priority.value,
-                "status": assessment.status.value,
-                "gaps": assessment.gaps,
-                "remediation": assessment.remediation,
-                "evidence_needed": assessment.control.evidence_types,
-            })
+            gaps.append(
+                {
+                    "control_id": assessment.control.id,
+                    "title": assessment.control.title,
+                    "category": assessment.control.category,
+                    "priority": assessment.control.priority.value,
+                    "status": assessment.status.value,
+                    "gaps": assessment.gaps,
+                    "remediation": assessment.remediation,
+                    "evidence_needed": assessment.control.evidence_types,
+                }
+            )
 
     # Sort by priority
     priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}

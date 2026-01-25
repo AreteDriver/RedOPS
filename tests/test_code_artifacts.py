@@ -2,7 +2,6 @@
 
 import json
 import tempfile
-import pytest
 from pathlib import Path
 from redops.core.context import Context
 from redops.core.models import RiskLevel
@@ -11,7 +10,6 @@ from redops.modules.metadata.code_artifacts import (
     detect_languages,
     extract_dependencies,
     parse_requirements_txt,
-    parse_pyproject_toml,
     parse_package_json,
     parse_go_mod,
     parse_gemfile,
@@ -35,6 +33,7 @@ class TestSecretPatterns:
     def test_aws_access_key_pattern(self):
         """Test AWS access key pattern."""
         import re
+
         pattern = SECRET_PATTERNS["aws_access_key"]["pattern"]
 
         # Valid AWS key (AKIA/ASIA + exactly 16 alphanumeric chars)
@@ -47,6 +46,7 @@ class TestSecretPatterns:
     def test_github_token_pattern(self):
         """Test GitHub token pattern."""
         import re
+
         pattern = SECRET_PATTERNS["github_token"]["pattern"]
 
         # Valid GitHub tokens
@@ -56,6 +56,7 @@ class TestSecretPatterns:
     def test_stripe_key_pattern(self):
         """Test Stripe API key pattern matches expected format."""
         import re
+
         pattern = SECRET_PATTERNS["stripe_key"]["pattern"]
 
         # Pattern should match sk_live_ or pk_test_ followed by 24+ alphanumeric chars
@@ -66,6 +67,7 @@ class TestSecretPatterns:
     def test_private_key_pattern(self):
         """Test private key pattern."""
         import re
+
         pattern = SECRET_PATTERNS["private_key"]["pattern"]
 
         assert re.search(pattern, "-----BEGIN RSA PRIVATE KEY-----")
@@ -75,6 +77,7 @@ class TestSecretPatterns:
     def test_database_url_pattern(self):
         """Test database URL pattern."""
         import re
+
         pattern = SECRET_PATTERNS["database_url"]["pattern"]
 
         assert re.search(pattern, "postgresql://user:password@localhost:5432/db")
@@ -84,6 +87,7 @@ class TestSecretPatterns:
     def test_jwt_pattern(self):
         """Test JWT token pattern."""
         import re
+
         pattern = SECRET_PATTERNS["jwt_token"]["pattern"]
 
         # Valid JWT structure
@@ -241,10 +245,7 @@ class TestParsePackageJson:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             data = {
                 "name": "test-project",
-                "dependencies": {
-                    "express": "^4.18.0",
-                    "lodash": "4.17.21"
-                }
+                "dependencies": {"express": "^4.18.0", "lodash": "4.17.21"},
             }
             json.dump(data, f)
             f.flush()
@@ -261,7 +262,7 @@ class TestParsePackageJson:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             data = {
                 "dependencies": {"express": "^4.18.0"},
-                "devDependencies": {"jest": "^29.0.0"}
+                "devDependencies": {"jest": "^29.0.0"},
             }
             json.dump(data, f)
             f.flush()
@@ -505,6 +506,7 @@ class TestGetMaskedContext:
     def test_mask_secret(self):
         """Test that secrets are masked."""
         import re
+
         # Use AWS example key (AWS's official documentation example)
         line = "AWS_KEY = 'AKIAIOSFODNN7EXAMPLE'"
         pattern = SECRET_PATTERNS["aws_access_key"]["pattern"]
@@ -518,6 +520,7 @@ class TestGetMaskedContext:
     def test_truncate_long_lines(self):
         """Test that long lines are truncated."""
         import re
+
         line = "x" * 200 + "AKIAIOSFODNN7EXAMPLE" + "x" * 200
         pattern = SECRET_PATTERNS["aws_access_key"]["pattern"]
         match = re.search(pattern, line)
@@ -600,7 +603,7 @@ class TestExtractGitMetadata:
             git_dir.mkdir()
 
             with open(git_dir / "config", "w") as f:
-                f.write("[remote \"origin\"]\n")
+                f.write('[remote "origin"]\n')
                 f.write("url = https://github.com/user/repo.git\n")
 
             result = extract_git_metadata(tmpdir)
@@ -616,7 +619,7 @@ class TestExtractGitMetadata:
             git_dir.mkdir()
 
             with open(git_dir / "config", "w") as f:
-                f.write("[remote \"origin\"]\n")
+                f.write('[remote "origin"]\n')
                 f.write("url = https://user:password@github.com/user/repo.git\n")
 
             result = extract_git_metadata(tmpdir)
@@ -642,9 +645,21 @@ class TestGetSecretsSummary:
         """Test summary with actual secrets."""
         results = [
             {"type": "summary", "files_scanned": 10},
-            {"secret_type": "aws_access_key", "severity": RiskLevel.CRITICAL, "file": "a.py"},
-            {"secret_type": "aws_access_key", "severity": RiskLevel.CRITICAL, "file": "b.py"},
-            {"secret_type": "generic_api_key", "severity": RiskLevel.HIGH, "file": "a.py"},
+            {
+                "secret_type": "aws_access_key",
+                "severity": RiskLevel.CRITICAL,
+                "file": "a.py",
+            },
+            {
+                "secret_type": "aws_access_key",
+                "severity": RiskLevel.CRITICAL,
+                "file": "b.py",
+            },
+            {
+                "secret_type": "generic_api_key",
+                "severity": RiskLevel.HIGH,
+                "file": "a.py",
+            },
         ]
 
         summary = get_secrets_summary(results)
@@ -725,7 +740,9 @@ class TestAnalyzeRepository:
             assert analysis["secrets_found"] >= 1
 
             # Check for findings
-            finding_keys = [k for k in result.data.keys() if k.startswith("finding_code_")]
+            finding_keys = [
+                k for k in result.data.keys() if k.startswith("finding_code_")
+            ]
             assert len(finding_keys) >= 1
 
     def test_disable_secret_scanning(self):
@@ -809,16 +826,14 @@ class TestIntegration:
 
             # Create package.json
             with open(Path(tmpdir, "package.json"), "w") as f:
-                json.dump({
-                    "name": "test-project",
-                    "dependencies": {
-                        "express": "^4.18.0",
-                        "lodash": "^4.17.0"
+                json.dump(
+                    {
+                        "name": "test-project",
+                        "dependencies": {"express": "^4.18.0", "lodash": "^4.17.0"},
+                        "devDependencies": {"jest": "^29.0.0"},
                     },
-                    "devDependencies": {
-                        "jest": "^29.0.0"
-                    }
-                }, f)
+                    f,
+                )
 
             # Create source files
             with open(src / "app.js", "w") as f:

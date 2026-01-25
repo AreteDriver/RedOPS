@@ -6,7 +6,7 @@ Identifies potential attack chains from entry points to high-value targets.
 No exploitation or intrusion - textual analysis only.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Optional, Dict, Any, List, Set
 from dataclasses import dataclass, field
 from collections import defaultdict
 from redops.core.context import Context
@@ -43,11 +43,14 @@ class AttackChain:
         likelihood = min(5, max(1, int(self.total_risk / 5) + 1))
         impact = min(5, max(1, int(self.total_risk / 4) + 1))
 
-        step_descriptions = [s.get("description", s.get("action", "")) for s in self.steps]
+        step_descriptions = [
+            s.get("description", s.get("action", "")) for s in self.steps
+        ]
 
         return AttackPath(
             name=name or f"Path: {self.entry_point} -> {self.target}",
-            description=description or f"Attack chain from {self.entry_point} to {self.target}",
+            description=description
+            or f"Attack chain from {self.entry_point} to {self.target}",
             steps=step_descriptions,
             mitre_techniques=self.mitre_techniques,
             likelihood=likelihood,
@@ -96,11 +99,15 @@ TRANSITION_TECHNIQUES = {
     ("domain", "subdomain"): ["T1595.002"],  # Active Scanning: Vulnerability Scanning
     ("domain", "ip"): ["T1590.002"],  # Gather Victim Network Information: DNS
     ("subdomain", "ip"): ["T1590.002"],
-    ("subdomain", "technology"): ["T1592.002"],  # Gather Victim Host Information: Software
+    ("subdomain", "technology"): [
+        "T1592.002"
+    ],  # Gather Victim Host Information: Software
     ("ip", "technology"): ["T1592.002"],
     ("technology", "risk"): ["T1190"],  # Exploit Public-Facing Application
     ("technology", "finding"): ["T1190"],
-    ("domain", "email"): ["T1589.002"],  # Gather Victim Identity Information: Email Addresses
+    ("domain", "email"): [
+        "T1589.002"
+    ],  # Gather Victim Identity Information: Email Addresses
     ("domain", "risk"): ["T1190"],
     ("subdomain", "risk"): ["T1190"],
     ("ip", "risk"): ["T1190"],
@@ -150,7 +157,9 @@ def analyze_paths(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     entry_points = identify_entry_points(nodes, ctx)
     targets = identify_targets(nodes, ctx)
 
-    ctx.log(f"Found {len(entry_points)} entry points, {len(targets)} targets", level="DEBUG")
+    ctx.log(
+        f"Found {len(entry_points)} entry points, {len(targets)} targets", level="DEBUG"
+    )
 
     # Find attack chains
     attack_chains = find_attack_chains(
@@ -167,8 +176,8 @@ def analyze_paths(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     attack_paths = []
     for i, chain in enumerate(filtered_chains[:max_paths]):
         path = chain.to_attack_path(
-            name=f"Attack Path {i+1}",
-            description=generate_path_description(chain, nodes)
+            name=f"Attack Path {i + 1}",
+            description=generate_path_description(chain, nodes),
         )
         attack_paths.append(path)
 
@@ -176,19 +185,25 @@ def analyze_paths(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     critical_nodes = identify_critical_nodes(graph_data, attack_chains)
 
     ctx.add("attack_paths", [ap.model_dump() for ap in attack_paths])
-    ctx.add("attack_chains_raw", [
-        {"path": c.path, "risk": c.total_risk, "techniques": c.mitre_techniques}
-        for c in filtered_chains[:max_paths]
-    ])
+    ctx.add(
+        "attack_chains_raw",
+        [
+            {"path": c.path, "risk": c.total_risk, "techniques": c.mitre_techniques}
+            for c in filtered_chains[:max_paths]
+        ],
+    )
     ctx.add("critical_nodes", critical_nodes)
-    ctx.add("attack_path_summary", {
-        "total_paths_found": len(attack_chains),
-        "paths_above_threshold": len(filtered_chains),
-        "paths_reported": len(attack_paths),
-        "entry_points": list(entry_points),
-        "targets": list(targets),
-        "critical_nodes": critical_nodes[:5],
-    })
+    ctx.add(
+        "attack_path_summary",
+        {
+            "total_paths_found": len(attack_chains),
+            "paths_above_threshold": len(filtered_chains),
+            "paths_reported": len(attack_paths),
+            "entry_points": list(entry_points),
+            "targets": list(targets),
+            "critical_nodes": critical_nodes[:5],
+        },
+    )
 
     ctx.log(f"Identified {len(attack_paths)} potential attack paths", level="INFO")
 
@@ -222,7 +237,15 @@ def identify_entry_points(nodes: Dict[str, Dict], ctx: Context) -> Set[str]:
             # Technologies on external-facing systems
             elif node_type == "technology":
                 # Check if it's a web-facing technology
-                web_techs = ["nginx", "apache", "iis", "tomcat", "express", "flask", "django"]
+                web_techs = [
+                    "nginx",
+                    "apache",
+                    "iis",
+                    "tomcat",
+                    "express",
+                    "flask",
+                    "django",
+                ]
                 if any(t in label for t in web_techs):
                     entry_points.add(node_id)
 
@@ -299,7 +322,7 @@ def find_attack_chains(
     adjacency: Dict[str, List[str]],
     entry_points: Set[str],
     targets: Set[str],
-    max_depth: int
+    max_depth: int,
 ) -> List[AttackChain]:
     """
     Find attack chains from entry points to targets using DFS.
@@ -338,10 +361,7 @@ def find_attack_chains(
 
 
 def dfs_find_paths(
-    adjacency: Dict[str, List[str]],
-    start: str,
-    end: str,
-    max_depth: int
+    adjacency: Dict[str, List[str]], start: str, end: str, max_depth: int
 ) -> List[List[str]]:
     """
     Find all paths between two nodes using DFS.
@@ -400,12 +420,14 @@ def generate_steps(path: List[str], nodes: Dict[str, Dict]) -> List[Dict[str, An
         else:
             action = f"Traverse to {node_type}: {label}"
 
-        steps.append({
-            "node_id": node_id,
-            "action": action,
-            "description": action,
-            "node_type": node_type,
-        })
+        steps.append(
+            {
+                "node_id": node_id,
+                "action": action,
+                "description": action,
+                "node_type": node_type,
+            }
+        )
 
     return steps
 
@@ -435,8 +457,7 @@ def get_path_techniques(path: List[str], nodes: Dict[str, Dict]) -> List[str]:
 
 
 def score_attack_chains(
-    chains: List[AttackChain],
-    nodes: Dict[str, Dict]
+    chains: List[AttackChain], nodes: Dict[str, Dict]
 ) -> List[AttackChain]:
     """
     Score attack chains by risk.
@@ -515,14 +536,15 @@ def generate_path_description(chain: AttackChain, nodes: Dict[str, Dict]) -> str
     description += f"Risk score: {chain.total_risk:.1f}."
 
     if chain.mitre_techniques:
-        description += f" Involves {len(chain.mitre_techniques)} MITRE ATT&CK techniques."
+        description += (
+            f" Involves {len(chain.mitre_techniques)} MITRE ATT&CK techniques."
+        )
 
     return description
 
 
 def identify_critical_nodes(
-    graph_data: Dict[str, Any],
-    chains: List[AttackChain]
+    graph_data: Dict[str, Any], chains: List[AttackChain]
 ) -> List[Dict[str, Any]]:
     """
     Identify critical nodes (chokepoints) in attack paths.
@@ -549,16 +571,20 @@ def identify_critical_nodes(
     critical = []
     nodes = {n["id"]: n for n in graph_data.get("nodes", [])}
 
-    for node_id, freq in sorted(node_frequency.items(), key=lambda x: x[1], reverse=True):
+    for node_id, freq in sorted(
+        node_frequency.items(), key=lambda x: x[1], reverse=True
+    ):
         if freq >= 2:  # Appears on at least 2 paths
             node = nodes.get(node_id, {})
-            critical.append({
-                "node_id": node_id,
-                "label": node.get("label", node_id),
-                "type": node.get("type", "unknown"),
-                "path_count": freq,
-                "criticality_score": freq * 2 + node.get("degree", 0),
-            })
+            critical.append(
+                {
+                    "node_id": node_id,
+                    "label": node.get("label", node_id),
+                    "type": node.get("type", "unknown"),
+                    "path_count": freq,
+                    "criticality_score": freq * 2 + node.get("degree", 0),
+                }
+            )
 
     return critical[:10]
 

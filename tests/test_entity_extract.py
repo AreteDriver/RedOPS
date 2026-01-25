@@ -1,6 +1,5 @@
 """Tests for intel/entity_extract module."""
 
-import pytest
 from redops.modules.intel.entity_extract import (
     ExtractedEntities,
     PATTERNS,
@@ -457,10 +456,10 @@ class TestExtractEntitiesContext:
     def test_extract_entities_basic(self):
         """Test basic entity extraction with context."""
         ctx = Context(target="test.io")
-        ctx.add("domain_profile", {
-            "registrar": "Example Registrar",
-            "contact": "admin@test.io"
-        })
+        ctx.add(
+            "domain_profile",
+            {"registrar": "Example Registrar", "contact": "admin@test.io"},
+        )
 
         result = extract_entities(ctx)
         assert "entities" in result.data
@@ -469,10 +468,13 @@ class TestExtractEntitiesContext:
     def test_extract_entities_with_findings(self):
         """Test entity extraction including findings."""
         ctx = Context(target="example.io")
-        ctx.add("finding_0", {
-            "title": "Issue found",
-            "description": "Contact admin@vuln.io about IP 8.8.8.8"
-        })
+        ctx.add(
+            "finding_0",
+            {
+                "title": "Issue found",
+                "description": "Contact admin@vuln.io about IP 8.8.8.8",
+            },
+        )
 
         result = extract_entities(ctx, {"include_findings": True})
         entities = result.get("entities")
@@ -481,9 +483,7 @@ class TestExtractEntitiesContext:
     def test_extract_entities_sensitive_only(self):
         """Test sensitive-only extraction."""
         ctx = Context(target="test.io")
-        ctx.add("domain_profile", {
-            "data": "Email: user@test.io, Domain: other.com"
-        })
+        ctx.add("domain_profile", {"data": "Email: user@test.io, Domain: other.com"})
 
         result = extract_entities(ctx, {"sensitive_only": True})
         entities = result.get("entities")
@@ -493,9 +493,7 @@ class TestExtractEntitiesContext:
     def test_extract_entities_creates_findings_for_aws_keys(self):
         """Test that AWS key detection creates findings."""
         ctx = Context(target="test.io")
-        ctx.add("repo", {
-            "content": "AWS key: AKIAIOSFODNN7EXAMPLE"
-        })
+        ctx.add("repo", {"content": "AWS key: AKIAIOSFODNN7EXAMPLE"})
 
         result = extract_entities(ctx)
         # Should have finding for AWS key

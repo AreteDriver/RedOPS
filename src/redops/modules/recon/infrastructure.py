@@ -14,7 +14,7 @@ IMPORTANT: This module analyzes PUBLIC information only.
 No active scanning or intrusive probing.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 from enum import Enum
 import re
@@ -23,6 +23,7 @@ from redops.core.context import Context
 
 class CloudProvider(Enum):
     """Major cloud providers."""
+
     AWS = "aws"
     AZURE = "azure"
     GCP = "gcp"
@@ -39,6 +40,7 @@ class CloudProvider(Enum):
 
 class CDNProvider(Enum):
     """CDN providers."""
+
     CLOUDFLARE = "cloudflare"
     AKAMAI = "akamai"
     FASTLY = "fastly"
@@ -55,6 +57,7 @@ class CDNProvider(Enum):
 
 class ServiceType(Enum):
     """Types of services detected."""
+
     WEB_SERVER = "web_server"
     APPLICATION_SERVER = "application_server"
     DATABASE = "database"
@@ -72,6 +75,7 @@ class ServiceType(Enum):
 
 class InfrastructureConfidence(Enum):
     """Confidence level for infrastructure detection."""
+
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
@@ -81,6 +85,7 @@ class InfrastructureConfidence(Enum):
 @dataclass
 class CloudDetection:
     """Cloud provider detection result."""
+
     provider: CloudProvider
     confidence: InfrastructureConfidence
     indicators: List[str] = field(default_factory=list)
@@ -103,6 +108,7 @@ class CloudDetection:
 @dataclass
 class CDNDetection:
     """CDN provider detection result."""
+
     provider: CDNProvider
     confidence: InfrastructureConfidence
     indicators: List[str] = field(default_factory=list)
@@ -123,6 +129,7 @@ class CDNDetection:
 @dataclass
 class ServiceFingerprint:
     """Service fingerprint result."""
+
     service_type: ServiceType
     name: str
     version: Optional[str] = None
@@ -145,6 +152,7 @@ class ServiceFingerprint:
 @dataclass
 class NetworkComponent:
     """Network topology component."""
+
     component_type: str
     name: str
     address: Optional[str] = None
@@ -198,8 +206,18 @@ AWS_INDICATORS = {
         r"\.execute-api\..*\.amazonaws\.com",
     ],
     "services": [
-        "EC2", "S3", "Lambda", "ELB", "CloudFront", "RDS", "DynamoDB",
-        "API Gateway", "ECS", "EKS", "Fargate", "Route 53",
+        "EC2",
+        "S3",
+        "Lambda",
+        "ELB",
+        "CloudFront",
+        "RDS",
+        "DynamoDB",
+        "API Gateway",
+        "ECS",
+        "EKS",
+        "Fargate",
+        "Route 53",
     ],
 }
 
@@ -233,8 +251,14 @@ AZURE_INDICATORS = {
         r"\.trafficmanager\.net$",
     ],
     "services": [
-        "App Service", "Azure Functions", "Blob Storage", "Azure CDN",
-        "Azure SQL", "Cosmos DB", "AKS", "Virtual Machines",
+        "App Service",
+        "Azure Functions",
+        "Blob Storage",
+        "Azure CDN",
+        "Azure SQL",
+        "Cosmos DB",
+        "AKS",
+        "Virtual Machines",
     ],
 }
 
@@ -268,8 +292,15 @@ GCP_INDICATORS = {
         r"\.firebaseapp\.com$",
     ],
     "services": [
-        "Compute Engine", "Cloud Functions", "Cloud Run", "App Engine",
-        "Cloud Storage", "BigQuery", "GKE", "Cloud SQL", "Firebase",
+        "Compute Engine",
+        "Cloud Functions",
+        "Cloud Run",
+        "App Engine",
+        "Cloud Storage",
+        "BigQuery",
+        "GKE",
+        "Cloud SQL",
+        "Firebase",
     ],
 }
 
@@ -506,7 +537,10 @@ DNS_PROVIDERS = {
 # Main Functions
 # ============================================================================
 
-def analyze_infrastructure(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+
+def analyze_infrastructure(
+    ctx: Context, params: Optional[Dict[str, Any]] = None
+) -> Context:
     """
     Analyze infrastructure from context data.
 
@@ -595,7 +629,7 @@ def analyze_infrastructure(ctx: Context, params: Optional[Dict[str, Any]] = None
 
     ctx.log(
         f"Infrastructure analysis complete: {cloud_count} cloud, {cdn_count} CDN, {service_count} services",
-        level="INFO"
+        level="INFO",
     )
 
     return ctx
@@ -719,7 +753,7 @@ def detect_cloud_providers(
     headers: Dict[str, str],
     dns_records: Dict[str, List[str]],
     urls: List[str],
-    target: str
+    target: str,
 ) -> List[CloudDetection]:
     """
     Detect cloud providers from available data.
@@ -744,7 +778,9 @@ def detect_cloud_providers(
     ]
 
     for provider, indicators in providers:
-        detection = check_cloud_provider(provider, indicators, headers, dns_records, urls, target)
+        detection = check_cloud_provider(
+            provider, indicators, headers, dns_records, urls, target
+        )
         if detection:
             detections.append(detection)
 
@@ -757,7 +793,7 @@ def check_cloud_provider(
     headers: Dict[str, str],
     dns_records: Dict[str, List[str]],
     urls: List[str],
-    target: str
+    target: str,
 ) -> Optional[CloudDetection]:
     """
     Check for a specific cloud provider.
@@ -850,8 +886,7 @@ def check_cloud_provider(
 
 
 def detect_cdn_providers(
-    headers: Dict[str, str],
-    dns_records: Dict[str, List[str]]
+    headers: Dict[str, str], dns_records: Dict[str, List[str]]
 ) -> List[CDNDetection]:
     """
     Detect CDN providers from available data.
@@ -884,7 +919,7 @@ def check_cdn_provider(
     provider: CDNProvider,
     indicators: Dict[str, Any],
     headers: Dict[str, str],
-    dns_records: Dict[str, List[str]]
+    dns_records: Dict[str, List[str]],
 ) -> Optional[CDNDetection]:
     """
     Check for a specific CDN provider.
@@ -944,9 +979,7 @@ def check_cdn_provider(
 
 
 def fingerprint_services(
-    headers: Dict[str, str],
-    urls: List[str],
-    ctx: Context
+    headers: Dict[str, str], urls: List[str], ctx: Context
 ) -> List[ServiceFingerprint]:
     """
     Fingerprint services from headers and other data.
@@ -1000,7 +1033,7 @@ def check_service_signature(
     name: str,
     signature: Dict[str, Any],
     headers: Dict[str, str],
-    service_type: ServiceType
+    service_type: ServiceType,
 ) -> Optional[ServiceFingerprint]:
     """
     Check for a specific service signature.
@@ -1043,7 +1076,9 @@ def check_service_signature(
             service_type=service_type,
             name=name,
             version=version,
-            confidence=InfrastructureConfidence.HIGH if version else InfrastructureConfidence.MEDIUM,
+            confidence=InfrastructureConfidence.HIGH
+            if version
+            else InfrastructureConfidence.MEDIUM,
             indicators=found_indicators[:5],
         )
 
@@ -1051,8 +1086,7 @@ def check_service_signature(
 
 
 def analyze_dns_infrastructure(
-    dns_records: Dict[str, List[str]],
-    target: str
+    dns_records: Dict[str, List[str]], target: str
 ) -> Dict[str, Any]:
     """
     Analyze DNS infrastructure.
@@ -1154,8 +1188,7 @@ def analyze_certificates(certificates: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def detect_security_features(
-    headers: Dict[str, str],
-    infra_data: Dict[str, Any]
+    headers: Dict[str, str], infra_data: Dict[str, Any]
 ) -> List[Dict[str, Any]]:
     """
     Detect security features in use.
@@ -1182,45 +1215,56 @@ def detect_security_features(
 
     for header, name in security_headers.items():
         if header in [h.lower() for h in headers.keys()]:
-            features.append({
-                "feature": name,
-                "type": "security_header",
-                "status": "enabled",
-            })
+            features.append(
+                {
+                    "feature": name,
+                    "type": "security_header",
+                    "status": "enabled",
+                }
+            )
 
     # Check for WAF from services
     for service in infra_data.get("services", []):
         if service.get("service_type") == "waf":
-            features.append({
-                "feature": f"WAF ({service.get('name', 'Unknown')})",
-                "type": "waf",
-                "status": "detected",
-            })
+            features.append(
+                {
+                    "feature": f"WAF ({service.get('name', 'Unknown')})",
+                    "type": "waf",
+                    "status": "detected",
+                }
+            )
 
     # Check for CDN WAF features
     for cdn in infra_data.get("cdn_providers", []):
         if "WAF" in cdn.get("features", []):
-            features.append({
-                "feature": f"CDN WAF ({cdn.get('provider', 'Unknown')})",
-                "type": "cdn_waf",
-                "status": "detected",
-            })
+            features.append(
+                {
+                    "feature": f"CDN WAF ({cdn.get('provider', 'Unknown')})",
+                    "type": "cdn_waf",
+                    "status": "detected",
+                }
+            )
 
     # Check DNS security
     dns_info = infra_data.get("dns_infrastructure", {})
     if dns_info.get("has_spf"):
-        features.append({"feature": "SPF", "type": "email_security", "status": "enabled"})
+        features.append(
+            {"feature": "SPF", "type": "email_security", "status": "enabled"}
+        )
     if dns_info.get("has_dkim"):
-        features.append({"feature": "DKIM", "type": "email_security", "status": "enabled"})
+        features.append(
+            {"feature": "DKIM", "type": "email_security", "status": "enabled"}
+        )
     if dns_info.get("has_dmarc"):
-        features.append({"feature": "DMARC", "type": "email_security", "status": "enabled"})
+        features.append(
+            {"feature": "DMARC", "type": "email_security", "status": "enabled"}
+        )
 
     return features
 
 
 def infer_network_topology(
-    infra_data: Dict[str, Any],
-    ctx: Context
+    infra_data: Dict[str, Any], ctx: Context
 ) -> List[NetworkComponent]:
     """
     Infer network topology from infrastructure data.
@@ -1237,48 +1281,58 @@ def infer_network_topology(
 
     # Add target as primary component
     if target:
-        components.append(NetworkComponent(
-            component_type="domain",
-            name=target,
-            role="primary",
-        ))
+        components.append(
+            NetworkComponent(
+                component_type="domain",
+                name=target,
+                role="primary",
+            )
+        )
 
     # Add cloud providers
     for cloud in infra_data.get("cloud_providers", []):
-        components.append(NetworkComponent(
-            component_type="cloud",
-            name=cloud.get("provider", "unknown"),
-            role="hosting",
-            attributes={"services": cloud.get("services", [])},
-        ))
+        components.append(
+            NetworkComponent(
+                component_type="cloud",
+                name=cloud.get("provider", "unknown"),
+                role="hosting",
+                attributes={"services": cloud.get("services", [])},
+            )
+        )
 
     # Add CDN
     for cdn in infra_data.get("cdn_providers", []):
-        components.append(NetworkComponent(
-            component_type="cdn",
-            name=cdn.get("provider", "unknown"),
-            role="edge",
-            attributes={"features": cdn.get("features", [])},
-        ))
+        components.append(
+            NetworkComponent(
+                component_type="cdn",
+                name=cdn.get("provider", "unknown"),
+                role="edge",
+                attributes={"features": cdn.get("features", [])},
+            )
+        )
 
     # Add DNS
     dns_info = infra_data.get("dns_infrastructure", {})
     if dns_info.get("dns_provider"):
-        components.append(NetworkComponent(
-            component_type="dns",
-            name=dns_info["dns_provider"],
-            role="dns",
-            attributes={"nameservers": dns_info.get("nameservers", [])},
-        ))
+        components.append(
+            NetworkComponent(
+                component_type="dns",
+                name=dns_info["dns_provider"],
+                role="dns",
+                attributes={"nameservers": dns_info.get("nameservers", [])},
+            )
+        )
 
     # Add services
     for service in infra_data.get("services", []):
-        components.append(NetworkComponent(
-            component_type="service",
-            name=service.get("name", "unknown"),
-            role=service.get("service_type", "unknown"),
-            attributes={"version": service.get("version")},
-        ))
+        components.append(
+            NetworkComponent(
+                component_type="service",
+                name=service.get("name", "unknown"),
+                role=service.get("service_type", "unknown"),
+                attributes={"version": service.get("version")},
+            )
+        )
 
     return components
 
@@ -1309,7 +1363,9 @@ def generate_infrastructure_summary(infra_data: Dict[str, Any]) -> Dict[str, Any
         # Sort by confidence
         sorted_clouds = sorted(
             clouds,
-            key=lambda x: {"high": 0, "medium": 1, "low": 2, "inferred": 3}.get(x.get("confidence", "low"), 3)
+            key=lambda x: {"high": 0, "medium": 1, "low": 2, "inferred": 3}.get(
+                x.get("confidence", "low"), 3
+            ),
         )
         summary["primary_cloud"] = sorted_clouds[0].get("provider")
 
@@ -1318,7 +1374,9 @@ def generate_infrastructure_summary(infra_data: Dict[str, Any]) -> Dict[str, Any
     if cdns:
         sorted_cdns = sorted(
             cdns,
-            key=lambda x: {"high": 0, "medium": 1, "low": 2, "inferred": 3}.get(x.get("confidence", "low"), 3)
+            key=lambda x: {"high": 0, "medium": 1, "low": 2, "inferred": 3}.get(
+                x.get("confidence", "low"), 3
+            ),
         )
         summary["primary_cdn"] = sorted_cdns[0].get("provider")
 
@@ -1339,6 +1397,7 @@ def generate_infrastructure_summary(infra_data: Dict[str, Any]) -> Dict[str, Any
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def get_cloud_provider(name: str) -> Optional[CloudProvider]:
     """
@@ -1448,11 +1507,16 @@ def identify_cloud_from_domain(domain: str) -> Optional[CloudProvider]:
     domain_lower = domain.lower()
 
     # AWS patterns
-    if any(p in domain_lower for p in [".amazonaws.com", ".awsstatic.com", ".cloudfront.net"]):
+    if any(
+        p in domain_lower
+        for p in [".amazonaws.com", ".awsstatic.com", ".cloudfront.net"]
+    ):
         return CloudProvider.AWS
 
     # Azure patterns
-    if any(p in domain_lower for p in [".azure.com", ".azurewebsites.net", ".windows.net"]):
+    if any(
+        p in domain_lower for p in [".azure.com", ".azurewebsites.net", ".windows.net"]
+    ):
         return CloudProvider.AZURE
 
     # GCP patterns
@@ -1460,7 +1524,9 @@ def identify_cloud_from_domain(domain: str) -> Optional[CloudProvider]:
         return CloudProvider.GCP
 
     # DigitalOcean patterns
-    if any(p in domain_lower for p in [".digitaloceanspaces.com", ".ondigitalocean.app"]):
+    if any(
+        p in domain_lower for p in [".digitaloceanspaces.com", ".ondigitalocean.app"]
+    ):
         return CloudProvider.DIGITALOCEAN
 
     return None

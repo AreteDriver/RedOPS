@@ -7,7 +7,7 @@ Detects potential secrets, API keys, and sensitive information in code.
 
 import json
 import re
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -124,32 +124,84 @@ SECRET_PATTERNS = {
 
 # Files to skip when scanning
 SKIP_EXTENSIONS = {
-    ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".webp",
-    ".mp3", ".mp4", ".wav", ".avi", ".mov",
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
-    ".zip", ".tar", ".gz", ".rar", ".7z",
-    ".exe", ".dll", ".so", ".dylib",
-    ".woff", ".woff2", ".ttf", ".eot",
-    ".pyc", ".pyo", ".class",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".svg",
+    ".webp",
+    ".mp3",
+    ".mp4",
+    ".wav",
+    ".avi",
+    ".mov",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".rar",
+    ".7z",
+    ".exe",
+    ".dll",
+    ".so",
+    ".dylib",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
+    ".pyc",
+    ".pyo",
+    ".class",
 }
 
 SKIP_DIRECTORIES = {
-    ".git", ".svn", ".hg",
-    "node_modules", "vendor", "venv", ".venv", "__pycache__",
-    "dist", "build", "target", "bin", "obj",
-    ".idea", ".vscode", ".vs",
-    "coverage", ".coverage", "htmlcov",
-    ".tox", ".nox", ".eggs",
+    ".git",
+    ".svn",
+    ".hg",
+    "node_modules",
+    "vendor",
+    "venv",
+    ".venv",
+    "__pycache__",
+    "dist",
+    "build",
+    "target",
+    "bin",
+    "obj",
+    ".idea",
+    ".vscode",
+    ".vs",
+    "coverage",
+    ".coverage",
+    "htmlcov",
+    ".tox",
+    ".nox",
+    ".eggs",
 }
 
 # Files that often contain secrets (for prioritized scanning)
 HIGH_PRIORITY_FILES = {
-    ".env", ".env.local", ".env.development", ".env.production",
-    "config.yaml", "config.yml", "config.json",
-    "secrets.yaml", "secrets.yml", "secrets.json",
-    "credentials.json", "credentials.yaml",
-    "settings.py", "settings.json",
-    "application.properties", "application.yml",
+    ".env",
+    ".env.local",
+    ".env.development",
+    ".env.production",
+    "config.yaml",
+    "config.yml",
+    "config.json",
+    "secrets.yaml",
+    "secrets.yml",
+    "secrets.json",
+    "credentials.json",
+    "credentials.yaml",
+    "settings.py",
+    "settings.json",
+    "application.properties",
+    "application.yml",
 }
 
 
@@ -176,7 +228,7 @@ def analyze_repository(
     repo_path = params.get("repo_path") or ctx.target
     scan_secrets = params.get("scan_secrets", True)
     max_files = params.get("max_files", 10000)
-    include_git_history = params.get("include_git_history", False)
+    params.get("include_git_history", False)
 
     if not repo_path:
         ctx.log("No repository path specified", level="WARNING")
@@ -204,7 +256,10 @@ def analyze_repository(
     # Detect languages
     languages = detect_languages(repo_path)
     analysis["languages"] = languages
-    ctx.log(f"Detected languages: {', '.join(languages) if languages else 'none'}", level="DEBUG")
+    ctx.log(
+        f"Detected languages: {', '.join(languages) if languages else 'none'}",
+        level="DEBUG",
+    )
 
     # Extract dependencies
     dependencies = extract_dependencies(repo_path)
@@ -215,7 +270,9 @@ def analyze_repository(
         ctx.log("Scanning for secrets and sensitive data...", level="INFO")
         secret_results = scan_for_secrets(repo_path, max_files=max_files)
         analysis["secrets_found"] = len(secret_results)
-        analysis["files_scanned"] = secret_results[0]["files_scanned"] if secret_results else 0
+        analysis["files_scanned"] = (
+            secret_results[0]["files_scanned"] if secret_results else 0
+        )
 
         # Create findings for each secret
         for secret in secret_results:
@@ -241,7 +298,7 @@ def analyze_repository(
         if analysis["secrets_found"] > 0:
             ctx.log(
                 f"CRITICAL: Found {analysis['secrets_found']} potential secrets!",
-                level="WARNING"
+                level="WARNING",
             )
 
     # Find code patterns
@@ -261,13 +318,16 @@ def analyze_repository(
         ctx.add(f"finding_code_{i}", finding.model_dump())
 
     # Add summary
-    ctx.add("code_analysis_summary", {
-        "languages": languages,
-        "dependency_managers": list(dependencies.keys()),
-        "secrets_found": analysis["secrets_found"],
-        "files_scanned": analysis["files_scanned"],
-        "total_findings": len(findings),
-    })
+    ctx.add(
+        "code_analysis_summary",
+        {
+            "languages": languages,
+            "dependency_managers": list(dependencies.keys()),
+            "secrets_found": analysis["secrets_found"],
+            "files_scanned": analysis["files_scanned"],
+            "total_findings": len(findings),
+        },
+    )
 
     ctx.log("Repository analysis completed", level="INFO")
 
@@ -427,7 +487,9 @@ def parse_requirements_txt(file_path: Path) -> List[Dict[str, str]]:
                 continue
 
             # Parse various formats: pkg, pkg==1.0, pkg>=1.0, pkg[extra]>=1.0
-            match = re.match(r"^([A-Za-z0-9_-]+)(?:\[[^\]]+\])?(?:([<>=!~]+)(.+))?$", line)
+            match = re.match(
+                r"^([A-Za-z0-9_-]+)(?:\[[^\]]+\])?(?:([<>=!~]+)(.+))?$", line
+            )
             if match:
                 name = match.group(1)
                 version = match.group(3) if match.group(3) else "any"
@@ -455,13 +517,17 @@ def parse_pyproject_toml(file_path: Path) -> List[Dict[str, str]]:
         deps = []
         # Simple pattern matching for dependencies
         # Note: Full TOML parsing would be better but adds dependency
-        dep_section = re.search(r'\[(?:project\.)?dependencies\](.*?)(?:\[|$)', content, re.DOTALL)
+        dep_section = re.search(
+            r"\[(?:project\.)?dependencies\](.*?)(?:\[|$)", content, re.DOTALL
+        )
         if dep_section:
             for match in re.finditer(r'"([^"]+)"', dep_section.group(1)):
                 dep_str = match.group(1)
-                name_match = re.match(r'^([A-Za-z0-9_-]+)', dep_str)
+                name_match = re.match(r"^([A-Za-z0-9_-]+)", dep_str)
                 if name_match:
-                    deps.append({"name": name_match.group(1), "version": "from pyproject.toml"})
+                    deps.append(
+                        {"name": name_match.group(1), "version": "from pyproject.toml"}
+                    )
 
         return deps
     except Exception:
@@ -487,11 +553,13 @@ def parse_package_json(file_path: Path) -> List[Dict[str, str]]:
         for dep_type in ["dependencies", "devDependencies"]:
             if dep_type in data:
                 for name, version in data[dep_type].items():
-                    deps.append({
-                        "name": name,
-                        "version": version,
-                        "dev": dep_type == "devDependencies"
-                    })
+                    deps.append(
+                        {
+                            "name": name,
+                            "version": version,
+                            "dev": dep_type == "devDependencies",
+                        }
+                    )
 
         return deps
     except Exception:
@@ -515,14 +583,20 @@ def parse_go_mod(file_path: Path) -> List[Dict[str, str]]:
         deps = []
 
         # Match require block
-        require_block = re.search(r'require\s*\((.*?)\)', content, re.DOTALL)
+        require_block = re.search(r"require\s*\((.*?)\)", content, re.DOTALL)
         if require_block:
             # Match module paths (start with letter, contain alphanumerics and dots/slashes)
-            for match in re.finditer(r'^\s*([a-zA-Z][^\s]*)\s+(v[^\s]+)', require_block.group(1), re.MULTILINE):
+            for match in re.finditer(
+                r"^\s*([a-zA-Z][^\s]*)\s+(v[^\s]+)",
+                require_block.group(1),
+                re.MULTILINE,
+            ):
                 deps.append({"name": match.group(1), "version": match.group(2)})
 
         # Match single require statements
-        for match in re.finditer(r'^require\s+([a-zA-Z][^\s]*)\s+(v[^\s]+)', content, re.MULTILINE):
+        for match in re.finditer(
+            r"^require\s+([a-zA-Z][^\s]*)\s+(v[^\s]+)", content, re.MULTILINE
+        ):
             deps.append({"name": match.group(1), "version": match.group(2)})
 
         return deps
@@ -547,7 +621,9 @@ def parse_gemfile(file_path: Path) -> List[Dict[str, str]]:
         deps = []
 
         # Match gem statements
-        for match in re.finditer(r"gem\s+['\"]([^'\"]+)['\"](?:,\s*['\"]([^'\"]+)['\"])?", content):
+        for match in re.finditer(
+            r"gem\s+['\"]([^'\"]+)['\"](?:,\s*['\"]([^'\"]+)['\"])?", content
+        ):
             name = match.group(1)
             version = match.group(2) if match.group(2) else "any"
             deps.append({"name": name, "version": version})
@@ -574,9 +650,13 @@ def parse_cargo_toml(file_path: Path) -> List[Dict[str, str]]:
         deps = []
 
         # Match [dependencies] section
-        dep_section = re.search(r'\[dependencies\](.*?)(?:\[|$)', content, re.DOTALL)
+        dep_section = re.search(r"\[dependencies\](.*?)(?:\[|$)", content, re.DOTALL)
         if dep_section:
-            for match in re.finditer(r'^([A-Za-z0-9_-]+)\s*=\s*["\']?([^"\'\n]+)["\']?', dep_section.group(1), re.MULTILINE):
+            for match in re.finditer(
+                r'^([A-Za-z0-9_-]+)\s*=\s*["\']?([^"\'\n]+)["\']?',
+                dep_section.group(1),
+                re.MULTILINE,
+            ):
                 deps.append({"name": match.group(1), "version": match.group(2)})
 
         return deps
@@ -585,9 +665,7 @@ def parse_cargo_toml(file_path: Path) -> List[Dict[str, str]]:
 
 
 def scan_for_secrets(
-    repo_path: str,
-    max_files: int = 10000,
-    patterns: Optional[Dict[str, Dict]] = None
+    repo_path: str, max_files: int = 10000, patterns: Optional[Dict[str, Dict]] = None
 ) -> List[Dict[str, Any]]:
     """
     Scan repository for secrets and sensitive data.
@@ -645,18 +723,20 @@ def scan_for_secrets(
         pass
 
     # Add summary as first result
-    results.insert(0, {
-        "type": "summary",
-        "files_scanned": files_scanned,
-        "secrets_found": len(results),
-    })
+    results.insert(
+        0,
+        {
+            "type": "summary",
+            "files_scanned": files_scanned,
+            "secrets_found": len(results),
+        },
+    )
 
     return results
 
 
 def scan_file_for_secrets(
-    file_path: Path,
-    patterns: Dict[str, Dict]
+    file_path: Path, patterns: Dict[str, Dict]
 ) -> List[Dict[str, Any]]:
     """
     Scan a single file for secrets.
@@ -685,15 +765,17 @@ def scan_file_for_secrets(
                     # Get context (mask the actual secret)
                     context = get_masked_context(line, match)
 
-                    results.append({
-                        "file": str(file_path),
-                        "line": line_num,
-                        "pattern_name": pattern_name,
-                        "description": pattern_info["description"],
-                        "severity": pattern_info["severity"],
-                        "secret_type": pattern_name,
-                        "context": context,
-                    })
+                    results.append(
+                        {
+                            "file": str(file_path),
+                            "line": line_num,
+                            "pattern_name": pattern_name,
+                            "description": pattern_info["description"],
+                            "severity": pattern_info["severity"],
+                            "secret_type": pattern_name,
+                            "context": context,
+                        }
+                    )
 
     except Exception:
         pass
@@ -752,11 +834,13 @@ def find_code_patterns(repo_path: str) -> List[Dict[str, Any]]:
     for pattern_name, file_pattern in checks:
         check_path = path / file_pattern
         if check_path.exists():
-            patterns.append({
-                "name": pattern_name,
-                "type": "file_exists",
-                "path": file_pattern,
-            })
+            patterns.append(
+                {
+                    "name": pattern_name,
+                    "type": "file_exists",
+                    "path": file_pattern,
+                }
+            )
 
     # Check for security-related files
     security_patterns = [
@@ -767,11 +851,13 @@ def find_code_patterns(repo_path: str) -> List[Dict[str, Any]]:
 
     for check_path, pattern_name in security_patterns:
         if check_path.exists():
-            patterns.append({
-                "name": pattern_name,
-                "type": "security_practice",
-                "path": str(check_path.relative_to(path)),
-            })
+            patterns.append(
+                {
+                    "name": pattern_name,
+                    "type": "security_practice",
+                    "path": str(check_path.relative_to(path)),
+                }
+            )
 
     return patterns
 
@@ -804,11 +890,11 @@ def extract_git_metadata(repo_path: str) -> Optional[Dict[str, Any]]:
                 content = f.read()
 
             # Extract remote URL
-            url_match = re.search(r'url\s*=\s*(.+)', content)
+            url_match = re.search(r"url\s*=\s*(.+)", content)
             if url_match:
                 url = url_match.group(1).strip()
                 # Mask credentials in URL if present
-                url = re.sub(r'://[^:]+:[^@]+@', '://***:***@', url)
+                url = re.sub(r"://[^:]+:[^@]+@", "://***:***@", url)
                 metadata["remote_url"] = url
 
         except Exception:

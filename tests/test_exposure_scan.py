@@ -1,6 +1,5 @@
 """Tests for corp_assessment/exposure_scan module."""
 
-import pytest
 from redops.modules.corp_assessment.exposure_scan import (
     ExposureSeverity,
     ExposureCategory,
@@ -280,7 +279,9 @@ class TestCredentialPatterns:
 
     def test_database_connection_pattern(self):
         """Test database connection string pattern."""
-        db_pattern = next(p for p in CREDENTIAL_PATTERNS if "Database Connection" in p.name)
+        db_pattern = next(
+            p for p in CREDENTIAL_PATTERNS if "Database Connection" in p.name
+        )
         assert db_pattern.matches("mysql://user:pass@host/db")
         assert db_pattern.matches("postgres://admin:secret@localhost")
 
@@ -290,7 +291,9 @@ class TestBackupPatterns:
 
     def test_backup_file_pattern(self):
         """Test backup file pattern."""
-        backup_pattern = next(p for p in BACKUP_PATTERNS if p.name == "Backup File Exposed")
+        backup_pattern = next(
+            p for p in BACKUP_PATTERNS if p.name == "Backup File Exposed"
+        )
         assert backup_pattern.matches("config.bak")
         assert backup_pattern.matches("data.backup")
         assert backup_pattern.matches("old.orig")
@@ -385,7 +388,9 @@ class TestInfrastructurePatterns:
 
     def test_server_version_pattern(self):
         """Test server version disclosure pattern."""
-        version_pattern = next(p for p in INFRASTRUCTURE_PATTERNS if "Server Version" in p.name)
+        version_pattern = next(
+            p for p in INFRASTRUCTURE_PATTERNS if "Server Version" in p.name
+        )
         assert version_pattern.matches("Apache/2.4.41")
         assert version_pattern.matches("nginx/1.18.0")
 
@@ -396,15 +401,15 @@ class TestAllPatterns:
     def test_all_patterns_combined(self):
         """Test that all patterns are included."""
         total = (
-            len(SOURCE_CODE_PATTERNS) +
-            len(CONFIG_PATTERNS) +
-            len(CREDENTIAL_PATTERNS) +
-            len(BACKUP_PATTERNS) +
-            len(DEBUG_PATTERNS) +
-            len(CLOUD_PATTERNS) +
-            len(API_PATTERNS) +
-            len(ADMIN_PATTERNS) +
-            len(INFRASTRUCTURE_PATTERNS)
+            len(SOURCE_CODE_PATTERNS)
+            + len(CONFIG_PATTERNS)
+            + len(CREDENTIAL_PATTERNS)
+            + len(BACKUP_PATTERNS)
+            + len(DEBUG_PATTERNS)
+            + len(CLOUD_PATTERNS)
+            + len(API_PATTERNS)
+            + len(ADMIN_PATTERNS)
+            + len(INFRASTRUCTURE_PATTERNS)
         )
         assert len(ALL_PATTERNS) == total
 
@@ -484,10 +489,13 @@ class TestScanExposure:
     def test_with_domain_profile(self):
         """Test scan with domain profile data."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "domain": "example.com",
-            "registrant_email": "admin@example.com",
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "domain": "example.com",
+                "registrant_email": "admin@example.com",
+            },
+        )
 
         result = scan_exposure(ctx)
         exposure = result.get("exposure_scan")
@@ -498,10 +506,13 @@ class TestScanExposure:
     def test_with_attack_paths(self):
         """Test scan with attack path data containing patterns."""
         ctx = Context(target="example.com")
-        ctx.add("attack_paths", [
-            {"url": "https://example.com/.git/config"},
-            {"url": "https://example.com/.env"},
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {"url": "https://example.com/.git/config"},
+                {"url": "https://example.com/.env"},
+            ],
+        )
 
         result = scan_exposure(ctx)
         exposure = result.get("exposure_scan")
@@ -512,9 +523,12 @@ class TestScanExposure:
     def test_min_severity_filter(self):
         """Test minimum severity filtering."""
         ctx = Context(target="example.com")
-        ctx.add("tech_stack", {
-            "technologies": [{"name": "Apache", "version": "2.4.41"}],
-        })
+        ctx.add(
+            "tech_stack",
+            {
+                "technologies": [{"name": "Apache", "version": "2.4.41"}],
+            },
+        )
 
         # Without filter - should include low severity
         result1 = scan_exposure(ctx)
@@ -529,12 +543,18 @@ class TestScanExposure:
     def test_category_filter(self):
         """Test category filtering."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "registrant_email": "admin@example.com",
-        })
-        ctx.add("code_artifacts", {
-            "files": [".env", "id_rsa"],
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "registrant_email": "admin@example.com",
+            },
+        )
+        ctx.add(
+            "code_artifacts",
+            {
+                "files": [".env", "id_rsa"],
+            },
+        )
 
         result = scan_exposure(ctx, {"categories": ["credentials"]})
         exposure = result.get("exposure_scan")
@@ -546,10 +566,13 @@ class TestScanExposure:
     def test_exposure_summary(self):
         """Test exposure summary generation."""
         ctx = Context(target="example.com")
-        ctx.add("code_artifacts", {
-            "files": [".env", "id_rsa", "backup.sql"],
-            "secrets": [{"type": "api_key", "file": "config.js"}],
-        })
+        ctx.add(
+            "code_artifacts",
+            {
+                "files": [".env", "id_rsa", "backup.sql"],
+                "secrets": [{"type": "api_key", "file": "config.js"}],
+            },
+        )
 
         result = scan_exposure(ctx)
         exposure = result.get("exposure_scan")
@@ -598,7 +621,7 @@ class TestAnalyzeDomainExposure:
             "domain": "example.com",
             "dns_records": {
                 "A": ["192.168.1.100", "1.2.3.4"],
-            }
+            },
         }
         findings = analyze_domain_exposure(profile)
 
@@ -740,14 +763,17 @@ class TestAnalyzePathsInContext:
     def test_multiple_pattern_detection(self):
         """Test multiple pattern detection."""
         ctx = Context(target="example.com")
-        ctx.add("data", {
-            "paths": [
-                "/.git/HEAD",
-                "/.env",
-                "/admin/login",
-                "/api/v1/users",
-            ]
-        })
+        ctx.add(
+            "data",
+            {
+                "paths": [
+                    "/.git/HEAD",
+                    "/.env",
+                    "/admin/login",
+                    "/api/v1/users",
+                ]
+            },
+        )
 
         findings = analyze_paths_in_context(ctx)
         assert len(findings) >= 3
@@ -816,7 +842,11 @@ class TestGenerateCloudFindings:
         refs = [
             {"provider": "AWS S3", "resource_type": "bucket", "name": "bucket1"},
             {"provider": "AWS S3", "resource_type": "bucket", "name": "bucket2"},
-            {"provider": "Azure Blob", "resource_type": "container", "name": "container1"},
+            {
+                "provider": "Azure Blob",
+                "resource_type": "container",
+                "name": "container1",
+            },
         ]
         findings = generate_cloud_findings(refs)
 
@@ -923,10 +953,13 @@ class TestIdentifyPublicAssets:
     def test_subdomains(self):
         """Test subdomain extraction."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "domain": "example.com",
-            "subdomains": ["www.example.com", "api.example.com"],
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "domain": "example.com",
+                "subdomains": ["www.example.com", "api.example.com"],
+            },
+        )
 
         assets = identify_public_assets_from_context(ctx)
 
@@ -946,9 +979,12 @@ class TestFindSensitiveFilesInContext:
     def test_sensitive_file_detection(self):
         """Test sensitive file detection."""
         ctx = Context(target="example.com")
-        ctx.add("code_artifacts", {
-            "files": [".env", "config/database.yml", "id_rsa"],
-        })
+        ctx.add(
+            "code_artifacts",
+            {
+                "files": [".env", "config/database.yml", "id_rsa"],
+            },
+        )
 
         files = find_sensitive_files_in_context(ctx)
 
@@ -1175,7 +1211,7 @@ class TestExtractStringsFromDict:
         assert "deep_value" not in strings
 
 
-class TestIdentifyPublicAssets:
+class TestIdentifyPublicAssetsHelper:
     """Tests for identify_public_assets helper function."""
 
     def test_basic_identification(self):
@@ -1337,23 +1373,32 @@ class TestIntegration:
         ctx = Context(target="example.com")
 
         # Add domain profile
-        ctx.add("domain_profile", {
-            "domain": "example.com",
-            "registrant_email": "admin@example.com",
-            "dns_records": {"A": ["1.2.3.4"]},
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "domain": "example.com",
+                "registrant_email": "admin@example.com",
+                "dns_records": {"A": ["1.2.3.4"]},
+            },
+        )
 
         # Add tech stack
-        ctx.add("tech_stack", {
-            "technologies": [{"name": "nginx", "version": "1.18.0"}],
-            "headers": {"Server": "nginx/1.18.0"},
-        })
+        ctx.add(
+            "tech_stack",
+            {
+                "technologies": [{"name": "nginx", "version": "1.18.0"}],
+                "headers": {"Server": "nginx/1.18.0"},
+            },
+        )
 
         # Add code artifacts
-        ctx.add("code_artifacts", {
-            "files": [".env", ".git/config"],
-            "secrets": [{"type": "API Key", "file": "config.js"}],
-        })
+        ctx.add(
+            "code_artifacts",
+            {
+                "files": [".env", ".git/config"],
+                "secrets": [{"type": "API Key", "file": "config.js"}],
+            },
+        )
 
         # Add cloud references
         ctx.add("storage_config", "s3://mybucket/data")
@@ -1374,12 +1419,15 @@ class TestIntegration:
     def test_critical_findings_logged(self):
         """Test that critical findings are logged."""
         ctx = Context(target="example.com")
-        ctx.add("code_artifacts", {
-            "secrets": [
-                {"type": "AWS Key", "file": "config.js"},
-                {"type": "Password", "file": "db.py"},
-            ],
-        })
+        ctx.add(
+            "code_artifacts",
+            {
+                "secrets": [
+                    {"type": "AWS Key", "file": "config.js"},
+                    {"type": "Password", "file": "db.py"},
+                ],
+            },
+        )
 
         result = scan_exposure(ctx)
 

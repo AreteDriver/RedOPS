@@ -1,10 +1,8 @@
 """Tests for the Social OSINT module."""
 
-import pytest
 from redops.core.context import Context
 from redops.modules.recon.social_osint import (
     # Dataclasses
-    Platform,
     UserProfile,
     BreachInfo,
     EmailPattern,
@@ -44,6 +42,7 @@ from redops.modules.recon.social_osint import (
 # ============================================================================
 # Platform Dataclass Tests
 # ============================================================================
+
 
 class TestPlatform:
     """Tests for Platform dataclass."""
@@ -120,6 +119,7 @@ class TestBreachInfo:
 # ============================================================================
 # Username Generation Tests
 # ============================================================================
+
 
 class TestGenerateUsernamesFromName:
     """Tests for generate_usernames_from_name function."""
@@ -231,6 +231,7 @@ class TestIsValidUsername:
 # Platform Correlation Tests
 # ============================================================================
 
+
 class TestCorrelateUsernamesToPlatforms:
     """Tests for correlate_usernames_to_platforms function."""
 
@@ -254,8 +255,7 @@ class TestCorrelateUsernamesToPlatforms:
     def test_correlate_specific_platforms(self):
         """Test correlating with specific platforms."""
         profiles, correlations = correlate_usernames_to_platforms(
-            {"testuser"},
-            platform_keys=["github", "twitter"]
+            {"testuser"}, platform_keys=["github", "twitter"]
         )
 
         platforms_found = set()
@@ -268,8 +268,7 @@ class TestCorrelateUsernamesToPlatforms:
         """Test that invalid usernames for platforms are filtered."""
         # Twitter doesn't allow dashes
         profiles, _ = correlate_usernames_to_platforms(
-            {"test-user"},
-            platform_keys=["twitter"]
+            {"test-user"}, platform_keys=["twitter"]
         )
 
         # Should not have Twitter profile
@@ -320,6 +319,7 @@ class TestCalculateUsernameConfidence:
 # ============================================================================
 # Email Pattern Tests
 # ============================================================================
+
 
 class TestIsDomain:
     """Tests for is_domain function."""
@@ -386,6 +386,7 @@ class TestGenerateEmailPermutations:
 # Breach Checking Tests
 # ============================================================================
 
+
 class TestCheckBreachSimulated:
     """Tests for check_breach_simulated function."""
 
@@ -448,6 +449,7 @@ class TestCheckDataBreaches:
 # Context Extraction Tests
 # ============================================================================
 
+
 class TestExtractUsernamesFromContext:
     """Tests for extract_usernames_from_context function."""
 
@@ -463,11 +465,10 @@ class TestExtractUsernamesFromContext:
     def test_from_code_artifacts(self):
         """Test extracting from code artifacts."""
         ctx = Context(target="example.com")
-        ctx.add("code_artifacts", {
-            "git_authors": [
-                {"name": "Jane Smith", "email": "jsmith@example.com"}
-            ]
-        })
+        ctx.add(
+            "code_artifacts",
+            {"git_authors": [{"name": "Jane Smith", "email": "jsmith@example.com"}]},
+        )
 
         usernames = extract_usernames_from_context(ctx)
 
@@ -476,9 +477,7 @@ class TestExtractUsernamesFromContext:
     def test_from_entities(self):
         """Test extracting from entities."""
         ctx = Context(target="example.com")
-        ctx.add("entities", {
-            "persons": [{"name": "Bob Wilson"}]
-        })
+        ctx.add("entities", {"persons": [{"name": "Bob Wilson"}]})
 
         usernames = extract_usernames_from_context(ctx)
 
@@ -498,9 +497,7 @@ class TestExtractEmailsFromContext:
     def test_from_domain_profile(self):
         """Test extracting from domain profile."""
         ctx = Context(target="example.com")
-        ctx.add("domain_profile", {
-            "registrant_email": "admin@example.com"
-        })
+        ctx.add("domain_profile", {"registrant_email": "admin@example.com"})
 
         emails = extract_emails_from_context(ctx)
 
@@ -509,9 +506,7 @@ class TestExtractEmailsFromContext:
     def test_from_entities(self):
         """Test extracting from entities."""
         ctx = Context(target="example.com")
-        ctx.add("entities", {
-            "emails": ["test@example.com"]
-        })
+        ctx.add("entities", {"emails": ["test@example.com"]})
 
         emails = extract_emails_from_context(ctx)
 
@@ -520,9 +515,7 @@ class TestExtractEmailsFromContext:
     def test_filters_invalid(self):
         """Test that invalid emails are filtered."""
         ctx = Context(target="example.com")
-        ctx.add("entities", {
-            "emails": ["valid@example.com", "invalid"]
-        })
+        ctx.add("entities", {"emails": ["valid@example.com", "invalid"]})
 
         emails = extract_emails_from_context(ctx)
 
@@ -533,6 +526,7 @@ class TestExtractEmailsFromContext:
 # ============================================================================
 # Main Function Tests
 # ============================================================================
+
 
 class TestGatherOsint:
     """Tests for gather_osint function."""
@@ -550,9 +544,10 @@ class TestGatherOsint:
         """Test with existing context data."""
         ctx = Context(target="example.com")
         ctx.add("domain_profile", {"registrant_name": "John Doe"})
-        ctx.add("code_artifacts", {
-            "git_authors": [{"name": "Jane Smith", "email": "jane@example.com"}]
-        })
+        ctx.add(
+            "code_artifacts",
+            {"git_authors": [{"name": "Jane Smith", "email": "jane@example.com"}]},
+        )
 
         result = gather_osint(ctx)
         osint_data = result.get("osint_data")
@@ -579,9 +574,7 @@ class TestGatherOsint:
     def test_generates_findings(self):
         """Test that findings are generated."""
         ctx = Context(target="example.com")
-        ctx.add("entities", {
-            "emails": ["test@example.com", "admin@example.com"]
-        })
+        ctx.add("entities", {"emails": ["test@example.com", "admin@example.com"]})
 
         result = gather_osint(ctx)
 
@@ -597,11 +590,10 @@ class TestDiscoverEmployees:
     def test_from_git_authors(self):
         """Test discovering employees from git authors."""
         ctx = Context(target="example.com")
-        ctx.add("code_artifacts", {
-            "git_authors": [
-                {"name": "John Developer", "email": "john@example.com"}
-            ]
-        })
+        ctx.add(
+            "code_artifacts",
+            {"git_authors": [{"name": "John Developer", "email": "john@example.com"}]},
+        )
 
         result = discover_employees(ctx)
         employees = result.get("discovered_employees")
@@ -613,12 +605,8 @@ class TestDiscoverEmployees:
     def test_deduplication(self):
         """Test that duplicate names are removed."""
         ctx = Context(target="example.com")
-        ctx.add("code_artifacts", {
-            "git_authors": [{"name": "John Doe"}]
-        })
-        ctx.add("entities", {
-            "persons": [{"name": "John Doe"}]
-        })
+        ctx.add("code_artifacts", {"git_authors": [{"name": "John Doe"}]})
+        ctx.add("entities", {"persons": [{"name": "John Doe"}]})
 
         result = discover_employees(ctx)
         employees = result.get("discovered_employees")
@@ -632,16 +620,13 @@ class TestDiscoverEmployees:
 # Findings Generation Tests
 # ============================================================================
 
+
 class TestGenerateOsintFindings:
     """Tests for generate_osint_findings function."""
 
     def test_high_exposure_finding(self):
         """Test finding for high username exposure."""
-        osint_data = {
-            "correlations": [
-                {"username": "testuser", "platform_count": 10}
-            ]
-        }
+        osint_data = {"correlations": [{"username": "testuser", "platform_count": 10}]}
 
         findings = generate_osint_findings(osint_data)
 
@@ -651,9 +636,7 @@ class TestGenerateOsintFindings:
     def test_breach_finding(self):
         """Test finding for breach exposure."""
         osint_data = {
-            "breach_results": [
-                {"email": "test@example.com", "exposed": True}
-            ]
+            "breach_results": [{"email": "test@example.com", "exposed": True}]
         }
 
         findings = generate_osint_findings(osint_data)
@@ -678,6 +661,7 @@ class TestGenerateOsintFindings:
 # ============================================================================
 # Utility Function Tests
 # ============================================================================
+
 
 class TestGetPlatformCategories:
     """Tests for get_platform_categories function."""
@@ -753,6 +737,7 @@ class TestGenerateProfileUrls:
 # Constants Tests
 # ============================================================================
 
+
 class TestPlatformsConstant:
     """Tests for PLATFORMS constant."""
 
@@ -796,6 +781,7 @@ class TestKnownBreachPatternsConstant:
 # Integration Tests
 # ============================================================================
 
+
 class TestOsintIntegration:
     """Integration tests for OSINT module."""
 
@@ -804,23 +790,29 @@ class TestOsintIntegration:
         ctx = Context(target="testcompany.io")
 
         # Add realistic context data
-        ctx.add("domain_profile", {
-            "registrant_name": "Test Company Inc",
-            "registrant_email": "admin@testcompany.io",
-        })
-        ctx.add("code_artifacts", {
-            "git_authors": [
-                {"name": "Alice Developer", "email": "alice@testcompany.io"},
-                {"name": "Bob Engineer", "email": "bob@testcompany.io"},
-            ],
-            "package_maintainers": [
-                {"name": "Charlie Maintainer", "username": "charlie_m"}
-            ]
-        })
-        ctx.add("entities", {
-            "persons": [{"name": "Diana Manager"}],
-            "emails": ["info@testcompany.io"]
-        })
+        ctx.add(
+            "domain_profile",
+            {
+                "registrant_name": "Test Company Inc",
+                "registrant_email": "admin@testcompany.io",
+            },
+        )
+        ctx.add(
+            "code_artifacts",
+            {
+                "git_authors": [
+                    {"name": "Alice Developer", "email": "alice@testcompany.io"},
+                    {"name": "Bob Engineer", "email": "bob@testcompany.io"},
+                ],
+                "package_maintainers": [
+                    {"name": "Charlie Maintainer", "username": "charlie_m"}
+                ],
+            },
+        )
+        ctx.add(
+            "entities",
+            {"persons": [{"name": "Diana Manager"}], "emails": ["info@testcompany.io"]},
+        )
 
         # Run OSINT gathering
         result = gather_osint(ctx)
@@ -855,20 +847,22 @@ class TestOsintIntegration:
         ctx = Context(target="vulnerable.io")
 
         # Add data that would trigger findings
-        ctx.add("entities", {
-            "emails": [
-                "user1@vulnerable.io",
-                "user2@vulnerable.io",
-                "user3@vulnerable.io",
-            ]
-        })
+        ctx.add(
+            "entities",
+            {
+                "emails": [
+                    "user1@vulnerable.io",
+                    "user2@vulnerable.io",
+                    "user3@vulnerable.io",
+                ]
+            },
+        )
 
         result = gather_osint(ctx)
 
         # Check that findings were generated
         finding_count = sum(
-            1 for k in result.data.keys()
-            if k.startswith("osint_finding_")
+            1 for k in result.data.keys() if k.startswith("osint_finding_")
         )
 
         # Should have at least email pattern finding

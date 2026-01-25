@@ -8,11 +8,7 @@ from redops.modules.intel.graph_build import (
     build_graph,
     build_domain_nodes,
     build_subdomain_nodes,
-    build_dns_nodes,
     build_tech_nodes,
-    build_entity_nodes,
-    build_risk_nodes,
-    build_finding_nodes,
     find_paths,
     find_shortest_path,
     get_subgraph,
@@ -25,11 +21,7 @@ class TestGraphNode:
 
     def test_basic_creation(self):
         """Test basic node creation."""
-        node = GraphNode(
-            id="node1",
-            node_type="domain",
-            label="example.com"
-        )
+        node = GraphNode(id="node1", node_type="domain", label="example.com")
         assert node.id == "node1"
         assert node.node_type == "domain"
         assert node.label == "example.com"
@@ -50,10 +42,7 @@ class TestGraphNode:
     def test_to_dict(self):
         """Test node to dictionary conversion."""
         node = GraphNode(
-            id="n1",
-            node_type="ip",
-            label="8.8.8.8",
-            data={"provider": "Google"}
+            id="n1", node_type="ip", label="8.8.8.8", data={"provider": "Google"}
         )
         node.add_edge_to("n2")
 
@@ -71,11 +60,7 @@ class TestGraphEdge:
 
     def test_basic_creation(self):
         """Test basic edge creation."""
-        edge = GraphEdge(
-            source="n1",
-            target="n2",
-            edge_type="resolves_to"
-        )
+        edge = GraphEdge(source="n1", target="n2", edge_type="resolves_to")
         assert edge.source == "n1"
         assert edge.target == "n2"
         assert edge.edge_type == "resolves_to"
@@ -88,7 +73,7 @@ class TestGraphEdge:
             target="n2",
             edge_type="uses",
             weight=0.5,
-            data={"info": "test"}
+            data={"info": "test"},
         )
         result = edge.to_dict()
 
@@ -271,7 +256,7 @@ class TestCentralityMetrics:
         # Hub has highest centrality (3 edges / 3 other nodes = 1.0)
         assert centrality["hub"] == 1.0
         # Others have 1 edge each
-        assert centrality["n1"] == pytest.approx(1/3)
+        assert centrality["n1"] == pytest.approx(1 / 3)
 
     def test_degree_centrality_single_node(self):
         """Test centrality with single node."""
@@ -383,10 +368,13 @@ class TestBuildGraph:
     def test_build_graph_with_subdomains(self):
         """Test building graph with subdomains."""
         ctx = Context(target="test.io")
-        ctx.add("subdomains", [
-            {"subdomain": "www.test.io", "ip": "1.2.3.4"},
-            {"subdomain": "api.test.io", "ip": "1.2.3.5"}
-        ])
+        ctx.add(
+            "subdomains",
+            [
+                {"subdomain": "www.test.io", "ip": "1.2.3.4"},
+                {"subdomain": "api.test.io", "ip": "1.2.3.5"},
+            ],
+        )
 
         result = build_graph(ctx)
         graph = result.get("graph")
@@ -397,11 +385,14 @@ class TestBuildGraph:
     def test_build_graph_with_dns(self):
         """Test building graph with DNS records."""
         ctx = Context(target="test.io")
-        ctx.add("dns_records", {
-            "A": ["1.2.3.4", "1.2.3.5"],
-            "MX": ["mail.test.io"],
-            "NS": ["ns1.test.io"]
-        })
+        ctx.add(
+            "dns_records",
+            {
+                "A": ["1.2.3.4", "1.2.3.5"],
+                "MX": ["mail.test.io"],
+                "NS": ["ns1.test.io"],
+            },
+        )
 
         result = build_graph(ctx)
         graph = result.get("graph")
@@ -410,12 +401,10 @@ class TestBuildGraph:
     def test_build_graph_with_tech_stack(self):
         """Test building graph with technology stack."""
         ctx = Context(target="test.io")
-        ctx.add("tech_stack", {
-            "technologies": [
-                {"name": "nginx", "version": "1.20"},
-                {"name": "React"}
-            ]
-        })
+        ctx.add(
+            "tech_stack",
+            {"technologies": [{"name": "nginx", "version": "1.20"}, {"name": "React"}]},
+        )
 
         result = build_graph(ctx)
         graph = result.get("graph")
@@ -426,11 +415,14 @@ class TestBuildGraph:
     def test_build_graph_with_entities(self):
         """Test building graph with extracted entities."""
         ctx = Context(target="test.io")
-        ctx.add("entities", {
-            "emails": ["admin@test.io"],
-            "domains": ["related.io"],
-            "ipv4_addresses": ["8.8.8.8"]
-        })
+        ctx.add(
+            "entities",
+            {
+                "emails": ["admin@test.io"],
+                "domains": ["related.io"],
+                "ipv4_addresses": ["8.8.8.8"],
+            },
+        )
 
         result = build_graph(ctx, {"include_entities": True})
         graph = result.get("graph")
@@ -442,10 +434,13 @@ class TestBuildGraph:
     def test_build_graph_with_risks(self):
         """Test building graph with risks."""
         ctx = Context(target="test.io")
-        ctx.add("risks", [
-            {"title": "SSL Issue", "severity": "high", "score": 15},
-            {"title": "Missing Header", "severity": "medium", "score": 8}
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"title": "SSL Issue", "severity": "high", "score": 15},
+                {"title": "Missing Header", "severity": "medium", "score": 8},
+            ],
+        )
 
         result = build_graph(ctx, {"include_risks": True})
         graph = result.get("graph")
@@ -456,11 +451,14 @@ class TestBuildGraph:
     def test_build_graph_with_findings(self):
         """Test building graph with findings."""
         ctx = Context(target="test.io")
-        ctx.add("finding_0", {
-            "title": "Vulnerability Found",
-            "severity": "critical",
-            "module": "scanner"
-        })
+        ctx.add(
+            "finding_0",
+            {
+                "title": "Vulnerability Found",
+                "severity": "critical",
+                "module": "scanner",
+            },
+        )
 
         result = build_graph(ctx, {"include_findings": True})
         graph = result.get("graph")
@@ -471,10 +469,9 @@ class TestBuildGraph:
     def test_build_graph_calculates_centrality(self):
         """Test that centrality is calculated."""
         ctx = Context(target="test.io")
-        ctx.add("subdomains", [
-            {"subdomain": "www.test.io"},
-            {"subdomain": "api.test.io"}
-        ])
+        ctx.add(
+            "subdomains", [{"subdomain": "www.test.io"}, {"subdomain": "api.test.io"}]
+        )
 
         result = build_graph(ctx)
         assert "graph_centrality" in result.data
@@ -588,7 +585,7 @@ class TestPathFinding:
         for i in range(10):
             graph.add_node(str(i), "node")
         for i in range(9):
-            graph.add_edge(str(i), str(i+1))
+            graph.add_edge(str(i), str(i + 1))
 
         # Path of length 10, but max_depth=5
         paths = find_paths(graph, "0", "9", max_depth=5)
@@ -673,7 +670,7 @@ class TestEdgeCases:
     def test_special_characters_in_labels(self):
         """Test handling special characters in labels."""
         graph = AssetGraph()
-        node = graph.add_node("test", "domain", label='test "quoted"')
+        graph.add_node("test", "domain", label='test "quoted"')
 
         dot = graph.to_dot()
         # Should escape quotes
@@ -687,7 +684,7 @@ class TestEdgeCases:
             graph.add_node(f"n{i}", "node")
         # Add edges
         for i in range(99):
-            graph.add_edge(f"n{i}", f"n{i+1}")
+            graph.add_edge(f"n{i}", f"n{i + 1}")
 
         assert graph.node_count() == 100
         assert graph.edge_count() == 99

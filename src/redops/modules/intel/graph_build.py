@@ -92,7 +92,7 @@ class AssetGraph:
         node_id: str,
         node_type: str,
         label: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[Dict[str, Any]] = None,
     ) -> GraphNode:
         """
         Add a node to the graph.
@@ -127,7 +127,7 @@ class AssetGraph:
         target_id: str,
         edge_type: str = "relates_to",
         weight: float = 1.0,
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[Dict[str, Any]] = None,
     ) -> Optional[GraphEdge]:
         """
         Add an edge between two nodes.
@@ -242,10 +242,7 @@ class AssetGraph:
         if n <= 1:
             return {node_id: 0.0 for node_id in self.nodes}
 
-        return {
-            node_id: node.degree / (n - 1)
-            for node_id, node in self.nodes.items()
-        }
+        return {node_id: node.degree / (n - 1) for node_id, node in self.nodes.items()}
 
     def calculate_in_degree_centrality(self) -> Dict[str, float]:
         """Calculate in-degree centrality (nodes that are pointed to)."""
@@ -254,8 +251,7 @@ class AssetGraph:
             return {node_id: 0.0 for node_id in self.nodes}
 
         return {
-            node_id: node.in_degree / (n - 1)
-            for node_id, node in self.nodes.items()
+            node_id: node.in_degree / (n - 1) for node_id, node in self.nodes.items()
         }
 
     def calculate_out_degree_centrality(self) -> Dict[str, float]:
@@ -265,8 +261,7 @@ class AssetGraph:
             return {node_id: 0.0 for node_id in self.nodes}
 
         return {
-            node_id: node.out_degree / (n - 1)
-            for node_id, node in self.nodes.items()
+            node_id: node.out_degree / (n - 1) for node_id, node in self.nodes.items()
         }
 
     def get_most_connected(self, n: int = 10) -> List[Tuple[str, int]]:
@@ -280,9 +275,7 @@ class AssetGraph:
             List of (node_id, degree) tuples sorted by degree
         """
         sorted_nodes = sorted(
-            self.nodes.items(),
-            key=lambda x: x[1].degree,
-            reverse=True
+            self.nodes.items(), key=lambda x: x[1].degree, reverse=True
         )
         return [(node_id, node.degree) for node_id, node in sorted_nodes[:n]]
 
@@ -311,11 +304,15 @@ class AssetGraph:
         for node in self.nodes.values():
             color = type_colors.get(node.node_type, "white")
             label = node.label.replace('"', '\\"')
-            lines.append(f'  "{node.id}" [label="{label}" fillcolor="{color}" style="filled"];')
+            lines.append(
+                f'  "{node.id}" [label="{label}" fillcolor="{color}" style="filled"];'
+            )
 
         # Add edges
         for edge in self.edges:
-            lines.append(f'  "{edge.source}" -> "{edge.target}" [label="{edge.edge_type}"];')
+            lines.append(
+                f'  "{edge.source}" -> "{edge.target}" [label="{edge.edge_type}"];'
+            )
 
         lines.append("}")
         return "\n".join(lines)
@@ -330,27 +327,31 @@ class AssetGraph:
         elements = []
 
         for node in self.nodes.values():
-            elements.append({
-                "data": {
-                    "id": node.id,
-                    "label": node.label,
-                    "type": node.node_type,
-                    **node.data,
-                },
-                "group": "nodes",
-            })
+            elements.append(
+                {
+                    "data": {
+                        "id": node.id,
+                        "label": node.label,
+                        "type": node.node_type,
+                        **node.data,
+                    },
+                    "group": "nodes",
+                }
+            )
 
         for edge in self.edges:
-            elements.append({
-                "data": {
-                    "id": f"{edge.source}->{edge.target}",
-                    "source": edge.source,
-                    "target": edge.target,
-                    "type": edge.edge_type,
-                    "weight": edge.weight,
-                },
-                "group": "edges",
-            })
+            elements.append(
+                {
+                    "data": {
+                        "id": f"{edge.source}->{edge.target}",
+                        "source": edge.source,
+                        "target": edge.target,
+                        "type": edge.edge_type,
+                        "weight": edge.weight,
+                    },
+                    "group": "edges",
+                }
+            )
 
         return {"elements": elements}
 
@@ -384,10 +385,7 @@ def build_graph(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     # Add target domain as root node
     if ctx.target:
         graph.add_node(
-            f"domain:{ctx.target}",
-            "domain",
-            label=ctx.target,
-            data={"is_target": True}
+            f"domain:{ctx.target}", "domain", label=ctx.target, data={"is_target": True}
         )
 
     # Build nodes from domain profile
@@ -423,7 +421,10 @@ def build_graph(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     ctx.add("graph_centrality", centrality)
     ctx.add("graph_most_connected", most_connected)
 
-    ctx.log(f"Graph built: {graph.node_count()} nodes, {graph.edge_count()} edges", level="INFO")
+    ctx.log(
+        f"Graph built: {graph.node_count()} nodes, {graph.edge_count()} edges",
+        level="INFO",
+    )
 
     return ctx
 
@@ -543,7 +544,9 @@ def build_tech_nodes(graph: AssetGraph, ctx: Context) -> None:
 
         tech_id = f"tech:{tech_name}"
         label = f"{tech_name} {tech_version}" if tech_version else tech_name
-        graph.add_node(tech_id, "technology", label=label, data={"version": tech_version})
+        graph.add_node(
+            tech_id, "technology", label=label, data={"version": tech_version}
+        )
 
         if domain_node_id:
             graph.add_edge(domain_node_id, tech_id, "uses_technology")
@@ -569,7 +572,9 @@ def build_entity_nodes(graph: AssetGraph, ctx: Context) -> None:
     for domain in entities.get("domains", []):
         ext_domain_id = f"domain:{domain}"
         if ext_domain_id not in graph.nodes:
-            graph.add_node(ext_domain_id, "domain", label=domain, data={"discovered": True})
+            graph.add_node(
+                ext_domain_id, "domain", label=domain, data={"discovered": True}
+            )
             if domain_node_id and domain_node_id != ext_domain_id:
                 graph.add_edge(domain_node_id, ext_domain_id, "references")
 
@@ -603,7 +608,7 @@ def build_risk_nodes(graph: AssetGraph, ctx: Context) -> None:
                     "severity": severity,
                     "full_title": title,
                     "score": risk.get("score"),
-                }
+                },
             )
 
             if domain_node_id:
@@ -633,7 +638,7 @@ def build_finding_nodes(graph: AssetGraph, ctx: Context) -> None:
                     "severity": severity,
                     "full_title": title,
                     "module": finding.get("module"),
-                }
+                },
             )
 
             if domain_node_id:
@@ -641,10 +646,7 @@ def build_finding_nodes(graph: AssetGraph, ctx: Context) -> None:
 
 
 def find_paths(
-    graph: AssetGraph,
-    start_id: str,
-    end_id: str,
-    max_depth: int = 5
+    graph: AssetGraph, start_id: str, end_id: str, max_depth: int = 5
 ) -> List[List[str]]:
     """
     Find all paths between two nodes using DFS.
@@ -686,9 +688,7 @@ def find_paths(
 
 
 def find_shortest_path(
-    graph: AssetGraph,
-    start_id: str,
-    end_id: str
+    graph: AssetGraph, start_id: str, end_id: str
 ) -> Optional[List[str]]:
     """
     Find shortest path between two nodes using BFS.
@@ -730,9 +730,7 @@ def find_shortest_path(
 
 
 def get_subgraph(
-    graph: AssetGraph,
-    node_ids: Set[str],
-    include_edges: bool = True
+    graph: AssetGraph, node_ids: Set[str], include_edges: bool = True
 ) -> AssetGraph:
     """
     Extract a subgraph containing only specified nodes.
@@ -760,7 +758,7 @@ def get_subgraph(
                     edge.target,
                     edge.edge_type,
                     edge.weight,
-                    edge.data.copy()
+                    edge.data.copy(),
                 )
 
     return subgraph

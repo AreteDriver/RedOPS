@@ -13,7 +13,7 @@ Correlation Types:
 - Pattern: Findings matching known attack patterns
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple, Callable
+from typing import Optional, Dict, Any, List, Set, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timedelta
@@ -25,6 +25,7 @@ from redops.core.context import Context
 
 class CorrelationType(Enum):
     """Types of correlation between findings."""
+
     TEMPORAL = "temporal"
     ENTITY = "entity"
     ATTRIBUTE = "attribute"
@@ -36,6 +37,7 @@ class CorrelationType(Enum):
 
 class CorrelationStrength(Enum):
     """Strength of correlation."""
+
     STRONG = "strong"
     MODERATE = "moderate"
     WEAK = "weak"
@@ -44,6 +46,7 @@ class CorrelationStrength(Enum):
 
 class FindingCategory(Enum):
     """Categories of findings."""
+
     VULNERABILITY = "vulnerability"
     EXPOSURE = "exposure"
     MISCONFIGURATION = "misconfiguration"
@@ -58,6 +61,7 @@ class FindingCategory(Enum):
 
 class FindingSeverity(Enum):
     """Severity levels for findings."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -68,6 +72,7 @@ class FindingSeverity(Enum):
 @dataclass
 class Finding:
     """Represents a finding from any module."""
+
     id: str
     source_module: str
     category: FindingCategory
@@ -100,6 +105,7 @@ class Finding:
 @dataclass
 class Correlation:
     """Represents a correlation between findings."""
+
     id: str
     finding_ids: List[str]
     correlation_type: CorrelationType
@@ -130,6 +136,7 @@ class Correlation:
 @dataclass
 class CorrelationCluster:
     """A cluster of correlated findings."""
+
     id: str
     name: str
     finding_ids: List[str]
@@ -160,6 +167,7 @@ class CorrelationCluster:
 @dataclass
 class CorrelationInsight:
     """An insight derived from correlations."""
+
     id: str
     title: str
     description: str
@@ -206,7 +214,10 @@ ATTACK_PATTERNS = {
     },
     "infrastructure_exposure": {
         "name": "Infrastructure Exposure",
-        "categories": [FindingCategory.INFRASTRUCTURE, FindingCategory.MISCONFIGURATION],
+        "categories": [
+            FindingCategory.INFRASTRUCTURE,
+            FindingCategory.MISCONFIGURATION,
+        ],
         "indicators": ["cloud", "s3", "azure", "exposed", "public"],
         "description": "Cloud infrastructure misconfigurations exposing assets",
     },
@@ -282,7 +293,10 @@ CAUSAL_RELATIONSHIPS = {
 # Main Functions
 # ============================================================================
 
-def correlate_findings(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+
+def correlate_findings(
+    ctx: Context, params: Optional[Dict[str, Any]] = None
+) -> Context:
     """
     Correlate findings from context data.
 
@@ -301,20 +315,25 @@ def correlate_findings(ctx: Context, params: Optional[Dict[str, Any]] = None) ->
     params = params or {}
     target = params.get("target") or ctx.target
 
-    ctx.log(f"Starting finding correlation for: {target or 'all findings'}", level="INFO")
+    ctx.log(
+        f"Starting finding correlation for: {target or 'all findings'}", level="INFO"
+    )
 
     # Extract findings from context
     findings = extract_findings_from_context(ctx)
 
     if not findings:
         ctx.log("No findings to correlate", level="WARNING")
-        ctx.add("correlations", {"findings": [], "correlations": [], "clusters": [], "insights": []})
+        ctx.add(
+            "correlations",
+            {"findings": [], "correlations": [], "clusters": [], "insights": []},
+        )
         return ctx
 
     ctx.log(f"Extracted {len(findings)} findings for correlation", level="INFO")
 
     # Build finding index
-    finding_index = {f.id: f for f in findings}
+    {f.id: f for f in findings}
 
     # Perform correlations
     correlations = []
@@ -368,7 +387,9 @@ def correlate_findings(ctx: Context, params: Optional[Dict[str, Any]] = None) ->
         "correlations": [c.to_dict() for c in correlations],
         "clusters": [c.to_dict() for c in clusters],
         "insights": [i.to_dict() for i in insights],
-        "summary": generate_correlation_summary(findings, correlations, clusters, insights),
+        "summary": generate_correlation_summary(
+            findings, correlations, clusters, insights
+        ),
         "graph": build_correlation_graph(findings, correlations),
     }
 
@@ -394,143 +415,160 @@ def extract_findings_from_context(ctx: Context) -> List[Finding]:
     exposure = ctx.get("exposure_scan", {})
     for exp in exposure.get("exposures", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"EXP-{finding_id:04d}",
-            source_module="exposure_scan",
-            category=FindingCategory.EXPOSURE,
-            title=exp.get("title", "Exposure Finding"),
-            description=exp.get("description", ""),
-            severity=parse_severity(exp.get("severity", "medium")),
-            entities=extract_entities_from_text(str(exp)),
-            attributes=exp,
-            evidence=exp.get("evidence", []),
-        ))
+        findings.append(
+            Finding(
+                id=f"EXP-{finding_id:04d}",
+                source_module="exposure_scan",
+                category=FindingCategory.EXPOSURE,
+                title=exp.get("title", "Exposure Finding"),
+                description=exp.get("description", ""),
+                severity=parse_severity(exp.get("severity", "medium")),
+                entities=extract_entities_from_text(str(exp)),
+                attributes=exp,
+                evidence=exp.get("evidence", []),
+            )
+        )
 
     # Extract from threat intel
     threat_intel = ctx.get("threat_intel", {})
     for ioc in threat_intel.get("iocs", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"IOC-{finding_id:04d}",
-            source_module="threat_intel",
-            category=FindingCategory.THREAT_INDICATOR,
-            title=f"Threat Indicator: {ioc.get('type', 'Unknown')}",
-            description=ioc.get("description", ""),
-            severity=parse_severity(ioc.get("severity", "high")),
-            entities=[ioc.get("value", "")],
-            attributes=ioc,
-        ))
+        findings.append(
+            Finding(
+                id=f"IOC-{finding_id:04d}",
+                source_module="threat_intel",
+                category=FindingCategory.THREAT_INDICATOR,
+                title=f"Threat Indicator: {ioc.get('type', 'Unknown')}",
+                description=ioc.get("description", ""),
+                severity=parse_severity(ioc.get("severity", "high")),
+                entities=[ioc.get("value", "")],
+                attributes=ioc,
+            )
+        )
 
     # Extract from compliance
     compliance = ctx.get("compliance", {})
     for gap in compliance.get("gaps", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"CMP-{finding_id:04d}",
-            source_module="compliance",
-            category=FindingCategory.COMPLIANCE,
-            title=gap.get("title", "Compliance Gap"),
-            description=gap.get("description", ""),
-            severity=parse_severity(gap.get("priority", "medium")),
-            attributes=gap,
-        ))
+        findings.append(
+            Finding(
+                id=f"CMP-{finding_id:04d}",
+                source_module="compliance",
+                category=FindingCategory.COMPLIANCE,
+                title=gap.get("title", "Compliance Gap"),
+                description=gap.get("description", ""),
+                severity=parse_severity(gap.get("priority", "medium")),
+                attributes=gap,
+            )
+        )
 
     # Extract from infrastructure
     infrastructure = ctx.get("infrastructure", {})
     for issue in infrastructure.get("issues", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"INF-{finding_id:04d}",
-            source_module="infrastructure",
-            category=FindingCategory.INFRASTRUCTURE,
-            title=issue.get("title", "Infrastructure Finding"),
-            description=issue.get("description", ""),
-            severity=parse_severity(issue.get("severity", "medium")),
-            entities=extract_entities_from_text(str(issue)),
-            attributes=issue,
-        ))
+        findings.append(
+            Finding(
+                id=f"INF-{finding_id:04d}",
+                source_module="infrastructure",
+                category=FindingCategory.INFRASTRUCTURE,
+                title=issue.get("title", "Infrastructure Finding"),
+                description=issue.get("description", ""),
+                severity=parse_severity(issue.get("severity", "medium")),
+                entities=extract_entities_from_text(str(issue)),
+                attributes=issue,
+            )
+        )
 
     # Extract from domain profile
     domain_profile = ctx.get("domain_profile", {})
     for subdomain in domain_profile.get("subdomains", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"REC-{finding_id:04d}",
-            source_module="recon",
-            category=FindingCategory.RECONNAISSANCE,
-            title=f"Subdomain: {subdomain}",
-            description=f"Discovered subdomain: {subdomain}",
-            severity=FindingSeverity.INFO,
-            entities=[subdomain],
-            attributes={"subdomain": subdomain},
-        ))
+        findings.append(
+            Finding(
+                id=f"REC-{finding_id:04d}",
+                source_module="recon",
+                category=FindingCategory.RECONNAISSANCE,
+                title=f"Subdomain: {subdomain}",
+                description=f"Discovered subdomain: {subdomain}",
+                severity=FindingSeverity.INFO,
+                entities=[subdomain],
+                attributes={"subdomain": subdomain},
+            )
+        )
 
     # Extract from tech stack
     tech_stack = ctx.get("tech_stack", {})
     for tech in tech_stack.get("technologies", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"TEC-{finding_id:04d}",
-            source_module="tech_stack",
-            category=FindingCategory.RECONNAISSANCE,
-            title=f"Technology: {tech.get('name', 'Unknown')}",
-            description=f"Detected technology: {tech.get('name', '')}",
-            severity=FindingSeverity.INFO,
-            entities=[tech.get("name", "")],
-            attributes=tech,
-        ))
+        findings.append(
+            Finding(
+                id=f"TEC-{finding_id:04d}",
+                source_module="tech_stack",
+                category=FindingCategory.RECONNAISSANCE,
+                title=f"Technology: {tech.get('name', 'Unknown')}",
+                description=f"Detected technology: {tech.get('name', '')}",
+                severity=FindingSeverity.INFO,
+                entities=[tech.get("name", "")],
+                attributes=tech,
+            )
+        )
 
     # Extract from social OSINT
     social = ctx.get("social_profiles", {})
     for profile in social.get("profiles", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"SOC-{finding_id:04d}",
-            source_module="social_osint",
-            category=FindingCategory.SOCIAL,
-            title=f"Social Profile: {profile.get('platform', 'Unknown')}",
-            description=profile.get("bio", ""),
-            severity=FindingSeverity.LOW,
-            entities=[profile.get("username", ""), profile.get("url", "")],
-            attributes=profile,
-        ))
+        findings.append(
+            Finding(
+                id=f"SOC-{finding_id:04d}",
+                source_module="social_osint",
+                category=FindingCategory.SOCIAL,
+                title=f"Social Profile: {profile.get('platform', 'Unknown')}",
+                description=profile.get("bio", ""),
+                severity=FindingSeverity.LOW,
+                entities=[profile.get("username", ""), profile.get("url", "")],
+                attributes=profile,
+            )
+        )
 
     # Extract from risk scoring
     risk = ctx.get("risk_assessment", {})
     for vuln in risk.get("vulnerabilities", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"VUL-{finding_id:04d}",
-            source_module="risk_scoring",
-            category=FindingCategory.VULNERABILITY,
-            title=vuln.get("title", "Vulnerability"),
-            description=vuln.get("description", ""),
-            severity=parse_severity(vuln.get("severity", "medium")),
-            entities=extract_entities_from_text(str(vuln)),
-            attributes=vuln,
-        ))
+        findings.append(
+            Finding(
+                id=f"VUL-{finding_id:04d}",
+                source_module="risk_scoring",
+                category=FindingCategory.VULNERABILITY,
+                title=vuln.get("title", "Vulnerability"),
+                description=vuln.get("description", ""),
+                severity=parse_severity(vuln.get("severity", "medium")),
+                entities=extract_entities_from_text(str(vuln)),
+                attributes=vuln,
+            )
+        )
 
     # Extract from code artifacts
     code = ctx.get("code_artifacts", {})
     for secret in code.get("secrets", []):
         finding_id += 1
-        findings.append(Finding(
-            id=f"SEC-{finding_id:04d}",
-            source_module="code_artifacts",
-            category=FindingCategory.CREDENTIAL,
-            title=f"Exposed Secret: {secret.get('type', 'Unknown')}",
-            description=secret.get("context", ""),
-            severity=FindingSeverity.HIGH,
-            entities=[secret.get("value", "")],
-            attributes=secret,
-        ))
+        findings.append(
+            Finding(
+                id=f"SEC-{finding_id:04d}",
+                source_module="code_artifacts",
+                category=FindingCategory.CREDENTIAL,
+                title=f"Exposed Secret: {secret.get('type', 'Unknown')}",
+                description=secret.get("context", ""),
+                severity=FindingSeverity.HIGH,
+                entities=[secret.get("value", "")],
+                attributes=secret,
+            )
+        )
 
     return findings
 
 
 def correlate_temporal(
-    findings: List[Finding],
-    window_hours: int = 24
+    findings: List[Finding], window_hours: int = 24
 ) -> List[Correlation]:
     """
     Correlate findings based on temporal proximity.
@@ -558,7 +596,7 @@ def correlate_temporal(
     # Find temporal clusters
     for i, (f1, t1) in enumerate(timestamped):
         related = []
-        for f2, t2 in timestamped[i + 1:]:
+        for f2, t2 in timestamped[i + 1 :]:
             if t2 - t1 <= window:
                 related.append(f2)
             else:
@@ -566,26 +604,34 @@ def correlate_temporal(
 
         if related:
             # Calculate confidence based on time proximity
-            min_gap = min((parse_timestamp(f.timestamp) - t1).total_seconds() for f in related if f.timestamp)
+            min_gap = min(
+                (parse_timestamp(f.timestamp) - t1).total_seconds()
+                for f in related
+                if f.timestamp
+            )
             confidence = max(0.3, 1.0 - (min_gap / (window_hours * 3600)))
 
             corr_id = generate_correlation_id([f1] + related, "temporal")
-            correlations.append(Correlation(
-                id=corr_id,
-                finding_ids=[f1.id] + [f.id for f in related],
-                correlation_type=CorrelationType.TEMPORAL,
-                strength=calculate_strength(confidence),
-                confidence=confidence,
-                reason=f"Findings occurred within {window_hours} hours",
-                timeline=[{"finding_id": f.id, "timestamp": f.timestamp} for f in [f1] + related],
-            ))
+            correlations.append(
+                Correlation(
+                    id=corr_id,
+                    finding_ids=[f1.id] + [f.id for f in related],
+                    correlation_type=CorrelationType.TEMPORAL,
+                    strength=calculate_strength(confidence),
+                    confidence=confidence,
+                    reason=f"Findings occurred within {window_hours} hours",
+                    timeline=[
+                        {"finding_id": f.id, "timestamp": f.timestamp}
+                        for f in [f1] + related
+                    ],
+                )
+            )
 
     return correlations
 
 
 def correlate_entities(
-    findings: List[Finding],
-    entity_types: List[str]
+    findings: List[Finding], entity_types: List[str]
 ) -> List[Correlation]:
     """
     Correlate findings based on shared entities.
@@ -623,16 +669,20 @@ def correlate_entities(
                 # Calculate confidence based on number of shared findings
                 confidence = min(0.95, 0.5 + (len(unique_findings) - 2) * 0.1)
 
-                corr_id = generate_correlation_id(unique_findings, f"entity_{entity[:20]}")
-                correlations.append(Correlation(
-                    id=corr_id,
-                    finding_ids=[f.id for f in unique_findings],
-                    correlation_type=CorrelationType.ENTITY,
-                    strength=calculate_strength(confidence),
-                    confidence=confidence,
-                    reason=f"Findings share entity: {entity[:50]}",
-                    shared_entities=[entity],
-                ))
+                corr_id = generate_correlation_id(
+                    unique_findings, f"entity_{entity[:20]}"
+                )
+                correlations.append(
+                    Correlation(
+                        id=corr_id,
+                        finding_ids=[f.id for f in unique_findings],
+                        correlation_type=CorrelationType.ENTITY,
+                        strength=calculate_strength(confidence),
+                        confidence=confidence,
+                        reason=f"Findings share entity: {entity[:50]}",
+                        shared_entities=[entity],
+                    )
+                )
 
     return correlations
 
@@ -661,7 +711,7 @@ def correlate_attributes(findings: List[Finding]) -> List[Correlation]:
 
         # Find findings with overlapping attribute keys
         for i, f1 in enumerate(cat_findings):
-            for f2 in cat_findings[i + 1:]:
+            for f2 in cat_findings[i + 1 :]:
                 shared_keys = set(f1.attributes.keys()) & set(f2.attributes.keys())
                 shared_values = {}
 
@@ -673,15 +723,17 @@ def correlate_attributes(findings: List[Finding]) -> List[Correlation]:
                     confidence = min(0.8, 0.3 + len(shared_values) * 0.1)
 
                     corr_id = generate_correlation_id([f1, f2], "attribute")
-                    correlations.append(Correlation(
-                        id=corr_id,
-                        finding_ids=[f1.id, f2.id],
-                        correlation_type=CorrelationType.ATTRIBUTE,
-                        strength=calculate_strength(confidence),
-                        confidence=confidence,
-                        reason=f"Findings share {len(shared_values)} attribute(s)",
-                        shared_attributes=shared_values,
-                    ))
+                    correlations.append(
+                        Correlation(
+                            id=corr_id,
+                            finding_ids=[f1.id, f2.id],
+                            correlation_type=CorrelationType.ATTRIBUTE,
+                            strength=calculate_strength(confidence),
+                            confidence=confidence,
+                            reason=f"Findings share {len(shared_values)} attribute(s)",
+                            shared_attributes=shared_values,
+                        )
+                    )
 
     return correlations
 
@@ -726,19 +778,21 @@ def correlate_causal(findings: List[Finding]) -> List[Correlation]:
                         confidence = min(0.85, 0.5 + len(shared) * 0.15)
 
                         corr_id = generate_correlation_id([cause, effect], "causal")
-                        correlations.append(Correlation(
-                            id=corr_id,
-                            finding_ids=[cause.id, effect.id],
-                            correlation_type=CorrelationType.CAUSAL,
-                            strength=calculate_strength(confidence),
-                            confidence=confidence,
-                            reason=f"{cause_category.value} may enable {effect_category.value}",
-                            shared_entities=list(shared),
-                            metadata={
-                                "cause_category": cause_category.value,
-                                "effect_category": effect_category.value,
-                            },
-                        ))
+                        correlations.append(
+                            Correlation(
+                                id=corr_id,
+                                finding_ids=[cause.id, effect.id],
+                                correlation_type=CorrelationType.CAUSAL,
+                                strength=calculate_strength(confidence),
+                                confidence=confidence,
+                                reason=f"{cause_category.value} may enable {effect_category.value}",
+                                shared_entities=list(shared),
+                                metadata={
+                                    "cause_category": cause_category.value,
+                                    "effect_category": effect_category.value,
+                                },
+                            )
+                        )
 
     return correlations
 
@@ -775,27 +829,30 @@ def detect_attack_patterns(findings: List[Finding]) -> List[Correlation]:
             # Calculate confidence based on matches
             confidence = min(0.9, 0.4 + len(matching_findings) * 0.1)
 
-            corr_id = generate_correlation_id(matching_findings, f"pattern_{pattern_id}")
-            correlations.append(Correlation(
-                id=corr_id,
-                finding_ids=[f.id for f in matching_findings],
-                correlation_type=CorrelationType.PATTERN,
-                strength=calculate_strength(confidence),
-                confidence=confidence,
-                reason=f"Matches attack pattern: {pattern['name']}",
-                metadata={
-                    "pattern_id": pattern_id,
-                    "pattern_name": pattern["name"],
-                    "pattern_description": pattern["description"],
-                },
-            ))
+            corr_id = generate_correlation_id(
+                matching_findings, f"pattern_{pattern_id}"
+            )
+            correlations.append(
+                Correlation(
+                    id=corr_id,
+                    finding_ids=[f.id for f in matching_findings],
+                    correlation_type=CorrelationType.PATTERN,
+                    strength=calculate_strength(confidence),
+                    confidence=confidence,
+                    reason=f"Matches attack pattern: {pattern['name']}",
+                    metadata={
+                        "pattern_id": pattern_id,
+                        "pattern_name": pattern["name"],
+                        "pattern_description": pattern["description"],
+                    },
+                )
+            )
 
     return correlations
 
 
 def cluster_findings(
-    findings: List[Finding],
-    correlations: List[Correlation]
+    findings: List[Finding], correlations: List[Correlation]
 ) -> List[CorrelationCluster]:
     """
     Cluster related findings using correlation data.
@@ -814,7 +871,7 @@ def cluster_findings(
     graph: Dict[str, Set[str]] = defaultdict(set)
     for corr in correlations:
         for i, fid1 in enumerate(corr.finding_ids):
-            for fid2 in corr.finding_ids[i + 1:]:
+            for fid2 in corr.finding_ids[i + 1 :]:
                 graph[fid1].add(fid2)
                 graph[fid2].add(fid1)
 
@@ -840,7 +897,9 @@ def cluster_findings(
 
         if len(component) >= 2:
             cluster_id += 1
-            component_findings = [finding_index[fid] for fid in component if fid in finding_index]
+            component_findings = [
+                finding_index[fid] for fid in component if fid in finding_index
+            ]
 
             # Determine primary category
             category_counts: Dict[FindingCategory, int] = defaultdict(int)
@@ -864,33 +923,45 @@ def cluster_findings(
 
             # Get related correlations
             related_corrs = [
-                c.id for c in correlations
+                c.id
+                for c in correlations
                 if any(fid in component for fid in c.finding_ids)
             ]
 
             # Calculate cluster confidence
-            cluster_confidence = sum(c.confidence for c in correlations if c.id in related_corrs)
-            cluster_confidence = min(0.95, cluster_confidence / max(1, len(related_corrs)))
+            cluster_confidence = sum(
+                c.confidence for c in correlations if c.id in related_corrs
+            )
+            cluster_confidence = min(
+                0.95, cluster_confidence / max(1, len(related_corrs))
+            )
 
             # Check for attack patterns
             attack_pattern = None
             for corr in correlations:
-                if corr.id in related_corrs and corr.correlation_type == CorrelationType.PATTERN:
+                if (
+                    corr.id in related_corrs
+                    and corr.correlation_type == CorrelationType.PATTERN
+                ):
                     attack_pattern = corr.metadata.get("pattern_name")
                     break
 
-            clusters.append(CorrelationCluster(
-                id=f"CLU-{cluster_id:04d}",
-                name=f"{primary_category.value.replace('_', ' ').title()} Cluster",
-                finding_ids=component,
-                correlations=related_corrs,
-                primary_category=primary_category,
-                aggregate_severity=aggregate_severity,
-                confidence=cluster_confidence,
-                summary=f"Cluster of {len(component)} related findings",
-                attack_pattern=attack_pattern,
-                recommendations=generate_cluster_recommendations(component_findings, primary_category),
-            ))
+            clusters.append(
+                CorrelationCluster(
+                    id=f"CLU-{cluster_id:04d}",
+                    name=f"{primary_category.value.replace('_', ' ').title()} Cluster",
+                    finding_ids=component,
+                    correlations=related_corrs,
+                    primary_category=primary_category,
+                    aggregate_severity=aggregate_severity,
+                    confidence=cluster_confidence,
+                    summary=f"Cluster of {len(component)} related findings",
+                    attack_pattern=attack_pattern,
+                    recommendations=generate_cluster_recommendations(
+                        component_findings, primary_category
+                    ),
+                )
+            )
 
     return clusters
 
@@ -898,7 +969,7 @@ def cluster_findings(
 def generate_insights(
     findings: List[Finding],
     correlations: List[Correlation],
-    clusters: List[CorrelationCluster]
+    clusters: List[CorrelationCluster],
 ) -> List[CorrelationInsight]:
     """
     Generate insights from correlation analysis.
@@ -915,42 +986,51 @@ def generate_insights(
     insight_id = 0
 
     # Insight: Attack pattern detected
-    pattern_corrs = [c for c in correlations if c.correlation_type == CorrelationType.PATTERN]
+    pattern_corrs = [
+        c for c in correlations if c.correlation_type == CorrelationType.PATTERN
+    ]
     for corr in pattern_corrs:
         insight_id += 1
         pattern_name = corr.metadata.get("pattern_name", "Unknown Pattern")
-        insights.append(CorrelationInsight(
-            id=f"INS-{insight_id:04d}",
-            title=f"Attack Pattern Detected: {pattern_name}",
-            description=corr.metadata.get("pattern_description", ""),
-            insight_type="attack_pattern",
-            severity=FindingSeverity.HIGH,
-            related_findings=corr.finding_ids,
-            related_correlations=[corr.id],
-            evidence=[corr.reason],
-            recommendations=[
-                f"Investigate findings related to {pattern_name}",
-                "Review security controls for attack vector",
-                "Consider threat hunting for similar indicators",
-            ],
-            confidence=corr.confidence,
-        ))
+        insights.append(
+            CorrelationInsight(
+                id=f"INS-{insight_id:04d}",
+                title=f"Attack Pattern Detected: {pattern_name}",
+                description=corr.metadata.get("pattern_description", ""),
+                insight_type="attack_pattern",
+                severity=FindingSeverity.HIGH,
+                related_findings=corr.finding_ids,
+                related_correlations=[corr.id],
+                evidence=[corr.reason],
+                recommendations=[
+                    f"Investigate findings related to {pattern_name}",
+                    "Review security controls for attack vector",
+                    "Consider threat hunting for similar indicators",
+                ],
+                confidence=corr.confidence,
+            )
+        )
 
     # Insight: High severity clusters
     for cluster in clusters:
-        if cluster.aggregate_severity in [FindingSeverity.CRITICAL, FindingSeverity.HIGH]:
+        if cluster.aggregate_severity in [
+            FindingSeverity.CRITICAL,
+            FindingSeverity.HIGH,
+        ]:
             insight_id += 1
-            insights.append(CorrelationInsight(
-                id=f"INS-{insight_id:04d}",
-                title=f"High Severity Finding Cluster: {cluster.name}",
-                description=f"{len(cluster.finding_ids)} related high-severity findings detected",
-                insight_type="severity_cluster",
-                severity=cluster.aggregate_severity,
-                related_findings=cluster.finding_ids,
-                related_correlations=cluster.correlations,
-                recommendations=cluster.recommendations,
-                confidence=cluster.confidence,
-            ))
+            insights.append(
+                CorrelationInsight(
+                    id=f"INS-{insight_id:04d}",
+                    title=f"High Severity Finding Cluster: {cluster.name}",
+                    description=f"{len(cluster.finding_ids)} related high-severity findings detected",
+                    insight_type="severity_cluster",
+                    severity=cluster.aggregate_severity,
+                    related_findings=cluster.finding_ids,
+                    related_correlations=cluster.correlations,
+                    recommendations=cluster.recommendations,
+                    confidence=cluster.confidence,
+                )
+            )
 
     # Insight: Entity hotspots
     entity_counts: Dict[str, int] = defaultdict(int)
@@ -962,52 +1042,58 @@ def generate_insights(
     for entity, count in sorted(entity_counts.items(), key=lambda x: -x[1])[:5]:
         if count >= 3:
             insight_id += 1
-            insights.append(CorrelationInsight(
-                id=f"INS-{insight_id:04d}",
-                title=f"Entity Hotspot: {entity[:50]}",
-                description=f"Entity appears in {count} findings across correlations",
-                insight_type="entity_hotspot",
-                severity=FindingSeverity.MEDIUM,
-                related_findings=[],
-                related_correlations=[
-                    c.id for c in correlations
-                    if entity in c.shared_entities
-                ],
-                evidence=[f"Entity {entity} is highly connected"],
-                recommendations=[
-                    f"Prioritize investigation of {entity}",
-                    "Review all findings involving this entity",
-                ],
-                confidence=0.8,
-            ))
+            insights.append(
+                CorrelationInsight(
+                    id=f"INS-{insight_id:04d}",
+                    title=f"Entity Hotspot: {entity[:50]}",
+                    description=f"Entity appears in {count} findings across correlations",
+                    insight_type="entity_hotspot",
+                    severity=FindingSeverity.MEDIUM,
+                    related_findings=[],
+                    related_correlations=[
+                        c.id for c in correlations if entity in c.shared_entities
+                    ],
+                    evidence=[f"Entity {entity} is highly connected"],
+                    recommendations=[
+                        f"Prioritize investigation of {entity}",
+                        "Review all findings involving this entity",
+                    ],
+                    confidence=0.8,
+                )
+            )
 
     # Insight: Causal chains
-    causal_corrs = [c for c in correlations if c.correlation_type == CorrelationType.CAUSAL]
+    causal_corrs = [
+        c for c in correlations if c.correlation_type == CorrelationType.CAUSAL
+    ]
     if len(causal_corrs) >= 2:
         insight_id += 1
-        insights.append(CorrelationInsight(
-            id=f"INS-{insight_id:04d}",
-            title="Potential Attack Chain Identified",
-            description=f"{len(causal_corrs)} causal relationships suggest attack progression",
-            insight_type="attack_chain",
-            severity=FindingSeverity.HIGH,
-            related_findings=list(set(fid for c in causal_corrs for fid in c.finding_ids)),
-            related_correlations=[c.id for c in causal_corrs],
-            evidence=[c.reason for c in causal_corrs],
-            recommendations=[
-                "Analyze the attack chain progression",
-                "Implement controls to break the chain",
-                "Monitor for similar attack patterns",
-            ],
-            confidence=0.75,
-        ))
+        insights.append(
+            CorrelationInsight(
+                id=f"INS-{insight_id:04d}",
+                title="Potential Attack Chain Identified",
+                description=f"{len(causal_corrs)} causal relationships suggest attack progression",
+                insight_type="attack_chain",
+                severity=FindingSeverity.HIGH,
+                related_findings=list(
+                    set(fid for c in causal_corrs for fid in c.finding_ids)
+                ),
+                related_correlations=[c.id for c in causal_corrs],
+                evidence=[c.reason for c in causal_corrs],
+                recommendations=[
+                    "Analyze the attack chain progression",
+                    "Implement controls to break the chain",
+                    "Monitor for similar attack patterns",
+                ],
+                confidence=0.75,
+            )
+        )
 
     return insights
 
 
 def build_correlation_graph(
-    findings: List[Finding],
-    correlations: List[Correlation]
+    findings: List[Finding], correlations: List[Correlation]
 ) -> Dict[str, Any]:
     """
     Build a graph representation of correlations.
@@ -1033,14 +1119,16 @@ def build_correlation_graph(
     edges = []
     for corr in correlations:
         for i, fid1 in enumerate(corr.finding_ids):
-            for fid2 in corr.finding_ids[i + 1:]:
-                edges.append({
-                    "source": fid1,
-                    "target": fid2,
-                    "type": corr.correlation_type.value,
-                    "strength": corr.strength.value,
-                    "confidence": corr.confidence,
-                })
+            for fid2 in corr.finding_ids[i + 1 :]:
+                edges.append(
+                    {
+                        "source": fid1,
+                        "target": fid2,
+                        "type": corr.correlation_type.value,
+                        "strength": corr.strength.value,
+                        "confidence": corr.confidence,
+                    }
+                )
 
     return {
         "nodes": nodes,
@@ -1054,7 +1142,7 @@ def generate_correlation_summary(
     findings: List[Finding],
     correlations: List[Correlation],
     clusters: List[CorrelationCluster],
-    insights: List[CorrelationInsight]
+    insights: List[CorrelationInsight],
 ) -> Dict[str, Any]:
     """
     Generate summary of correlation analysis.
@@ -1084,7 +1172,11 @@ def generate_correlation_summary(
         correlation_type_counts[c.correlation_type.value] += 1
 
     # Average confidence
-    avg_confidence = sum(c.confidence for c in correlations) / len(correlations) if correlations else 0
+    avg_confidence = (
+        sum(c.confidence for c in correlations) / len(correlations)
+        if correlations
+        else 0
+    )
 
     return {
         "total_findings": len(findings),
@@ -1095,14 +1187,18 @@ def generate_correlation_summary(
         "findings_by_severity": dict(severity_counts),
         "correlations_by_type": dict(correlation_type_counts),
         "average_correlation_confidence": round(avg_confidence, 2),
-        "high_severity_findings": severity_counts.get("critical", 0) + severity_counts.get("high", 0),
-        "attack_patterns_detected": sum(1 for c in correlations if c.correlation_type == CorrelationType.PATTERN),
+        "high_severity_findings": severity_counts.get("critical", 0)
+        + severity_counts.get("high", 0),
+        "attack_patterns_detected": sum(
+            1 for c in correlations if c.correlation_type == CorrelationType.PATTERN
+        ),
     }
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def generate_correlation_id(findings: List[Finding], prefix: str) -> str:
     """Generate a unique correlation ID."""
@@ -1204,8 +1300,7 @@ def deduplicate_correlations(correlations: List[Correlation]) -> List[Correlatio
 
 
 def generate_cluster_recommendations(
-    findings: List[Finding],
-    category: FindingCategory
+    findings: List[Finding], category: FindingCategory
 ) -> List[str]:
     """Generate recommendations for a cluster."""
     recommendations = []
@@ -1243,7 +1338,9 @@ def generate_cluster_recommendations(
         ],
     }
 
-    recommendations.extend(category_recommendations.get(category, ["Review and remediate findings"]))
+    recommendations.extend(
+        category_recommendations.get(category, ["Review and remediate findings"])
+    )
 
     # Add severity-specific recommendations
     has_critical = any(f.severity == FindingSeverity.CRITICAL for f in findings)
@@ -1256,6 +1353,7 @@ def generate_cluster_recommendations(
 # ============================================================================
 # Additional Analysis Functions
 # ============================================================================
+
 
 def get_correlation_types() -> List[str]:
     """Get all correlation types."""
@@ -1286,8 +1384,7 @@ def get_attack_patterns() -> Dict[str, Dict[str, Any]]:
 
 
 def find_related_findings(
-    finding_id: str,
-    correlations: List[Correlation]
+    finding_id: str, correlations: List[Correlation]
 ) -> List[str]:
     """Find all findings related to a given finding."""
     related = set()
@@ -1301,16 +1398,14 @@ def find_related_findings(
 
 
 def get_finding_correlations(
-    finding_id: str,
-    correlations: List[Correlation]
+    finding_id: str, correlations: List[Correlation]
 ) -> List[Correlation]:
     """Get all correlations involving a finding."""
     return [c for c in correlations if finding_id in c.finding_ids]
 
 
 def calculate_finding_centrality(
-    finding_id: str,
-    correlations: List[Correlation]
+    finding_id: str, correlations: List[Correlation]
 ) -> float:
     """Calculate centrality score for a finding."""
     connections = 0
@@ -1328,14 +1423,11 @@ def calculate_finding_centrality(
 
 
 def get_high_centrality_findings(
-    findings: List[Finding],
-    correlations: List[Correlation],
-    top_n: int = 10
+    findings: List[Finding], correlations: List[Correlation], top_n: int = 10
 ) -> List[Tuple[str, float]]:
     """Get findings with highest centrality scores."""
     centralities = [
-        (f.id, calculate_finding_centrality(f.id, correlations))
-        for f in findings
+        (f.id, calculate_finding_centrality(f.id, correlations)) for f in findings
     ]
     centralities.sort(key=lambda x: -x[1])
     return centralities[:top_n]
@@ -1384,8 +1476,7 @@ def create_finding(
 
 
 def merge_findings(
-    findings: List[Finding],
-    merge_strategy: str = "keep_highest_severity"
+    findings: List[Finding], merge_strategy: str = "keep_highest_severity"
 ) -> List[Finding]:
     """
     Merge duplicate findings.

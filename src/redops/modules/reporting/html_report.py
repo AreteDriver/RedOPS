@@ -8,7 +8,6 @@ from typing import Optional, Dict, Any, List
 from pathlib import Path
 from datetime import datetime
 import html
-import json
 from redops.core.context import Context
 
 
@@ -354,40 +353,40 @@ def build_stats_overview(ctx: Context) -> str:
 
     # Total risks
     risks = ctx.get("risks", [])
-    content += f'''
+    content += f"""
     <div class="stat-card">
         <div class="stat-value">{len(risks)}</div>
         <div class="stat-label">Total Risks</div>
     </div>
-    '''
+    """
 
     # Critical/High risks
     critical = sum(1 for r in risks if r.get("level", "").lower() == "critical")
     high = sum(1 for r in risks if r.get("level", "").lower() == "high")
-    content += f'''
+    content += f"""
     <div class="stat-card" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
         <div class="stat-value">{critical + high}</div>
         <div class="stat-label">Critical/High Risks</div>
     </div>
-    '''
+    """
 
     # Attack paths
     attack_paths = ctx.get("attack_paths", [])
-    content += f'''
+    content += f"""
     <div class="stat-card">
         <div class="stat-value">{len(attack_paths)}</div>
         <div class="stat-label">Attack Paths</div>
     </div>
-    '''
+    """
 
     # MITRE techniques
     mitre_techniques = ctx.get("mitre_techniques_used", [])
-    content += f'''
+    content += f"""
     <div class="stat-card">
         <div class="stat-value">{len(mitre_techniques)}</div>
         <div class="stat-label">MITRE Techniques</div>
     </div>
-    '''
+    """
 
     content += "</div>\n</div>\n"
     return content
@@ -419,23 +418,25 @@ def build_risk_section(risks: List[Dict[str, Any]]) -> str:
         count = severity_counts[severity]
         pct = (count / total) * 100
         color = RISK_COLORS.get(severity, "#ccc")
-        content += f'''
+        content += f"""
         <div class="risk-bar">
             <div class="risk-bar-fill" style="background: {color}; width: {max(pct, 5)}%;"></div>
             <strong>{severity.upper()}</strong><br>{count}
         </div>
-        '''
+        """
     content += "</div>\n"
 
     # Risk table
     content += "<table>\n"
-    content += "<tr><th>Severity</th><th>Title</th><th>Score</th><th>Description</th></tr>\n"
+    content += (
+        "<tr><th>Severity</th><th>Title</th><th>Score</th><th>Description</th></tr>\n"
+    )
 
     sorted_risks = sorted(
         risks,
         key=lambda r: {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(
             r.get("level", "info").lower(), 5
-        )
+        ),
     )
 
     for risk in sorted_risks[:15]:
@@ -444,7 +445,7 @@ def build_risk_section(risks: List[Dict[str, Any]]) -> str:
         score = risk.get("score", 0)
         desc = html.escape(risk.get("description", "")[:150])
 
-        content += f"<tr>"
+        content += "<tr>"
         content += f'<td><span class="badge badge-{level}">{level.upper()}</span></td>'
         content += f"<td>{title}</td>"
         content += f"<td>{score}</td>"
@@ -486,7 +487,9 @@ def build_mitre_matrix_html(ctx: Context) -> str:
 
     # If no mapping but have technique IDs, just use IDs
     if not matrix and mitre_techniques:
-        matrix["Identified Techniques"] = [{"id": t, "name": t} for t in sorted(mitre_techniques)]
+        matrix["Identified Techniques"] = [
+            {"id": t, "name": t} for t in sorted(mitre_techniques)
+        ]
 
     content += '<div class="mitre-matrix">\n'
 
@@ -535,7 +538,7 @@ def build_attack_paths_html(attack_paths: List[Dict[str, Any]]) -> str:
     sorted_paths = sorted(
         attack_paths,
         key=lambda p: p.get("likelihood", 0) * p.get("impact", 0),
-        reverse=True
+        reverse=True,
     )
 
     for i, path in enumerate(sorted_paths[:5], 1):
@@ -580,7 +583,9 @@ def build_attack_paths_html(attack_paths: List[Dict[str, Any]]) -> str:
             content += '<div class="path-steps">\n'
             for j, step in enumerate(steps):
                 if isinstance(step, dict):
-                    step_name = html.escape(step.get("name", step.get("node", f"Step {j+1}")))
+                    step_name = html.escape(
+                        step.get("name", step.get("node", f"Step {j + 1}"))
+                    )
                 else:
                     step_name = html.escape(str(step))
 
@@ -595,7 +600,9 @@ def build_attack_paths_html(attack_paths: List[Dict[str, Any]]) -> str:
         content += "</div>\n"
 
     if len(attack_paths) > 5:
-        content += f"<p><em>... and {len(attack_paths) - 5} more attack paths.</em></p>\n"
+        content += (
+            f"<p><em>... and {len(attack_paths) - 5} more attack paths.</em></p>\n"
+        )
 
     content += "</div>\n"
     return content
@@ -668,7 +675,9 @@ def build_detailed_findings_html(ctx: Context) -> str:
             size = f"{len(value)} chars"
         else:
             size = "-"
-        content += f"<tr><td>{key_escaped}</td><td>{value_type}</td><td>{size}</td></tr>\n"
+        content += (
+            f"<tr><td>{key_escaped}</td><td>{value_type}</td><td>{size}</td></tr>\n"
+        )
 
     content += "</table>\n"
     content += "</div>\n</div>\n"

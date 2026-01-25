@@ -5,7 +5,7 @@ Generates executive summaries and technical reports in Markdown format.
 Includes MITRE ATT&CK matrix visualization, risk heatmaps, and attack path diagrams.
 """
 
-from typing import Optional, Dict, Any, List, Set
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 from datetime import datetime
 from redops.core.context import Context
@@ -112,7 +112,7 @@ def build_executive_summary(ctx: Context) -> str:
         medium = sum(1 for r in risks if r.get("level", "").lower() == "medium")
         low = sum(1 for r in risks if r.get("level", "").lower() == "low")
 
-        report += f"**Risk Distribution:**\n"
+        report += "**Risk Distribution:**\n"
         report += f"- {RISK_INDICATORS['critical']} Critical: {critical}\n"
         report += f"- {RISK_INDICATORS['high']} High: {high}\n"
         report += f"- {RISK_INDICATORS['medium']} Medium: {medium}\n"
@@ -123,14 +123,14 @@ def build_executive_summary(ctx: Context) -> str:
     # Attack paths summary
     attack_paths = ctx.get("attack_paths", [])
     if attack_paths:
-        report += f"**Attack Surface:**\n"
+        report += "**Attack Surface:**\n"
         report += f"- {len(attack_paths)} potential attack path(s) identified\n"
 
         # Get highest risk path
         sorted_paths = sorted(
             attack_paths,
             key=lambda p: p.get("likelihood", 0) * p.get("impact", 0),
-            reverse=True
+            reverse=True,
         )
         if sorted_paths:
             top_path = sorted_paths[0]
@@ -147,7 +147,7 @@ def build_executive_summary(ctx: Context) -> str:
         tactics_covered = mitre_summary.get("tactics_covered", 0)
         coverage_pct = mitre_summary.get("coverage_percentage", 0)
 
-        report += f"**MITRE ATT&CK Coverage:**\n"
+        report += "**MITRE ATT&CK Coverage:**\n"
         report += f"- {total_techniques} technique(s) mapped\n"
         report += f"- {tactics_covered} tactic(s) covered\n"
         if coverage_pct > 0:
@@ -157,7 +157,7 @@ def build_executive_summary(ctx: Context) -> str:
     # Scenarios summary
     scenarios = ctx.get("scenarios", [])
     if scenarios:
-        report += f"**Threat Scenarios:**\n"
+        report += "**Threat Scenarios:**\n"
         report += f"- {len(scenarios)} realistic attack scenario(s) modeled\n"
 
         # Count by risk level
@@ -369,8 +369,14 @@ def build_mitre_matrix_markdown(ctx: Context) -> str:
     output = "### ATT&CK Matrix Coverage\n\n"
 
     # Summary statistics
-    total_techniques = len(mitre_techniques) if mitre_techniques else sum(len(v) for v in matrix.values())
-    tactics_covered = len([t for t in matrix if matrix.get(t)]) if matrix else len(tactic_coverage)
+    total_techniques = (
+        len(mitre_techniques)
+        if mitre_techniques
+        else sum(len(v) for v in matrix.values())
+    )
+    tactics_covered = (
+        len([t for t in matrix if matrix.get(t)]) if matrix else len(tactic_coverage)
+    )
 
     output += f"- **Total Techniques:** {total_techniques}\n"
     output += f"- **Tactics Covered:** {tactics_covered}/{len(MITRE_TACTICS_ORDER)}\n\n"
@@ -451,10 +457,7 @@ def build_likelihood_impact_matrix(risks: List[Dict[str, Any]]) -> str:
         Markdown string with matrix
     """
     # Check if risks have likelihood and impact
-    has_metrics = any(
-        "likelihood" in r and "impact" in r
-        for r in risks
-    )
+    has_metrics = any("likelihood" in r and "impact" in r for r in risks)
 
     if not has_metrics:
         return ""
@@ -511,7 +514,7 @@ def build_attack_paths_markdown(attack_paths: List[Dict[str, Any]]) -> str:
     sorted_paths = sorted(
         attack_paths,
         key=lambda p: p.get("likelihood", 0) * p.get("impact", 0),
-        reverse=True
+        reverse=True,
     )
 
     for i, path in enumerate(sorted_paths[:5], 1):
@@ -557,7 +560,7 @@ def build_attack_paths_markdown(attack_paths: List[Dict[str, Any]]) -> str:
             output += "\n**Attack Chain:**\n```\n"
             for j, step in enumerate(steps):
                 if isinstance(step, dict):
-                    step_name = step.get("name", step.get("node", f"Step {j+1}"))
+                    step_name = step.get("name", step.get("node", f"Step {j + 1}"))
                 else:
                     step_name = str(step)
 
@@ -605,7 +608,7 @@ def build_scenarios_markdown(scenarios: List[Dict[str, Any]]) -> str:
             "HIGH": "🟠",
             "MEDIUM": "🟡",
             "LOW": "🟢",
-            "INFO": "🔵"
+            "INFO": "🔵",
         }.get(risk_level.upper(), "⚪")
 
         output += f"#### {i}. {indicator} {name}\n\n"
@@ -805,48 +808,66 @@ def build_recommendations_section(ctx: Context) -> str:
     high_risks = [r for r in risks if r.get("level", "").lower() == "high"]
 
     if critical_risks:
-        recommendations.append({
-            "priority": "CRITICAL",
-            "action": f"Address {len(critical_risks)} critical risk(s) immediately",
-            "description": "Critical risks pose immediate threat to security posture"
-        })
+        recommendations.append(
+            {
+                "priority": "CRITICAL",
+                "action": f"Address {len(critical_risks)} critical risk(s) immediately",
+                "description": "Critical risks pose immediate threat to security posture",
+            }
+        )
 
     if high_risks:
-        recommendations.append({
-            "priority": "HIGH",
-            "action": f"Remediate {len(high_risks)} high-severity finding(s)",
-            "description": "High-severity issues should be addressed within 30 days"
-        })
+        recommendations.append(
+            {
+                "priority": "HIGH",
+                "action": f"Remediate {len(high_risks)} high-severity finding(s)",
+                "description": "High-severity issues should be addressed within 30 days",
+            }
+        )
 
     # Check for attack paths
     attack_paths = ctx.get("attack_paths", [])
     if attack_paths:
-        recommendations.append({
-            "priority": "HIGH",
-            "action": "Review and mitigate identified attack paths",
-            "description": f"{len(attack_paths)} potential attack paths identified"
-        })
+        recommendations.append(
+            {
+                "priority": "HIGH",
+                "action": "Review and mitigate identified attack paths",
+                "description": f"{len(attack_paths)} potential attack paths identified",
+            }
+        )
 
     # Check detection recommendations
     detection_recs = ctx.get("detection_recommendations", [])
     if detection_recs:
-        recommendations.append({
-            "priority": "MEDIUM",
-            "action": "Implement recommended detection capabilities",
-            "description": "Enhance monitoring based on identified techniques"
-        })
+        recommendations.append(
+            {
+                "priority": "MEDIUM",
+                "action": "Implement recommended detection capabilities",
+                "description": "Enhance monitoring based on identified techniques",
+            }
+        )
 
     # Default recommendations
     if not recommendations:
         recommendations = [
-            {"priority": "MEDIUM", "action": "Conduct regular security assessments", "description": ""},
-            {"priority": "LOW", "action": "Maintain security awareness training", "description": ""},
+            {
+                "priority": "MEDIUM",
+                "action": "Conduct regular security assessments",
+                "description": "",
+            },
+            {
+                "priority": "LOW",
+                "action": "Maintain security awareness training",
+                "description": "",
+            },
         ]
 
     # Output recommendations
     for i, rec in enumerate(recommendations, 1):
         priority = rec["priority"]
-        indicator = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🟢"}.get(priority, "⚪")
+        indicator = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🟢"}.get(
+            priority, "⚪"
+        )
         output += f"{i}. {indicator} **[{priority}]** {rec['action']}\n"
         if rec.get("description"):
             output += f"   - {rec['description']}\n"

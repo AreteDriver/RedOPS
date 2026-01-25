@@ -77,7 +77,9 @@ def extract_exif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
         return ctx
 
     if not PILLOW_AVAILABLE:
-        ctx.log("Pillow not available - install with: pip install Pillow", level="WARNING")
+        ctx.log(
+            "Pillow not available - install with: pip install Pillow", level="WARNING"
+        )
         ctx.add("exif_data", [])
         return ctx
 
@@ -120,19 +122,28 @@ def extract_exif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     files_with_gps = sum(1 for r in exif_results if "gps_coordinates" in r.metadata)
     files_with_sensitive = sum(1 for r in exif_results if r.sensitive_fields)
 
-    ctx.log(f"EXIF extraction completed: {len(exif_results)} files processed", level="INFO")
+    ctx.log(
+        f"EXIF extraction completed: {len(exif_results)} files processed", level="INFO"
+    )
     if files_with_gps > 0:
-        ctx.log(f"WARNING: {files_with_gps} files contain GPS coordinates", level="WARNING")
+        ctx.log(
+            f"WARNING: {files_with_gps} files contain GPS coordinates", level="WARNING"
+        )
     if files_with_sensitive > 0:
-        ctx.log(f"Found {files_with_sensitive} files with sensitive metadata", level="INFO")
+        ctx.log(
+            f"Found {files_with_sensitive} files with sensitive metadata", level="INFO"
+        )
 
     # Add summary
-    ctx.add("exif_summary", {
-        "total_files": len(exif_results),
-        "files_with_gps": files_with_gps,
-        "files_with_sensitive_data": files_with_sensitive,
-        "total_findings": len(findings),
-    })
+    ctx.add(
+        "exif_summary",
+        {
+            "total_files": len(exif_results),
+            "files_with_gps": files_with_gps,
+            "files_with_sensitive_data": files_with_sensitive,
+            "total_findings": len(findings),
+        },
+    )
 
     return ctx
 
@@ -295,7 +306,9 @@ def parse_gps_info(gps_info: Dict[int, Any]) -> Optional[Dict[str, Any]]:
             result["altitude"] = alt_value
 
         # Create Google Maps link
-        result["google_maps_url"] = f"https://maps.google.com/?q={lat_decimal},{lon_decimal}"
+        result["google_maps_url"] = (
+            f"https://maps.google.com/?q={lat_decimal},{lon_decimal}"
+        )
 
         return result
 
@@ -540,6 +553,8 @@ def get_exif_summary(exif_results: List[ExifData]) -> Dict[str, Any]:
         # Track software
         if "Software" in result.metadata:
             software = result.metadata["Software"]
-            summary["software_used"][software] = summary["software_used"].get(software, 0) + 1
+            summary["software_used"][software] = (
+                summary["software_used"].get(software, 0) + 1
+            )
 
     return summary

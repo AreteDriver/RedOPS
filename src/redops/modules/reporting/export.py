@@ -4,7 +4,7 @@ Export utilities for RedOps.
 Handles exporting data in various formats (JSON, CSV, STIX 2.1, etc.).
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from pathlib import Path
 import json
 import csv
@@ -218,21 +218,24 @@ def export_stix(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     }
 
     # Save to file
-    output_path = output_dir / f"stix_bundle_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    output_path = (
+        output_dir / f"stix_bundle_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(output_path, "w") as f:
         json.dump(bundle, f, indent=2)
 
     ctx.add("stix_export_path", str(output_path))
     ctx.add("stix_object_count", len(stix_objects))
-    ctx.log(f"STIX bundle saved to {output_path} ({len(stix_objects)} objects)", level="INFO")
+    ctx.log(
+        f"STIX bundle saved to {output_path} ({len(stix_objects)} objects)",
+        level="INFO",
+    )
 
     return ctx
 
 
 def create_stix_attack_pattern(
-    technique_id: str,
-    technique_info: Dict[str, Any],
-    timestamp: str
+    technique_id: str, technique_info: Dict[str, Any], timestamp: str
 ) -> Dict[str, Any]:
     """
     Create a STIX attack-pattern from MITRE technique.
@@ -276,14 +279,13 @@ def create_stix_attack_pattern(
                 "kill_chain_name": "mitre-attack",
                 "phase_name": tactic.lower().replace(" ", "-") if tactic else "unknown",
             }
-        ] if tactic else [],
+        ]
+        if tactic
+        else [],
     }
 
 
-def create_stix_vulnerability(
-    risk: Dict[str, Any],
-    timestamp: str
-) -> Dict[str, Any]:
+def create_stix_vulnerability(risk: Dict[str, Any], timestamp: str) -> Dict[str, Any]:
     """
     Create a STIX vulnerability from risk.
 
@@ -300,10 +302,12 @@ def create_stix_vulnerability(
 
     external_refs = []
     if risk.get("cve"):
-        external_refs.append({
-            "source_name": "cve",
-            "external_id": risk["cve"],
-        })
+        external_refs.append(
+            {
+                "source_name": "cve",
+                "external_id": risk["cve"],
+            }
+        )
 
     return {
         "type": "vulnerability",
@@ -318,8 +322,7 @@ def create_stix_vulnerability(
 
 
 def create_stix_indicator(
-    finding: Dict[str, Any],
-    timestamp: str
+    finding: Dict[str, Any], timestamp: str
 ) -> Optional[Dict[str, Any]]:
     """
     Create a STIX indicator from finding.
@@ -356,9 +359,7 @@ def create_stix_indicator(
 
 
 def export_from_template(
-    ctx: Context,
-    template: str,
-    params: Optional[Dict[str, Any]] = None
+    ctx: Context, template: str, params: Optional[Dict[str, Any]] = None
 ) -> Context:
     """
     Export using a custom template.
@@ -400,10 +401,18 @@ def export_from_template(
     # Count risks by severity
     risks = ctx.get("risks", [])
     variables["total_risks"] = len(risks)
-    variables["critical_risks"] = sum(1 for r in risks if r.get("level", "").lower() == "critical")
-    variables["high_risks"] = sum(1 for r in risks if r.get("level", "").lower() == "high")
-    variables["medium_risks"] = sum(1 for r in risks if r.get("level", "").lower() == "medium")
-    variables["low_risks"] = sum(1 for r in risks if r.get("level", "").lower() == "low")
+    variables["critical_risks"] = sum(
+        1 for r in risks if r.get("level", "").lower() == "critical"
+    )
+    variables["high_risks"] = sum(
+        1 for r in risks if r.get("level", "").lower() == "high"
+    )
+    variables["medium_risks"] = sum(
+        1 for r in risks if r.get("level", "").lower() == "medium"
+    )
+    variables["low_risks"] = sum(
+        1 for r in risks if r.get("level", "").lower() == "low"
+    )
 
     # Attack paths
     attack_paths = ctx.get("attack_paths", [])
@@ -425,7 +434,9 @@ def export_from_template(
             output = output.replace(f"{{{key}}}", str(variables[key]))
 
     # Determine output filename
-    output_name = params.get("output_name", f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+    output_name = params.get(
+        "output_name", f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    )
     output_path = output_dir / output_name
 
     with open(output_path, "w") as f:
@@ -494,7 +505,9 @@ TECHNICAL_SUMMARY_TEMPLATE = """
 """
 
 
-def export_executive_brief(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_executive_brief(
+    ctx: Context, params: Optional[Dict[str, Any]] = None
+) -> Context:
     """
     Export a quick executive brief.
 
@@ -506,11 +519,15 @@ def export_executive_brief(ctx: Context, params: Optional[Dict[str, Any]] = None
         Updated context
     """
     params = params or {}
-    params["output_name"] = f"executive_brief_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    params["output_name"] = (
+        f"executive_brief_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    )
     return export_from_template(ctx, EXECUTIVE_BRIEF_TEMPLATE, params)
 
 
-def export_technical_summary(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_technical_summary(
+    ctx: Context, params: Optional[Dict[str, Any]] = None
+) -> Context:
     """
     Export a technical summary in markdown.
 
@@ -522,5 +539,7 @@ def export_technical_summary(ctx: Context, params: Optional[Dict[str, Any]] = No
         Updated context
     """
     params = params or {}
-    params["output_name"] = f"technical_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    params["output_name"] = (
+        f"technical_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    )
     return export_from_template(ctx, TECHNICAL_SUMMARY_TEMPLATE, params)

@@ -1,6 +1,5 @@
 """Tests for simulation/mitre_mapping module."""
 
-import pytest
 from redops.modules.simulation.mitre_mapping import (
     MitreTechnique,
     MITRE_TACTICS,
@@ -31,7 +30,7 @@ class TestMitreTechnique:
             id="T1595",
             name="Active Scanning",
             tactic="Reconnaissance",
-            description="Test description"
+            description="Test description",
         )
         assert technique.id == "T1595"
         assert technique.name == "Active Scanning"
@@ -47,7 +46,7 @@ class TestMitreTechnique:
             detection="Monitor logs",
             mitigation="Apply patches",
             platforms=["Linux", "Windows"],
-            data_sources=["Application Log"]
+            data_sources=["Application Log"],
         )
         assert technique.detection == "Monitor logs"
         assert technique.mitigation == "Apply patches"
@@ -60,7 +59,7 @@ class TestMitreTechnique:
             name="Active Scanning",
             tactic="Reconnaissance",
             description="Test",
-            platforms=["PRE"]
+            platforms=["PRE"],
         )
         result = technique.to_dict()
 
@@ -140,10 +139,13 @@ class TestMapToMitre:
     def test_map_with_attack_paths(self):
         """Test mapping with attack paths."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {"name": "Path 1", "mitre_techniques": ["T1595", "T1190"]},
-            {"name": "Path 2", "mitre_techniques": ["T1078"]},
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {"name": "Path 1", "mitre_techniques": ["T1595", "T1190"]},
+                {"name": "Path 2", "mitre_techniques": ["T1078"]},
+            ],
+        )
 
         result = map_to_mitre(ctx)
         mapping = result.get("mitre_mapping")
@@ -155,10 +157,13 @@ class TestMapToMitre:
     def test_map_with_findings(self):
         """Test mapping findings to techniques."""
         ctx = Context(target="test.io")
-        ctx.add("finding_0", {
-            "title": "SQL Injection Vulnerability",
-            "description": "Database is vulnerable to SQL injection attacks"
-        })
+        ctx.add(
+            "finding_0",
+            {
+                "title": "SQL Injection Vulnerability",
+                "description": "Database is vulnerable to SQL injection attacks",
+            },
+        )
 
         result = map_to_mitre(ctx)
         techniques = result.get("mitre_techniques_used")
@@ -169,9 +174,15 @@ class TestMapToMitre:
     def test_map_with_risks(self):
         """Test mapping risks to techniques."""
         ctx = Context(target="test.io")
-        ctx.add("risks", [
-            {"title": "Exposed credentials", "description": "API keys found in source code"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {
+                    "title": "Exposed credentials",
+                    "description": "API keys found in source code",
+                },
+            ],
+        )
 
         result = map_to_mitre(ctx)
         techniques = result.get("mitre_techniques_used")
@@ -182,9 +193,12 @@ class TestMapToMitre:
     def test_exclude_subtechniques(self):
         """Test excluding sub-techniques."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {"mitre_techniques": ["T1595", "T1595.001", "T1595.002"]},
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {"mitre_techniques": ["T1595", "T1595.001", "T1595.002"]},
+            ],
+        )
 
         result = map_to_mitre(ctx, {"include_subtechniques": False})
         techniques = result.get("mitre_techniques_used")
@@ -207,9 +221,12 @@ class TestMapToMitre:
     def test_mitre_summary(self):
         """Test MITRE summary generation."""
         ctx = Context(target="test.io")
-        ctx.add("attack_paths", [
-            {"mitre_techniques": ["T1595", "T1190", "T1078"]},
-        ])
+        ctx.add(
+            "attack_paths",
+            [
+                {"mitre_techniques": ["T1595", "T1190", "T1078"]},
+            ],
+        )
 
         result = map_to_mitre(ctx)
         summary = result.get("mitre_summary")
@@ -225,10 +242,10 @@ class TestMapFindingsToTechniques:
     def test_map_sql_injection(self):
         """Test mapping SQL injection finding."""
         ctx = Context(target="test.io")
-        ctx.add("finding_0", {
-            "title": "SQL Injection",
-            "description": "Input not sanitized"
-        })
+        ctx.add(
+            "finding_0",
+            {"title": "SQL Injection", "description": "Input not sanitized"},
+        )
 
         mapping = map_findings_to_techniques(ctx)
         assert any("T1190" in techniques for techniques in mapping.keys())
@@ -236,10 +253,13 @@ class TestMapFindingsToTechniques:
     def test_map_credential_finding(self):
         """Test mapping credential finding."""
         ctx = Context(target="test.io")
-        ctx.add("finding_0", {
-            "title": "Exposed API Key",
-            "description": "AWS credentials found in code"
-        })
+        ctx.add(
+            "finding_0",
+            {
+                "title": "Exposed API Key",
+                "description": "AWS credentials found in code",
+            },
+        )
 
         mapping = map_findings_to_techniques(ctx)
         assert any("T1552" in t for t in mapping.keys())
@@ -289,11 +309,7 @@ class TestMapRiskToTechniques:
 
     def test_direct_mitre_id(self):
         """Test direct MITRE ID mapping."""
-        risk = {
-            "title": "Test Risk",
-            "description": "Description",
-            "mitre_id": "T1190"
-        }
+        risk = {"title": "Test Risk", "description": "Description", "mitre_id": "T1190"}
         techniques = map_risk_to_techniques(risk)
         assert "T1190" in techniques
 
@@ -301,7 +317,7 @@ class TestMapRiskToTechniques:
         """Test keyword-based mapping."""
         risk = {
             "title": "Exposed password file",
-            "description": "Credentials accessible"
+            "description": "Credentials accessible",
         }
         techniques = map_risk_to_techniques(risk)
         assert any("T1552" in t for t in techniques)
@@ -311,7 +327,7 @@ class TestMapRiskToTechniques:
         risk = {
             "title": "Scan vulnerability",
             "description": "Active scanning detected",
-            "mitre_id": "T1190"
+            "mitre_id": "T1190",
         }
         techniques = map_risk_to_techniques(risk)
         assert "T1190" in techniques
@@ -323,10 +339,7 @@ class TestMapFindingToTechnique:
 
     def test_returns_single_technique(self):
         """Test that it returns a single technique."""
-        finding = {
-            "title": "SQL Injection Found",
-            "description": "Database vulnerable"
-        }
+        finding = {"title": "SQL Injection Found", "description": "Database vulnerable"}
         technique = map_finding_to_technique(finding)
         assert technique is not None
         assert technique.startswith("T")
@@ -335,7 +348,7 @@ class TestMapFindingToTechnique:
         """Test preference for sub-techniques."""
         finding = {
             "title": "DNS enumeration detected",
-            "description": "Subdomain scanning"
+            "description": "Subdomain scanning",
         }
         technique = map_finding_to_technique(finding)
         # Should prefer sub-technique if available
@@ -345,10 +358,7 @@ class TestMapFindingToTechnique:
 
     def test_returns_none_for_no_match(self):
         """Test returns None when no match."""
-        finding = {
-            "title": "Generic Issue",
-            "description": "No specific keywords"
-        }
+        finding = {"title": "Generic Issue", "description": "No specific keywords"}
         technique = map_finding_to_technique(finding)
         # Might be None if no keywords match
         assert technique is None or technique.startswith("T")
@@ -399,7 +409,9 @@ class TestGenerateDetectionRecommendations:
         techniques = {"T1595", "T1595.001", "T1595.002", "T1190"}
         recommendations = generate_detection_recommendations(techniques)
 
-        network_rec = next((r for r in recommendations if r["data_source"] == "Network Traffic"), None)
+        network_rec = next(
+            (r for r in recommendations if r["data_source"] == "Network Traffic"), None
+        )
         assert network_rec is not None
         assert network_rec["priority"] in ("high", "medium", "low")
 
