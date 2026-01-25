@@ -56,9 +56,9 @@ class AIAssistant:
         self.max_tokens = ai_config.get("max_tokens", 2048)
         self.temperature = ai_config.get("temperature", 0.7)
 
-        # Get API key
+        # Get API key (not required for Ollama)
         self.api_key = get_api_key(self.provider)
-        if not self.api_key:
+        if not self.api_key and self.provider != "ollama":
             raise ValueError(
                 f"No API key found for {self.provider}. "
                 f"Set {self.provider.upper()}_API_KEY environment variable or "
@@ -89,6 +89,31 @@ class AIAssistant:
                     "Anthropic library not installed. "
                     "Install with: pip install anthropic"
                 )
+        elif self.provider == "gemini":
+            try:
+                import google.generativeai as genai
+
+                genai.configure(api_key=self.api_key)
+                self.client = genai.GenerativeModel(self.model)
+            except ImportError:
+                raise ImportError(
+                    "Google AI library not installed. "
+                    "Install with: pip install google-generativeai"
+                )
+        elif self.provider == "ollama":
+            try:
+                import ollama
+
+                # Get base URL from config
+                config = load_config()
+                ollama_config = config.get("ollama", {})
+                base_url = ollama_config.get("base_url", "http://localhost:11434")
+                self.client = ollama.Client(host=base_url)
+            except ImportError:
+                raise ImportError(
+                    "Ollama library not installed. "
+                    "Install with: pip install ollama"
+                )
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -98,6 +123,10 @@ class AIAssistant:
             return self._call_openai(prompt, system_prompt)
         elif self.provider == "anthropic":
             return self._call_anthropic(prompt, system_prompt)
+        elif self.provider == "gemini":
+            return self._call_gemini(prompt, system_prompt)
+        elif self.provider == "ollama":
+            return self._call_ollama(prompt, system_prompt)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -127,6 +156,42 @@ class AIAssistant:
         )
 
         return response.content[0].text
+
+    def _call_gemini(self, prompt: str, system_prompt: str = None) -> str:
+        """Call Google Gemini API."""
+        # Combine system prompt with user prompt for Gemini
+        full_prompt = prompt
+        if system_prompt:
+            full_prompt = f"{system_prompt}\n\n{prompt}"
+
+        response = self.client.generate_content(
+            full_prompt,
+            generation_config={
+                "max_output_tokens": self.max_tokens,
+                "temperature": self.temperature,
+            },
+        )
+
+        return response.text
+
+    def _call_ollama(self, prompt: str, system_prompt: str = None) -> str:
+        """Call Ollama API (local models)."""
+        response = self.client.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt or "You are a security analysis assistant.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            options={
+                "num_predict": self.max_tokens,
+                "temperature": self.temperature,
+            },
+        )
+
+        return response["message"]["content"]
 
     def analyze_findings(self, scan_data: Dict[str, Any]) -> str:
         """

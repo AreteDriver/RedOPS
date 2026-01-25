@@ -1261,7 +1261,7 @@ Examples:
     ai_parser.add_argument(
         "--provider",
         "-p",
-        choices=["openai", "anthropic"],
+        choices=["openai", "anthropic", "gemini", "ollama"],
         help="AI provider (default: from config)",
     )
     ai_parser.add_argument(

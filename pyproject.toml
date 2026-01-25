@@ -56,6 +56,8 @@ full = [
 ai = [
     "anthropic>=0.40.0",
     "openai>=1.50.0",
+    "google-generativeai>=0.8.0",
+    "ollama>=0.4.0",
 ]
 all = [
     "redops[full,ai]",

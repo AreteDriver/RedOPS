@@ -57,6 +57,12 @@ API_PROVIDERS = {
         "env_var": "HUNTER_API_KEY",
         "url": "https://hunter.io/api-keys",
     },
+    "google": {
+        "name": "Google AI (Gemini)",
+        "description": "Gemini models for AI assistance",
+        "env_var": "GOOGLE_API_KEY",
+        "url": "https://aistudio.google.com/app/apikey",
+    },
 }
 
 # AI Provider options
@@ -74,6 +80,26 @@ AI_PROVIDERS = {
             "claude-3-5-haiku-20241022",
         ],
         "default_model": "claude-sonnet-4-20250514",
+    },
+    "gemini": {
+        "name": "Google Gemini",
+        "models": [
+            "gemini-2.0-flash",
+            "gemini-1.5-pro",
+            "gemini-1.5-flash",
+        ],
+        "default_model": "gemini-2.0-flash",
+    },
+    "ollama": {
+        "name": "Ollama (Local)",
+        "models": [
+            "llama3.2",
+            "llama3.1",
+            "mistral",
+            "codellama",
+            "deepseek-r1",
+        ],
+        "default_model": "llama3.2",
     },
 }
 
@@ -167,11 +193,15 @@ def get_default_config() -> Dict[str, Any]:
         "api_keys": {
             "openai": None,
             "anthropic": None,
+            "google": None,
             "shodan": None,
             "virustotal": None,
             "securitytrails": None,
             "censys": None,
             "hunter": None,
+        },
+        "ollama": {
+            "base_url": "http://localhost:11434",
         },
         "ai": {
             "provider": "openai",
@@ -374,7 +404,7 @@ class SettingsMenu:
         """Test an API key."""
         print()
         print("Select provider to test:")
-        providers = ["openai", "anthropic"]  # Only test AI providers for now
+        providers = ["openai", "anthropic", "google"]  # AI providers with API keys
         for i, provider in enumerate(providers, 1):
             info = API_PROVIDERS[provider]
             key = self._get_api_key(provider)
@@ -422,6 +452,13 @@ class SettingsMenu:
 
                 client = anthropic.Anthropic(api_key=key)
                 # Simple test - just initialize the client
+                return True
+            elif provider == "google":
+                import google.generativeai as genai
+
+                genai.configure(api_key=key)
+                # List models to verify key works
+                list(genai.list_models())
                 return True
         except ImportError:
             print(f"Required library for {provider} is not installed.")
