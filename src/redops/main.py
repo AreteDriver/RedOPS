@@ -137,7 +137,17 @@ def list_pipelines(directory: str = "./config/pipelines"):
 
 
 def main():
-    """Main entry point for RedOps CLI."""
+    """Main entry point for RedOps CLI.
+
+    This uses the enhanced CLI from redops.cli.app.
+    For legacy pipeline-based execution, use run_pipeline() directly.
+    """
+    from redops.cli.app import main as cli_main
+    sys.exit(cli_main())
+
+
+def main_legacy():
+    """Legacy main entry point for RedOps CLI."""
     parser = argparse.ArgumentParser(
         description="RedOps - OSINT and Security Assessment Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
