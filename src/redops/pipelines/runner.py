@@ -3,9 +3,12 @@ Pipeline runner - Executes pipelines step by step.
 """
 
 import importlib
-from typing import Callable, Optional
+from typing import Callable, Optional, TYPE_CHECKING
 from redops.pipelines.schemas import Pipeline, PipelineStep
 from redops.core.context import Context
+
+if TYPE_CHECKING:
+    from redops.core.config import RedOpsConfig
 
 
 class PipelineRunner:
@@ -14,14 +17,16 @@ class PipelineRunner:
     passing a Context object through the chain.
     """
 
-    def __init__(self, pipeline: Pipeline):
+    def __init__(self, pipeline: Pipeline, config: Optional["RedOpsConfig"] = None):
         """
         Initialize the runner with a pipeline.
 
         Args:
             pipeline: The pipeline to execute
+            config: RedOps configuration (scope, output settings, etc.)
         """
         self.pipeline = pipeline
+        self.config = config
 
     def _resolve_module_function(self, module_path: str) -> Callable:
         """
@@ -100,7 +105,7 @@ class PipelineRunner:
             The final context after all steps
         """
         # Create or use existing context
-        ctx = initial_context or Context(target=target)
+        ctx = initial_context or Context(target=target, config=self.config)
 
         # Add pipeline metadata to context
         ctx.add("pipeline_name", self.pipeline.metadata.name)

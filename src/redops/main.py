@@ -52,8 +52,8 @@ def run_pipeline(
         print(f"[RedOps] Steps: {len(pipeline.enabled_steps)}")
         print()
 
-        # Create the runner
-        runner = PipelineRunner(pipeline)
+        # Create the runner with config
+        runner = PipelineRunner(pipeline, config=config)
 
         # Run the pipeline
         print("[RedOps] Starting pipeline execution...")

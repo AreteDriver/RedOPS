@@ -5,9 +5,12 @@ The Context object is passed through each step of the pipeline,
 preserving all intermediate outputs for reporting and simulation steps.
 """
 
-from typing import Any, Dict, List, Optional
-from datetime import datetime
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from datetime import datetime, timezone
 import json
+
+if TYPE_CHECKING:
+    from redops.core.config import RedOpsConfig
 
 
 class Context:
@@ -18,18 +21,22 @@ class Context:
     all intermediate outputs.
     """
 
-    def __init__(self, target: Optional[str] = None):
+    def __init__(
+        self, target: Optional[str] = None, config: Optional["RedOpsConfig"] = None
+    ):
         """
         Initialize a new Context.
 
         Args:
             target: The target of the pipeline execution (e.g., domain, directory)
+            config: RedOps configuration (scope, output settings, etc.)
         """
         self.target = target
+        self.config = config
         self.data: Dict[str, Any] = {}
         self.logs: List[Dict[str, Any]] = []
         self.metadata: Dict[str, Any] = {
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "target": target,
         }
 
@@ -67,7 +74,7 @@ class Context:
             **kwargs: Additional metadata to include in the log entry
         """
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": level,
             "message": message,
             **kwargs,
