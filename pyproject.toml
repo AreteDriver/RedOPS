@@ -52,6 +52,13 @@ full = [
     "requests>=2.31.0",
     "jinja2>=3.1.0",
 ]
+ai = [
+    "anthropic>=0.40.0",
+    "openai>=1.50.0",
+]
+all = [
+    "redops[full,ai]",
+]
 
 [project.scripts]
 redops = "redops.main:main"

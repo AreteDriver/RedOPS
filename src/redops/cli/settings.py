@@ -68,8 +68,12 @@ AI_PROVIDERS = {
     },
     "anthropic": {
         "name": "Anthropic",
-        "models": ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"],
-        "default_model": "claude-3-5-sonnet-20241022",
+        "models": [
+            "claude-sonnet-4-20250514",
+            "claude-opus-4-20250514",
+            "claude-3-5-haiku-20241022",
+        ],
+        "default_model": "claude-sonnet-4-20250514",
     },
 }
 
