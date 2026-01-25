@@ -139,6 +139,14 @@ class TestScanPresets:
         assert ScanPreset.QUICK in SCAN_PRESETS
         assert ScanPreset.FULL in SCAN_PRESETS
         assert ScanPreset.RECON in SCAN_PRESETS
+        assert ScanPreset.AI_ENHANCED in SCAN_PRESETS
+
+    def test_ai_enhanced_preset(self):
+        """Test ai_enhanced preset includes AI modules."""
+        preset = SCAN_PRESETS[ScanPreset.AI_ENHANCED]
+        assert "ai_analyze" in preset["modules"]
+        assert "ai_recommend" in preset["modules"]
+        assert preset["name"] == "AI-Enhanced Assessment"
 
     def test_preset_structure(self):
         """Test preset structure."""
