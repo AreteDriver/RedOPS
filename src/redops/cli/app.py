@@ -534,10 +534,12 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
     from redops.modules.ai_assistant import AIAssistant
 
     action = args.action
+    provider = getattr(args, "provider", None)
+    model = getattr(args, "model", None)
 
     # Initialize AI assistant
     try:
-        assistant = AIAssistant()
+        assistant = AIAssistant(provider=provider, model=model)
     except Exception as e:
         print_error(f"Failed to initialize AI assistant: {e}")
         print_info(
@@ -1256,6 +1258,17 @@ Examples:
     ai_parser.add_argument("--input", "-i", help="Input scan results file (JSON)")
     ai_parser.add_argument("--query", "-q", help="Query or question for AI")
     ai_parser.add_argument("--context", "-x", help="Additional context file (JSON)")
+    ai_parser.add_argument(
+        "--provider",
+        "-p",
+        choices=["openai", "anthropic"],
+        help="AI provider (default: from config)",
+    )
+    ai_parser.add_argument(
+        "--model",
+        "-m",
+        help="Model name (default: from config)",
+    )
 
     # Version command
     subparsers.add_parser("version", help="Show version")
