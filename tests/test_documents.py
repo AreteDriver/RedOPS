@@ -666,6 +666,514 @@ class TestExtractMetadata:
                 assert len(finding_keys) >= 1
 
 
+class TestPdfMetadataWithMocking:
+    """Tests for PDF metadata extraction with mocked library."""
+
+    def test_pdf_with_full_metadata_mocked(self):
+        """Test PDF extraction with all metadata fields mocked."""
+        import sys
+
+        # Create mock pypdf module
+        mock_reader_class = MagicMock()
+
+        # Mock reader instance
+        mock_instance = MagicMock()
+        mock_reader_class.return_value = mock_instance
+
+        # Mock full metadata
+        mock_meta = MagicMock()
+        mock_meta.author = "Test Author"
+        mock_meta.creator = "Test Creator App"
+        mock_meta.producer = "Test Producer"
+        mock_meta.subject = "Test Subject"
+        mock_meta.title = "Test Document Title"
+        mock_meta.creation_date = "2024-01-15"
+        mock_meta.modification_date = "2024-02-20"
+        mock_meta.__iter__ = lambda x: iter(["/CustomKey"])
+        mock_meta.__getitem__ = lambda x, k: "CustomValue"
+        mock_instance.metadata = mock_meta
+
+        # Mock pages and other properties
+        mock_instance.pages = [MagicMock(), MagicMock(), MagicMock()]
+        mock_instance.is_encrypted = False
+        mock_instance.attachments = {}
+
+        with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(b"fake pdf content")
+                    f.flush()
+
+                    result = extract_pdf_metadata(f.name)
+
+                    assert result is not None
+                    assert result.author == "Test Author"
+                    assert result.metadata.get("creator") == "Test Creator App"
+                    assert result.metadata.get("producer") == "Test Producer"
+                    assert result.metadata.get("subject") == "Test Subject"
+                    assert result.metadata.get("title") == "Test Document Title"
+                    assert result.metadata.get("created") == "2024-01-15"
+                    assert result.metadata.get("modified") == "2024-02-20"
+                    assert result.metadata.get("page_count") == 3
+
+    def test_pdf_encrypted_document(self):
+        """Test PDF extraction detects encryption."""
+        mock_reader_class = MagicMock()
+
+        mock_instance = MagicMock()
+        mock_reader_class.return_value = mock_instance
+
+        mock_instance.metadata = MagicMock()
+        mock_instance.metadata.author = None
+        mock_instance.metadata.creator = None
+        mock_instance.metadata.producer = None
+        mock_instance.metadata.subject = None
+        mock_instance.metadata.title = None
+        mock_instance.metadata.creation_date = None
+        mock_instance.metadata.modification_date = None
+        mock_instance.metadata.__iter__ = lambda x: iter([])
+        mock_instance.pages = [MagicMock()]
+        mock_instance.is_encrypted = True
+        mock_instance.attachments = {}
+
+        with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(b"encrypted pdf")
+                    f.flush()
+
+                    result = extract_pdf_metadata(f.name)
+
+                    assert result is not None
+                    assert result.metadata.get("encrypted") is True
+                    assert any("encrypted" in w.lower() for w in result.warnings)
+
+    def test_pdf_with_attachments(self):
+        """Test PDF extraction detects embedded files."""
+        mock_reader_class = MagicMock()
+
+        mock_instance = MagicMock()
+        mock_reader_class.return_value = mock_instance
+
+        mock_instance.metadata = MagicMock()
+        mock_instance.metadata.author = None
+        mock_instance.metadata.creator = None
+        mock_instance.metadata.producer = None
+        mock_instance.metadata.subject = None
+        mock_instance.metadata.title = None
+        mock_instance.metadata.creation_date = None
+        mock_instance.metadata.modification_date = None
+        mock_instance.metadata.__iter__ = lambda x: iter([])
+        mock_instance.pages = [MagicMock()]
+        mock_instance.is_encrypted = False
+        mock_instance.attachments = {"secret.txt": b"data", "config.json": b"{}"}
+
+        with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(b"pdf with attachments")
+                    f.flush()
+
+                    result = extract_pdf_metadata(f.name)
+
+                    assert result is not None
+                    assert "attachments" in result.metadata
+                    assert len(result.metadata["attachments"]) == 2
+                    assert any("embedded files" in w.lower() for w in result.warnings)
+
+    def test_pdf_reader_exception(self):
+        """Test PDF extraction handles reader exceptions."""
+        mock_reader_class = MagicMock()
+        mock_reader_class.side_effect = Exception("Corrupted PDF")
+
+        with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(b"corrupted pdf")
+                    f.flush()
+
+                    result = extract_pdf_metadata(f.name)
+
+                    assert result is not None
+                    assert any("Error reading PDF" in w for w in result.warnings)
+
+    def test_pdf_no_metadata(self):
+        """Test PDF extraction when metadata object is None."""
+        mock_reader_class = MagicMock()
+
+        mock_instance = MagicMock()
+        mock_reader_class.return_value = mock_instance
+
+        mock_instance.metadata = None  # No metadata
+        mock_instance.pages = [MagicMock(), MagicMock()]
+        mock_instance.is_encrypted = False
+        mock_instance.attachments = {}
+
+        with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                    f.write(b"pdf no metadata")
+                    f.flush()
+
+                    result = extract_pdf_metadata(f.name)
+
+                    assert result is not None
+                    assert result.author is None
+                    assert result.metadata.get("page_count") == 2
+
+
+class TestDocxMetadataWithMocking:
+    """Tests for DOCX metadata extraction with mocked library."""
+
+    def test_docx_full_metadata_mocked(self):
+        """Test DOCX extraction with all metadata fields mocked."""
+        mock_doc_class = MagicMock()
+
+        mock_instance = MagicMock()
+        mock_doc_class.return_value = mock_instance
+
+        # Mock core properties
+        mock_props = MagicMock()
+        mock_props.author = "Document Author"
+        mock_props.last_modified_by = "Editor Person"
+        mock_props.title = "Document Title"
+        mock_props.subject = "Document Subject"
+        mock_props.keywords = "keyword1, keyword2"
+        mock_props.comments = "Some comments"
+        mock_props.category = "Category"
+        mock_props.revision = "3"
+        mock_props.created = "2024-01-01"
+        mock_props.modified = "2024-01-15"
+        mock_instance.core_properties = mock_props
+
+        # Mock document structure
+        mock_instance.paragraphs = [MagicMock(), MagicMock(), MagicMock()]
+        mock_instance.tables = [MagicMock()]
+
+        # Mock part for hidden data check
+        mock_rel = MagicMock()
+        mock_rel.reltype = "normal_relationship"
+        mock_instance.part.rels.values.return_value = [mock_rel]
+
+        # Mock PackageNotFoundError
+        class FakePackageNotFoundError(Exception):
+            pass
+
+        with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
+                with patch("redops.modules.metadata.documents.PackageNotFoundError", FakePackageNotFoundError, create=True):
+                    with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                        f.write(b"fake docx")
+                        f.flush()
+
+                        result = extract_docx_metadata(f.name)
+
+                        assert result is not None
+                        assert result.author == "Document Author"
+                        assert result.metadata.get("last_modified_by") == "Editor Person"
+                        assert result.metadata.get("title") == "Document Title"
+                        assert result.metadata.get("subject") == "Document Subject"
+                        assert result.metadata.get("keywords") == "keyword1, keyword2"
+                        assert result.metadata.get("comments") == "Some comments"
+                        assert result.metadata.get("category") == "Category"
+                        assert result.metadata.get("revision") == "3"
+                        assert result.metadata.get("paragraph_count") == 3
+                        assert result.metadata.get("table_count") == 1
+
+    def test_docx_package_not_found_error(self):
+        """Test DOCX extraction handles PackageNotFoundError."""
+        # Create a real exception class
+        class MockPackageNotFoundError(Exception):
+            pass
+
+        mock_doc_class = MagicMock()
+        mock_doc_class.side_effect = MockPackageNotFoundError("Not found")
+
+        with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
+                with patch("redops.modules.metadata.documents.PackageNotFoundError", MockPackageNotFoundError, create=True):
+                    with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                        f.write(b"invalid docx")
+                        f.flush()
+
+                        result = extract_docx_metadata(f.name)
+
+                        assert result is not None
+                        assert any("Invalid" in w or "corrupted" in w.lower() for w in result.warnings)
+
+    def test_docx_generic_exception(self):
+        """Test DOCX extraction handles generic exceptions."""
+        mock_doc_class = MagicMock()
+        mock_doc_class.side_effect = Exception("Generic error")
+
+        # Create a fake PackageNotFoundError that won't match
+        class FakePackageNotFoundError(Exception):
+            pass
+
+        with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
+                with patch("redops.modules.metadata.documents.PackageNotFoundError", FakePackageNotFoundError, create=True):
+                    with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                        f.write(b"broken docx")
+                        f.flush()
+
+                        result = extract_docx_metadata(f.name)
+
+                        assert result is not None
+                        assert any("Error reading Word document" in w for w in result.warnings)
+
+    def test_docx_without_hidden_check(self):
+        """Test DOCX extraction without hidden data check."""
+        mock_doc_class = MagicMock()
+
+        mock_instance = MagicMock()
+        mock_doc_class.return_value = mock_instance
+
+        mock_props = MagicMock()
+        mock_props.author = "Author"
+        mock_props.last_modified_by = None
+        mock_props.title = None
+        mock_props.subject = None
+        mock_props.keywords = None
+        mock_props.comments = None
+        mock_props.category = None
+        mock_props.revision = None
+        mock_props.created = None
+        mock_props.modified = None
+        mock_instance.core_properties = mock_props
+        mock_instance.paragraphs = []
+        mock_instance.tables = []
+
+        class FakePackageNotFoundError(Exception):
+            pass
+
+        with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
+                with patch("redops.modules.metadata.documents.PackageNotFoundError", FakePackageNotFoundError, create=True):
+                    with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                        f.write(b"docx")
+                        f.flush()
+
+                        result = extract_docx_metadata(f.name, include_hidden_check=False)
+
+                        assert result is not None
+                        assert result.author == "Author"
+
+
+class TestCheckDocxHiddenDataAdvanced:
+    """Additional tests for hidden data detection."""
+
+    def test_revision_count_invalid_value(self):
+        """Test handling of invalid revision count value."""
+        mock_doc = MagicMock()
+        mock_doc.core_properties.revision = "not_a_number"
+        mock_doc.part.rels.values.return_value = []
+
+        warnings = check_docx_for_hidden_data(mock_doc)
+        # Should not crash, revision warning should not appear
+        assert not any("revision" in w.lower() for w in warnings)
+
+    def test_revision_count_none(self):
+        """Test handling of None revision count."""
+        mock_doc = MagicMock()
+        mock_doc.core_properties.revision = None
+        mock_doc.part.rels.values.return_value = []
+
+        warnings = check_docx_for_hidden_data(mock_doc)
+        assert len(warnings) == 0
+
+    def test_revision_count_low(self):
+        """Test no warning for low revision count."""
+        mock_doc = MagicMock()
+        mock_doc.core_properties.revision = "5"
+        mock_doc.part.rels.values.return_value = []
+
+        warnings = check_docx_for_hidden_data(mock_doc)
+        assert not any("revision" in w.lower() for w in warnings)
+
+    def test_hidden_data_check_exception(self):
+        """Test hidden data check handles exceptions gracefully."""
+        mock_doc = MagicMock()
+        mock_doc.core_properties.revision = "5"
+        mock_doc.part.rels.values.side_effect = Exception("Access error")
+
+        # Should not raise, should return empty list
+        warnings = check_docx_for_hidden_data(mock_doc)
+        assert isinstance(warnings, list)
+
+
+class TestCheckForHiddenDataAdvanced:
+    """Additional tests for check_for_hidden_data function."""
+
+    def test_check_hidden_data_docx_with_mock(self):
+        """Test hidden data check for docx with mocked library."""
+        mock_doc_class = MagicMock()
+
+        mock_instance = MagicMock()
+        mock_doc_class.return_value = mock_instance
+
+        mock_instance.core_properties.revision = "25"  # High revision
+        mock_rel = MagicMock()
+        mock_rel.reltype = "oleObject"  # OLE object
+        mock_instance.part.rels.values.return_value = [mock_rel]
+
+        with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
+            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
+                with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                    f.write(b"docx with hidden data")
+                    f.flush()
+
+                    warnings = check_for_hidden_data(f.name)
+
+                    assert len(warnings) >= 1
+                    # Should have either revision or OLE warning
+
+    def test_check_hidden_data_docx_unavailable(self):
+        """Test hidden data check when docx not available."""
+        with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", False):
+            with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                f.write(b"docx file")
+                f.flush()
+
+                warnings = check_for_hidden_data(f.name)
+
+                assert warnings == []
+
+    def test_check_hidden_data_xlsx(self):
+        """Test hidden data check for xlsx file."""
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            f.write(b"xlsx file")
+            f.flush()
+
+            warnings = check_for_hidden_data(f.name)
+
+            assert warnings == []
+
+
+class TestExtractOfficeMetadataAdvanced:
+    """Additional tests for extract_office_metadata."""
+
+    def test_office_metadata_docx_returns_empty_on_none(self):
+        """Test office metadata returns empty dict when extract returns None."""
+        with patch("redops.modules.metadata.documents.extract_docx_metadata") as mock:
+            mock.return_value = None
+
+            with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+                result = extract_office_metadata(f.name)
+                assert result == {}
+
+    def test_office_metadata_xlsx(self):
+        """Test office metadata for xlsx files."""
+        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+            f.write(b"xlsx data")
+            f.flush()
+
+            result = extract_office_metadata(f.name)
+
+            assert "warning" in result
+            assert ".xlsx" in result.get("file_type", "")
+
+    def test_office_metadata_ppt(self):
+        """Test office metadata for ppt files."""
+        with tempfile.NamedTemporaryFile(suffix=".ppt", delete=False) as f:
+            f.write(b"ppt data")
+            f.flush()
+
+            result = extract_office_metadata(f.name)
+
+            assert "warning" in result
+
+
+class TestExtractMetadataAdvanced:
+    """Additional tests for main extract_metadata function."""
+
+    def test_extract_metadata_with_directory_not_dir(self):
+        """Test extract_metadata when directory target is actually a file."""
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
+            f.write(b"not a directory")
+            f.flush()
+
+            ctx = Context(target=f.name)
+            result = extract_metadata(ctx)
+
+            # Should handle gracefully
+            assert "document_summary" in result.data
+
+    def test_extract_metadata_logs_author_files(self):
+        """Test that extraction logs files with author info."""
+        with patch("redops.modules.metadata.documents.extract_from_file") as mock_extract:
+            mock_extract.return_value = DocumentMetadata(
+                filename="test.pdf",
+                file_type=".pdf",
+                author="Known Author",
+                metadata={},
+                warnings=[],
+            )
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                Path(tmpdir, "test.pdf").touch()
+
+                ctx = Context(target=tmpdir)
+                result = extract_metadata(ctx)
+
+                # Check logs
+                info_logs = result.get_logs(level="INFO")
+                assert any("author" in log["message"].lower() for log in info_logs)
+
+    def test_extract_metadata_logs_warning_files(self):
+        """Test that extraction logs files with warnings."""
+        with patch("redops.modules.metadata.documents.extract_from_file") as mock_extract:
+            mock_extract.return_value = DocumentMetadata(
+                filename="test.pdf",
+                file_type=".pdf",
+                metadata={},
+                warnings=["Some hidden content detected"],
+            )
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                Path(tmpdir, "test.pdf").touch()
+
+                ctx = Context(target=tmpdir)
+                result = extract_metadata(ctx)
+
+                # Check for warning log
+                warning_logs = result.get_logs(level="WARNING")
+                assert any("hidden content" in log["message"].lower() for log in warning_logs)
+
+    def test_extract_metadata_both_file_and_directory(self):
+        """Test extraction with both file_path and directory params."""
+        with patch("redops.modules.metadata.documents.extract_from_file") as mock_extract:
+            mock_extract.return_value = DocumentMetadata(
+                filename="test.doc",
+                file_type=".doc",
+                metadata={},
+                warnings=["Legacy format"],
+            )
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                Path(tmpdir, "dir_file.pdf").touch()
+
+                with tempfile.NamedTemporaryFile(suffix=".doc", delete=False) as f:
+                    f.write(b"doc content")
+                    f.flush()
+
+                    ctx = Context(target=tmpdir)
+                    result = extract_metadata(ctx, params={"file_path": f.name})
+
+                    # Should process both file and directory
+                    assert "document_metadata" in result.data
+                    # At least 2 calls (1 for file_path + 1 for directory file)
+                    assert mock_extract.call_count >= 2
+
+    def test_extract_metadata_params_none(self):
+        """Test extract_metadata with None params."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctx = Context(target=tmpdir)
+            result = extract_metadata(ctx, params=None)
+
+            assert "document_summary" in result.data
+
+
 class TestIntegration:
     """Integration tests requiring actual files."""
 
