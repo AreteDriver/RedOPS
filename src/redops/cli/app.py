@@ -689,6 +689,198 @@ def cmd_version(args: argparse.Namespace, config: CLIConfig) -> int:
     return 0
 
 
+def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
+    """Manage plugins."""
+    from redops.core.plugin_system import (
+        get_plugin_registry,
+        PluginState,
+        PluginType,
+    )
+
+    action = args.action
+    registry = get_plugin_registry()
+
+    # Add default plugin directories
+    plugin_dirs = get_plugin_directories()
+    for plugin_dir in plugin_dirs:
+        registry.add_plugin_directory(plugin_dir)
+
+    if action == "list":
+        # List all plugins
+        if not config.quiet:
+            print_header("Installed Plugins")
+
+        # Discover plugins from directories
+        registry.discover_plugins()
+
+        plugins = registry.plugins
+        if not plugins:
+            print("No plugins installed.")
+            print()
+            print(f"Plugin directories searched:")
+            for pd in plugin_dirs:
+                print(f"  - {pd}")
+            return 0
+
+        if config.output_format == OutputFormat.JSON:
+            output = {}
+            for name, info in plugins.items():
+                output[name] = {
+                    "version": info.metadata.version,
+                    "description": info.metadata.description,
+                    "type": info.metadata.plugin_type.value,
+                    "state": info.state.value,
+                    "author": info.metadata.author,
+                    "tags": info.metadata.tags,
+                }
+            print(json.dumps(output, indent=2))
+        else:
+            # Group by type
+            by_type: Dict[PluginType, List] = {}
+            for name, info in plugins.items():
+                ptype = info.metadata.plugin_type
+                if ptype not in by_type:
+                    by_type[ptype] = []
+                by_type[ptype].append((name, info))
+
+            for ptype, items in sorted(by_type.items(), key=lambda x: x[0].value):
+                print(f"{ptype.value.upper()} PLUGINS:")
+                for name, info in items:
+                    state_icon = "✓" if info.state == PluginState.ACTIVE else "○"
+                    print(f"  {state_icon} {name} v{info.metadata.version}")
+                    if info.metadata.description:
+                        print(f"      {info.metadata.description}")
+                    if info.error:
+                        print(f"      ERROR: {info.error}")
+                print()
+
+    elif action == "load":
+        # Load a plugin from file or module
+        source = args.source
+        if not source:
+            print_error("Plugin source required. Use --source <path_or_module>")
+            return 1
+
+        try:
+            if source.endswith(".py"):
+                # Load from file
+                registered = registry.register_from_file(source)
+            else:
+                # Load from module
+                registered = registry.register_from_module(source)
+
+            if registered:
+                print_success(f"Loaded {len(registered)} plugin(s): {', '.join(registered)}")
+            else:
+                print_warning("No plugins found in source")
+                return 1
+        except Exception as e:
+            print_error(f"Failed to load plugin: {e}")
+            return 1
+
+    elif action == "enable":
+        name = args.name
+        if not name:
+            print_error("Plugin name required. Use --name <plugin>")
+            return 1
+
+        if registry.enable(name):
+            print_success(f"Plugin '{name}' enabled")
+        else:
+            print_error(f"Could not enable plugin '{name}' (not found or already enabled)")
+            return 1
+
+    elif action == "disable":
+        name = args.name
+        if not name:
+            print_error("Plugin name required. Use --name <plugin>")
+            return 1
+
+        if registry.disable(name):
+            print_success(f"Plugin '{name}' disabled")
+        else:
+            print_error(f"Could not disable plugin '{name}' (not found or already disabled)")
+            return 1
+
+    elif action == "info":
+        name = args.name
+        if not name:
+            print_error("Plugin name required. Use --name <plugin>")
+            return 1
+
+        # Discover first
+        registry.discover_plugins()
+        info = registry.get(name)
+
+        if not info:
+            print_error(f"Plugin '{name}' not found")
+            return 1
+
+        if config.output_format == OutputFormat.JSON:
+            output = {
+                "name": info.metadata.name,
+                "version": info.metadata.version,
+                "description": info.metadata.description,
+                "type": info.metadata.plugin_type.value,
+                "state": info.state.value,
+                "author": info.metadata.author,
+                "tags": info.metadata.tags,
+                "dependencies": info.metadata.dependencies,
+                "homepage": info.metadata.homepage,
+                "license": info.metadata.license,
+                "path": str(info.path) if info.path else None,
+                "error": info.error,
+            }
+            print(json.dumps(output, indent=2))
+        else:
+            print(f"Plugin: {info.metadata.name}")
+            print(f"Version: {info.metadata.version}")
+            print(f"Type: {info.metadata.plugin_type.value}")
+            print(f"State: {info.state.value}")
+            if info.metadata.description:
+                print(f"Description: {info.metadata.description}")
+            if info.metadata.author:
+                print(f"Author: {info.metadata.author}")
+            if info.metadata.tags:
+                print(f"Tags: {', '.join(info.metadata.tags)}")
+            if info.metadata.dependencies:
+                print(f"Dependencies: {', '.join(info.metadata.dependencies)}")
+            if info.metadata.homepage:
+                print(f"Homepage: {info.metadata.homepage}")
+            if info.path:
+                print(f"Path: {info.path}")
+            if info.error:
+                print(f"Error: {info.error}")
+
+    return 0
+
+
+def get_plugin_directories() -> List[Path]:
+    """Get directories to search for plugins."""
+    dirs = []
+
+    # User plugins: ~/.config/redops/plugins/
+    user_plugin_dir = Path.home() / ".config" / "redops" / "plugins"
+    if user_plugin_dir.exists():
+        dirs.append(user_plugin_dir)
+
+    # Project plugins: ./plugins/
+    project_plugin_dir = Path.cwd() / "plugins"
+    if project_plugin_dir.exists():
+        dirs.append(project_plugin_dir)
+
+    # Environment variable
+    import os
+    env_dirs = os.environ.get("REDOPS_PLUGIN_PATH", "")
+    if env_dirs:
+        for d in env_dirs.split(":"):
+            p = Path(d)
+            if p.exists():
+                dirs.append(p)
+
+    return dirs
+
+
 # ============================================================================
 # Execution Functions
 # ============================================================================
@@ -1273,6 +1465,20 @@ Examples:
     # Version command
     subparsers.add_parser("version", help="Show version")
 
+    # Plugin management command
+    plugin_parser = subparsers.add_parser("plugin", help="Manage plugins")
+    plugin_parser.add_argument(
+        "action",
+        choices=["list", "load", "enable", "disable", "info"],
+        help="Plugin action",
+    )
+    plugin_parser.add_argument(
+        "--name", "-n", help="Plugin name (for enable, disable, info)"
+    )
+    plugin_parser.add_argument(
+        "--source", "-s", help="Plugin source file or module path (for load)"
+    )
+
     return parser
 
 
@@ -1306,6 +1512,7 @@ def main(args: Optional[List[str]] = None) -> int:
         "apikey": cmd_apikey,
         "ai": cmd_ai,
         "version": cmd_version,
+        "plugin": cmd_plugin,
     }
 
     if parsed.command in commands:

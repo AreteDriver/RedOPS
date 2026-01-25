@@ -31,7 +31,20 @@ class PipelineStep(BaseModel):
     @field_validator("module")
     @classmethod
     def validate_module_path(cls, v: str) -> str:
-        """Validate that module path has at least one dot."""
+        """Validate module path format.
+
+        Accepts:
+        - Dotted module paths: "recon.domains.profile_domain"
+        - Plugin references: "plugin:plugin_name"
+        """
+        # Plugin references start with "plugin:"
+        if v.startswith("plugin:"):
+            plugin_name = v[7:]
+            if not plugin_name:
+                raise ValueError("Plugin reference must have a name after 'plugin:'")
+            return v
+
+        # Regular module paths need at least one dot
         if "." not in v:
             raise ValueError(f"Module path must be a dotted path, got: {v}")
         return v
