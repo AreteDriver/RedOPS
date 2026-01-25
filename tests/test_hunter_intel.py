@@ -282,3 +282,275 @@ class TestAnalyzeHunterIntel:
         intel = result.get("hunter_intel")
         assert intel is not None
         assert intel["domain"]["error"] is not None
+
+
+class TestGetHunterApiKey:
+    """Tests for get_hunter_api_key function."""
+
+    def test_api_key_from_env(self):
+        """Test API key loaded from environment."""
+        from redops.modules.intel.hunter_intel import get_hunter_api_key
+
+        with patch.dict("os.environ", {"HUNTER_API_KEY": "env-api-key"}):
+            result = get_hunter_api_key()
+            assert result == "env-api-key"
+
+    def test_api_key_from_settings_fallback(self):
+        """Test API key loaded from settings when env not set."""
+        from redops.modules.intel.hunter_intel import get_hunter_api_key
+
+        with patch.dict("os.environ", {}, clear=True):
+            with patch("redops.cli.settings.get_api_key_direct", return_value="settings-key"):
+                result = get_hunter_api_key()
+                assert result == "settings-key"
+
+    def test_settings_fallback_exception(self):
+        """Test that settings exception returns None."""
+        from redops.modules.intel.hunter_intel import get_hunter_api_key
+
+        with patch.dict("os.environ", {}, clear=True):
+            with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Settings error")):
+                result = get_hunter_api_key()
+                assert result is None
+
+    def test_no_api_key_anywhere(self):
+        """Test returns None when no API key configured."""
+        from redops.modules.intel.hunter_intel import get_hunter_api_key
+
+        with patch.dict("os.environ", {}, clear=True):
+            with patch("redops.cli.settings.get_api_key_direct", return_value=None):
+                result = get_hunter_api_key()
+                assert result is None
+
+
+class TestMakeHunterRequest:
+    """Tests for _make_hunter_request function."""
+
+    def test_import_error_returns_none(self):
+        """Test that import error returns None."""
+        # Test the case where requests is not installed by mocking the import to fail
+        def mock_import(name, *args, **kwargs):
+            if name == "requests":
+                raise ImportError("No module named 'requests'")
+            return original_import(name, *args, **kwargs)
+
+        import builtins
+        original_import = builtins.__import__
+
+        from importlib import reload
+        import redops.modules.intel.hunter_intel as hunter_mod
+
+        try:
+            builtins.__import__ = mock_import
+            reload(hunter_mod)
+            result = hunter_mod._make_hunter_request("domain-search", "test-key")
+            assert result is None
+        finally:
+            builtins.__import__ = original_import
+            reload(hunter_mod)
+
+    def test_successful_request(self):
+        """Test successful 200 response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"data": {"domain": "test.com"}}
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hunter_intel as hunter_mod
+            reload(hunter_mod)
+
+            result = hunter_mod._make_hunter_request("domain-search", "test-key", {"domain": "test.com"})
+            assert result == {"data": {"domain": "test.com"}}
+
+    def test_404_response(self):
+        """Test 404 not found response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hunter_intel as hunter_mod
+            reload(hunter_mod)
+
+            result = hunter_mod._make_hunter_request("domain-search", "test-key")
+            assert result == {"error": "not_found"}
+
+    def test_429_rate_limit_response(self):
+        """Test 429 rate limit response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hunter_intel as hunter_mod
+            reload(hunter_mod)
+
+            result = hunter_mod._make_hunter_request("domain-search", "test-key")
+            assert result == {"error": "rate_limited"}
+
+    def test_401_unauthorized_response(self):
+        """Test 401 unauthorized response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hunter_intel as hunter_mod
+            reload(hunter_mod)
+
+            result = hunter_mod._make_hunter_request("domain-search", "test-key")
+            assert result == {"error": "invalid_api_key"}
+
+    def test_other_status_code_response(self):
+        """Test other HTTP status code response."""
+        mock_requests = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_requests.get.return_value = mock_response
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hunter_intel as hunter_mod
+            reload(hunter_mod)
+
+            result = hunter_mod._make_hunter_request("domain-search", "test-key")
+            assert result == {"error": "HTTP 500"}
+
+    def test_request_exception(self):
+        """Test request exception handling."""
+        mock_requests = MagicMock()
+        mock_requests.get.side_effect = Exception("Connection error")
+
+        import sys
+        with patch.dict(sys.modules, {"requests": mock_requests}):
+            from importlib import reload
+            import redops.modules.intel.hunter_intel as hunter_mod
+            reload(hunter_mod)
+
+            result = hunter_mod._make_hunter_request("domain-search", "test-key")
+            assert result == {"error": "Connection error"}
+
+
+class TestQueryHunterDomainEdgeCases:
+    """Edge case tests for query_hunter_domain."""
+
+    def test_requests_not_available(self):
+        """Test when requests library returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=None):
+                result = query_hunter_domain(ctx)
+
+        data = result.get("hunter_domain")
+        assert "requests library not available" in data["error"]
+
+    def test_error_in_response(self):
+        """Test when error key in response."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"error": "rate_limited"}):
+                result = query_hunter_domain(ctx)
+
+        data = result.get("hunter_domain")
+        assert data["error"] == "rate_limited"
+
+    def test_errors_array_in_response(self):
+        """Test when errors array in response."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"errors": [{"details": "Domain not found"}]}):
+                result = query_hunter_domain(ctx)
+
+        data = result.get("hunter_domain")
+        assert "Domain not found" in data["error"]
+
+
+class TestQueryHunterEmailCountEdgeCases:
+    """Edge case tests for query_hunter_email_count."""
+
+    def test_no_api_key(self):
+        """Test when API key not configured."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None):
+            result = query_hunter_email_count(ctx)
+
+        data = result.get("hunter_count")
+        assert data is not None
+        assert "not configured" in data["error"]
+
+    def test_requests_not_available(self):
+        """Test when requests library returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=None):
+                result = query_hunter_email_count(ctx)
+
+        data = result.get("hunter_count")
+        assert "requests library not available" in data["error"]
+
+    def test_error_in_response(self):
+        """Test when error key in response."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"error": "invalid_api_key"}):
+                result = query_hunter_email_count(ctx)
+
+        data = result.get("hunter_count")
+        assert data["error"] == "invalid_api_key"
+
+
+class TestVerifyHunterEmailEdgeCases:
+    """Edge case tests for verify_hunter_email."""
+
+    def test_no_api_key(self):
+        """Test when API key not configured."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None):
+            result = verify_hunter_email(ctx, {"email": "test@example.com"})
+
+        data = result.get("hunter_verify")
+        assert data is not None
+        assert "not configured" in data["error"]
+
+    def test_requests_not_available(self):
+        """Test when requests library returns None."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=None):
+                result = verify_hunter_email(ctx, {"email": "test@example.com"})
+
+        data = result.get("hunter_verify")
+        assert "requests library not available" in data["error"]
+
+    def test_error_in_response(self):
+        """Test when error key in response."""
+        ctx = Context(target="example.com")
+
+        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
+            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"error": "not_found"}):
+                result = verify_hunter_email(ctx, {"email": "test@example.com"})
+
+        data = result.get("hunter_verify")
+        assert data["error"] == "not_found"
