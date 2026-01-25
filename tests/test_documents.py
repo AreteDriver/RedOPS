@@ -173,7 +173,8 @@ class TestExtractPdfMetadata:
         result = extract_pdf_metadata("/nonexistent/path.pdf")
         # Without the file, we still get a DocumentMetadata with warnings
         assert result is not None
-        assert any("Error" in w for w in result.warnings)
+        # Either "Error" or "not available" depending on pypdf availability
+        assert any("Error" in w or "not available" in w for w in result.warnings)
 
     @pytest.mark.skipif(not PYPDF_AVAILABLE, reason="pypdf not available")
     def test_extract_simple_pdf(self):

@@ -24,6 +24,7 @@ from redops.core.config_manager import (
     get_config,
     get_config_manager,
     load_config,
+    YAML_AVAILABLE,
 )
 
 
@@ -793,6 +794,7 @@ class TestGlobalFunctions:
 class TestProjectConfigDiscovery:
     """Tests for project config file discovery."""
 
+    @pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not installed")
     def test_discovers_redops_yaml(self):
         """Test discovering redops.yaml in current directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -810,6 +812,7 @@ class TestProjectConfigDiscovery:
             finally:
                 os.chdir(original_cwd)
 
+    @pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not installed")
     def test_discovers_redops_yml(self):
         """Test discovering redops.yml in current directory."""
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -19,6 +19,7 @@ from redops.modules.recon.domains import (
 class TestGetDnsRecords:
     """Tests for get_dns_records function."""
 
+    @pytest.mark.skipif(not DNS_AVAILABLE, reason="dnspython not installed")
     def test_get_dns_records_success(self):
         """Test successful DNS record retrieval."""
         with patch(
@@ -42,6 +43,7 @@ class TestGetDnsRecords:
 
             assert records == []
 
+    @pytest.mark.skipif(not DNS_AVAILABLE, reason="dnspython not installed")
     def test_get_dns_records_mx(self):
         """Test MX record retrieval."""
         with patch(
@@ -54,6 +56,7 @@ class TestGetDnsRecords:
             assert len(records) == 2
             assert "10 mail.example.com." in records
 
+    @pytest.mark.skipif(not DNS_AVAILABLE, reason="dnspython not installed")
     def test_get_dns_records_txt(self):
         """Test TXT record retrieval."""
         with patch(
@@ -433,6 +436,7 @@ class TestCheckZoneTransfer:
         warnings = result.get_logs(level="WARNING")
         assert len(warnings) > 0
 
+    @pytest.mark.skipif(not DNS_AVAILABLE, reason="dnspython not installed")
     def test_zone_transfer_denied(self):
         """Test zone transfer check when denied (secure)."""
         with patch("redops.modules.recon.domains.get_dns_records") as mock_ns:
