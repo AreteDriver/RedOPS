@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-01-25
+
 ### Added
 - **Plugin System Integration**
   - Plugin CLI: `redops plugin list|load|enable|disable|info`
@@ -25,6 +27,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Certificate transparency data
   - Certificate search
   - ASN and organization data
+
+- **VirusTotal Intelligence Module**
+  - Domain reputation and analysis
+  - IP address reports with country/ASN info
+  - URL analysis with malware detection
+  - Multi-engine detection statistics
+
+- **SecurityTrails Intelligence Module**
+  - DNS record queries (current and historical)
+  - Subdomain enumeration
+  - Associated domain discovery
+  - WHOIS history data
+
+- **Hunter.io Intelligence Module**
+  - Domain email pattern detection
+  - Email discovery with confidence scores
+  - Email verification
+  - Organization and department extraction
+
+- **Have I Been Pwned Intelligence Module**
+  - Domain breach search
+  - Email breach lookup
+  - Paste monitoring
+  - Breach details and statistics
 
 ## [1.2.0] - 2026-01-24
 
