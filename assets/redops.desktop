@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=RedOPS
+Comment=OSINT and Security Assessment Framework
+Exec=bash -c 'cd /home/arete/projects/RedOPS && source venv/bin/activate && echo "RedOPS Framework - Type redops --help to get started" && exec bash'
+Icon=/home/arete/projects/RedOPS/assets/redops.svg
+Terminal=true
+Type=Application
+Categories=Development;Security;System;
+Keywords=security;osint;recon;pentest;
