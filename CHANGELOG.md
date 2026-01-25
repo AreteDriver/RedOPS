@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-24
+
+### Added
+- **AI Providers**
+  - Groq provider for fast inference (llama-3.3-70b, mixtral-8x7b, gemma2-9b)
+  - Now supports 6 providers: OpenAI, Anthropic, Gemini, Ollama, Groq
+
+- **Web Dashboard**
+  - FastAPI-based REST API (`redops-web`)
+  - Interactive web dashboard with real-time scan progress
+  - API documentation at /api/docs (Swagger UI)
+  - Background scan execution with progress tracking
+  - `[web]` optional dependencies (fastapi, uvicorn)
+
+- **MCP Server**
+  - Model Context Protocol server for Claude Code integration (`redops-mcp`)
+  - Tools: redops_scan, redops_explain, redops_analyze, redops_suggest, redops_summarize
+  - JSON-RPC over stdio transport
+
+### Fixed
+- AI summarizer tests now properly mock AIAssistant
+
 ## [1.1.0] - 2025-01-25
 
 ### Added
@@ -112,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safe-by-default configuration
 - Audit trail for all operations
 
-[Unreleased]: https://github.com/AreteDriver/RedOPS/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/AreteDriver/RedOPS/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/AreteDriver/RedOPS/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/AreteDriver/RedOPS/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/AreteDriver/RedOPS/releases/tag/v1.0.0
