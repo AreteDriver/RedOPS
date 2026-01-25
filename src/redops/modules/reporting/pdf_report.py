@@ -14,6 +14,10 @@ try:
     HAS_FPDF = True
 except ImportError:
     HAS_FPDF = False
+    # Create a dummy FPDF class for when the library is not installed
+    class FPDF:
+        """Dummy FPDF class when fpdf2 is not installed."""
+        pass
 
 
 class RedOPSPDFReport(FPDF):
@@ -27,11 +31,11 @@ class RedOPSPDFReport(FPDF):
         """Add header to each page."""
         self.set_font("Helvetica", "B", 12)
         self.set_text_color(60, 60, 60)
-        self.cell(0, 10, "RedOPS Security Assessment Report", align="C")
-        self.ln(5)
+        self.cell(0, 10, "RedOPS Security Assessment Report", align="C", ln=True)
         self.set_draw_color(200, 200, 200)
         self.line(10, 20, 200, 20)
-        self.ln(10)
+        self.ln(5)
+        self.set_x(self.l_margin)  # Reset to left margin
 
     def footer(self):
         """Add footer to each page."""
@@ -79,24 +83,31 @@ class RedOPSPDFReport(FPDF):
         }
         color = colors.get(severity.lower(), (100, 100, 100))
 
-        # Severity badge
-        self.set_fill_color(*color)
-        self.set_text_color(255, 255, 255)
-        self.set_font("Helvetica", "B", 9)
-        self.cell(20, 6, severity.upper(), fill=True, align="C")
-        self.set_text_color(40, 40, 40)
+        # Reset position to left margin
+        self.set_x(self.l_margin)
+
+        # Title with severity prefix
         self.set_font("Helvetica", "B", 10)
-        self.cell(0, 6, f"  {title}", ln=True)
+        self.set_text_color(*color)
+        severity_prefix = f"[{severity.upper()}] "
+        self.set_text_color(40, 40, 40)
+        # Truncate title if needed
+        title_text = title[:70] if len(title) > 70 else title
+        self.multi_cell(0, 6, f"{severity_prefix}{title_text}")
 
         # Description
+        self.set_x(self.l_margin)
         self.set_font("Helvetica", "", 9)
-        self.multi_cell(0, 4, description)
+        self.set_text_color(60, 60, 60)
+        desc_text = description[:500] if len(description) > 500 else description
+        self.multi_cell(0, 4, desc_text)
 
         # Recommendation
         if recommendation:
+            self.set_x(self.l_margin)
             self.set_font("Helvetica", "I", 9)
-            self.set_text_color(60, 60, 60)
-            self.multi_cell(0, 4, f"Recommendation: {recommendation}")
+            rec_text = recommendation[:300] if len(recommendation) > 300 else recommendation
+            self.multi_cell(0, 4, f"Recommendation: {rec_text}")
 
         self.ln(3)
 
