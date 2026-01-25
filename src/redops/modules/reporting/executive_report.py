@@ -16,7 +16,7 @@ Report Types:
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 import hashlib
 from redops.core.context import Context

@@ -15,7 +15,7 @@ Real implementations would integrate with actual threat feeds.
 from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import re
 from redops.core.context import Context
 
