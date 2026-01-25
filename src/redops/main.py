@@ -13,7 +13,7 @@ from redops.pipelines.runner import PipelineRunner
 from redops.core.config import RedOpsConfig
 
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 def run_pipeline(

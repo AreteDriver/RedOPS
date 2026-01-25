@@ -7,18 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-01-25
+
 ### Added
-- Docker containerization with multi-stage build
-- PyPI publishing workflow with trusted publishing (OIDC)
-- CI badges in README (pipeline status, Python version, license)
-- `[dev]` optional dependencies group (pytest, ruff, mypy)
-- `--provider` and `--model` flags for AI commands
-- AI features documentation in README
-- Integration test for ai_enhanced preset
+- **Docker Support**
+  - Multi-stage Dockerfile with non-root user
+  - docker-compose.yml for easy deployment
+  - GHCR publishing in release workflow
+
+- **Scheduling & Notifications**
+  - systemd service and timer for scheduled scans
+  - Cron examples for various schedules
+  - Slack webhook notifications
+  - Discord webhook notifications
+  - Email notifications via SMTP
+  - Generic webhook support
+
+- **Reporting**
+  - PDF report generation with fpdf2
+  - STIX 2.1 threat intelligence export
+  - Professional report formatting with severity badges
+
+- **CLI Enhancements**
+  - `--provider` and `--model` flags for AI commands
+  - Bash completion script
+  - Zsh completion script
+  - Man page (redops.1)
+
+- **Documentation**
+  - CHANGELOG.md
+  - Example scripts (quick_scan.py, ai_analysis.py, generate_reports.py)
+  - Updated SETUP.md with Docker, AI, scheduling docs
+  - CI badges in README
+
+- **Development**
+  - `[dev]` optional dependencies group
+  - `[ai]` optional dependencies group
+  - PyPI publishing workflow with OIDC
+  - Integration test for ai_enhanced preset
 
 ### Changed
-- Updated Anthropic model names to current versions
-- Improved release workflow with better install instructions
+- Updated Anthropic model names to current versions (claude-sonnet-4)
+- Added fpdf2 to `[full]` dependencies
+- Improved release workflow with GHCR and better install instructions
 
 ## [1.0.0] - 2025-01-24
 
@@ -81,5 +112,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safe-by-default configuration
 - Audit trail for all operations
 
-[Unreleased]: https://github.com/AreteDriver/RedOPS/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/AreteDriver/RedOPS/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/AreteDriver/RedOPS/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/AreteDriver/RedOPS/releases/tag/v1.0.0
