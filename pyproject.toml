@@ -61,7 +61,11 @@ ai = [
     "groq>=0.11.0",
 ]
 all = [
-    "redops[full,ai]",
+    "redops[full,ai,web]",
+]
+web = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
 ]
 dev = [
     "pytest>=7.0.0",
@@ -72,6 +76,7 @@ dev = [
 
 [project.scripts]
 redops = "redops.main:main"
+redops-web = "redops.web.app:main"
 
 [project.urls]
 Homepage = "https://github.com/AreteDriver/RedOPS"
