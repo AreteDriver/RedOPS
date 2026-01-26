@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-01-25
+
+### Added
+- **New Recon Modules**
+  - Certificate Transparency: Search CT logs via crt.sh for subdomain discovery
+  - Subdomain Enumeration: Bruteforce and passive enumeration with verification
+  - ASN Lookup: Network ownership and IP range discovery via BGPView
+
+- **Threat Intelligence Integrations**
+  - GreyNoise: IP reputation and scanner detection (Community + Enterprise)
+  - AbuseIPDB: IP abuse reports and confidence scoring
+  - URLhaus: Malicious URL and payload detection
+
+- **New Report Formats**
+  - SARIF 2.1.0: For GitHub Code Scanning and Azure DevOps integration
+  - JUnit XML: For CI/CD pipeline integration (Jenkins, GitLab CI, CircleCI)
+  - OSCAL: NIST standard for security assessment results
+
+- **Dashboard Widgets**
+  - Risk summary with severity breakdown and scoring
+  - Attack surface metrics with exposure scoring
+  - Module statistics and compliance status
+  - Threat intel summary integration
+
+- **Extended MCP Tools**
+  - redops_check_ip: Multi-source IP reputation checking
+  - redops_check_url: Malicious URL detection
+  - redops_cert_transparency: CT log searching
+  - redops_asn_lookup: ASN information lookup
+  - redops_enumerate_subdomains: Subdomain enumeration
+  - redops_export_sarif/junit: CI/CD export tools
+  - redops_dashboard_summary: Dashboard metrics generation
+  - MCP prompt templates for security workflows
+
+### Fixed
+- Resolved 617 deprecation warnings (datetime.utcnow, fpdf2, Pillow)
+- Fixed MCP server coroutine handling in tests
+
+### Changed
+- Improved test coverage across multiple modules
+- Added 391 new tests (4046 → 4437 total)
+
 ## [1.3.0] - 2026-01-25
 
 ### Added
