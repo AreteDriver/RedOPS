@@ -1,0 +1,308 @@
+# RedOPS Helm Chart Values
+# Default values for redops deployment
+
+# Global settings
+global:
+  # Image pull secrets for private registries
+  imagePullSecrets: []
+  # Storage class for persistent volumes
+  storageClass: ""
+
+# RedOPS API Server
+api:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: redops/api
+    tag: ""  # Defaults to appVersion
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8000
+    annotations: {}
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: redops.example.com
+        paths:
+          - path: /api
+            pathType: Prefix
+    tls: []
+      # - secretName: redops-tls
+      #   hosts:
+      #     - redops.example.com
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Environment variables
+  env: []
+    # - name: LOG_LEVEL
+    #   value: "INFO"
+
+  # Environment variables from secrets/configmaps
+  envFrom: []
+    # - secretRef:
+    #     name: redops-secrets
+
+# RedOPS Web Dashboard
+dashboard:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: redops/dashboard
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8080
+    annotations: {}
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: redops.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# RedOPS Worker (for async scan jobs)
+worker:
+  enabled: true
+  replicaCount: 3
+
+  image:
+    repository: redops/worker
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Worker-specific settings
+  concurrency: 4
+  queues:
+    - default
+    - priority
+    - threat-intel
+
+# Redis (for job queue and caching)
+redis:
+  enabled: true
+  architecture: standalone
+
+  auth:
+    enabled: true
+    password: ""  # Set via secret
+    existingSecret: ""
+    existingSecretPasswordKey: "redis-password"
+
+  master:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    persistence:
+      enabled: true
+      size: 8Gi
+
+  # Use external Redis instead
+  external:
+    enabled: false
+    host: ""
+    port: 6379
+    password: ""
+
+# PostgreSQL (for scan results and configuration)
+postgresql:
+  enabled: true
+
+  auth:
+    username: redops
+    password: ""  # Set via secret
+    database: redops
+    existingSecret: ""
+
+  primary:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    persistence:
+      enabled: true
+      size: 20Gi
+
+  # Use external PostgreSQL instead
+  external:
+    enabled: false
+    host: ""
+    port: 5432
+    database: redops
+    username: ""
+    password: ""
+    existingSecret: ""
+
+# Persistence for scan results and reports
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  annotations: {}
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod Security Context
+podSecurityContext:
+  fsGroup: 1000
+
+# Container Security Context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# Network Policies
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Monitoring
+monitoring:
+  enabled: false
+
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+
+  prometheusRule:
+    enabled: false
+    rules: []
+
+# Secrets (for API keys, credentials)
+secrets:
+  # Create a secret with these values
+  create: true
+
+  # Or use an existing secret
+  existingSecret: ""
+
+  # API keys (only used if create: true)
+  apiKeys:
+    greynoise: ""
+    abuseipdb: ""
+    urlscan: ""
+    otx: ""
+    shodan: ""
+    virustotal: ""
+
+  # SIEM credentials
+  siem:
+    splunk:
+      hecUrl: ""
+      hecToken: ""
+    elastic:
+      hosts: ""
+      apiKey: ""
+    datadog:
+      apiKey: ""
+      site: "us1"
+
+  # Ticketing credentials
+  ticketing:
+    jira:
+      baseUrl: ""
+      username: ""
+      apiToken: ""
+      projectKey: ""
+    github:
+      token: ""
+      owner: ""
+      repo: ""
+
+# Extra manifests to deploy
+extraManifests: []
+  # - apiVersion: v1
+  #   kind: ConfigMap
+  #   metadata:
+  #     name: extra-config
+  #   data:
+  #     key: value

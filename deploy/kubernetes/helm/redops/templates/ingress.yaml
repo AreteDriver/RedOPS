@@ -1,0 +1,50 @@
+{{- if .Values.api.ingress.enabled -}}
+{{- $fullName := include "redops.fullname" . -}}
+{{- $apiSvcPort := .Values.api.service.port -}}
+{{- $dashboardSvcPort := .Values.dashboard.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "redops.labels" . | nindent 4 }}
+  {{- with .Values.api.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.api.ingress.className }}
+  ingressClassName: {{ .Values.api.ingress.className }}
+  {{- end }}
+  {{- if .Values.api.ingress.tls }}
+  tls:
+    {{- range .Values.api.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.api.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                {{- if hasPrefix "/api" .path }}
+                name: {{ $fullName }}-api
+                port:
+                  number: {{ $apiSvcPort }}
+                {{- else }}
+                name: {{ $fullName }}-dashboard
+                port:
+                  number: {{ $dashboardSvcPort }}
+                {{- end }}
+          {{- end }}
+    {{- end }}
+{{- end }}
