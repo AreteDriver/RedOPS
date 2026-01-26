@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-01-26
+
+### Added
+- **ThreatFox Integration** (abuse.ch)
+  - IOC lookup (domains, IPs, URLs, hashes)
+  - Malware family search
+  - Recent IOCs feed
+  - C2 infrastructure detection with CRITICAL severity findings
+
+- **MalwareBazaar Integration** (abuse.ch)
+  - File hash lookups (MD5, SHA1, SHA256)
+  - Malware signature search
+  - YARA rule matching
+  - AV detection analysis
+  - Tag-based sample search
+
+### Fixed
+- Replaced passlib with direct bcrypt for password hashing (eliminates deprecation warnings from passlib's crypt module)
+- Improved finding deduplication: severity changes are now tracked as modifications rather than new/resolved findings
+
+### Changed
+- Updated test suite to 5072 tests with 0 warnings (+61 threat intel tests)
+
 ## [1.4.0] - 2026-01-25
 
 ### Added
@@ -221,7 +244,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safe-by-default configuration
 - Audit trail for all operations
 
-[Unreleased]: https://github.com/AreteDriver/RedOPS/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/AreteDriver/RedOPS/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/AreteDriver/RedOPS/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/AreteDriver/RedOPS/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/AreteDriver/RedOPS/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/AreteDriver/RedOPS/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/AreteDriver/RedOPS/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/AreteDriver/RedOPS/releases/tag/v1.0.0

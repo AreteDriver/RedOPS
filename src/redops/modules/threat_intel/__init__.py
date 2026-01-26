@@ -44,6 +44,25 @@ from redops.modules.threat_intel.alienvault import (
     analyze_otx_indicator,
     get_otx_summary,
 )
+from redops.modules.threat_intel.threatfox import (
+    query_ioc,
+    search_malware,
+    get_recent_iocs,
+    get_ioc_by_id,
+    get_tag_iocs,
+    analyze_threatfox_results,
+    get_threatfox_summary,
+)
+from redops.modules.threat_intel.malwarebazaar import (
+    query_hash,
+    search_signature,
+    search_tag,
+    search_yara,
+    get_recent_samples,
+    get_file_types,
+    analyze_malwarebazaar_results,
+    get_malwarebazaar_summary,
+)
 
 __all__ = [
     # greynoise
@@ -84,4 +103,21 @@ __all__ = [
     "get_pulse_details",
     "analyze_otx_indicator",
     "get_otx_summary",
+    # threatfox
+    "query_ioc",
+    "search_malware",
+    "get_recent_iocs",
+    "get_ioc_by_id",
+    "get_tag_iocs",
+    "analyze_threatfox_results",
+    "get_threatfox_summary",
+    # malwarebazaar
+    "query_hash",
+    "search_signature",
+    "search_tag",
+    "search_yara",
+    "get_recent_samples",
+    "get_file_types",
+    "analyze_malwarebazaar_results",
+    "get_malwarebazaar_summary",
 ]
