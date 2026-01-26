@@ -7,7 +7,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from ..deps import get_current_user, require_admin, Pagination
 
@@ -23,16 +23,15 @@ class UserCreate(BaseModel):
     full_name: Optional[str] = None
     role: str = Field(default="user", description="Role: admin, user, viewer")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "username": "johndoe",
-                "email": "john@example.com",
-                "password": "securepassword123",
-                "full_name": "John Doe",
-                "role": "user",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "username": "johndoe",
+            "email": "john@example.com",
+            "password": "securepassword123",
+            "full_name": "John Doe",
+            "role": "user",
         }
+    })
 
 
 class UserUpdate(BaseModel):

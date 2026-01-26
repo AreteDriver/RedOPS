@@ -7,7 +7,7 @@ from typing import Any, List, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..deps import get_current_user, Pagination, ScanFilters
 
@@ -24,15 +24,14 @@ class ScanCreate(BaseModel):
     options: Optional[dict] = Field(default_factory=dict, description="Module options")
     tags: Optional[List[str]] = Field(default_factory=list, description="Tags for organization")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "target": "https://example.com",
-                "pipeline": "web_security",
-                "modules": ["ssl_check", "header_scan"],
-                "tags": ["production", "q1-audit"],
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "target": "https://example.com",
+            "pipeline": "web_security",
+            "modules": ["ssl_check", "header_scan"],
+            "tags": ["production", "q1-audit"],
         }
+    })
 
 
 class ScanResponse(BaseModel):

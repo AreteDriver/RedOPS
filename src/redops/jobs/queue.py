@@ -10,7 +10,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
@@ -58,7 +58,7 @@ class Job:
     # Scheduling
     priority: JobPriority = JobPriority.NORMAL
     queue: str = "default"
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     scheduled_at: Optional[datetime] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -446,7 +446,7 @@ class JobQueue:
         # Calculate scheduled time
         job_scheduled_at = scheduled_at
         if delay and not job_scheduled_at:
-            job_scheduled_at = datetime.utcnow() + timedelta(seconds=delay)
+            job_scheduled_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
 
         job = Job(
             name=job_name,
@@ -608,7 +608,7 @@ class JobWorker:
         """Execute a single job."""
         self._current_jobs[threading.current_thread().name] = job
 
-        job.started_at = datetime.utcnow()
+        job.started_at = datetime.now(timezone.utc)
         job.worker_id = self._worker_id
         job.attempts += 1
 
@@ -629,14 +629,14 @@ class JobWorker:
             # Success
             job.status = JobStatus.COMPLETED
             job.result = result
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
 
             logger.info(f"Job {job.id} completed in {job.duration_seconds:.2f}s")
 
         except TimeoutError as e:
             job.status = JobStatus.TIMEOUT
             job.error = str(e)
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
             logger.warning(f"Job {job.id} timed out")
 
         except Exception as e:
@@ -680,11 +680,11 @@ class JobWorker:
 
         job.error = str(error)
         job.error_traceback = traceback.format_exc()
-        job.completed_at = datetime.utcnow()
+        job.completed_at = datetime.now(timezone.utc)
 
         if job.should_retry():
             job.status = JobStatus.RETRYING
-            job.scheduled_at = datetime.utcnow() + timedelta(seconds=job.get_retry_delay())
+            job.scheduled_at = datetime.now(timezone.utc) + timedelta(seconds=job.get_retry_delay())
             logger.warning(f"Job {job.id} failed, retrying in {job.get_retry_delay()}s")
             # Re-enqueue for retry
             self._queue.enqueue_job(job)

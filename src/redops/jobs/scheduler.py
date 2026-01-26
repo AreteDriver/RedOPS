@@ -10,7 +10,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, Set
 from uuid import uuid4
 
@@ -224,7 +224,7 @@ class ScheduledJob:
     def __post_init__(self):
         """Calculate next run time."""
         if self.schedule and not self.next_run:
-            self.next_run = self.schedule.get_next_run(datetime.utcnow())
+            self.next_run = self.schedule.get_next_run(datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dict."""
@@ -488,7 +488,7 @@ class JobScheduler:
         )
 
         # Update scheduled job stats
-        scheduled_job.last_run = datetime.utcnow()
+        scheduled_job.last_run = datetime.now(timezone.utc)
         scheduled_job.run_count += 1
         if scheduled_job.schedule:
             scheduled_job.next_run = scheduled_job.schedule.get_next_run(
@@ -533,7 +533,7 @@ class JobScheduler:
         """Main scheduler loop."""
         while self._running:
             try:
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
 
                 with self._lock:
                     for job in self._jobs.values():

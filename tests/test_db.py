@@ -138,11 +138,14 @@ class TestDatabase:
         """Engine is created lazily."""
         db = Database()
         assert db._engine is None
-        # Access engine property
+        # Access engine property - patch event.listens_for to avoid SQLAlchemy event issues with mock
         with patch("redops.db.connection.create_engine") as mock_create:
-            mock_create.return_value = MagicMock()
-            _ = db.engine
-            mock_create.assert_called_once()
+            with patch("redops.db.connection.event") as mock_event:
+                mock_engine = MagicMock()
+                mock_create.return_value = mock_engine
+                mock_event.listens_for.return_value = lambda f: f
+                _ = db.engine
+                mock_create.assert_called_once()
         assert db._engine is not None
 
     def test_session_factory_creation(self):
@@ -150,12 +153,14 @@ class TestDatabase:
         db = Database()
         assert db._session_factory is None
         with patch("redops.db.connection.create_engine") as mock_create:
-            mock_engine = MagicMock()
-            mock_create.return_value = mock_engine
-            with patch("redops.db.connection.sessionmaker") as mock_sessionmaker:
-                mock_sessionmaker.return_value = MagicMock()
-                _ = db.session_factory
-                mock_sessionmaker.assert_called_once()
+            with patch("redops.db.connection.event") as mock_event:
+                mock_engine = MagicMock()
+                mock_create.return_value = mock_engine
+                mock_event.listens_for.return_value = lambda f: f
+                with patch("redops.db.connection.sessionmaker") as mock_sessionmaker:
+                    mock_sessionmaker.return_value = MagicMock()
+                    _ = db.session_factory
+                    mock_sessionmaker.assert_called_once()
 
     def test_dispose(self):
         """Dispose clears engine and session factory."""

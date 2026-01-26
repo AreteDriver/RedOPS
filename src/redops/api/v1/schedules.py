@@ -7,7 +7,7 @@ from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..deps import get_current_user, Pagination
 
@@ -24,15 +24,14 @@ class ScheduleCreate(BaseModel):
     cron_expression: Optional[str] = Field(None, description="Cron expression for custom schedules")
     enabled: bool = Field(default=True, description="Enable or disable schedule")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "Daily Production Scan",
-                "target": "https://example.com",
-                "pipeline": "web_security",
-                "recurrence": "daily",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "name": "Daily Production Scan",
+            "target": "https://example.com",
+            "pipeline": "web_security",
+            "recurrence": "daily",
         }
+    })
 
 
 class ScheduleUpdate(BaseModel):

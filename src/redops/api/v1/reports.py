@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..deps import get_current_user, Pagination
 
@@ -28,16 +28,15 @@ class ReportCreate(BaseModel):
     organization: Optional[str] = Field(None, description="Organization name")
     options: Optional[dict] = Field(default_factory=dict, description="Report options")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "scan_id": "123e4567-e89b-12d3-a456-426614174000",
-                "report_type": "executive",
-                "format": "pdf",
-                "title": "Q1 Security Assessment",
-                "organization": "ACME Corp",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "scan_id": "123e4567-e89b-12d3-a456-426614174000",
+            "report_type": "executive",
+            "format": "pdf",
+            "title": "Q1 Security Assessment",
+            "organization": "ACME Corp",
         }
+    })
 
 
 class ReportResponse(BaseModel):

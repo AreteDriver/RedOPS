@@ -49,12 +49,13 @@ class FindingData:
         """Generate a fingerprint for deduplication.
 
         The fingerprint is based on stable attributes that identify
-        the same vulnerability across scans.
+        the same vulnerability across scans. Note: severity is NOT
+        included because severity changes should be tracked as
+        modifications, not as new/resolved findings.
         """
         # Create fingerprint from stable attributes
         components = [
             self.title.lower().strip(),
-            self.severity.lower(),
             self.module.lower() if self.module else "",
             self.category.lower() if self.category else "",
         ]

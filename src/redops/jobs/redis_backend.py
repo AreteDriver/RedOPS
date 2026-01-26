@@ -7,7 +7,7 @@ Provides distributed job processing using Redis.
 import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
@@ -82,7 +82,7 @@ class RedisJobBackend(JobBackend):
         self._redis.zadd(queue_key, {job.id: score})
 
         # Handle scheduled jobs
-        if job.scheduled_at and job.scheduled_at > datetime.utcnow():
+        if job.scheduled_at and job.scheduled_at > datetime.now(timezone.utc):
             # Move to scheduled set
             self._redis.zrem(queue_key, job.id)
             scheduled_key = self._key("scheduled")
@@ -131,7 +131,7 @@ class RedisJobBackend(JobBackend):
 
             # Mark as running
             job.status = JobStatus.RUNNING
-            job.started_at = datetime.utcnow()
+            job.started_at = datetime.now(timezone.utc)
             self.update(job)
 
             # Add to processing set
@@ -161,7 +161,7 @@ class RedisJobBackend(JobBackend):
         self._redis.hset(job_key, mapping={
             "data": json.dumps(job.to_dict()),
             "status": job.status.value,
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         })
 
         # If completed/failed, remove from processing
@@ -317,7 +317,7 @@ class RedisJobBackend(JobBackend):
                     # Mark as failed
                     job.status = JobStatus.FAILED
                     job.error = "Processing timeout - max retries exceeded"
-                    job.completed_at = datetime.utcnow()
+                    job.completed_at = datetime.now(timezone.utc)
                     self.update(job)
 
                 self._redis.zrem(key, job_id)

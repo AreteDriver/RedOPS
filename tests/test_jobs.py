@@ -1,7 +1,7 @@
 """Tests for job queue system."""
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -66,7 +66,7 @@ class TestJob:
             "kwargs": {},
             "priority": 1,
             "queue": "default",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "pending",
             "attempts": 0,
         }
@@ -300,7 +300,7 @@ class TestIntervalSchedule:
     def test_next_run(self):
         """Calculate next run time."""
         schedule = IntervalSchedule(minutes=5)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         next_run = schedule.get_next_run(now)
 
         diff = (next_run - now).total_seconds()
