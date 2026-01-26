@@ -1,63 +1,60 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
-    branches: [main, develop, master]
+    branches: [main, develop]
   pull_request:
-    branches: [main, develop, master]
-  workflow_dispatch:
+    branches: [main, develop]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  security-events: write
+env:
+  PYTHON_VERSION: "3.12"
 
 jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
-    continue-on-error: true  # Report issues but don't fail CI
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install ruff
         run: pip install ruff
 
       - name: Run ruff linter
-        run: ruff check . --output-format=github
+        run: ruff check src/ tests/
 
-      - name: Check formatting
-        run: ruff format --check .
+      - name: Run ruff formatter check
+        run: ruff format --check src/ tests/
 
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          pip install mypy types-requests types-cachetools
+          pip install -e ".[dev]"
+          pip install mypy
 
       - name: Run mypy
-        run: mypy . --ignore-missing-imports --no-error-summary || true
+        run: mypy src/redops --ignore-missing-imports
+        continue-on-error: true
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -65,107 +62,148 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          pip install pytest pytest-cov pytest-asyncio
+          pip install -e ".[dev,test]"
 
-      - name: Run tests with coverage
+      - name: Run tests
         run: |
-          pytest --cov=. --cov-report=xml --cov-report=term-missing -v || \
-          python -m pytest --cov=. --cov-report=xml -v 2>/dev/null || \
-          echo "No tests found or test runner not configured"
+          python -m pytest tests/ \
+            --cov=redops \
+            --cov-report=xml \
+            --junitxml=junit.xml \
+            -v
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.12'
         with:
-          files: ./coverage.xml
+          file: ./coverage.xml
           fail_ci_if_error: false
-          verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-
-      - name: Install security tools
-        run: pip install bandit pip-audit safety
-
-      - name: Run bandit security scan
-        run: |
-          bandit -r . -x ./tests,./venv,./.venv,./node_modules -f sarif -o bandit-results.sarif || true
-
-      - name: Upload bandit results
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: bandit-results.sarif
-        continue-on-error: true
+          name: test-results-${{ matrix.python-version }}
+          path: |
+            junit.xml
 
-      - name: Audit dependencies
-        run: |
-          if [ -f requirements.txt ]; then
-            pip-audit -r requirements.txt --ignore-vuln PYSEC-2022-43012 || true
-          fi
-
-  build:
-    name: Build Check
+  integration-test:
+    name: Integration Tests
     runs-on: ubuntu-latest
     needs: [lint, test]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: redops
+          POSTGRES_PASSWORD: redops
+          POSTGRES_DB: redops_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://redops:redops@localhost:5432/redops_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        run: |
+          python -m pytest tests/integration/ -v --tb=short
+        continue-on-error: true
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install build tools
-        run: pip install build wheel
+        run: pip install build twine
 
       - name: Build package
-        run: |
-          if [ -f pyproject.toml ] || [ -f setup.py ]; then
-            python -m build --no-isolation 2>/dev/null || echo "Build skipped - no package config"
-          else
-            echo "No pyproject.toml or setup.py - skipping build"
-          fi
+        run: python -m build
 
-      - name: Verify imports
-        run: |
-          python -c "
-          import sys
-          import importlib.util
-          for f in __import__('glob').glob('**/*.py', recursive=True):
-              if 'venv' in f or 'test' in f or 'node_modules' in f: continue
-              try:
-                  spec = importlib.util.spec_from_file_location('mod', f)
-                  if spec and spec.loader:
-                      mod = importlib.util.module_from_spec(spec)
-                      print(f'✓ {f}')
-              except Exception as e:
-                  print(f'⚠ {f}: {e}')
-          " || true
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: deploy/docker/Dockerfile
+          push: false
+          tags: redops:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

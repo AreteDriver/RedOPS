@@ -1,0 +1,252 @@
+version: '3.8'
+
+services:
+  # =============================================================================
+  # Core Services
+  # =============================================================================
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: redops-api
+    command: python -m redops.web.app
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - REDOPS_ENV=${REDOPS_ENV:-development}
+      - DATABASE_URL=postgresql://redops:${POSTGRES_PASSWORD:-redops}@postgres:5432/redops
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_BACKEND=redis
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - METRICS_ENABLED=true
+      - TRACING_ENABLED=true
+      - OTEL_SERVICE_NAME=redops-api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    volumes:
+      - ../../src:/app/src:ro
+      - redops-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - redops-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: redops-worker
+    command: python -m redops.worker
+    environment:
+      - REDOPS_ENV=${REDOPS_ENV:-development}
+      - DATABASE_URL=postgresql://redops:${POSTGRES_PASSWORD:-redops}@postgres:5432/redops
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_BACKEND=redis
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-4}
+      - OTEL_SERVICE_NAME=redops-worker
+    volumes:
+      - ../../src:/app/src:ro
+      - redops-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - redops-network
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: redops-scheduler
+    command: python -m redops.scheduler.service
+    environment:
+      - REDOPS_ENV=${REDOPS_ENV:-development}
+      - DATABASE_URL=postgresql://redops:${POSTGRES_PASSWORD:-redops}@postgres:5432/redops
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SCHEDULER_CHECK_INTERVAL=${SCHEDULER_CHECK_INTERVAL:-60}
+      - SCHEDULER_MAX_CONCURRENT=${SCHEDULER_MAX_CONCURRENT:-5}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - OTEL_SERVICE_NAME=redops-scheduler
+    volumes:
+      - ../../src:/app/src:ro
+      - redops-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - redops-network
+    restart: unless-stopped
+
+  # =============================================================================
+  # Data Stores
+  # =============================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: redops-postgres
+    environment:
+      - POSTGRES_USER=redops
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-redops}
+      - POSTGRES_DB=redops
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - redops-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redops -d redops"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redops-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - redops-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # =============================================================================
+  # Observability Stack (Optional)
+  # =============================================================================
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: redops-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - redops-network
+    profiles:
+      - observability
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: redops-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    networks:
+      - redops-network
+    depends_on:
+      - prometheus
+    profiles:
+      - observability
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.50
+    container_name: redops-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    networks:
+      - redops-network
+    profiles:
+      - observability
+    restart: unless-stopped
+
+  # =============================================================================
+  # Development Tools (Optional)
+  # =============================================================================
+
+  adminer:
+    image: adminer:4
+    container_name: redops-adminer
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    networks:
+      - redops-network
+    depends_on:
+      - postgres
+    profiles:
+      - dev
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redops-redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    networks:
+      - redops-network
+    depends_on:
+      - redis
+    profiles:
+      - dev
+    restart: unless-stopped
+
+# =============================================================================
+# Networks & Volumes
+# =============================================================================
+
+networks:
+  redops-network:
+    driver: bridge
+    name: redops-network
+
+volumes:
+  postgres-data:
+    name: redops-postgres-data
+  redis-data:
+    name: redops-redis-data
+  redops-data:
+    name: redops-data
+  prometheus-data:
+    name: redops-prometheus-data
+  grafana-data:
+    name: redops-grafana-data
