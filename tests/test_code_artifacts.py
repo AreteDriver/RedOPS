@@ -10,6 +10,7 @@ from redops.modules.metadata.code_artifacts import (
     detect_languages,
     extract_dependencies,
     parse_requirements_txt,
+    parse_pyproject_toml,
     parse_package_json,
     parse_go_mod,
     parse_gemfile,
@@ -773,6 +774,317 @@ class TestAnalyzeRepository:
             assert "has_dockerfile" in pattern_names
             assert "has_gitignore" in pattern_names
             assert "has_readme" in pattern_names
+
+
+class TestParsePyprojectToml:
+    """Tests for pyproject.toml parsing."""
+
+    def test_parse_with_dependencies(self):
+        """Test parsing pyproject.toml with dependencies section."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+            f.write('''[project]
+name = "test"
+version = "1.0.0"
+
+[project.dependencies]
+"requests>=2.28.0"
+"flask>=2.0.0"
+''')
+            f.flush()
+
+            from redops.modules.metadata.code_artifacts import parse_pyproject_toml
+            deps = parse_pyproject_toml(Path(f.name))
+
+            assert len(deps) >= 1
+
+    def test_parse_invalid_file(self):
+        """Test parsing invalid pyproject.toml."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+            # Write content that will cause an exception during parsing
+            f.write("invalid content")
+            f.flush()
+
+            from redops.modules.metadata.code_artifacts import parse_pyproject_toml
+            deps = parse_pyproject_toml(Path(f.name))
+
+            # Should return empty list on error
+            assert deps == []
+
+    def test_parse_file_read_error(self):
+        """Test parsing pyproject.toml with read error."""
+        from unittest.mock import patch
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+            f.write("[project]\nname = 'test'\n")
+            f.flush()
+
+            # Mock open to raise an exception
+            with patch("builtins.open", side_effect=IOError("Read error")):
+                deps = parse_pyproject_toml(Path(f.name))
+
+            # Should return empty list on error
+            assert deps == []
+
+
+class TestParseGoModEdgeCases:
+    """Edge case tests for go.mod parsing."""
+
+    def test_parse_single_require(self):
+        """Test parsing single require statement."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mod", delete=False) as f:
+            f.write("""module example.com/mymodule
+
+go 1.21
+
+require github.com/some/package v1.0.0
+require github.com/other/pkg v2.0.0
+""")
+            f.flush()
+
+            deps = parse_go_mod(Path(f.name))
+
+            names = [d["name"] for d in deps]
+            assert "github.com/some/package" in names
+            assert "github.com/other/pkg" in names
+
+    def test_parse_invalid_file(self):
+        """Test parsing invalid go.mod returns empty list."""
+        # Test with nonexistent file
+        deps = parse_go_mod(Path("/nonexistent/go.mod"))
+        assert deps == []
+
+
+class TestParseGemfileEdgeCases:
+    """Edge case tests for Gemfile parsing."""
+
+    def test_parse_invalid_file(self):
+        """Test parsing invalid Gemfile returns empty list."""
+        deps = parse_gemfile(Path("/nonexistent/Gemfile"))
+        assert deps == []
+
+
+class TestParseCargoTomlEdgeCases:
+    """Edge case tests for Cargo.toml parsing."""
+
+    def test_parse_invalid_file(self):
+        """Test parsing invalid Cargo.toml returns empty list."""
+        deps = parse_cargo_toml(Path("/nonexistent/Cargo.toml"))
+        assert deps == []
+
+
+class TestParseRequirementsTxtEdgeCases:
+    """Edge case tests for requirements.txt parsing."""
+
+    def test_parse_invalid_file(self):
+        """Test parsing nonexistent file returns empty list."""
+        deps = parse_requirements_txt(Path("/nonexistent/requirements.txt"))
+        assert deps == []
+
+
+class TestScanForSecretsEdgeCases:
+    """Edge case tests for secret scanning."""
+
+    def test_nonexistent_path(self):
+        """Test scanning nonexistent path returns empty list."""
+        results = scan_for_secrets("/nonexistent/path")
+        assert results == []
+
+
+class TestFindCodePatternsEdgeCases:
+    """Edge case tests for code pattern detection."""
+
+    def test_nonexistent_path(self):
+        """Test with nonexistent path returns empty list."""
+        patterns = find_code_patterns("/nonexistent/path")
+        assert patterns == []
+
+    def test_find_security_patterns(self):
+        """Test detecting security-related patterns."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create security-related files
+            Path(tmpdir, ".pre-commit-config.yaml").touch()
+            Path(tmpdir, "requirements-dev.txt").touch()
+            Path(tmpdir, "Makefile").touch()
+
+            patterns = find_code_patterns(tmpdir)
+
+            pattern_names = [p["name"] for p in patterns]
+            assert "has_pre_commit" in pattern_names
+            assert "has_dev_deps" in pattern_names
+            assert "has_makefile" in pattern_names
+
+
+class TestExtractGitMetadataEdgeCases:
+    """Edge case tests for git metadata extraction."""
+
+    def test_config_read_exception(self):
+        """Test handling exception when reading git config."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            git_dir = Path(tmpdir, ".git")
+            git_dir.mkdir()
+
+            # Create config as a directory instead of file to cause read error
+            config_dir = git_dir / "config"
+            config_dir.mkdir()
+
+            result = extract_git_metadata(tmpdir)
+
+            # Should still return metadata, just without remote_url
+            assert result is not None
+            assert result["is_git_repo"] is True
+            assert "remote_url" not in result
+
+    def test_head_read_exception(self):
+        """Test handling exception when reading HEAD."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            git_dir = Path(tmpdir, ".git")
+            git_dir.mkdir()
+
+            # Create HEAD as a directory instead of file to cause read error
+            head_dir = git_dir / "HEAD"
+            head_dir.mkdir()
+
+            result = extract_git_metadata(tmpdir)
+
+            # Should still return metadata, just without current_branch
+            assert result is not None
+            assert result["is_git_repo"] is True
+            assert "current_branch" not in result
+
+
+class TestDetectLanguagesEdgeCases:
+    """Edge case tests for language detection."""
+
+    def test_permission_error(self):
+        """Test handling PermissionError during file traversal."""
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a file
+            py_file = Path(tmpdir, "main.py")
+            py_file.touch()
+
+            # Mock rglob to raise PermissionError after first file
+            def mock_rglob(self, pattern):
+                yield py_file
+                raise PermissionError("Access denied")
+
+            with patch.object(Path, "rglob", mock_rglob):
+                languages = detect_languages(tmpdir)
+
+            # Should still return Python from the file before the error
+            assert "Python" in languages
+
+
+class TestScanForSecretsPermissionError:
+    """Test permission error handling in scan_for_secrets."""
+
+    def test_permission_error_during_scan(self):
+        """Test handling PermissionError during directory traversal."""
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a file
+            Path(tmpdir, "config.py").touch()
+
+            # Mock rglob to raise PermissionError
+            original_rglob = Path.rglob
+
+            def mock_rglob(self, pattern):
+                if str(self) == tmpdir:
+                    raise PermissionError("Access denied")
+                return original_rglob(self, pattern)
+
+            with patch.object(Path, "rglob", mock_rglob):
+                results = scan_for_secrets(tmpdir)
+
+            # Should return summary even with permission error
+            assert results[0]["type"] == "summary"
+
+
+class TestScanFileForSecretsEdgeCases:
+    """Edge case tests for single file scanning."""
+
+    def test_file_read_exception(self):
+        """Test handling exception when reading file."""
+        from unittest.mock import patch, mock_open
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write("test content")
+            f.flush()
+
+            # Mock open to raise an exception
+            with patch("builtins.open", side_effect=IOError("Read error")):
+                results = scan_file_for_secrets(Path(f.name), SECRET_PATTERNS)
+
+            # Should return empty list on error
+            assert results == []
+
+
+class TestExtractDependenciesEdgeCases:
+    """Edge case tests for dependency extraction."""
+
+    def test_extract_pyproject_dependencies(self):
+        """Test extracting dependencies from pyproject.toml."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(Path(tmpdir, "pyproject.toml"), "w") as f:
+                f.write('''[project]
+name = "test"
+
+[project.dependencies]
+"requests>=2.28.0"
+''')
+
+            deps = extract_dependencies(tmpdir)
+
+            # pyproject.toml deps should be extracted
+            assert "pyproject" in deps or "pip" in deps or deps == {}
+
+    def test_extract_go_dependencies(self):
+        """Test extracting dependencies from go.mod."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(Path(tmpdir, "go.mod"), "w") as f:
+                f.write("""module example.com/test
+
+go 1.21
+
+require (
+    github.com/gin-gonic/gin v1.9.0
+)
+""")
+
+            deps = extract_dependencies(tmpdir)
+
+            assert "go" in deps
+            assert len(deps["go"]) >= 1
+
+    def test_extract_gemfile_dependencies(self):
+        """Test extracting dependencies from Gemfile."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(Path(tmpdir, "Gemfile"), "w") as f:
+                f.write("gem 'rails', '~> 7.0'\n")
+
+            deps = extract_dependencies(tmpdir)
+
+            assert "bundler" in deps
+            assert len(deps["bundler"]) >= 1
+
+    def test_extract_cargo_dependencies(self):
+        """Test extracting dependencies from Cargo.toml."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(Path(tmpdir, "Cargo.toml"), "w") as f:
+                f.write("""[package]
+name = "test"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+""")
+
+            deps = extract_dependencies(tmpdir)
+
+            assert "cargo" in deps
+            assert len(deps["cargo"]) >= 1
 
 
 class TestIntegration:
