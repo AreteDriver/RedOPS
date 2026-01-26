@@ -23,6 +23,16 @@ from redops.observability.logging import (
     get_logger,
     LogContext,
 )
+from redops.observability.grafana import (
+    GrafanaPanel,
+    GrafanaDashboard,
+    create_prometheus_target,
+    create_redops_overview_dashboard,
+    create_redops_alerts_dashboard,
+    get_dashboard,
+    get_all_dashboards,
+    export_dashboards,
+)
 
 __all__ = [
     # Metrics
@@ -41,4 +51,13 @@ __all__ = [
     "setup_structured_logging",
     "get_logger",
     "LogContext",
+    # Grafana
+    "GrafanaPanel",
+    "GrafanaDashboard",
+    "create_prometheus_target",
+    "create_redops_overview_dashboard",
+    "create_redops_alerts_dashboard",
+    "get_dashboard",
+    "get_all_dashboards",
+    "export_dashboards",
 ]
