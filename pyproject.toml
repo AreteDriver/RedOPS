@@ -75,6 +75,12 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0.0",
 ]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinx-autodoc-typehints>=2.0.0",
+    "myst-parser>=3.0.0",
+]
 
 [project.scripts]
 redops = "redops.main:main"

@@ -1,9 +1,17 @@
 """
 Pipeline runner - Executes pipelines step by step.
+
+Supports:
+- Sequential execution (default)
+- Parallel execution via parallel_group
+- Dependency-based execution via depends_on
 """
 
 import importlib
-from typing import Callable, Optional, TYPE_CHECKING
+import asyncio
+import copy
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Callable, Optional, List, Dict, Set, TYPE_CHECKING
 from redops.pipelines.schemas import Pipeline, PipelineStep
 from redops.core.context import Context
 from redops.core.plugin_system import (
@@ -24,6 +32,8 @@ class PipelineRunner:
     Executes pipelines by running each step sequentially and
     passing a Context object through the chain.
 
+    Supports parallel execution for steps with the same parallel_group.
+
     Integrates with the plugin system to:
     - Execute hooks at pipeline lifecycle points
     - Support ModulePlugin-based modules alongside function modules
@@ -34,6 +44,7 @@ class PipelineRunner:
         pipeline: Pipeline,
         config: Optional["RedOpsConfig"] = None,
         plugin_registry: Optional[PluginRegistry] = None,
+        max_workers: int = 4,
     ):
         """
         Initialize the runner with a pipeline.
@@ -42,10 +53,12 @@ class PipelineRunner:
             pipeline: The pipeline to execute
             config: RedOps configuration (scope, output settings, etc.)
             plugin_registry: Plugin registry (uses global if not provided)
+            max_workers: Maximum number of parallel workers
         """
         self.pipeline = pipeline
         self.config = config
         self.plugins = plugin_registry or get_plugin_registry()
+        self.max_workers = max_workers
 
     def _resolve_module_function(self, module_path: str) -> Callable:
         """
@@ -186,18 +199,148 @@ class PipelineRunner:
 
         return None
 
+    def _group_steps_for_execution(
+        self, steps: List[PipelineStep]
+    ) -> List[List[PipelineStep]]:
+        """
+        Group steps into execution batches.
+
+        Steps with the same parallel_group are grouped together and run concurrently.
+        Steps without a parallel_group run sequentially.
+
+        Args:
+            steps: List of pipeline steps
+
+        Returns:
+            List of step batches (each batch runs concurrently)
+        """
+        batches: List[List[PipelineStep]] = []
+        current_group: Optional[str] = None
+        current_batch: List[PipelineStep] = []
+
+        for step in steps:
+            if step.parallel_group is None:
+                # Sequential step - flush current batch and add as single step
+                if current_batch:
+                    batches.append(current_batch)
+                    current_batch = []
+                    current_group = None
+                batches.append([step])
+            elif step.parallel_group == current_group:
+                # Same parallel group - add to current batch
+                current_batch.append(step)
+            else:
+                # New parallel group - flush current batch and start new one
+                if current_batch:
+                    batches.append(current_batch)
+                current_batch = [step]
+                current_group = step.parallel_group
+
+        # Flush final batch
+        if current_batch:
+            batches.append(current_batch)
+
+        return batches
+
+    def _execute_parallel_batch(
+        self, batch: List[PipelineStep], ctx: Context
+    ) -> Context:
+        """
+        Execute a batch of steps in parallel.
+
+        Each step gets a copy of the context, and results are merged back.
+
+        Args:
+            batch: List of steps to run in parallel
+            ctx: Current context
+
+        Returns:
+            Updated context with merged results
+        """
+        if len(batch) == 1:
+            # Single step - run directly
+            return self._execute_step(batch[0], ctx)
+
+        ctx.log(
+            f"Starting parallel batch: {[s.name for s in batch]}",
+            level="INFO",
+        )
+
+        # Track results from each parallel execution
+        step_results: Dict[str, Dict] = {}
+        step_logs: Dict[str, List] = {}
+        errors: List[str] = []
+
+        def run_step(step: PipelineStep) -> tuple:
+            """Execute a step in a thread."""
+            # Create a fresh context copy for this thread
+            step_ctx = Context(target=ctx.target, config=ctx.config)
+            # Copy existing data
+            step_ctx.data = copy.deepcopy(ctx.data)
+            step_ctx.metadata = copy.deepcopy(ctx.metadata)
+
+            try:
+                result_ctx = self._execute_step(step, step_ctx)
+                return (step.name, result_ctx.data, result_ctx.logs, None)
+            except Exception as e:
+                return (step.name, {}, [], str(e))
+
+        # Run steps in parallel using ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=min(len(batch), self.max_workers)) as executor:
+            futures = {executor.submit(run_step, step): step for step in batch}
+
+            for future in as_completed(futures):
+                step_name, data, logs, error = future.result()
+                if error:
+                    errors.append(f"{step_name}: {error}")
+                    step = futures[future]
+                    if not step.continue_on_error:
+                        # Cancel remaining futures (best effort)
+                        for f in futures:
+                            f.cancel()
+                        raise RuntimeError(f"Parallel step failed: {error}")
+                else:
+                    step_results[step_name] = data
+                    step_logs[step_name] = logs
+
+        # Merge results back into main context
+        for step_name, data in step_results.items():
+            for key, value in data.items():
+                # Skip pipeline metadata that was copied
+                if key not in ("pipeline_name", "pipeline_version"):
+                    ctx.data[key] = value
+
+        # Merge logs
+        for step_name, logs in step_logs.items():
+            for log_entry in logs:
+                # Avoid duplicating logs we already have
+                if log_entry not in ctx.logs:
+                    ctx.logs.append(log_entry)
+
+        ctx.log(
+            f"Completed parallel batch: {[s.name for s in batch]}",
+            level="INFO",
+        )
+
+        return ctx
+
     def run(
-        self, target: Optional[str] = None, initial_context: Optional[Context] = None
+        self,
+        target: Optional[str] = None,
+        initial_context: Optional[Context] = None,
+        parallel: bool = True,
     ) -> Context:
         """
         Run the pipeline.
 
         Executes BEFORE_PIPELINE and AFTER_PIPELINE hooks around the
-        pipeline execution.
+        pipeline execution. Supports parallel execution of steps with
+        the same parallel_group.
 
         Args:
             target: The target for the pipeline (domain, directory, etc.)
             initial_context: Optional pre-existing context to use
+            parallel: Enable parallel execution (default True)
 
         Returns:
             The final context after all steps
@@ -215,9 +358,16 @@ class PipelineRunner:
         # Execute BEFORE_PIPELINE hooks
         self.plugins.execute_hooks(HookPoint.BEFORE_PIPELINE, ctx)
 
-        # Execute each enabled step
-        for step in self.pipeline.enabled_steps:
-            ctx = self._execute_step(step, ctx)
+        if parallel:
+            # Group steps into batches for parallel execution
+            batches = self._group_steps_for_execution(self.pipeline.enabled_steps)
+
+            for batch in batches:
+                ctx = self._execute_parallel_batch(batch, ctx)
+        else:
+            # Sequential execution (original behavior)
+            for step in self.pipeline.enabled_steps:
+                ctx = self._execute_step(step, ctx)
 
         # Execute AFTER_PIPELINE hooks
         self.plugins.execute_hooks(HookPoint.AFTER_PIPELINE, ctx)

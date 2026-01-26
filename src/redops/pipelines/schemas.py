@@ -27,6 +27,14 @@ class PipelineStep(BaseModel):
     continue_on_error: bool = Field(
         default=False, description="Continue pipeline execution if this step fails"
     )
+    parallel_group: Optional[str] = Field(
+        default=None,
+        description="Group name for parallel execution. Steps with the same group run concurrently."
+    )
+    depends_on: List[str] = Field(
+        default_factory=list,
+        description="Step names that must complete before this step runs"
+    )
 
     @field_validator("module")
     @classmethod

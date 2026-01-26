@@ -8,9 +8,9 @@ import os
 from datetime import datetime, UTC
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, WebSocket, WebSocketDisconnect, Depends, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from redops.web.websocket import (
@@ -21,6 +21,16 @@ from redops.web.websocket import (
     emit_module_end,
     emit_scan_completed,
     emit_scan_failed,
+)
+from redops.web.auth import (
+    AuthConfig,
+    AuthManager,
+    AuthenticatedUser,
+    require_auth,
+    optional_auth,
+    get_auth_manager,
+    set_auth_manager,
+    generate_api_key,
 )
 
 from redops.main import __version__
@@ -86,6 +96,31 @@ class HealthResponse(BaseModel):
     status: str
     version: str
     timestamp: str
+    auth_enabled: bool = False
+
+
+class LoginRequest(BaseModel):
+    """Request model for login."""
+
+    username: str = Field(..., description="Username")
+    password: str = Field(..., description="Password")
+
+
+class LoginResponse(BaseModel):
+    """Response model for login."""
+
+    success: bool
+    message: str
+    username: Optional[str] = None
+
+
+class AuthStatusResponse(BaseModel):
+    """Response model for auth status check."""
+
+    authenticated: bool
+    username: Optional[str] = None
+    auth_method: Optional[str] = None
+    auth_enabled: bool
 
 
 # In-memory scan storage (for demo; use database in production)
@@ -93,7 +128,7 @@ _scans: dict[str, ScanStatus] = {}
 _scan_results: dict[str, dict] = {}
 
 
-def create_app() -> FastAPI:
+def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
         title="RedOPS API",
@@ -102,6 +137,10 @@ def create_app() -> FastAPI:
         docs_url="/api/docs",
         redoc_url="/api/redoc",
     )
+
+    # Initialize auth manager
+    if auth_config:
+        set_auth_manager(AuthManager(auth_config))
 
     # CORS middleware
     app.add_middleware(
@@ -112,19 +151,98 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Health check
+    # Health check (public)
     @app.get("/api/health", response_model=HealthResponse, tags=["System"])
     async def health_check():
         """Check API health status."""
+        auth_manager = get_auth_manager()
         return HealthResponse(
             status="healthy",
             version=__version__,
             timestamp=datetime.now(UTC).isoformat() + "Z",
+            auth_enabled=auth_manager.config.enabled,
         )
 
-    # Scan endpoints
+    # Authentication endpoints
+    @app.get("/api/auth/status", response_model=AuthStatusResponse, tags=["Auth"])
+    async def auth_status(user: Optional[AuthenticatedUser] = Depends(optional_auth)):
+        """Check current authentication status."""
+        auth_manager = get_auth_manager()
+        if user and user.auth_method != "none":
+            return AuthStatusResponse(
+                authenticated=True,
+                username=user.username,
+                auth_method=user.auth_method,
+                auth_enabled=auth_manager.config.enabled,
+            )
+        return AuthStatusResponse(
+            authenticated=False,
+            auth_enabled=auth_manager.config.enabled,
+        )
+
+    @app.post("/api/auth/login", response_model=LoginResponse, tags=["Auth"])
+    async def login(request: LoginRequest, response: Response):
+        """Login with username and password."""
+        auth_manager = get_auth_manager()
+
+        if not auth_manager.config.enabled:
+            return LoginResponse(
+                success=True,
+                message="Authentication not enabled",
+                username="anonymous",
+            )
+
+        if auth_manager.verify_basic_auth(request.username, request.password):
+            # Create session and set cookie
+            token = auth_manager.create_session(request.username)
+            response.set_cookie(
+                key="redops_session",
+                value=token,
+                httponly=True,
+                samesite="lax",
+                max_age=auth_manager.config.session_expiry_hours * 3600,
+            )
+            return LoginResponse(
+                success=True,
+                message="Login successful",
+                username=request.username,
+            )
+
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    @app.post("/api/auth/logout", response_model=LoginResponse, tags=["Auth"])
+    async def logout(request: Request, response: Response):
+        """Logout and invalidate session."""
+        auth_manager = get_auth_manager()
+
+        token = request.cookies.get("redops_session")
+        if token:
+            auth_manager.logout(token)
+
+        response.delete_cookie(key="redops_session")
+
+        return LoginResponse(
+            success=True,
+            message="Logged out successfully",
+        )
+
+    @app.post("/api/auth/generate-api-key", tags=["Auth"])
+    async def generate_new_api_key(user: AuthenticatedUser = Depends(require_auth)):
+        """Generate a new API key (requires admin auth)."""
+        if user.auth_method == "none":
+            raise HTTPException(
+                status_code=403,
+                detail="Authentication must be enabled to generate API keys",
+            )
+        return {"api_key": generate_api_key()}
+
+    # Scan endpoints (protected)
     @app.post("/api/scans", response_model=ScanResponse, tags=["Scans"])
-    async def start_scan(request: ScanRequest, background_tasks: BackgroundTasks):
+    async def start_scan(
+        request: ScanRequest,
+        background_tasks: BackgroundTasks,
+        user: AuthenticatedUser = Depends(require_auth),
+    ):
         """Start a new security scan."""
         import uuid
 
@@ -158,6 +276,7 @@ def create_app() -> FastAPI:
     async def list_scans(
         status: Optional[str] = Query(None, description="Filter by status"),
         limit: int = Query(20, ge=1, le=100, description="Max results"),
+        user: AuthenticatedUser = Depends(require_auth),
     ):
         """List all scans."""
         scans = list(_scans.values())
@@ -166,14 +285,14 @@ def create_app() -> FastAPI:
         return sorted(scans, key=lambda s: s.started_at, reverse=True)[:limit]
 
     @app.get("/api/scans/{scan_id}", response_model=ScanStatus, tags=["Scans"])
-    async def get_scan(scan_id: str):
+    async def get_scan(scan_id: str, user: AuthenticatedUser = Depends(require_auth)):
         """Get scan status by ID."""
         if scan_id not in _scans:
             raise HTTPException(status_code=404, detail="Scan not found")
         return _scans[scan_id]
 
     @app.get("/api/scans/{scan_id}/results", tags=["Scans"])
-    async def get_scan_results(scan_id: str):
+    async def get_scan_results(scan_id: str, user: AuthenticatedUser = Depends(require_auth)):
         """Get scan results."""
         if scan_id not in _scans:
             raise HTTPException(status_code=404, detail="Scan not found")
@@ -183,9 +302,9 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="Results not available")
         return _scan_results[scan_id]
 
-    # AI endpoints
+    # AI endpoints (protected)
     @app.post("/api/ai", response_model=AIResponse, tags=["AI"])
-    async def ai_action(request: AIRequest):
+    async def ai_action(request: AIRequest, user: AuthenticatedUser = Depends(require_auth)):
         """Perform AI-assisted analysis."""
         try:
             from redops.modules.ai_assistant import AIAssistant
@@ -413,9 +532,43 @@ def get_dashboard_html() -> str:
                 <div class="flex items-center space-x-4">
                     <span class="text-sm" :class="wsStatus === 'Connected' ? 'text-green-400' : 'text-yellow-400'" x-text="'WS: ' + wsStatus"></span>
                     <span class="text-sm text-gray-400" x-text="health"></span>
+                    <!-- Auth status -->
+                    <template x-if="authEnabled && authenticated">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-green-400" x-text="'User: ' + username"></span>
+                            <button @click="logout()" class="text-xs text-gray-400 hover:text-gray-200 px-2 py-1 border border-gray-600 rounded">Logout</button>
+                        </div>
+                    </template>
                 </div>
             </div>
         </header>
+
+        <!-- Login Modal -->
+        <template x-if="authEnabled && !authenticated && showLogin">
+            <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div class="bg-gray-800 rounded-lg p-8 w-96 shadow-xl">
+                    <h2 class="text-xl font-bold mb-6 text-center">Login to RedOPS</h2>
+                    <form @submit.prevent="login()">
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Username</label>
+                            <input type="text" x-model="loginForm.username" required
+                                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm text-gray-400 mb-2">Password</label>
+                            <input type="password" x-model="loginForm.password" required
+                                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500">
+                        </div>
+                        <p x-show="loginError" class="text-red-400 text-sm mb-4" x-text="loginError"></p>
+                        <button type="submit" :disabled="loggingIn"
+                            class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 py-2 rounded font-medium transition">
+                            <span x-show="!loggingIn">Login</span>
+                            <span x-show="loggingIn">Logging in...</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </template>
 
         <div class="container mx-auto px-6 py-8">
             <!-- New Scan Form -->
@@ -510,12 +663,81 @@ def get_dashboard_html() -> str:
                 selectedScan: null,
                 results: null,
                 ws: null,
+                // Auth state
+                authEnabled: false,
+                authenticated: false,
+                username: '',
+                showLogin: true,
+                loginForm: { username: '', password: '' },
+                loginError: '',
+                loggingIn: false,
 
                 async init() {
                     await this.checkHealth();
-                    await this.loadPresets();
-                    await this.loadScans();
-                    this.connectWebSocket();
+                    await this.checkAuth();
+                    if (!this.authEnabled || this.authenticated) {
+                        await this.loadPresets();
+                        await this.loadScans();
+                        this.connectWebSocket();
+                    }
+                },
+
+                async checkAuth() {
+                    try {
+                        const res = await fetch('/api/auth/status');
+                        const data = await res.json();
+                        this.authEnabled = data.auth_enabled;
+                        this.authenticated = data.authenticated;
+                        this.username = data.username || '';
+                        if (this.authenticated) {
+                            this.showLogin = false;
+                        }
+                    } catch (e) {
+                        console.error('Failed to check auth:', e);
+                    }
+                },
+
+                async login() {
+                    this.loggingIn = true;
+                    this.loginError = '';
+                    try {
+                        const res = await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.loginForm)
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.authenticated = true;
+                            this.username = data.username;
+                            this.showLogin = false;
+                            this.loginForm = { username: '', password: '' };
+                            await this.loadPresets();
+                            await this.loadScans();
+                            this.connectWebSocket();
+                        } else {
+                            this.loginError = data.detail || 'Login failed';
+                        }
+                    } catch (e) {
+                        this.loginError = 'Connection failed';
+                    }
+                    this.loggingIn = false;
+                },
+
+                async logout() {
+                    try {
+                        await fetch('/api/auth/logout', { method: 'POST' });
+                    } catch (e) {
+                        console.error('Logout error:', e);
+                    }
+                    this.authenticated = false;
+                    this.username = '';
+                    this.showLogin = true;
+                    this.scans = [];
+                    if (this.ws) {
+                        this.ws.close();
+                        this.ws = null;
+                    }
                 },
 
                 connectWebSocket() {
@@ -612,6 +834,11 @@ def get_dashboard_html() -> str:
                 async loadScans() {
                     try {
                         const res = await fetch('/api/scans?limit=10');
+                        if (res.status === 401) {
+                            this.authenticated = false;
+                            this.showLogin = true;
+                            return;
+                        }
                         this.scans = await res.json();
                     } catch (e) {
                         console.error('Failed to load scans:', e);

@@ -1,0 +1,68 @@
+/* Custom styles for RedOPS documentation */
+
+/* Theme customization */
+.wy-side-nav-search {
+    background-color: #2b3e50;
+}
+
+.wy-side-nav-search input[type="text"] {
+    border-color: #1a252f;
+}
+
+.wy-menu-vertical a.current {
+    background-color: #1a252f;
+}
+
+/* Code blocks */
+.highlight {
+    background-color: #1a1a1a !important;
+}
+
+pre {
+    border-radius: 4px;
+}
+
+/* Inline code */
+code.literal {
+    background-color: #f0f0f0;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+/* Tables */
+table.docutils {
+    border-collapse: collapse;
+}
+
+table.docutils td,
+table.docutils th {
+    padding: 8px 12px;
+}
+
+/* API reference improvements */
+dl.py.class > dt,
+dl.py.function > dt,
+dl.py.method > dt {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-left: 3px solid #2b3e50;
+    margin-bottom: 10px;
+}
+
+/* Notes and warnings */
+.admonition.note {
+    background-color: #e7f2fa;
+    border-left-color: #6ab0de;
+}
+
+.admonition.warning {
+    background-color: #ffedcc;
+    border-left-color: #f0b37e;
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 768px) {
+    .wy-nav-content {
+        padding: 1em;
+    }
+}
