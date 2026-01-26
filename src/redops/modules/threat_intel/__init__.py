@@ -22,6 +22,28 @@ from redops.modules.threat_intel.urlhaus import (
     analyze_urlhaus_results,
     get_urlhaus_summary,
 )
+from redops.modules.threat_intel.urlscan import (
+    scan_url,
+    search_urlscan,
+    get_scan_result,
+    analyze_urlscan_results,
+    get_urlscan_summary,
+)
+from redops.modules.threat_intel.passivedns import (
+    query_passivedns,
+    get_domain_history,
+    get_ip_history,
+    analyze_passivedns_results,
+    get_passivedns_summary,
+)
+from redops.modules.threat_intel.alienvault import (
+    get_indicator,
+    get_pulses,
+    search_pulses,
+    get_pulse_details,
+    analyze_otx_indicator,
+    get_otx_summary,
+)
 
 __all__ = [
     # greynoise
@@ -43,4 +65,23 @@ __all__ = [
     "get_recent_urls",
     "analyze_urlhaus_results",
     "get_urlhaus_summary",
+    # urlscan
+    "scan_url",
+    "search_urlscan",
+    "get_scan_result",
+    "analyze_urlscan_results",
+    "get_urlscan_summary",
+    # passivedns
+    "query_passivedns",
+    "get_domain_history",
+    "get_ip_history",
+    "analyze_passivedns_results",
+    "get_passivedns_summary",
+    # alienvault
+    "get_indicator",
+    "get_pulses",
+    "search_pulses",
+    "get_pulse_details",
+    "analyze_otx_indicator",
+    "get_otx_summary",
 ]
