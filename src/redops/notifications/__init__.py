@@ -1,7 +1,7 @@
 """
-Webhook notifications for RedOPS.
+Notifications module for RedOPS.
 
-Supports Slack, Teams, Discord, PagerDuty, and custom webhooks.
+Supports Email, Slack, Teams, Discord, PagerDuty, and custom webhooks.
 """
 
 from .webhooks import (
@@ -20,18 +20,31 @@ from .manager import (
     get_notification_manager,
     notify,
 )
+from .email import (
+    EmailConfig,
+    EmailBackend,
+    EmailTemplate,
+    render_email_template,
+    TEMPLATES as EMAIL_TEMPLATES,
+)
 
 __all__ = [
     # Message types
     "NotificationMessage",
     "NotificationLevel",
-    # Providers
+    # Webhook Providers
     "WebhookProvider",
     "SlackWebhook",
     "TeamsWebhook",
     "DiscordWebhook",
     "GenericWebhook",
     "PagerDutyWebhook",
+    # Email
+    "EmailConfig",
+    "EmailBackend",
+    "EmailTemplate",
+    "render_email_template",
+    "EMAIL_TEMPLATES",
     # Manager
     "NotificationConfig",
     "NotificationManager",
