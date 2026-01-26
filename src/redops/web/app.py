@@ -5,7 +5,7 @@ Provides a REST API and web dashboard for RedOPS functionality.
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, WebSocket, WebSocketDisconnect
@@ -119,7 +119,7 @@ def create_app() -> FastAPI:
         return HealthResponse(
             status="healthy",
             version=__version__,
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
         )
 
     # Scan endpoints
@@ -129,7 +129,7 @@ def create_app() -> FastAPI:
         import uuid
 
         scan_id = str(uuid.uuid4())[:8]
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now(UTC).isoformat() + "Z"
 
         # Create scan status
         status = ScanStatus(
@@ -377,7 +377,7 @@ async def run_scan_task(scan_id: str, request: ScanRequest):
         _scan_results[scan_id] = ctx.data
         _scans[scan_id].status = "completed"
         _scans[scan_id].progress = 100
-        _scans[scan_id].completed_at = datetime.utcnow().isoformat() + "Z"
+        _scans[scan_id].completed_at = datetime.now(UTC).isoformat() + "Z"
         _scans[scan_id].current_module = None
 
         # Emit completion

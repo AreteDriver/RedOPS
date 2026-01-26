@@ -535,15 +535,22 @@ class TestMain:
         """Test main handles keyboard interrupt gracefully."""
         from redops.mcp.server import main
 
-        with patch("redops.mcp.server.asyncio.run", side_effect=KeyboardInterrupt):
+        def mock_asyncio_run_interrupt(coro):
+            coro.close()
+            raise KeyboardInterrupt
+
+        with patch("redops.mcp.server.asyncio.run", side_effect=mock_asyncio_run_interrupt):
             # Should not raise
             main()
 
     def test_main_calls_run_server(self):
         """Test main calls run_server."""
-        from redops.mcp.server import main
+        # Mock asyncio.run to actually close the coroutine to avoid warnings
+        def mock_asyncio_run(coro):
+            coro.close()
 
-        with patch("redops.mcp.server.asyncio.run") as mock_run:
+        with patch("redops.mcp.server.asyncio.run", side_effect=mock_asyncio_run) as mock_run:
+            from redops.mcp.server import main
             main()
 
         mock_run.assert_called_once()
