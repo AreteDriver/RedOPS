@@ -1,0 +1,225 @@
+"""
+Schedules API routes.
+"""
+
+from datetime import datetime, timezone
+from typing import List, Optional
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+
+from ..deps import get_current_user, Pagination
+
+router = APIRouter()
+
+
+class ScheduleCreate(BaseModel):
+    """Create schedule request."""
+
+    name: str = Field(..., description="Schedule name")
+    target: str = Field(..., description="Target to scan")
+    pipeline: str = Field(default="default", description="Scan pipeline")
+    recurrence: str = Field(default="daily", description="Recurrence: daily, weekly, monthly, custom")
+    cron_expression: Optional[str] = Field(None, description="Cron expression for custom schedules")
+    enabled: bool = Field(default=True, description="Enable or disable schedule")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Daily Production Scan",
+                "target": "https://example.com",
+                "pipeline": "web_security",
+                "recurrence": "daily",
+            }
+        }
+
+
+class ScheduleUpdate(BaseModel):
+    """Update schedule request."""
+
+    name: Optional[str] = None
+    pipeline: Optional[str] = None
+    recurrence: Optional[str] = None
+    cron_expression: Optional[str] = None
+    status: Optional[str] = Field(None, description="Status: active, paused, disabled")
+
+
+class ScheduleResponse(BaseModel):
+    """Schedule response model."""
+
+    id: str
+    name: str
+    target: str
+    pipeline: str
+    recurrence: str
+    cron_expression: Optional[str] = None
+    status: str
+    next_run: Optional[datetime] = None
+    last_run: Optional[datetime] = None
+    run_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[str] = None
+
+
+class ScheduleList(BaseModel):
+    """Paginated schedule list response."""
+
+    schedules: List[ScheduleResponse]
+    total: int
+    skip: int
+    limit: int
+
+
+# In-memory storage
+_schedules: dict[str, dict] = {}
+
+
+@router.get("", response_model=ScheduleList)
+async def list_schedules(
+    pagination: Pagination = Depends(),
+    status: Optional[str] = None,
+    target: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+):
+    """List all schedules."""
+    schedules = list(_schedules.values())
+
+    if status:
+        schedules = [s for s in schedules if s.get("status") == status]
+    if target:
+        schedules = [s for s in schedules if target.lower() in s.get("target", "").lower()]
+
+    total = len(schedules)
+    schedules = schedules[pagination.skip : pagination.skip + pagination.limit]
+
+    return ScheduleList(
+        schedules=[ScheduleResponse(**s) for s in schedules],
+        total=total,
+        skip=pagination.skip,
+        limit=pagination.limit,
+    )
+
+
+@router.post("", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
+async def create_schedule(
+    schedule: ScheduleCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Create a new scan schedule."""
+    schedule_id = str(uuid4())
+    now = datetime.now(timezone.utc)
+
+    schedule_data = {
+        "id": schedule_id,
+        "name": schedule.name,
+        "target": schedule.target,
+        "pipeline": schedule.pipeline,
+        "recurrence": schedule.recurrence,
+        "cron_expression": schedule.cron_expression,
+        "status": "active" if schedule.enabled else "paused",
+        "next_run": now,  # Would be calculated based on recurrence
+        "last_run": None,
+        "run_count": 0,
+        "created_at": now,
+        "updated_at": now,
+        "created_by": current_user.get("username"),
+    }
+
+    _schedules[schedule_id] = schedule_data
+
+    return ScheduleResponse(**schedule_data)
+
+
+@router.get("/{schedule_id}", response_model=ScheduleResponse)
+async def get_schedule(
+    schedule_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Get schedule details."""
+    schedule = _schedules.get(schedule_id)
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Schedule {schedule_id} not found",
+        )
+
+    return ScheduleResponse(**schedule)
+
+
+@router.patch("/{schedule_id}", response_model=ScheduleResponse)
+async def update_schedule(
+    schedule_id: str,
+    update: ScheduleUpdate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update a schedule."""
+    schedule = _schedules.get(schedule_id)
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Schedule {schedule_id} not found",
+        )
+
+    if update.name is not None:
+        schedule["name"] = update.name
+    if update.pipeline is not None:
+        schedule["pipeline"] = update.pipeline
+    if update.recurrence is not None:
+        schedule["recurrence"] = update.recurrence
+    if update.cron_expression is not None:
+        schedule["cron_expression"] = update.cron_expression
+    if update.status is not None:
+        valid_statuses = ["active", "paused", "disabled"]
+        if update.status not in valid_statuses:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status. Must be one of: {valid_statuses}",
+            )
+        schedule["status"] = update.status
+
+    schedule["updated_at"] = datetime.now(timezone.utc)
+
+    return ScheduleResponse(**schedule)
+
+
+@router.delete("/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_schedule(
+    schedule_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Delete a schedule."""
+    if schedule_id not in _schedules:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Schedule {schedule_id} not found",
+        )
+
+    del _schedules[schedule_id]
+
+
+@router.post("/{schedule_id}/run")
+async def trigger_schedule(
+    schedule_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Trigger a scheduled scan immediately."""
+    schedule = _schedules.get(schedule_id)
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Schedule {schedule_id} not found",
+        )
+
+    # In production, would create a scan from the schedule
+    scan_id = str(uuid4())
+
+    schedule["last_run"] = datetime.now(timezone.utc)
+    schedule["run_count"] += 1
+
+    return {
+        "schedule_id": schedule_id,
+        "scan_id": scan_id,
+        "message": "Scan triggered successfully",
+    }
