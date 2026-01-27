@@ -495,7 +495,7 @@ def strip_exif(file_path: str, output_path: Optional[str] = None) -> bool:
 
         with Image.open(file_path) as img:
             # Get image data without EXIF
-            data = list(img.getdata())
+            data = list(img.get_flattened_data() if hasattr(img, 'get_flattened_data') else img.getdata())
 
             # Create new image without EXIF
             img_no_exif = Image.new(img.mode, img.size)

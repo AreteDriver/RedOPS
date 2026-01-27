@@ -57,6 +57,7 @@ full = [
     "rich>=13.0.0",
     "httpx>=0.25.0",
     "PyYAML>=6.0.0",
+    "cryptography>=41.0.0",
 ]
 ai = [
     "anthropic>=0.40.0",
