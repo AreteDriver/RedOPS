@@ -8,8 +8,8 @@ and cache invalidation strategies.
 import hashlib
 import json
 import os
-import pickle
 import shutil
+import sys
 import threading
 import time
 from abc import ABC, abstractmethod
@@ -227,8 +227,18 @@ class FileCacheBackend(BaseCacheBackend):
             if not path.exists():
                 return None
             try:
-                with open(path, "rb") as f:
-                    return pickle.load(f)
+                with open(path, "r") as f:
+                    data = json.load(f)
+                return CacheEntry(
+                    key=data["key"],
+                    value=data["value"],
+                    created_at=data["created_at"],
+                    expires_at=data.get("expires_at"),
+                    access_count=data.get("access_count", 0),
+                    last_accessed=data.get("last_accessed", 0),
+                    size_bytes=data.get("size_bytes", 0),
+                    tags=data.get("tags", []),
+                )
             except Exception:
                 return None
 
@@ -236,8 +246,18 @@ class FileCacheBackend(BaseCacheBackend):
         path = self._key_to_path(entry.key)
         with self._lock:
             try:
-                with open(path, "wb") as f:
-                    pickle.dump(entry, f)
+                data = {
+                    "key": entry.key,
+                    "value": entry.value,
+                    "created_at": entry.created_at,
+                    "expires_at": entry.expires_at,
+                    "access_count": entry.access_count,
+                    "last_accessed": entry.last_accessed,
+                    "size_bytes": entry.size_bytes,
+                    "tags": entry.tags,
+                }
+                with open(path, "w") as f:
+                    json.dump(data, f)
             except Exception as e:
                 raise CacheStorageError(f"Failed to write cache: {e}")
 
@@ -382,7 +402,7 @@ class Cache:
     def _estimate_size(self, value: Any) -> int:
         """Estimate size of a value in bytes."""
         try:
-            return len(pickle.dumps(value))
+            return sys.getsizeof(value)
         except Exception:
             return 0
 

@@ -41,10 +41,12 @@ class DatabaseConfig:
             pool_recycle: Recycle connections after seconds
             echo: Echo SQL statements
         """
-        self.url = url or os.environ.get(
-            "DATABASE_URL",
-            "postgresql://redops:redops@localhost:5432/redops"
-        )
+        self.url = url or os.environ.get("DATABASE_URL")
+        if not self.url:
+            raise RuntimeError(
+                "DATABASE_URL environment variable is required. "
+                "Example: postgresql://user:pass@localhost:5432/redops"
+            )
         self.pool_size = pool_size
         self.max_overflow = max_overflow
         self.pool_timeout = pool_timeout

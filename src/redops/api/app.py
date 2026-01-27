@@ -4,6 +4,7 @@ FastAPI application for RedOPS.
 Production-grade REST API for security scanning operations.
 """
 
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -51,9 +52,10 @@ def create_app(
     )
 
     # Configure CORS
+    cors_origins = os.environ.get("REDOPS_CORS_ORIGINS", "http://localhost:8000").split(",")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Configure for production
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

@@ -143,9 +143,10 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
         set_auth_manager(AuthManager(auth_config))
 
     # CORS middleware
+    cors_origins = os.environ.get("REDOPS_CORS_ORIGINS", "http://localhost:8000").split(",")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Configure for production
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -420,6 +421,13 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
         - {"action": "subscribe", "scan_id": "xxx"}: Subscribe to specific scan
         - {"action": "unsubscribe", "scan_id": "xxx"}: Unsubscribe from scan
         """
+        # Authenticate WebSocket connection
+        auth_manager = get_auth_manager()
+        if auth_manager.config.enabled:
+            session_token = websocket.cookies.get("redops_session")
+            if not session_token or not auth_manager.validate_session(session_token):
+                await websocket.close(code=4001, reason="Authentication required")
+                return
         await ws_manager.connect(websocket)
         try:
             while True:

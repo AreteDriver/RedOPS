@@ -288,8 +288,12 @@ class PluginRepository:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
 
-            # Extract ZIP
+            # Extract ZIP (with zip-slip protection)
             with zipfile.ZipFile(zip_path, "r") as zf:
+                for member in zf.namelist():
+                    target = (temp_path / member).resolve()
+                    if not str(target).startswith(str(temp_path.resolve())):
+                        raise ValueError(f"Zip slip detected: {member}")
                 zf.extractall(temp_path)
 
             # Find manifest (might be in root or subdirectory)
@@ -307,6 +311,9 @@ class PluginRepository:
 
             return self._install_from_directory(temp_path, force)
 
+    # Allowed hosts for plugin git repositories
+    ALLOWED_GIT_HOSTS = {"github.com", "gitlab.com", "bitbucket.org"}
+
     def _install_from_git(
         self,
         git_url: str,
@@ -314,6 +321,15 @@ class PluginRepository:
     ) -> PluginInfo:
         """Install plugin from Git repository."""
         import subprocess
+        from urllib.parse import urlparse
+
+        # Validate git URL against allowlist
+        parsed = urlparse(git_url)
+        if parsed.hostname not in self.ALLOWED_GIT_HOSTS:
+            raise ValueError(
+                f"Git host '{parsed.hostname}' not allowed. "
+                f"Permitted hosts: {', '.join(sorted(self.ALLOWED_GIT_HOSTS))}"
+            )
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Clone repository
