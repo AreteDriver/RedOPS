@@ -648,7 +648,7 @@ class InteractiveShell:
 
     def _cmd_clear(self, args: List[str]) -> None:
         """Clear the screen."""
-        os.system("clear" if os.name != "nt" else "cls")
+        print("\033[2J\033[H", end="", flush=True)
 
 
 class PromptBuilder:

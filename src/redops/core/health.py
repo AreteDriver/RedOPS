@@ -6,6 +6,7 @@ readiness probes, and liveness probes for the framework.
 """
 
 import asyncio
+import re
 import socket
 import threading
 import time
@@ -502,12 +503,17 @@ class MemoryCheck(HealthCheck):
 class ProcessCheck(HealthCheck):
     """Check if a process is running."""
 
+    # Safe characters for process names (alphanumeric, dash, underscore, dot, slash)
+    _SAFE_PROCESS_NAME = re.compile(r'^[\w./:-]+$')
+
     def __init__(
         self,
         process_name: str,
         name: Optional[str] = None,
         critical: bool = True,
     ):
+        if not self._SAFE_PROCESS_NAME.match(process_name):
+            raise ValueError(f"Invalid process name: {process_name!r}")
         self.process_name = process_name
         self.name = name or f"process:{process_name}"
         self.critical = critical

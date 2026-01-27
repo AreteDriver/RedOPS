@@ -134,7 +134,7 @@ AI_PROVIDERS = {
 
 def clear_screen():
     """Clear the terminal screen."""
-    os.system("cls" if os.name == "nt" else "clear")
+    print("\033[2J\033[H", end="", flush=True)
 
 
 def print_header(title: str):

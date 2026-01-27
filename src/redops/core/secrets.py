@@ -1189,12 +1189,18 @@ def create_secrets_manager(
         try:
             encryption = FernetEncryption(encryption_key.encode())
         except ImportError:
-            encryption = SimpleEncryption(encryption_key)
+            raise ImportError(
+                "The 'cryptography' package is required for encryption. "
+                "Install it with: pip install cryptography"
+            )
     elif backend_type == "file":
         try:
             encryption = FernetEncryption()
         except ImportError:
-            encryption = SimpleEncryption()
+            raise ImportError(
+                "The 'cryptography' package is required for file-backed secrets. "
+                "Install it with: pip install cryptography"
+            )
 
     # Set up backend
     if backend_type == "memory":
