@@ -22,6 +22,11 @@ RedOPS can be configured via environment variables, configuration files, or comm
 | `REDOPS_ADMIN_USER` | Admin username | `admin` |
 | `REDOPS_ADMIN_PASSWORD` | Admin password | - |
 | `REDOPS_SESSION_EXPIRY_HOURS` | Session expiry time | `24` |
+| `REDOPS_JWT_SECRET` | JWT signing key (required for API auth) | - |
+| `DATABASE_URL` | PostgreSQL connection string (required) | - |
+| `REDOPS_CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:8000` |
+| `REDOPS_HTTPS` | Enable secure cookies | `false` |
+| `REDOPS_SESSION_SECRET` | Session signing key | Auto-generated |
 
 ## Configuration File
 

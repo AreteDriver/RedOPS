@@ -15,7 +15,7 @@ This guide provides detailed instructions for installing and configuring RedOps 
 
 ### Minimum Requirements
 
-- **Python**: 3.8 or higher
+- **Python**: 3.10 or higher
 - **Operating System**: Linux, macOS, or Windows
 - **Memory**: 512 MB RAM (2 GB recommended)
 - **Disk Space**: 500 MB
@@ -258,6 +258,14 @@ export REDOPS_STRICT_SCOPE="true"
 export ANTHROPIC_API_KEY="your-key-here"
 export OPENAI_API_KEY="your-key-here"
 
+# REQUIRED: Security configuration
+export REDOPS_JWT_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(64))')"
+export DATABASE_URL="postgresql://user:pass@localhost:5432/redops"
+
+# Optional: CORS and HTTPS
+export REDOPS_CORS_ORIGINS="http://localhost:8000"
+export REDOPS_HTTPS="true"  # Set when behind TLS
+
 # Notification Webhooks
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
 export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
@@ -397,7 +405,7 @@ python -m json.tool config/pipelines/recon_pipeline.json
 
 #### Linux
 
-- Ensure Python 3.8+ is installed:
+- Ensure Python 3.10+ is installed:
   ```bash
   python3 --version
   ```
