@@ -19,10 +19,13 @@ from pydantic import BaseModel, Field
 # JWT configuration
 JWT_SECRET_KEY = os.environ.get("REDOPS_JWT_SECRET")
 if not JWT_SECRET_KEY:
-    raise RuntimeError(
-        "REDOPS_JWT_SECRET environment variable is required. "
-        "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
-    )
+    if os.environ.get("REDOPS_TESTING") == "true":
+        JWT_SECRET_KEY = "test-secret-do-not-use-in-production"
+    else:
+        raise RuntimeError(
+            "REDOPS_JWT_SECRET environment variable is required. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+        )
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
 JWT_REFRESH_TOKEN_EXPIRE_DAYS = 7

@@ -21,7 +21,6 @@ from redops.core.secrets import (
     # Encryption
     EncryptionProvider,
     FernetEncryption,
-    SimpleEncryption,
     # Backends
     SecretBackend,
     MemoryBackend,
@@ -212,76 +211,8 @@ class TestSecret:
 
 
 # =============================================================================
-# SimpleEncryption Tests
 # =============================================================================
-
-class TestSimpleEncryption:
-    """Tests for SimpleEncryption provider."""
-
-    def test_encrypt_decrypt(self):
-        """Test basic encryption and decryption."""
-        enc = SimpleEncryption("testkey123")
-        plaintext = "my secret value"
-
-        ciphertext = enc.encrypt(plaintext)
-        assert ciphertext != plaintext
-
-        decrypted = enc.decrypt(ciphertext)
-        assert decrypted == plaintext
-
-    def test_different_keys_different_output(self):
-        """Test different keys produce different ciphertext."""
-        enc1 = SimpleEncryption("key1")
-        enc2 = SimpleEncryption("key2")
-        plaintext = "test"
-
-        cipher1 = enc1.encrypt(plaintext)
-        cipher2 = enc2.encrypt(plaintext)
-        assert cipher1 != cipher2
-
-    def test_auto_generate_key(self):
-        """Test automatic key generation."""
-        enc = SimpleEncryption()
-        assert enc.key is not None
-
-        plaintext = "test value"
-        decrypted = enc.decrypt(enc.encrypt(plaintext))
-        assert decrypted == plaintext
-
-    def test_rotate_key(self):
-        """Test key rotation."""
-        enc = SimpleEncryption()
-        plaintext = "test value"
-
-        # Encrypt with original key
-        ciphertext = enc.encrypt(plaintext)
-
-        # Rotate key
-        old_key = enc.key
-        enc.rotate_key()
-        assert enc.key != old_key
-
-        # Should still decrypt with old key
-        decrypted = enc.decrypt(ciphertext)
-        assert decrypted == plaintext
-
-    def test_rotate_multiple_times(self):
-        """Test multiple key rotations."""
-        enc = SimpleEncryption()
-
-        # Encrypt with different versions
-        ciphertexts = []
-        for _ in range(3):
-            ciphertexts.append(enc.encrypt("test"))
-            enc.rotate_key()
-
-        # All should still decrypt
-        for ct in ciphertexts:
-            assert enc.decrypt(ct) == "test"
-
-
-# =============================================================================
-# FernetEncryption Tests (if cryptography available)
+# FernetEncryption Tests
 # =============================================================================
 
 class TestFernetEncryption:
@@ -433,7 +364,7 @@ class TestFileBackend:
 
     def test_set_get(self, temp_file):
         """Test basic set and get."""
-        backend = FileBackend(temp_file, SimpleEncryption())
+        backend = FileBackend(temp_file, FernetEncryption())
 
         meta = SecretMetadata(name="test")
         secret = Secret(value="value", metadata=meta)
@@ -446,7 +377,7 @@ class TestFileBackend:
 
     def test_persistence(self, temp_file):
         """Test secrets persist across instances."""
-        enc = SimpleEncryption("testkey")
+        enc = FernetEncryption()
 
         # Write with first instance
         backend1 = FileBackend(temp_file, enc)
@@ -462,7 +393,7 @@ class TestFileBackend:
 
     def test_delete(self, temp_file):
         """Test secret deletion."""
-        backend = FileBackend(temp_file, SimpleEncryption())
+        backend = FileBackend(temp_file, FernetEncryption())
 
         meta = SecretMetadata(name="test")
         backend.set(Secret(value="value", metadata=meta))
@@ -472,7 +403,7 @@ class TestFileBackend:
 
     def test_list(self, temp_file):
         """Test listing secrets."""
-        backend = FileBackend(temp_file, SimpleEncryption())
+        backend = FileBackend(temp_file, FernetEncryption())
 
         for i in range(3):
             meta = SecretMetadata(name=f"secret-{i}")
@@ -485,7 +416,7 @@ class TestFileBackend:
         """Test creates parent directories."""
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "subdir" / "secrets.json"
-            backend = FileBackend(path, SimpleEncryption())
+            backend = FileBackend(path, FernetEncryption())
 
             meta = SecretMetadata(name="test")
             backend.set(Secret(value="value", metadata=meta))
@@ -962,7 +893,7 @@ class TestSecretsManager:
 
     def test_with_encryption(self):
         """Test manager with encryption."""
-        encryption = SimpleEncryption()
+        encryption = FernetEncryption()
         manager = SecretsManager(encryption=encryption)
 
         manager.set("encrypted", "sensitive-value", validate=False)
@@ -978,7 +909,7 @@ class TestSecretsManager:
 
     def test_rotate_encryption_key(self):
         """Test encryption key rotation."""
-        encryption = SimpleEncryption()
+        encryption = FernetEncryption()
         manager = SecretsManager(encryption=encryption)
 
         manager.set("secret1", "value1", validate=False)

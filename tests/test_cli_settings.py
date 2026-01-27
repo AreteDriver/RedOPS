@@ -63,18 +63,16 @@ class TestClearScreen:
     """Tests for clear_screen function."""
 
     def test_clear_screen_unix(self):
-        """Test clear_screen on Unix."""
-        with patch("os.name", "posix"):
-            with patch("os.system") as mock_system:
-                clear_screen()
-                mock_system.assert_called_once_with("clear")
+        """Test clear_screen outputs ANSI escape codes."""
+        with patch("builtins.print") as mock_print:
+            clear_screen()
+            mock_print.assert_called_once_with("\033[2J\033[H", end="", flush=True)
 
     def test_clear_screen_windows(self):
-        """Test clear_screen on Windows."""
-        with patch("os.name", "nt"):
-            with patch("os.system") as mock_system:
-                clear_screen()
-                mock_system.assert_called_once_with("cls")
+        """Test clear_screen outputs ANSI escape codes (platform independent)."""
+        with patch("builtins.print") as mock_print:
+            clear_screen()
+            mock_print.assert_called_once_with("\033[2J\033[H", end="", flush=True)
 
 
 class TestPrintHeader:
