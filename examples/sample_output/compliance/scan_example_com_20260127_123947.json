@@ -39,12 +39,12 @@
         "0 ."
       ],
       "TXT": [
-        "v=spf1 -all",
-        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9"
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9",
+        "v=spf1 -all"
       ],
       "NS": [
-        "elliott.ns.cloudflare.com.",
-        "hera.ns.cloudflare.com."
+        "hera.ns.cloudflare.com.",
+        "elliott.ns.cloudflare.com."
       ],
       "SOA": [
         "elliott.ns.cloudflare.com. dns.cloudflare.com. 2393120882 10000 2400 604800 1800"
@@ -54,8 +54,8 @@
       "0 ."
     ],
     "nameservers": [
-      "elliott.ns.cloudflare.com.",
-      "hera.ns.cloudflare.com."
+      "hera.ns.cloudflare.com.",
+      "elliott.ns.cloudflare.com."
     ],
     "txt_analysis": {
       "spf": "v=spf1 -all",
@@ -930,19 +930,13 @@
       }
     }
   },
-  "correlations": {
-    "findings": [],
-    "correlations": [],
-    "clusters": [],
-    "insights": []
-  },
   "executive_report": {
     "report_type": "executive_summary",
     "audience": "executive",
     "executive_summary": {
-      "report_id": "RPT-20260127203130-04BEEE8D",
+      "report_id": "RPT-20260127203947-8D2A2A78",
       "title": "Security Assessment Report: example.com",
-      "generated_at": "2026-01-27T20:31:30.923744Z",
+      "generated_at": "2026-01-27T20:39:47.099194Z",
       "target": "example.com",
       "overall_risk_level": "minimal",
       "risk_score": 0,

@@ -169,18 +169,18 @@
       "Cloudflare"
     ],
     "headers": {
-      "Date": "Tue, 27 Jan 2026 20:31:30 GMT",
+      "Date": "Tue, 27 Jan 2026 20:39:47 GMT",
       "Content-Type": "text/html",
       "Transfer-Encoding": "chunked",
       "Connection": "close",
       "Content-Encoding": "gzip",
       "last-modified": "Tue, 27 Jan 2026 13:22:54 GMT",
       "allow": "GET, HEAD",
-      "Age": "9826",
+      "Age": "10324",
       "cf-cache-status": "HIT",
       "Vary": "Accept-Encoding",
       "Server": "cloudflare",
-      "CF-RAY": "9c4b03953ce6dd6a-PDX"
+      "CF-RAY": "9c4b0fb9bcca0c31-PDX"
     },
     "fingerprints": {
       "status_code": 200,

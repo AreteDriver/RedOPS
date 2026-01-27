@@ -2,9 +2,9 @@
   "report_type": "executive_summary",
   "audience": "executive",
   "executive_summary": {
-    "report_id": "RPT-20260127203130-04BEEE8D",
+    "report_id": "RPT-20260127203948-8944AF41",
     "title": "Security Assessment Report: example.com",
-    "generated_at": "2026-01-27T20:31:30.923744Z",
+    "generated_at": "2026-01-27T20:39:48.331246Z",
     "target": "example.com",
     "overall_risk_level": "minimal",
     "risk_score": 0,

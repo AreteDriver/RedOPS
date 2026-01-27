@@ -1266,6 +1266,11 @@ def count_findings(ctx: Context) -> int:
     """Count total findings in context."""
     count = 0
 
+    # Count finding_* keys stored directly on context by modules
+    for key in ctx.data:
+        if key.startswith("finding_"):
+            count += 1
+
     # From correlations
     correlations = ctx.get("correlations", {})
     count += len(correlations.get("findings", []))

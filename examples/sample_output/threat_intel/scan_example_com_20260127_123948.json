@@ -6,8 +6,8 @@
     "severity": "info",
     "data": {
       "records": [
-        "104.18.26.120",
-        "104.18.27.120"
+        "104.18.27.120",
+        "104.18.26.120"
       ]
     },
     "tags": []
@@ -28,8 +28,8 @@
     "domain": "example.com",
     "dns_records": {
       "A": [
-        "104.18.26.120",
-        "104.18.27.120"
+        "104.18.27.120",
+        "104.18.26.120"
       ],
       "AAAA": [
         "2606:4700::6812:1b78",
@@ -80,8 +80,8 @@
       "clean_count": 6,
       "unknown_count": 0,
       "by_tld": {
-        "com": 5,
-        "domains": 1
+        "domains": 1,
+        "com": 5
       },
       "age_analysis": {},
       "patterns_detected": []

@@ -32,15 +32,15 @@
         "104.18.26.120"
       ],
       "AAAA": [
-        "2606:4700::6812:1a78",
-        "2606:4700::6812:1b78"
+        "2606:4700::6812:1b78",
+        "2606:4700::6812:1a78"
       ],
       "MX": [
         "0 ."
       ],
       "TXT": [
-        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9",
-        "v=spf1 -all"
+        "v=spf1 -all",
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9"
       ],
       "NS": [
         "elliott.ns.cloudflare.com.",
@@ -169,18 +169,18 @@
       "Cloudflare"
     ],
     "headers": {
-      "Date": "Tue, 27 Jan 2026 20:31:28 GMT",
+      "Date": "Tue, 27 Jan 2026 20:39:45 GMT",
       "Content-Type": "text/html",
       "Transfer-Encoding": "chunked",
       "Connection": "close",
       "Content-Encoding": "gzip",
       "last-modified": "Tue, 27 Jan 2026 13:22:54 GMT",
       "allow": "GET, HEAD",
-      "Age": "9825",
+      "Age": "10322",
       "cf-cache-status": "HIT",
       "Vary": "Accept-Encoding",
       "Server": "cloudflare",
-      "CF-RAY": "9c4b038bfa80ef2c-PDX"
+      "CF-RAY": "9c4b0fafebe9b57f-PDX"
     },
     "fingerprints": {
       "status_code": 200,
