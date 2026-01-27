@@ -12,6 +12,7 @@ from redops.core.models import Finding, RiskLevel
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -20,9 +21,7 @@ except ImportError:
 THREATFOX_API = "https://threatfox-api.abuse.ch/api/v1/"
 
 
-def query_ioc(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_ioc(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query ThreatFox for IOC information.
 
@@ -69,9 +68,7 @@ def query_ioc(
     return ctx
 
 
-def search_malware(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def search_malware(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Search ThreatFox for malware family information.
 
@@ -98,11 +95,7 @@ def search_malware(
 
     ctx.log(f"Searching ThreatFox for malware: {malware}", level="INFO")
 
-    result = _query_api({
-        "query": "malwareinfo",
-        "malware": malware,
-        "limit": limit
-    })
+    result = _query_api({"query": "malwareinfo", "malware": malware, "limit": limit})
 
     if result.get("error"):
         ctx.log(f"ThreatFox search failed: {result['error']}", level="WARNING")
@@ -116,9 +109,7 @@ def search_malware(
     return ctx
 
 
-def get_recent_iocs(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def get_recent_iocs(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Get recent IOCs from ThreatFox.
 
@@ -192,7 +183,7 @@ def _query_api(payload: Dict[str, Any]) -> Dict[str, Any]:
             THREATFOX_API,
             json=payload,
             headers={"Content-Type": "application/json"},
-            timeout=30
+            timeout=30,
         )
         response.raise_for_status()
         data = response.json()
@@ -241,7 +232,9 @@ def analyze_threatfox_results(result: Dict[str, Any], ioc: str) -> List[Finding]
         if entry.get("confidence_level"):
             confidence_levels.append(entry["confidence_level"])
 
-    avg_confidence = sum(confidence_levels) / len(confidence_levels) if confidence_levels else 0
+    avg_confidence = (
+        sum(confidence_levels) / len(confidence_levels) if confidence_levels else 0
+    )
 
     if avg_confidence >= 75:
         severity = RiskLevel.CRITICAL
@@ -252,43 +245,49 @@ def analyze_threatfox_results(result: Dict[str, Any], ioc: str) -> List[Finding]
     else:
         severity = RiskLevel.LOW
 
-    findings.append(Finding(
-        module="threat_intel.threatfox",
-        title=f"Malware IOC Detected: {ioc}",
-        description=(
-            f"IOC {ioc} found in ThreatFox database with {len(data)} entries. "
-            f"Associated malware: {', '.join(malware_families) or 'Unknown'}. "
-            f"Threat types: {', '.join(threat_types) or 'Unknown'}. "
-            f"Average confidence: {avg_confidence:.0f}%."
-        ),
-        severity=severity,
-        data={
-            "ioc": ioc,
-            "entry_count": len(data),
-            "malware_families": list(malware_families),
-            "threat_types": list(threat_types),
-            "average_confidence": avg_confidence,
-            "first_seen": data[0].get("first_seen") if data else None,
-            "last_seen": data[-1].get("first_seen") if data else None,
-        },
-    ))
+    findings.append(
+        Finding(
+            module="threat_intel.threatfox",
+            title=f"Malware IOC Detected: {ioc}",
+            description=(
+                f"IOC {ioc} found in ThreatFox database with {len(data)} entries. "
+                f"Associated malware: {', '.join(malware_families) or 'Unknown'}. "
+                f"Threat types: {', '.join(threat_types) or 'Unknown'}. "
+                f"Average confidence: {avg_confidence:.0f}%."
+            ),
+            severity=severity,
+            data={
+                "ioc": ioc,
+                "entry_count": len(data),
+                "malware_families": list(malware_families),
+                "threat_types": list(threat_types),
+                "average_confidence": avg_confidence,
+                "first_seen": data[0].get("first_seen") if data else None,
+                "last_seen": data[-1].get("first_seen") if data else None,
+            },
+        )
+    )
 
     c2_entries = [e for e in data if e.get("threat_type") == "botnet_cc"]
     if c2_entries:
-        findings.append(Finding(
-            module="threat_intel.threatfox",
-            title=f"C2 Infrastructure Detected: {ioc}",
-            description=(
-                f"IOC {ioc} is associated with Command & Control infrastructure. "
-                f"Found {len(c2_entries)} C2 entries in ThreatFox."
-            ),
-            severity=RiskLevel.CRITICAL,
-            data={
-                "ioc": ioc,
-                "c2_count": len(c2_entries),
-                "malware": list({e.get("malware") for e in c2_entries if e.get("malware")}),
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.threatfox",
+                title=f"C2 Infrastructure Detected: {ioc}",
+                description=(
+                    f"IOC {ioc} is associated with Command & Control infrastructure. "
+                    f"Found {len(c2_entries)} C2 entries in ThreatFox."
+                ),
+                severity=RiskLevel.CRITICAL,
+                data={
+                    "ioc": ioc,
+                    "c2_count": len(c2_entries),
+                    "malware": list(
+                        {e.get("malware") for e in c2_entries if e.get("malware")}
+                    ),
+                },
+            )
+        )
 
     return findings
 

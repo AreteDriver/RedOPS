@@ -15,6 +15,7 @@ from redops.core.models import Finding
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -193,7 +194,9 @@ class SplunkHECExporter:
                 "attempted": total_events,
             }
 
-    def export_context(self, ctx: Context, scan_id: Optional[str] = None) -> Dict[str, Any]:
+    def export_context(
+        self, ctx: Context, scan_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Export all context data to Splunk.
 
@@ -256,9 +259,7 @@ class SplunkHECExporter:
         return self.flush()
 
 
-def export_to_splunk(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def export_to_splunk(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Export scan results to Splunk HEC.
 

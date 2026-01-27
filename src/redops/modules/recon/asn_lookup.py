@@ -15,6 +15,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests for API calls
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -28,9 +29,7 @@ CYMRU_DNS = "origin.asn.cymru.com"
 CYMRU_ASN_DNS = "asn.cymru.com"
 
 
-def lookup_asn(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def lookup_asn(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Perform ASN lookup for a target.
 
@@ -116,14 +115,14 @@ def lookup_asn(
 def is_ip_address(value: str) -> bool:
     """Check if a string is an IP address."""
     # IPv4
-    ipv4_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+    ipv4_pattern = r"^(\d{1,3}\.){3}\d{1,3}$"
     if re.match(ipv4_pattern, value):
-        parts = value.split('.')
+        parts = value.split(".")
         if all(0 <= int(p) <= 255 for p in parts):
             return True
 
     # IPv6 (simplified check)
-    if ':' in value:
+    if ":" in value:
         try:
             socket.inet_pton(socket.AF_INET6, value)
             return True
@@ -228,7 +227,8 @@ def lookup_asn_cymru(ip: str) -> Dict[str, Any]:
 
         # DNS TXT lookup
         import socket
-        answers = socket.gethostbyname_ex(query)
+
+        socket.gethostbyname_ex(query)
 
         # Parse the TXT record
         # Format: "ASN | Prefix | Country | RIR | Allocated"
@@ -324,23 +324,27 @@ def get_asn_prefixes(asn: str) -> List[Dict[str, Any]]:
 
         # IPv4 prefixes
         for prefix in prefix_data.get("ipv4_prefixes", []):
-            prefixes.append({
-                "prefix": prefix.get("prefix", ""),
-                "ip_version": 4,
-                "name": prefix.get("name", ""),
-                "description": prefix.get("description", ""),
-                "country": prefix.get("country_code", ""),
-            })
+            prefixes.append(
+                {
+                    "prefix": prefix.get("prefix", ""),
+                    "ip_version": 4,
+                    "name": prefix.get("name", ""),
+                    "description": prefix.get("description", ""),
+                    "country": prefix.get("country_code", ""),
+                }
+            )
 
         # IPv6 prefixes
         for prefix in prefix_data.get("ipv6_prefixes", []):
-            prefixes.append({
-                "prefix": prefix.get("prefix", ""),
-                "ip_version": 6,
-                "name": prefix.get("name", ""),
-                "description": prefix.get("description", ""),
-                "country": prefix.get("country_code", ""),
-            })
+            prefixes.append(
+                {
+                    "prefix": prefix.get("prefix", ""),
+                    "ip_version": 6,
+                    "name": prefix.get("name", ""),
+                    "description": prefix.get("description", ""),
+                    "country": prefix.get("country_code", ""),
+                }
+            )
 
         return prefixes
 
@@ -415,43 +419,60 @@ def analyze_asn_info(asn_info: Dict[str, Any], target: str) -> List[Finding]:
         return findings
 
     # Check for hosting providers (may indicate cloud infrastructure)
-    cloud_keywords = ["amazon", "aws", "google", "microsoft", "azure", "cloudflare",
-                     "digitalocean", "linode", "vultr", "ovh", "hetzner"]
+    cloud_keywords = [
+        "amazon",
+        "aws",
+        "google",
+        "microsoft",
+        "azure",
+        "cloudflare",
+        "digitalocean",
+        "linode",
+        "vultr",
+        "ovh",
+        "hetzner",
+    ]
     name_lower = name.lower()
 
     for keyword in cloud_keywords:
         if keyword in name_lower:
-            findings.append(Finding(
-                module="recon.asn_lookup",
-                title=f"Cloud/Hosting Provider Detected: {name}",
-                description=f"Target {target} is hosted on {name} (AS{asn}). "
-                           "This is a major cloud or hosting provider.",
-                severity=RiskLevel.INFO,
-                data={"asn": asn, "provider": name, "target": target},
-            ))
+            findings.append(
+                Finding(
+                    module="recon.asn_lookup",
+                    title=f"Cloud/Hosting Provider Detected: {name}",
+                    description=f"Target {target} is hosted on {name} (AS{asn}). "
+                    "This is a major cloud or hosting provider.",
+                    severity=RiskLevel.INFO,
+                    data={"asn": asn, "provider": name, "target": target},
+                )
+            )
             break
 
     # Large prefix count may indicate CDN or major provider
     if len(prefixes) > 100:
-        findings.append(Finding(
-            module="recon.asn_lookup",
-            title=f"Large Network (AS{asn} - {len(prefixes)} prefixes)",
-            description=f"AS{asn} ({name}) announces {len(prefixes)} IP prefixes. "
-                       "This indicates a large network infrastructure.",
-            severity=RiskLevel.INFO,
-            data={"asn": asn, "prefix_count": len(prefixes)},
-        ))
+        findings.append(
+            Finding(
+                module="recon.asn_lookup",
+                title=f"Large Network (AS{asn} - {len(prefixes)} prefixes)",
+                description=f"AS{asn} ({name}) announces {len(prefixes)} IP prefixes. "
+                "This indicates a large network infrastructure.",
+                severity=RiskLevel.INFO,
+                data={"asn": asn, "prefix_count": len(prefixes)},
+            )
+        )
 
     # Check for abuse contacts
     abuse_contacts = asn_info.get("abuse_contacts", [])
     if abuse_contacts:
-        findings.append(Finding(
-            module="recon.asn_lookup",
-            title="Abuse Contact Information Available",
-            description=f"Abuse contacts for AS{asn}: {', '.join(abuse_contacts[:3])}",
-            severity=RiskLevel.INFO,
-            data={"asn": asn, "abuse_contacts": abuse_contacts},
-        ))
+        findings.append(
+            Finding(
+                module="recon.asn_lookup",
+                title="Abuse Contact Information Available",
+                description=f"Abuse contacts for AS{asn}: {', '.join(abuse_contacts[:3])}",
+                severity=RiskLevel.INFO,
+                data={"asn": asn, "abuse_contacts": abuse_contacts},
+            )
+        )
 
     return findings
 

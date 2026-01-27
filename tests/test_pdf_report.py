@@ -1,12 +1,13 @@
 """Tests for PDF report module."""
 
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 # Check if fpdf is available
 try:
     from fpdf import FPDF
+
     HAS_FPDF = True
 except ImportError:
     HAS_FPDF = False
@@ -14,7 +15,7 @@ except ImportError:
 # Skip all tests if fpdf not available
 pytestmark = pytest.mark.skipif(not HAS_FPDF, reason="fpdf2 not installed")
 
-from redops.modules.reporting.pdf_report import (
+from redops.modules.reporting.pdf_report import (  # noqa: E402
     RedOPSPDFReport,
     PDFReportGenerator,
     generate_pdf_report,
@@ -69,7 +70,7 @@ class TestRedOPSPDFReport:
             title="Critical Vulnerability",
             severity="critical",
             description="This is a critical issue.",
-            recommendation="Fix immediately."
+            recommendation="Fix immediately.",
         )
         # Should not raise
 
@@ -117,7 +118,7 @@ class TestRedOPSPDFReport:
             rows=[
                 ["Item 1", "100", "OK"],
                 ["Item 2", "200", "Warning"],
-            ]
+            ],
         )
         # Should not raise
 
@@ -126,9 +127,7 @@ class TestRedOPSPDFReport:
         pdf = RedOPSPDFReport()
         pdf.add_page()
         pdf.add_table(
-            headers=["Name", "Value"],
-            rows=[["Test", "123"]],
-            col_widths=[100, 90]
+            headers=["Name", "Value"], rows=[["Test", "123"]], col_widths=[100, 90]
         )
         # Should not raise
 
@@ -137,10 +136,7 @@ class TestRedOPSPDFReport:
         pdf = RedOPSPDFReport()
         pdf.add_page()
         long_text = "A" * 100
-        pdf.add_table(
-            headers=["Data"],
-            rows=[[long_text]]
-        )
+        pdf.add_table(headers=["Data"], rows=[[long_text]])
         # Should not raise - text truncated to 30 chars
 
 
@@ -157,10 +153,7 @@ class TestPDFReportGenerator:
         generator = PDFReportGenerator()
         output = tmp_path / "report.pdf"
 
-        path = generator.generate(
-            scan_data={},
-            output_path=str(output)
-        )
+        path = generator.generate(scan_data={}, output_path=str(output))
 
         assert Path(path).exists()
         assert output.exists()
@@ -171,8 +164,7 @@ class TestPDFReportGenerator:
         output = tmp_path / "report.pdf"
 
         path = generator.generate(
-            scan_data={"target": "example.com"},
-            output_path=str(output)
+            scan_data={"target": "example.com"}, output_path=str(output)
         )
 
         assert Path(path).exists()
@@ -189,14 +181,14 @@ class TestPDFReportGenerator:
                     "title": "SQL Injection",
                     "severity": "critical",
                     "description": "Found SQL injection vulnerability.",
-                    "recommendation": "Use parameterized queries."
+                    "recommendation": "Use parameterized queries.",
                 },
                 {
                     "title": "XSS",
                     "severity": "high",
                     "description": "Cross-site scripting found.",
                 },
-            ]
+            ],
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -213,9 +205,9 @@ class TestPDFReportGenerator:
                 "executive_summary": {
                     "risk_level": "High",
                     "overall_score": 35,
-                    "summary": "The assessment revealed several critical issues."
+                    "summary": "The assessment revealed several critical issues.",
                 }
-            }
+            },
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -228,16 +220,9 @@ class TestPDFReportGenerator:
 
         data = {
             "target": "example.com",
-            "domain_profile": {
-                "dns": {"A": ["1.2.3.4"], "MX": ["mail.example.com"]}
-            },
-            "tech_stack": {
-                "technologies": ["Python", "Flask", "PostgreSQL", "Redis"]
-            },
-            "infrastructure": {
-                "cloud_provider": "AWS",
-                "cdn": "CloudFront"
-            }
+            "domain_profile": {"dns": {"A": ["1.2.3.4"], "MX": ["mail.example.com"]}},
+            "tech_stack": {"technologies": ["Python", "Flask", "PostgreSQL", "Redis"]},
+            "infrastructure": {"cloud_provider": "AWS", "cdn": "CloudFront"},
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -252,10 +237,18 @@ class TestPDFReportGenerator:
             "target": "example.com",
             "executive_report": {
                 "recommendations": [
-                    {"title": "Patch Vulnerabilities", "description": "Update all software.", "priority": "High"},
-                    {"title": "Enable MFA", "description": "Multi-factor auth.", "priority": "Medium"},
+                    {
+                        "title": "Patch Vulnerabilities",
+                        "description": "Update all software.",
+                        "priority": "High",
+                    },
+                    {
+                        "title": "Enable MFA",
+                        "description": "Multi-factor auth.",
+                        "priority": "Medium",
+                    },
                 ]
-            }
+            },
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -271,7 +264,7 @@ class TestPDFReportGenerator:
             output_path=str(output),
             include_executive_summary=False,
             include_technical_details=False,
-            include_recommendations=False
+            include_recommendations=False,
         )
 
         assert Path(path).exists()
@@ -282,8 +275,7 @@ class TestPDFReportGenerator:
         output = tmp_path / "nested" / "path" / "report.pdf"
 
         path = generator.generate(
-            scan_data={"target": "example.com"},
-            output_path=str(output)
+            scan_data={"target": "example.com"}, output_path=str(output)
         )
 
         assert Path(path).exists()
@@ -293,10 +285,7 @@ class TestPDFReportGenerator:
         generator = PDFReportGenerator()
         output = tmp_path / "report.pdf"
 
-        data = {
-            "target": "example.com",
-            "timestamp": "2024-01-15T10:30:00Z"
-        }
+        data = {"target": "example.com", "timestamp": "2024-01-15T10:30:00Z"}
 
         path = generator.generate(scan_data=data, output_path=str(output))
         assert Path(path).exists()
@@ -310,9 +299,13 @@ class TestPDFReportGenerator:
             "target": "example.com",
             "exposure_scan": {
                 "exposures": [
-                    {"type": "open_port", "severity": "high", "description": "Port 22 open"},
+                    {
+                        "type": "open_port",
+                        "severity": "high",
+                        "description": "Port 22 open",
+                    },
                 ]
-            }
+            },
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -329,7 +322,7 @@ class TestPDFReportGenerator:
                 "iocs": [
                     {"type": "ip", "value": "192.168.1.1"},
                 ]
-            }
+            },
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -344,9 +337,17 @@ class TestPDFReportGenerator:
             "target": "example.com",
             "findings": [
                 {"title": "Low", "severity": "low", "description": "Low issue"},
-                {"title": "Critical", "severity": "critical", "description": "Critical issue"},
-                {"title": "Medium", "severity": "medium", "description": "Medium issue"},
-            ]
+                {
+                    "title": "Critical",
+                    "severity": "critical",
+                    "description": "Critical issue",
+                },
+                {
+                    "title": "Medium",
+                    "severity": "medium",
+                    "description": "Medium issue",
+                },
+            ],
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -360,9 +361,13 @@ class TestPDFReportGenerator:
         data = {
             "target": "example.com",
             "findings": [
-                {"title": f"Finding {i}", "severity": "medium", "description": f"Issue {i}"}
+                {
+                    "title": f"Finding {i}",
+                    "severity": "medium",
+                    "description": f"Issue {i}",
+                }
                 for i in range(50)
-            ]
+            ],
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -380,7 +385,7 @@ class TestPDFReportGenerator:
                     {"title": f"Rec {i}", "description": f"Recommendation {i}"}
                     for i in range(20)
                 ]
-            }
+            },
         }
 
         path = generator.generate(scan_data=data, output_path=str(output))
@@ -434,7 +439,7 @@ class TestGeneratePdfReport:
             "output_dir": str(tmp_path),
             "include_executive_summary": False,
             "include_technical_details": False,
-            "include_recommendations": False
+            "include_recommendations": False,
         }
 
         result = generate_pdf_report(ctx, params)
@@ -470,11 +475,12 @@ class TestImportHandling:
     def test_has_fpdf_flag(self):
         """Test HAS_FPDF flag is set correctly."""
         from redops.modules.reporting.pdf_report import HAS_FPDF
+
         assert HAS_FPDF is True  # We're running tests, so it's available
 
     def test_import_error_in_generator(self):
         """Test ImportError raised when fpdf missing."""
-        with patch.dict('sys.modules', {'fpdf': None}):
+        with patch.dict("sys.modules", {"fpdf": None}):
             # This is hard to test without actually removing fpdf
             # Just verify the class exists
             assert PDFReportGenerator is not None

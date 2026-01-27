@@ -1,7 +1,6 @@
 """Tests for Grafana dashboard configuration."""
 
 import json
-import pytest
 
 from redops.observability.grafana import (
     GrafanaPanel,
@@ -120,7 +119,11 @@ class TestGrafanaDashboard:
     def test_dashboard_panel_ids(self):
         """Test panels get sequential IDs."""
         panels = [
-            GrafanaPanel(title=f"Panel {i}", panel_type="stat", gridPos={"x": 0, "y": i * 4, "w": 6, "h": 4})
+            GrafanaPanel(
+                title=f"Panel {i}",
+                panel_type="stat",
+                gridPos={"x": 0, "y": i * 4, "w": 6, "h": 4},
+            )
             for i in range(3)
         ]
 
@@ -142,7 +145,11 @@ class TestGrafanaDashboard:
             title="Test",
             uid="test",
             panels=[
-                GrafanaPanel(title="P1", panel_type="stat", gridPos={"x": 0, "y": 0, "w": 6, "h": 4}),
+                GrafanaPanel(
+                    title="P1",
+                    panel_type="stat",
+                    gridPos={"x": 0, "y": 0, "w": 6, "h": 4},
+                ),
             ],
         )
 

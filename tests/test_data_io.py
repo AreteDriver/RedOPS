@@ -5,7 +5,6 @@ import json
 import os
 import tempfile
 from io import StringIO
-from pathlib import Path
 
 import pytest
 
@@ -17,7 +16,6 @@ from redops.core.data_io import (
     DataTransformer,
     DataValidator,
     ExportResult,
-    FieldMapping,
     FormatConverter,
     ImportError,
     ImportResult,
@@ -27,7 +25,6 @@ from redops.core.data_io import (
     JSONLImporter,
     STIXExporter,
     STIXImporter,
-    ValidationError,
     export_csv,
     export_json,
     export_jsonl,
@@ -157,6 +154,7 @@ class TestDataTransformer:
 
     def test_record_transform(self):
         """Test record-level transform."""
+
         def add_timestamp(record):
             record["processed"] = True
             return record
@@ -478,7 +476,7 @@ class TestCSVExporter:
         try:
             records = [{"name": "Alice", "age": 30, "extra": "ignored"}]
             exporter = CSVExporter(fieldnames=["name", "age"])
-            result = exporter.export_file(records, path)
+            exporter.export_file(records, path)
 
             with open(path) as f:
                 header = f.readline()
@@ -575,8 +573,10 @@ class TestFormatConverter:
         try:
             converter = FormatConverter()
             import_result, export_result = converter.convert(
-                input_path, output_path,
-                DataFormat.JSON, DataFormat.JSONL,
+                input_path,
+                output_path,
+                DataFormat.JSON,
+                DataFormat.JSONL,
             )
 
             assert import_result.successful == 2
@@ -597,8 +597,10 @@ class TestFormatConverter:
         try:
             converter = FormatConverter()
             import_result, export_result = converter.convert(
-                input_path, output_path,
-                DataFormat.CSV, DataFormat.JSON,
+                input_path,
+                output_path,
+                DataFormat.CSV,
+                DataFormat.JSON,
             )
 
             assert import_result.successful == 2

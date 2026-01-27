@@ -1,8 +1,6 @@
 """Tests for documentation generator module."""
 
 import json
-import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -283,7 +281,10 @@ class SimpleClass:
         doc = analyzer.analyze_module(module_file)
 
         assert doc.name == "test_module"
-        assert "module docstring" in doc.summary.lower() or "test module" in doc.description.lower()
+        assert (
+            "module docstring" in doc.summary.lower()
+            or "test module" in doc.description.lower()
+        )
         assert len(doc.functions) == 1
         assert doc.functions[0].name == "simple_function"
         assert len(doc.classes) == 1
@@ -463,7 +464,9 @@ class TestMarkdownFormatter:
             name="test_module",
             summary="A test module",
             classes=[ClassDoc(name="Class1", summary="First class")],
-            functions=[FunctionDoc(name="func1", signature="()", summary="First function")],
+            functions=[
+                FunctionDoc(name="func1", signature="()", summary="First function")
+            ],
         )
 
         formatter = MarkdownFormatter()

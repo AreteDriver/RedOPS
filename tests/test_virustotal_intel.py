@@ -1,6 +1,5 @@
 """Tests for VirusTotal intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -103,7 +102,9 @@ class TestQueryVTDomain:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None
+        ):
             result = query_vt_domain(ctx)
 
         data = result.get("virustotal_domain")
@@ -119,15 +120,25 @@ class TestQueryVTDomain:
                 "attributes": {
                     "reputation": 0,
                     "categories": {"vendor": "tech"},
-                    "last_analysis_stats": {"malicious": 0, "suspicious": 0, "harmless": 85},
+                    "last_analysis_stats": {
+                        "malicious": 0,
+                        "suspicious": 0,
+                        "harmless": 85,
+                    },
                     "registrar": "Example Registrar",
                     "creation_date": "1995-08-14",
                 }
             }
         }
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=mock_response,
+            ):
                 result = query_vt_domain(ctx)
 
         data = result.get("virustotal_domain")
@@ -140,8 +151,14 @@ class TestQueryVTDomain:
         """Test domain not found."""
         ctx = Context(target="nonexistent.invalid")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value={"error": "not_found"}):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value={"error": "not_found"},
+            ):
                 result = query_vt_domain(ctx)
 
         data = result.get("virustotal_domain")
@@ -169,13 +186,23 @@ class TestQueryVTIP:
                     "country": "US",
                     "asn": 15169,
                     "as_owner": "GOOGLE",
-                    "last_analysis_stats": {"malicious": 0, "suspicious": 0, "harmless": 90},
+                    "last_analysis_stats": {
+                        "malicious": 0,
+                        "suspicious": 0,
+                        "harmless": 90,
+                    },
                 }
             }
         }
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=mock_response,
+            ):
                 result = query_vt_ip(ctx)
 
         data = result.get("virustotal_ip")
@@ -198,8 +225,14 @@ class TestQueryVTIP:
             }
         }
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=mock_response,
+            ):
                 with patch("socket.gethostbyname", return_value="93.184.216.34"):
                     result = query_vt_ip(ctx)
 
@@ -230,8 +263,14 @@ class TestQueryVTURL:
             }
         }
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=mock_response,
+            ):
                 result = query_vt_url(ctx)
 
         data = result.get("virustotal_url")
@@ -242,8 +281,14 @@ class TestQueryVTURL:
         """Test URL not previously scanned."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value={"error": "not_found"}):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value={"error": "not_found"},
+            ):
                 result = query_vt_url(ctx)
 
         data = result.get("virustotal_url")
@@ -261,7 +306,11 @@ class TestAnalyzeVirusTotalIntel:
             "data": {
                 "attributes": {
                     "reputation": 0,
-                    "last_analysis_stats": {"malicious": 1, "suspicious": 2, "harmless": 80},
+                    "last_analysis_stats": {
+                        "malicious": 1,
+                        "suspicious": 2,
+                        "harmless": 80,
+                    },
                 }
             }
         }
@@ -272,7 +321,11 @@ class TestAnalyzeVirusTotalIntel:
                     "reputation": 0,
                     "country": "US",
                     "asn": 12345,
-                    "last_analysis_stats": {"malicious": 0, "suspicious": 1, "harmless": 90},
+                    "last_analysis_stats": {
+                        "malicious": 0,
+                        "suspicious": 1,
+                        "harmless": 90,
+                    },
                 }
             }
         }
@@ -284,8 +337,14 @@ class TestAnalyzeVirusTotalIntel:
                 return ip_response
             return {"error": "unknown"}
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", side_effect=mock_request):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                side_effect=mock_request,
+            ):
                 with patch("socket.gethostbyname", return_value="93.184.216.34"):
                     result = analyze_virustotal_intel(ctx)
 
@@ -299,7 +358,9 @@ class TestAnalyzeVirusTotalIntel:
         """Test analysis without API key."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None
+        ):
             result = analyze_virustotal_intel(ctx)
 
         intel = result.get("virustotal_intel")
@@ -323,7 +384,9 @@ class TestGetVTApiKey:
         from redops.modules.intel.virustotal_intel import get_vt_api_key
 
         with patch.dict("os.environ", {}, clear=True):
-            with patch("redops.cli.settings.get_api_key_direct", return_value="settings-key"):
+            with patch(
+                "redops.cli.settings.get_api_key_direct", return_value="settings-key"
+            ):
                 result = get_vt_api_key()
                 assert result == "settings-key"
 
@@ -332,7 +395,10 @@ class TestGetVTApiKey:
         from redops.modules.intel.virustotal_intel import get_vt_api_key
 
         with patch.dict("os.environ", {}, clear=True):
-            with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Settings error")):
+            with patch(
+                "redops.cli.settings.get_api_key_direct",
+                side_effect=Exception("Settings error"),
+            ):
                 result = get_vt_api_key()
                 assert result is None
 
@@ -351,12 +417,14 @@ class TestMakeVTRequest:
 
     def test_import_error_returns_none(self):
         """Test that import error returns None."""
+
         def mock_import(name, *args, **kwargs):
             if name == "requests":
                 raise ImportError("No module named 'requests'")
             return original_import(name, *args, **kwargs)
 
         import builtins
+
         original_import = builtins.__import__
 
         from importlib import reload
@@ -380,9 +448,11 @@ class TestMakeVTRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
+
             reload(vt_mod)
 
             result = vt_mod._make_vt_request("domains/test.com", "test-key")
@@ -396,9 +466,11 @@ class TestMakeVTRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
+
             reload(vt_mod)
 
             result = vt_mod._make_vt_request("domains/nonexistent.com", "test-key")
@@ -412,9 +484,11 @@ class TestMakeVTRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
+
             reload(vt_mod)
 
             result = vt_mod._make_vt_request("domains/test.com", "test-key")
@@ -426,9 +500,11 @@ class TestMakeVTRequest:
         mock_requests.get.side_effect = Exception("Connection error")
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
+
             reload(vt_mod)
 
             result = vt_mod._make_vt_request("domains/test.com", "test-key")
@@ -442,8 +518,14 @@ class TestQueryVTDomainEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=None):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=None,
+            ):
                 result = query_vt_domain(ctx)
 
         data = result.get("virustotal_domain")
@@ -457,7 +539,11 @@ class TestQueryVTDomainEdgeCases:
             "data": {
                 "attributes": {
                     "reputation": 0,
-                    "last_analysis_stats": {"malicious": 0, "suspicious": 0, "harmless": 85},
+                    "last_analysis_stats": {
+                        "malicious": 0,
+                        "suspicious": 0,
+                        "harmless": 85,
+                    },
                     "last_dns_records": [
                         {"type": "A", "value": "93.184.216.34"},
                         {"type": "AAAA", "value": "2606:2800:220:1:248:1893:25c8:1946"},
@@ -466,8 +552,14 @@ class TestQueryVTDomainEdgeCases:
             }
         }
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=mock_response,
+            ):
                 result = query_vt_domain(ctx)
 
         data = result.get("virustotal_domain")
@@ -482,7 +574,9 @@ class TestQueryVTIPEdgeCases:
         """Test handling of domain resolution failure."""
         ctx = Context(target="nonexistent.invalid.domain")
 
-        with patch("socket.gethostbyname", side_effect=Exception("DNS resolution failed")):
+        with patch(
+            "socket.gethostbyname", side_effect=Exception("DNS resolution failed")
+        ):
             result = query_vt_ip(ctx)
 
         # Should return early, no data added
@@ -492,7 +586,9 @@ class TestQueryVTIPEdgeCases:
         """Test when API key not configured."""
         ctx = Context(target="8.8.8.8")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None
+        ):
             result = query_vt_ip(ctx)
 
         data = result.get("virustotal_ip")
@@ -503,8 +599,14 @@ class TestQueryVTIPEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="8.8.8.8")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=None):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=None,
+            ):
                 result = query_vt_ip(ctx)
 
         data = result.get("virustotal_ip")
@@ -514,8 +616,14 @@ class TestQueryVTIPEdgeCases:
         """Test when error key in response."""
         ctx = Context(target="8.8.8.8")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value={"error": "not_found"}):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value={"error": "not_found"},
+            ):
                 result = query_vt_ip(ctx)
 
         data = result.get("virustotal_ip")
@@ -529,7 +637,9 @@ class TestQueryVTURLEdgeCases:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key", return_value=None
+        ):
             result = query_vt_url(ctx)
 
         data = result.get("virustotal_url")
@@ -540,8 +650,14 @@ class TestQueryVTURLEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=None):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=None,
+            ):
                 result = query_vt_url(ctx)
 
         data = result.get("virustotal_url")
@@ -551,8 +667,14 @@ class TestQueryVTURLEdgeCases:
         """Test when other error key in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value={"error": "HTTP 429"}):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value={"error": "HTTP 429"},
+            ):
                 result = query_vt_url(ctx)
 
         data = result.get("virustotal_url")
@@ -571,8 +693,14 @@ class TestQueryVTURLEdgeCases:
             }
         }
 
-        with patch("redops.modules.intel.virustotal_intel.get_vt_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.virustotal_intel._make_vt_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.virustotal_intel.get_vt_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.virustotal_intel._make_vt_request",
+                return_value=mock_response,
+            ):
                 result = query_vt_url(ctx)
 
         data = result.get("virustotal_url")

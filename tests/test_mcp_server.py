@@ -3,7 +3,6 @@
 import json
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
-import asyncio
 
 
 class TestMCPServerInit:
@@ -166,7 +165,10 @@ class TestToolsCall:
             "jsonrpc": "2.0",
             "id": 6,
             "method": "tools/call",
-            "params": {"name": "redops_explain", "arguments": {"query": "What is XSS?"}},
+            "params": {
+                "name": "redops_explain",
+                "arguments": {"query": "What is XSS?"},
+            },
         }
 
         result = await server.handle_message(message)
@@ -236,8 +238,12 @@ class TestExecuteTool:
         mock_ctx.logs = []
 
         with patch("redops.core.context.Context", return_value=mock_ctx):
-            with patch("redops.modules.recon.domains.profile_domain", return_value=mock_ctx):
-                with patch("redops.modules.recon.tech_stack.fingerprint", return_value=mock_ctx):
+            with patch(
+                "redops.modules.recon.domains.profile_domain", return_value=mock_ctx
+            ):
+                with patch(
+                    "redops.modules.recon.tech_stack.fingerprint", return_value=mock_ctx
+                ):
                     result = await server._execute_tool(
                         "redops_scan", {"target": "example.com"}
                     )
@@ -256,7 +262,9 @@ class TestExecuteTool:
         mock_assistant = MagicMock()
         mock_assistant.explain.return_value = "XSS is a vulnerability..."
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = await server._execute_tool(
                 "redops_explain", {"query": "What is XSS?"}
             )
@@ -273,7 +281,9 @@ class TestExecuteTool:
         mock_assistant = MagicMock()
         mock_assistant.analyze_findings.return_value = "Analysis results..."
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = await server._execute_tool(
                 "redops_analyze", {"scan_data": {"target": "example.com"}}
             )
@@ -290,7 +300,9 @@ class TestExecuteTool:
         mock_assistant = MagicMock()
         mock_assistant.suggest_remediations.return_value = "Suggestions..."
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = await server._execute_tool(
                 "redops_suggest", {"scan_data": {"findings": []}}
             )
@@ -307,7 +319,9 @@ class TestExecuteTool:
         mock_assistant = MagicMock()
         mock_assistant.summarize.return_value = "Executive summary..."
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = await server._execute_tool(
                 "redops_summarize", {"scan_data": {"target": "example.com"}}
             )
@@ -350,8 +364,12 @@ class TestToolScan:
         mock_ctx.logs = []
 
         with patch("redops.core.context.Context", return_value=mock_ctx):
-            with patch("redops.modules.recon.domains.profile_domain", return_value=mock_ctx):
-                with patch("redops.modules.recon.tech_stack.fingerprint", return_value=mock_ctx):
+            with patch(
+                "redops.modules.recon.domains.profile_domain", return_value=mock_ctx
+            ):
+                with patch(
+                    "redops.modules.recon.tech_stack.fingerprint", return_value=mock_ctx
+                ):
                     result = await server._tool_scan(
                         {"target": "example.com", "preset": "full"}
                     )
@@ -373,8 +391,13 @@ class TestToolScan:
             raise Exception("Module failed")
 
         with patch("redops.core.context.Context", return_value=mock_ctx):
-            with patch("redops.modules.recon.domains.profile_domain", side_effect=failing_module):
-                with patch("redops.modules.recon.tech_stack.fingerprint", return_value=mock_ctx):
+            with patch(
+                "redops.modules.recon.domains.profile_domain",
+                side_effect=failing_module,
+            ):
+                with patch(
+                    "redops.modules.recon.tech_stack.fingerprint", return_value=mock_ctx
+                ):
                     result = await server._tool_scan({"target": "example.com"})
 
         # Should complete despite module failure
@@ -436,7 +459,9 @@ class TestToolAnalyze:
             "redops.modules.ai_assistant.AIAssistant",
             side_effect=ImportError("No module"),
         ):
-            result = await server._tool_analyze({"scan_data": {"target": "example.com"}})
+            result = await server._tool_analyze(
+                {"scan_data": {"target": "example.com"}}
+            )
 
         assert "not available" in result
 
@@ -465,7 +490,9 @@ class TestToolSuggest:
             "redops.modules.ai_assistant.AIAssistant",
             side_effect=ValueError("No API key"),
         ):
-            result = await server._tool_suggest({"scan_data": {"target": "example.com"}})
+            result = await server._tool_suggest(
+                {"scan_data": {"target": "example.com"}}
+            )
 
         assert "not available" in result
 
@@ -494,7 +521,9 @@ class TestToolSummarize:
             "redops.modules.ai_assistant.AIAssistant",
             side_effect=ValueError("No API key"),
         ):
-            result = await server._tool_summarize({"scan_data": {"target": "example.com"}})
+            result = await server._tool_summarize(
+                {"scan_data": {"target": "example.com"}}
+            )
 
         assert "not available" in result
 
@@ -539,18 +568,24 @@ class TestMain:
             coro.close()
             raise KeyboardInterrupt
 
-        with patch("redops.mcp.server.asyncio.run", side_effect=mock_asyncio_run_interrupt):
+        with patch(
+            "redops.mcp.server.asyncio.run", side_effect=mock_asyncio_run_interrupt
+        ):
             # Should not raise
             main()
 
     def test_main_calls_run_server(self):
         """Test main calls run_server."""
+
         # Mock asyncio.run to actually close the coroutine to avoid warnings
         def mock_asyncio_run(coro):
             coro.close()
 
-        with patch("redops.mcp.server.asyncio.run", side_effect=mock_asyncio_run) as mock_run:
+        with patch(
+            "redops.mcp.server.asyncio.run", side_effect=mock_asyncio_run
+        ) as mock_run:
             from redops.mcp.server import main
+
             main()
 
         mock_run.assert_called_once()
@@ -614,7 +649,9 @@ class TestRunServer:
         from redops.mcp.server import run_server
 
         # Create mock reader that returns valid JSON then EOF
-        valid_message = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+        valid_message = json.dumps(
+            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+        )
         mock_reader = AsyncMock()
         mock_reader.readline.side_effect = [valid_message.encode() + b"\n", b""]
 

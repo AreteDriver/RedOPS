@@ -4,7 +4,6 @@ WebSocket manager for real-time scan updates.
 Provides broadcast functionality for scan progress and completion events.
 """
 
-import asyncio
 import json
 from typing import Dict, Set, Any
 from dataclasses import dataclass, asdict
@@ -13,6 +12,7 @@ from enum import Enum
 
 class EventType(Enum):
     """WebSocket event types."""
+
     SCAN_STARTED = "scan_started"
     SCAN_PROGRESS = "scan_progress"
     SCAN_MODULE_START = "scan_module_start"
@@ -26,6 +26,7 @@ class EventType(Enum):
 @dataclass
 class WSEvent:
     """WebSocket event message."""
+
     event: str
     data: Dict[str, Any]
     scan_id: str | None = None
@@ -62,10 +63,16 @@ class ConnectionManager:
         self.active_connections.add(websocket)
 
         # Send connection confirmation
-        await self.send_personal(websocket, WSEvent(
-            event=EventType.CONNECTION.value,
-            data={"status": "connected", "message": "WebSocket connected successfully"},
-        ))
+        await self.send_personal(
+            websocket,
+            WSEvent(
+                event=EventType.CONNECTION.value,
+                data={
+                    "status": "connected",
+                    "message": "WebSocket connected successfully",
+                },
+            ),
+        )
 
     def disconnect(self, websocket) -> None:
         """
@@ -177,12 +184,14 @@ async def emit_scan_started(scan_id: str, target: str, preset: str) -> None:
     """Emit scan started event."""
     from datetime import datetime, UTC
 
-    await manager.broadcast(WSEvent(
-        event=EventType.SCAN_STARTED.value,
-        scan_id=scan_id,
-        data={"target": target, "preset": preset},
-        timestamp=datetime.now(UTC).isoformat() + "Z",
-    ))
+    await manager.broadcast(
+        WSEvent(
+            event=EventType.SCAN_STARTED.value,
+            scan_id=scan_id,
+            data={"target": target, "preset": preset},
+            timestamp=datetime.now(UTC).isoformat() + "Z",
+        )
+    )
 
 
 async def emit_scan_progress(
@@ -208,48 +217,58 @@ async def emit_module_start(scan_id: str, module_name: str) -> None:
     """Emit module start event."""
     from datetime import datetime, UTC
 
-    await manager.broadcast_to_scan(scan_id, WSEvent(
-        event=EventType.SCAN_MODULE_START.value,
-        scan_id=scan_id,
-        data={"module": module_name},
-        timestamp=datetime.now(UTC).isoformat() + "Z",
-    ))
+    await manager.broadcast_to_scan(
+        scan_id,
+        WSEvent(
+            event=EventType.SCAN_MODULE_START.value,
+            scan_id=scan_id,
+            data={"module": module_name},
+            timestamp=datetime.now(UTC).isoformat() + "Z",
+        ),
+    )
 
 
 async def emit_module_end(scan_id: str, module_name: str, success: bool = True) -> None:
     """Emit module end event."""
     from datetime import datetime, UTC
 
-    await manager.broadcast_to_scan(scan_id, WSEvent(
-        event=EventType.SCAN_MODULE_END.value,
-        scan_id=scan_id,
-        data={"module": module_name, "success": success},
-        timestamp=datetime.now(UTC).isoformat() + "Z",
-    ))
+    await manager.broadcast_to_scan(
+        scan_id,
+        WSEvent(
+            event=EventType.SCAN_MODULE_END.value,
+            scan_id=scan_id,
+            data={"module": module_name, "success": success},
+            timestamp=datetime.now(UTC).isoformat() + "Z",
+        ),
+    )
 
 
 async def emit_scan_completed(scan_id: str, findings_count: int = 0) -> None:
     """Emit scan completed event."""
     from datetime import datetime, UTC
 
-    await manager.broadcast(WSEvent(
-        event=EventType.SCAN_COMPLETED.value,
-        scan_id=scan_id,
-        data={"findings_count": findings_count},
-        timestamp=datetime.now(UTC).isoformat() + "Z",
-    ))
+    await manager.broadcast(
+        WSEvent(
+            event=EventType.SCAN_COMPLETED.value,
+            scan_id=scan_id,
+            data={"findings_count": findings_count},
+            timestamp=datetime.now(UTC).isoformat() + "Z",
+        )
+    )
 
 
 async def emit_scan_failed(scan_id: str, error: str) -> None:
     """Emit scan failed event."""
     from datetime import datetime, UTC
 
-    await manager.broadcast(WSEvent(
-        event=EventType.SCAN_FAILED.value,
-        scan_id=scan_id,
-        data={"error": error},
-        timestamp=datetime.now(UTC).isoformat() + "Z",
-    ))
+    await manager.broadcast(
+        WSEvent(
+            event=EventType.SCAN_FAILED.value,
+            scan_id=scan_id,
+            data={"error": error},
+            timestamp=datetime.now(UTC).isoformat() + "Z",
+        )
+    )
 
 
 async def emit_finding(
@@ -261,9 +280,12 @@ async def emit_finding(
     """Emit finding added event."""
     from datetime import datetime, UTC
 
-    await manager.broadcast_to_scan(scan_id, WSEvent(
-        event=EventType.FINDING_ADDED.value,
-        scan_id=scan_id,
-        data={"severity": severity, "title": title, "module": module},
-        timestamp=datetime.now(UTC).isoformat() + "Z",
-    ))
+    await manager.broadcast_to_scan(
+        scan_id,
+        WSEvent(
+            event=EventType.FINDING_ADDED.value,
+            scan_id=scan_id,
+            data={"severity": severity, "title": title, "module": module},
+            timestamp=datetime.now(UTC).isoformat() + "Z",
+        ),
+    )

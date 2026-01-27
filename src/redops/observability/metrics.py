@@ -5,8 +5,7 @@ Provides Prometheus-compatible metrics using OpenTelemetry SDK.
 """
 
 from typing import Optional, Dict, Any, Callable
-from datetime import datetime, timezone
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import os
 import time
 import threading
@@ -22,6 +21,7 @@ try:
     )
     from opentelemetry.exporter.prometheus import PrometheusMetricReader
     from opentelemetry.sdk.resources import Resource
+
     HAS_OTEL = True
 except ImportError:
     HAS_OTEL = False
@@ -88,11 +88,13 @@ class MetricsCollector:
 
     def _initialize_otel(self) -> None:
         """Initialize OpenTelemetry metrics."""
-        resource = Resource.create({
-            "service.name": self.config.service_name,
-            "service.version": self.config.service_version,
-            "deployment.environment": self.config.environment,
-        })
+        resource = Resource.create(
+            {
+                "service.name": self.config.service_name,
+                "service.version": self.config.service_version,
+                "deployment.environment": self.config.environment,
+            }
+        )
 
         readers = []
 
@@ -114,7 +116,9 @@ class MetricsCollector:
         if readers:
             provider = MeterProvider(resource=resource, metric_readers=readers)
             metrics.set_meter_provider(provider)
-            self._meter = metrics.get_meter(self.config.service_name, self.config.service_version)
+            self._meter = metrics.get_meter(
+                self.config.service_name, self.config.service_version
+            )
             self._create_instruments()
             self._initialized = True
 
@@ -178,14 +182,22 @@ class MetricsCollector:
             name="redops_active_scans",
             description="Number of currently active scans",
             unit="1",
-            callbacks=[lambda options: [metrics.Observation(self._gauge_values.get("active_scans", 0))]],
+            callbacks=[
+                lambda options: [
+                    metrics.Observation(self._gauge_values.get("active_scans", 0))
+                ]
+            ],
         )
 
         self._meter.create_observable_gauge(
             name="redops_queue_size",
             description="Number of items in job queue",
             unit="1",
-            callbacks=[lambda options: [metrics.Observation(self._gauge_values.get("queue_size", 0))]],
+            callbacks=[
+                lambda options: [
+                    metrics.Observation(self._gauge_values.get("queue_size", 0))
+                ]
+            ],
         )
 
     def record_scan(
@@ -360,6 +372,7 @@ def record_scan_duration(pipeline: str, target: str, status: str = "success"):
         target: Scan target
         status: Default status (can be overridden)
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -369,13 +382,15 @@ def record_scan_duration(pipeline: str, target: str, status: str = "success"):
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except Exception:
                 scan_status = "failure"
                 raise
             finally:
                 duration = time.time() - start
                 collector.record_scan(pipeline, target, scan_status, duration)
+
         return wrapper
+
     return decorator
 
 
@@ -399,6 +414,7 @@ def record_api_request(method: str, endpoint: str):
         method: HTTP method
         endpoint: Endpoint path
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -409,7 +425,7 @@ def record_api_request(method: str, endpoint: str):
                 result = await func(*args, **kwargs)
                 status_code = getattr(result, "status_code", 200)
                 return result
-            except Exception as e:
+            except Exception:
                 status_code = 500
                 raise
             finally:
@@ -425,7 +441,7 @@ def record_api_request(method: str, endpoint: str):
                 result = func(*args, **kwargs)
                 status_code = getattr(result, "status_code", 200)
                 return result
-            except Exception as e:
+            except Exception:
                 status_code = 500
                 raise
             finally:
@@ -433,7 +449,9 @@ def record_api_request(method: str, endpoint: str):
                 collector.record_api_request(method, endpoint, status_code, duration)
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
+
     return decorator

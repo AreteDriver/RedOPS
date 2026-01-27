@@ -11,13 +11,12 @@ import json
 import os
 import re
 import threading
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 import logging
 
 logger = logging.getLogger(__name__)
@@ -81,9 +80,13 @@ class SecretMetadata:
             "tags": self.tags,
             "description": self.description,
             "rotation_policy": self.rotation_policy,
-            "last_rotated": self.last_rotated.isoformat() if self.last_rotated else None,
+            "last_rotated": self.last_rotated.isoformat()
+            if self.last_rotated
+            else None,
             "access_count": self.access_count,
-            "last_accessed": self.last_accessed.isoformat() if self.last_accessed else None,
+            "last_accessed": self.last_accessed.isoformat()
+            if self.last_accessed
+            else None,
         }
 
     @classmethod
@@ -92,16 +95,26 @@ class SecretMetadata:
         return cls(
             name=data["name"],
             secret_type=SecretType(data.get("secret_type", "generic")),
-            created_at=datetime.fromisoformat(data["created_at"]) if data.get("created_at") else datetime.now(),
-            updated_at=datetime.fromisoformat(data["updated_at"]) if data.get("updated_at") else datetime.now(),
-            expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
+            created_at=datetime.fromisoformat(data["created_at"])
+            if data.get("created_at")
+            else datetime.now(),
+            updated_at=datetime.fromisoformat(data["updated_at"])
+            if data.get("updated_at")
+            else datetime.now(),
+            expires_at=datetime.fromisoformat(data["expires_at"])
+            if data.get("expires_at")
+            else None,
             version=data.get("version", 1),
             tags=data.get("tags", {}),
             description=data.get("description", ""),
             rotation_policy=data.get("rotation_policy"),
-            last_rotated=datetime.fromisoformat(data["last_rotated"]) if data.get("last_rotated") else None,
+            last_rotated=datetime.fromisoformat(data["last_rotated"])
+            if data.get("last_rotated")
+            else None,
             access_count=data.get("access_count", 0),
-            last_accessed=datetime.fromisoformat(data["last_accessed"]) if data.get("last_accessed") else None,
+            last_accessed=datetime.fromisoformat(data["last_accessed"])
+            if data.get("last_accessed")
+            else None,
         )
 
 
@@ -159,6 +172,7 @@ class FernetEncryption(EncryptionProvider):
         """
         try:
             from cryptography.fernet import Fernet
+
             self._fernet_class = Fernet
         except ImportError:
             raise ImportError("cryptography package required: pip install cryptography")
@@ -441,7 +455,7 @@ class EnvironmentBackend(SecretBackend):
         secrets = []
         for key in os.environ:
             if self._prefix and key.startswith(self._prefix):
-                name = key[len(self._prefix):].lower().replace("_", "-")
+                name = key[len(self._prefix) :].lower().replace("_", "-")
                 secrets.append(name)
             elif not self._prefix:
                 secrets.append(key.lower().replace("_", "-"))
@@ -506,7 +520,10 @@ class SecretValidator:
 
         pattern = self._patterns.get(secret_type)
         if pattern and not re.match(pattern, value, re.MULTILINE):
-            return False, f"Value does not match expected pattern for {secret_type.value}"
+            return (
+                False,
+                f"Value does not match expected pattern for {secret_type.value}",
+            )
 
         return True, ""
 
@@ -669,7 +686,9 @@ class AuditLog:
         if action:
             entries = [e for e in entries if e["action"] == action]
         if since:
-            entries = [e for e in entries if datetime.fromisoformat(e["timestamp"]) >= since]
+            entries = [
+                e for e in entries if datetime.fromisoformat(e["timestamp"]) >= since
+            ]
 
         # Return most recent first, limited
         return sorted(entries, key=lambda e: e["timestamp"], reverse=True)[:limit]
@@ -770,7 +789,9 @@ class SecretsManager:
         with self._lock:
             self._backend.set(secret)
 
-        self._audit.log("set", name, details={"version": version, "encrypted": encrypted})
+        self._audit.log(
+            "set", name, details={"version": version, "encrypted": encrypted}
+        )
 
         return Secret(value=value, metadata=metadata, encrypted=False)
 
@@ -852,7 +873,9 @@ class SecretsManager:
         """Check if a secret exists."""
         return self._backend.exists(name)
 
-    def list(self, prefix: Optional[str] = None, tags: Optional[Dict[str, str]] = None) -> List[str]:
+    def list(
+        self, prefix: Optional[str] = None, tags: Optional[Dict[str, str]] = None
+    ) -> List[str]:
         """
         List secret names.
 
@@ -1044,7 +1067,7 @@ class SecretsManager:
             # Convert env var name to secret name
             name = key
             if prefix:
-                name = key[len(prefix):]
+                name = key[len(prefix) :]
             name = name.lower().replace("_", "-")
 
             self.set(
@@ -1085,6 +1108,7 @@ class SecretsManager:
 
 
 # Convenience functions
+
 
 def create_secrets_manager(
     backend_type: str = "memory",

@@ -18,8 +18,6 @@ from redops.modules.reporting.export import (
     STIX_ATTACK_PATTERN_TEMPLATE,
     STIX_INDICATOR_TEMPLATE,
     STIX_VULNERABILITY_TEMPLATE,
-    EXECUTIVE_BRIEF_TEMPLATE,
-    TECHNICAL_SUMMARY_TEMPLATE,
 )
 
 
@@ -85,10 +83,13 @@ class TestExportCsv:
         """Test exporting list of dicts."""
         with tempfile.TemporaryDirectory() as tmpdir:
             ctx = Context()
-            ctx.add("risks", [
-                {"level": "high", "title": "Risk 1"},
-                {"level": "medium", "title": "Risk 2"},
-            ])
+            ctx.add(
+                "risks",
+                [
+                    {"level": "high", "title": "Risk 1"},
+                    {"level": "medium", "title": "Risk 2"},
+                ],
+            )
 
             result = export_csv(ctx, params={"output_dir": tmpdir})
 
@@ -129,7 +130,9 @@ class TestExportCsv:
             ctx = Context()
             ctx.add("custom_data", [{"a": 1}, {"a": 2}])
 
-            result = export_csv(ctx, params={"output_dir": tmpdir, "data_key": "custom_data"})
+            result = export_csv(
+                ctx, params={"output_dir": tmpdir, "data_key": "custom_data"}
+            )
 
             assert "custom_data_csv_path" in result.data
 
@@ -194,9 +197,12 @@ class TestExportStix:
         """Test STIX with MITRE mapping."""
         with tempfile.TemporaryDirectory() as tmpdir:
             ctx = Context(target="test.com")
-            ctx.add("mitre_mapping", {
-                "T1059": {"name": "Command Interpreter", "tactic": "Execution"},
-            })
+            ctx.add(
+                "mitre_mapping",
+                {
+                    "T1059": {"name": "Command Interpreter", "tactic": "Execution"},
+                },
+            )
 
             result = export_stix(ctx, params={"output_dir": tmpdir})
 
@@ -225,7 +231,9 @@ class TestExportStix:
         """Test STIX with findings."""
         with tempfile.TemporaryDirectory() as tmpdir:
             ctx = Context(target="test.com")
-            ctx.add("finding_1", {"title": "Exposed API", "description": "Test finding"})
+            ctx.add(
+                "finding_1", {"title": "Exposed API", "description": "Test finding"}
+            )
 
             result = export_stix(ctx, params={"output_dir": tmpdir})
 
@@ -244,8 +252,12 @@ class TestCreateStixAttackPattern:
         """Test with dict technique info."""
         result = create_stix_attack_pattern(
             "T1059",
-            {"name": "Command Interpreter", "description": "Executes commands", "tactic": "Execution"},
-            "2024-01-01T00:00:00.000Z"
+            {
+                "name": "Command Interpreter",
+                "description": "Executes commands",
+                "tactic": "Execution",
+            },
+            "2024-01-01T00:00:00.000Z",
         )
 
         assert result["type"] == "attack-pattern"
@@ -256,9 +268,7 @@ class TestCreateStixAttackPattern:
     def test_with_non_dict_info(self):
         """Test with non-dict technique info (just string)."""
         result = create_stix_attack_pattern(
-            "T1059",
-            "Just a string",
-            "2024-01-01T00:00:00.000Z"
+            "T1059", "Just a string", "2024-01-01T00:00:00.000Z"
         )
 
         assert result["type"] == "attack-pattern"
@@ -268,9 +278,7 @@ class TestCreateStixAttackPattern:
     def test_external_references(self):
         """Test external references are correct."""
         result = create_stix_attack_pattern(
-            "T1059.001",
-            {"name": "PowerShell"},
-            "2024-01-01T00:00:00.000Z"
+            "T1059.001", {"name": "PowerShell"}, "2024-01-01T00:00:00.000Z"
         )
 
         refs = result["external_references"]
@@ -285,8 +293,12 @@ class TestCreateStixVulnerability:
     def test_basic_vulnerability(self):
         """Test basic vulnerability creation."""
         result = create_stix_vulnerability(
-            {"title": "SQL Injection", "description": "Input validation flaw", "level": "critical"},
-            "2024-01-01T00:00:00.000Z"
+            {
+                "title": "SQL Injection",
+                "description": "Input validation flaw",
+                "level": "critical",
+            },
+            "2024-01-01T00:00:00.000Z",
         )
 
         assert result["type"] == "vulnerability"
@@ -296,8 +308,13 @@ class TestCreateStixVulnerability:
     def test_with_cve(self):
         """Test vulnerability with CVE."""
         result = create_stix_vulnerability(
-            {"title": "Log4Shell", "description": "RCE", "level": "critical", "cve": "CVE-2021-44228"},
-            "2024-01-01T00:00:00.000Z"
+            {
+                "title": "Log4Shell",
+                "description": "RCE",
+                "level": "critical",
+                "cve": "CVE-2021-44228",
+            },
+            "2024-01-01T00:00:00.000Z",
         )
 
         assert len(result["external_references"]) == 1
@@ -311,7 +328,7 @@ class TestCreateStixIndicator:
         """Test basic indicator creation."""
         result = create_stix_indicator(
             {"title": "Exposed API Key", "description": "Found in config file"},
-            "2024-01-01T00:00:00.000Z"
+            "2024-01-01T00:00:00.000Z",
         )
 
         assert result["type"] == "indicator"
@@ -321,8 +338,7 @@ class TestCreateStixIndicator:
     def test_empty_title_returns_none(self):
         """Test that empty title returns None."""
         result = create_stix_indicator(
-            {"description": "No title"},
-            "2024-01-01T00:00:00.000Z"
+            {"description": "No title"}, "2024-01-01T00:00:00.000Z"
         )
 
         assert result is None
@@ -348,11 +364,14 @@ class TestExportFromTemplate:
         """Test template with risk variables."""
         with tempfile.TemporaryDirectory() as tmpdir:
             ctx = Context(target="test.com")
-            ctx.add("risks", [
-                {"level": "critical"},
-                {"level": "high"},
-                {"level": "medium"},
-            ])
+            ctx.add(
+                "risks",
+                [
+                    {"level": "critical"},
+                    {"level": "high"},
+                    {"level": "medium"},
+                ],
+            )
             template = "Critical: {critical_risks}, High: {high_risks}"
 
             result = export_from_template(ctx, template, params={"output_dir": tmpdir})
@@ -427,7 +446,9 @@ class TestExportFromTemplate:
             template = "Test"
 
             result = export_from_template(
-                ctx, template, params={"output_dir": tmpdir, "output_name": "custom.txt"}
+                ctx,
+                template,
+                params={"output_dir": tmpdir, "output_name": "custom.txt"},
             )
 
             assert "custom.txt" in result.data["template_export_path"]
@@ -476,14 +497,27 @@ class TestIntegration:
         """Test complete export workflow."""
         with tempfile.TemporaryDirectory() as tmpdir:
             ctx = Context(target="integration-test.com")
-            ctx.add("risks", [
-                {"level": "critical", "title": "Critical Issue", "cve": "CVE-2024-0001"},
-                {"level": "high", "title": "High Issue"},
-            ])
-            ctx.add("mitre_mapping", {
-                "T1059": {"name": "Command Interpreter", "tactic": "Execution"},
-            })
-            ctx.add("finding_test", {"title": "Test Finding", "description": "Found something"})
+            ctx.add(
+                "risks",
+                [
+                    {
+                        "level": "critical",
+                        "title": "Critical Issue",
+                        "cve": "CVE-2024-0001",
+                    },
+                    {"level": "high", "title": "High Issue"},
+                ],
+            )
+            ctx.add(
+                "mitre_mapping",
+                {
+                    "T1059": {"name": "Command Interpreter", "tactic": "Execution"},
+                },
+            )
+            ctx.add(
+                "finding_test",
+                {"title": "Test Finding", "description": "Found something"},
+            )
             ctx.add("attack_paths", [{"name": "Path 1"}])
 
             result = export_all(ctx, params={"output_dir": tmpdir})

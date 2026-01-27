@@ -9,7 +9,6 @@ Sends scan results and alerts to various channels:
 """
 
 import os
-import json
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -19,6 +18,7 @@ from datetime import datetime, timezone
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -27,6 +27,7 @@ except ImportError:
 @dataclass
 class NotificationConfig:
     """Configuration for notifications."""
+
     slack_webhook_url: Optional[str] = None
     discord_webhook_url: Optional[str] = None
     smtp_host: Optional[str] = None
@@ -68,9 +69,11 @@ class NotificationService:
         """Check if required dependencies are available."""
         if not HAS_REQUESTS:
             # Only warn if webhook URLs are configured
-            if (self.config.slack_webhook_url or
-                self.config.discord_webhook_url or
-                self.config.webhook_urls):
+            if (
+                self.config.slack_webhook_url
+                or self.config.discord_webhook_url
+                or self.config.webhook_urls
+            ):
                 raise ImportError(
                     "requests library required for webhook notifications. "
                     "Install with: pip install requests"
@@ -153,12 +156,6 @@ class NotificationService:
         """
         results = {}
 
-        formatted = {
-            "title": title,
-            "text": message,
-            "severity": severity,
-        }
-
         # Determine color based on severity
         colors = {
             "info": "#36a64f",
@@ -219,9 +216,7 @@ High: {high_count}
             "high_count": high_count,
         }
 
-    def _send_slack(
-        self, message: Dict[str, Any], critical: int, high: int
-    ) -> bool:
+    def _send_slack(self, message: Dict[str, Any], critical: int, high: int) -> bool:
         """Send notification to Slack."""
         if not HAS_REQUESTS:
             return False
@@ -235,19 +230,29 @@ High: {high_count}
             color = "#36a64f"
 
         payload = {
-            "attachments": [{
-                "color": color,
-                "title": message["title"],
-                "text": message["text"],
-                "fields": [
-                    {"title": "Target", "value": message["target"], "short": True},
-                    {"title": "Preset", "value": message["preset"], "short": True},
-                    {"title": "Findings", "value": str(message["findings_count"]), "short": True},
-                    {"title": "Critical", "value": str(message["critical_count"]), "short": True},
-                ],
-                "footer": "RedOPS Security Scanner",
-                "ts": int(datetime.now(timezone.utc).timestamp()),
-            }]
+            "attachments": [
+                {
+                    "color": color,
+                    "title": message["title"],
+                    "text": message["text"],
+                    "fields": [
+                        {"title": "Target", "value": message["target"], "short": True},
+                        {"title": "Preset", "value": message["preset"], "short": True},
+                        {
+                            "title": "Findings",
+                            "value": str(message["findings_count"]),
+                            "short": True,
+                        },
+                        {
+                            "title": "Critical",
+                            "value": str(message["critical_count"]),
+                            "short": True,
+                        },
+                    ],
+                    "footer": "RedOPS Security Scanner",
+                    "ts": int(datetime.now(timezone.utc).timestamp()),
+                }
+            ]
         }
 
         try:
@@ -266,13 +271,15 @@ High: {high_count}
             return False
 
         payload = {
-            "attachments": [{
-                "color": color,
-                "title": title,
-                "text": message,
-                "footer": "RedOPS Alert",
-                "ts": int(datetime.now(timezone.utc).timestamp()),
-            }]
+            "attachments": [
+                {
+                    "color": color,
+                    "title": title,
+                    "text": message,
+                    "footer": "RedOPS Alert",
+                    "ts": int(datetime.now(timezone.utc).timestamp()),
+                }
+            ]
         }
 
         try:
@@ -285,9 +292,7 @@ High: {high_count}
         except Exception:
             return False
 
-    def _send_discord(
-        self, message: Dict[str, Any], critical: int, high: int
-    ) -> bool:
+    def _send_discord(self, message: Dict[str, Any], critical: int, high: int) -> bool:
         """Send notification to Discord."""
         if not HAS_REQUESTS:
             return False
@@ -301,18 +306,24 @@ High: {high_count}
             color = 3066993  # Green
 
         payload = {
-            "embeds": [{
-                "title": message["title"],
-                "description": message["text"],
-                "color": color,
-                "fields": [
-                    {"name": "Target", "value": message["target"], "inline": True},
-                    {"name": "Preset", "value": message["preset"], "inline": True},
-                    {"name": "Findings", "value": str(message["findings_count"]), "inline": True},
-                ],
-                "footer": {"text": "RedOPS Security Scanner"},
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }]
+            "embeds": [
+                {
+                    "title": message["title"],
+                    "description": message["text"],
+                    "color": color,
+                    "fields": [
+                        {"name": "Target", "value": message["target"], "inline": True},
+                        {"name": "Preset", "value": message["preset"], "inline": True},
+                        {
+                            "name": "Findings",
+                            "value": str(message["findings_count"]),
+                            "inline": True,
+                        },
+                    ],
+                    "footer": {"text": "RedOPS Security Scanner"},
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            ]
         }
 
         try:
@@ -334,13 +345,15 @@ High: {high_count}
         color_int = int(color.lstrip("#"), 16)
 
         payload = {
-            "embeds": [{
-                "title": title,
-                "description": message,
-                "color": color_int,
-                "footer": {"text": "RedOPS Alert"},
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }]
+            "embeds": [
+                {
+                    "title": title,
+                    "description": message,
+                    "color": color_int,
+                    "footer": {"text": "RedOPS Alert"},
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            ]
         }
 
         try:
@@ -399,12 +412,10 @@ def notify_on_complete(ctx, params: Optional[Dict[str, Any]] = None):
         # Extract findings info from context
         findings_count = len(ctx.data.get("findings", []))
         critical_count = sum(
-            1 for f in ctx.data.get("findings", [])
-            if f.get("severity") == "critical"
+            1 for f in ctx.data.get("findings", []) if f.get("severity") == "critical"
         )
         high_count = sum(
-            1 for f in ctx.data.get("findings", [])
-            if f.get("severity") == "high"
+            1 for f in ctx.data.get("findings", []) if f.get("severity") == "high"
         )
 
         results = service.notify_scan_complete(

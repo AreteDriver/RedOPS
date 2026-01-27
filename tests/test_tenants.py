@@ -1,7 +1,6 @@
 """Tests for multi-tenant support."""
 
 import pytest
-from datetime import datetime, timezone, timedelta
 
 from redops.tenants.models import (
     Tenant,
@@ -13,12 +12,9 @@ from redops.tenants.models import (
 )
 from redops.tenants.manager import (
     TenantManager,
-    MemoryTenantBackend,
     get_current_tenant,
     set_current_tenant,
     tenant_context,
-    TenantRequired,
-    QuotaExceeded,
 )
 from redops.tenants.middleware import (
     HeaderTenantResolver,
@@ -29,7 +25,6 @@ from redops.tenants.middleware import (
 from redops.tenants.isolation import (
     TenantIsolation,
     TenantDataStore,
-    IsolatedStorage,
     TenantAwareCache,
 )
 
@@ -380,7 +375,7 @@ class TestTenantManager:
         t1.status = TenantStatus.ACTIVE
         manager._backend.save(t1)
 
-        t2 = manager.create_tenant(
+        manager.create_tenant(
             name="Test 2",
             owner_email="t2@example.com",
             tier=TenantTier.PROFESSIONAL,
@@ -479,10 +474,12 @@ class TestTenantResolvers:
 
     def test_chained_resolver(self):
         """Test chained resolver."""
-        resolver = ChainedTenantResolver([
-            HeaderTenantResolver(),
-            SubdomainTenantResolver(base_domain="example.com"),
-        ])
+        resolver = ChainedTenantResolver(
+            [
+                HeaderTenantResolver(),
+                SubdomainTenantResolver(base_domain="example.com"),
+            ]
+        )
 
         # First resolver matches
         class RequestWithHeader:

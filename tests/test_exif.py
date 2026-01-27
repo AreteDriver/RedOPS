@@ -508,7 +508,7 @@ class TestExtractExifSingleFile:
     def test_extract_single_file_with_findings(self):
         """Test extracting EXIF from a single file generates findings."""
         from PIL import Image
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import patch
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a test image
@@ -528,7 +528,10 @@ class TestExtractExifSingleFile:
             )
 
             ctx = Context()
-            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif):
+            with patch(
+                "redops.modules.metadata.exif.extract_exif_from_file",
+                return_value=mock_exif,
+            ):
                 result = extract_exif(ctx, {"file_path": str(img_path)})
 
             # Should have exif_data and findings
@@ -556,7 +559,10 @@ class TestExtractExifSingleFile:
             )
 
             ctx = Context()
-            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif):
+            with patch(
+                "redops.modules.metadata.exif.extract_exif_from_file",
+                return_value=mock_exif,
+            ):
                 result = extract_exif(ctx, {"file_path": str(img_path)})
 
             warnings = result.get_logs(level="WARNING")
@@ -581,7 +587,10 @@ class TestExtractExifSingleFile:
             )
 
             ctx = Context()
-            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif):
+            with patch(
+                "redops.modules.metadata.exif.extract_exif_from_file",
+                return_value=mock_exif,
+            ):
                 result = extract_exif(ctx, {"file_path": str(img_path)})
 
             info_logs = result.get_logs(level="INFO")
@@ -621,7 +630,9 @@ class TestExtractExifFromFileEdgeCases:
             img = Image.new("RGB", (100, 100), color="red")
             img.save(f.name)
 
-            with patch("redops.modules.metadata.exif.Image.open", return_value=mock_img):
+            with patch(
+                "redops.modules.metadata.exif.Image.open", return_value=mock_img
+            ):
                 result = extract_exif_from_file(f.name)
 
             assert result is not None
@@ -651,11 +662,15 @@ class TestExtractExifFromFileEdgeCases:
             img = Image.new("RGB", (100, 100), color="red")
             img.save(f.name)
 
-            with patch("redops.modules.metadata.exif.Image.open", return_value=mock_img):
+            with patch(
+                "redops.modules.metadata.exif.Image.open", return_value=mock_img
+            ):
                 result = extract_exif_from_file(f.name)
 
             assert result is not None
-            assert "Make" in result.sensitive_fields or "Artist" in result.sensitive_fields
+            assert (
+                "Make" in result.sensitive_fields or "Artist" in result.sensitive_fields
+            )
 
     @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
     def test_extract_with_exception(self):
@@ -673,7 +688,9 @@ class TestExtractExifFromFileEdgeCases:
             def mock_open(path):
                 img = original_open(path)
                 # Make _getexif raise an exception
-                img._getexif = lambda: (_ for _ in ()).throw(Exception("EXIF read error"))
+                img._getexif = lambda: (_ for _ in ()).throw(
+                    Exception("EXIF read error")
+                )
                 return img
 
             with patch.object(Image, "open", side_effect=mock_open):
@@ -709,7 +726,10 @@ class TestParseGpsInfoEdgeCases:
         from unittest.mock import patch
 
         # Force dms_to_decimal to raise an exception
-        with patch("redops.modules.metadata.exif.dms_to_decimal", side_effect=Exception("Conversion error")):
+        with patch(
+            "redops.modules.metadata.exif.dms_to_decimal",
+            side_effect=Exception("Conversion error"),
+        ):
             gps_info = {
                 1: "N",
                 2: (40, 44, 55.0),
@@ -733,6 +753,7 @@ class TestConvertExifValueEdgeCases:
 
     def test_convert_unknown_type_to_string(self):
         """Test converting unknown type falls back to str()."""
+
         # Create a custom object that isn't a basic type
         class CustomObject:
             def __str__(self):
@@ -762,7 +783,6 @@ class TestStripExifEdgeCases:
     @pytest.mark.skipif(not PILLOW_AVAILABLE, reason="Pillow not available")
     def test_strip_exif_exception(self):
         """Test strip_exif handles exception."""
-        from unittest.mock import patch
 
         with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
             # Write invalid image data
@@ -860,12 +880,16 @@ class TestExtractExifWithDatetimeParsing:
             img = Image.new("RGB", (100, 100), color="red")
             img.save(f.name)
 
-            with patch("redops.modules.metadata.exif.Image.open", return_value=mock_img):
+            with patch(
+                "redops.modules.metadata.exif.Image.open", return_value=mock_img
+            ):
                 result = extract_exif_from_file(f.name)
 
             assert result is not None
             # Datetime tags should be present
-            assert "DateTime" in result.metadata or "DateTimeOriginal" in result.metadata
+            assert (
+                "DateTime" in result.metadata or "DateTimeOriginal" in result.metadata
+            )
 
 
 class TestExtractExifDirectoryWithWarnings:
@@ -892,7 +916,10 @@ class TestExtractExifDirectoryWithWarnings:
             )
 
             ctx = Context(target=tmpdir)
-            with patch("redops.modules.metadata.exif.extract_exif_from_file", return_value=mock_exif_with_warning):
+            with patch(
+                "redops.modules.metadata.exif.extract_exif_from_file",
+                return_value=mock_exif_with_warning,
+            ):
                 result = extract_exif(ctx, {"include_warnings": False})
 
             # Should not include the file since it has warnings

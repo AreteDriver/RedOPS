@@ -3,7 +3,6 @@
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 import httpx
@@ -32,39 +31,40 @@ def report():
 @report.command("generate")
 @click.argument("scan_id")
 @click.option(
-    "-t", "--type",
+    "-t",
+    "--type",
     "report_type",
     type=click.Choice(["executive", "detailed", "compliance", "comparison"]),
     default="executive",
-    help="Report type"
+    help="Report type",
 )
 @click.option(
-    "-f", "--format",
+    "-f",
+    "--format",
     "report_format",
     type=click.Choice(["pdf", "html", "markdown", "json"]),
     default="pdf",
-    help="Output format"
+    help="Output format",
 )
-@click.option(
-    "-o", "--output",
-    type=click.Path(),
-    help="Output file path"
-)
-@click.option(
-    "--title",
-    help="Custom report title"
-)
-@click.option(
-    "--organization",
-    help="Organization name for report"
-)
+@click.option("-o", "--output", type=click.Path(), help="Output file path")
+@click.option("--title", help="Custom report title")
+@click.option("--organization", help="Organization name for report")
 @click.option(
     "--include-remediation/--no-remediation",
     default=True,
-    help="Include remediation guidance"
+    help="Include remediation guidance",
 )
 @click.pass_context
-def generate_cmd(ctx, scan_id, report_type, report_format, output, title, organization, include_remediation):
+def generate_cmd(
+    ctx,
+    scan_id,
+    report_type,
+    report_format,
+    output,
+    title,
+    organization,
+    include_remediation,
+):
     """Generate a report from scan results.
 
     \b
@@ -179,22 +179,14 @@ def generate_cmd(ctx, scan_id, report_type, report_format, output, title, organi
 
 
 @report.command("list")
-@click.option(
-    "--scan-id",
-    help="Filter by scan ID"
-)
+@click.option("--scan-id", help="Filter by scan ID")
 @click.option(
     "--type",
     "report_type",
     type=click.Choice(["executive", "detailed", "compliance", "comparison"]),
-    help="Filter by report type"
+    help="Filter by report type",
 )
-@click.option(
-    "--limit",
-    type=int,
-    default=20,
-    help="Maximum number of results"
-)
+@click.option("--limit", type=int, default=20, help="Maximum number of results")
 @click.pass_context
 def list_cmd(ctx, scan_id, report_type, limit):
     """List generated reports.
@@ -249,11 +241,7 @@ def list_cmd(ctx, scan_id, report_type, limit):
 
 @report.command("download")
 @click.argument("report_id")
-@click.option(
-    "-o", "--output",
-    type=click.Path(),
-    help="Output file path"
-)
+@click.option("-o", "--output", type=click.Path(), help="Output file path")
 @click.pass_context
 def download_cmd(ctx, report_id, output):
     """Download a generated report.
@@ -307,11 +295,7 @@ def download_cmd(ctx, report_id, output):
 
 @report.command("delete")
 @click.argument("report_id")
-@click.option(
-    "--force", "-f",
-    is_flag=True,
-    help="Force delete without confirmation"
-)
+@click.option("--force", "-f", is_flag=True, help="Force delete without confirmation")
 @click.pass_context
 def delete_cmd(ctx, report_id, force):
     """Delete a generated report.

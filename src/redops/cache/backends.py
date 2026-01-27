@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """A cached item with metadata."""
+
     key: str
     value: Any
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -53,6 +54,7 @@ class CacheEntry:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CacheEntry":
         """Deserialize from dictionary."""
+
         def parse_dt(val):
             if val is None:
                 return None
@@ -233,6 +235,7 @@ class MemoryBackend(CacheBackend):
 
             # Simple glob matching
             import fnmatch
+
             return [k for k in self._cache.keys() if fnmatch.fnmatch(k, pattern)]
 
     def _evict_lru(self) -> None:
@@ -302,6 +305,7 @@ class RedisBackend(CacheBackend):
 
         try:
             import redis
+
             if connection_pool:
                 self._client = redis.Redis(connection_pool=connection_pool)
             else:
@@ -335,7 +339,7 @@ class RedisBackend(CacheBackend):
     def _strip_prefix(self, key: str) -> str:
         """Remove prefix from key."""
         if key.startswith(self._prefix):
-            return key[len(self._prefix):]
+            return key[len(self._prefix) :]
         return key
 
     def get(self, key: str) -> Optional[CacheEntry]:

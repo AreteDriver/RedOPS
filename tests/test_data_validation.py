@@ -2,32 +2,49 @@
 
 import pytest
 from datetime import datetime, date
-from decimal import Decimal
 from uuid import UUID, uuid4
 
 from redops.core.data_validation import (
     # Exceptions
-    ValidationError, CoercionError, ContractViolation,
+    ValidationError,
+    CoercionError,
+    ContractViolation,
     # Rules
-    ValidationRule, Required, TypeOf, Range, Length, Pattern,
-    OneOf, NoneOf, Email, URL, IPAddress, UUID4, DateFormat,
-    Custom, All, Any_,
+    Required,
+    TypeOf,
+    Range,
+    Length,
+    Pattern,
+    OneOf,
+    NoneOf,
+    Email,
+    URL,
+    IPAddress,
+    UUID4,
+    DateFormat,
+    Custom,
+    All,
+    Any_,
     # Coercion
     TypeCoercer,
     # Schema
-    FieldSpec, Schema, ValidationResult,
-    # Contracts
-    DataContract, ContractRegistry,
+    FieldSpec,
+    Schema,
+    DataContract,
+    ContractRegistry,
     # Security validators
     SecurityValidators,
     # Utilities
-    validate_dict, validate_list, create_schema,
+    validate_dict,
+    validate_list,
+    create_schema,
 )
 
 
 # =============================================================================
 # ValidationError Tests
 # =============================================================================
+
 
 class TestValidationError:
     """Tests for ValidationError."""
@@ -59,6 +76,7 @@ class TestValidationError:
 # =============================================================================
 # Required Rule Tests
 # =============================================================================
+
 
 class TestRequiredRule:
     """Tests for Required validation rule."""
@@ -103,6 +121,7 @@ class TestRequiredRule:
 # TypeOf Rule Tests
 # =============================================================================
 
+
 class TestTypeOfRule:
     """Tests for TypeOf validation rule."""
 
@@ -130,6 +149,7 @@ class TestTypeOfRule:
 # =============================================================================
 # Range Rule Tests
 # =============================================================================
+
 
 class TestRangeRule:
     """Tests for Range validation rule."""
@@ -179,6 +199,7 @@ class TestRangeRule:
 # Length Rule Tests
 # =============================================================================
 
+
 class TestLengthRule:
     """Tests for Length validation rule."""
 
@@ -217,30 +238,32 @@ class TestLengthRule:
 # Pattern Rule Tests
 # =============================================================================
 
+
 class TestPatternRule:
     """Tests for Pattern validation rule."""
 
     def test_matches(self):
         """Test matching pattern."""
-        rule = Pattern(r'^[A-Z]{3}-\d{4}$')
+        rule = Pattern(r"^[A-Z]{3}-\d{4}$")
         rule.validate("ABC-1234")
 
     def test_no_match(self):
         """Test non-matching pattern."""
-        rule = Pattern(r'^[A-Z]{3}-\d{4}$')
+        rule = Pattern(r"^[A-Z]{3}-\d{4}$")
         with pytest.raises(ValidationError):
             rule.validate("invalid")
 
     def test_non_string_fails(self):
         """Test that non-strings fail."""
-        rule = Pattern(r'.*')
+        rule = Pattern(r".*")
         with pytest.raises(ValidationError):
             rule.validate(123)
 
     def test_compiled_pattern(self):
         """Test with pre-compiled pattern."""
         import re
-        compiled = re.compile(r'^\d+$')
+
+        compiled = re.compile(r"^\d+$")
         rule = Pattern(compiled)
         rule.validate("123")
 
@@ -249,49 +272,52 @@ class TestPatternRule:
 # OneOf Rule Tests
 # =============================================================================
 
+
 class TestOneOfRule:
     """Tests for OneOf validation rule."""
 
     def test_valid_choice(self):
         """Test valid choice."""
-        rule = OneOf('red', 'green', 'blue')
-        rule.validate('red')
+        rule = OneOf("red", "green", "blue")
+        rule.validate("red")
 
     def test_invalid_choice(self):
         """Test invalid choice."""
-        rule = OneOf('red', 'green', 'blue')
+        rule = OneOf("red", "green", "blue")
         with pytest.raises(ValidationError):
-            rule.validate('yellow')
+            rule.validate("yellow")
 
     def test_case_insensitive(self):
         """Test case insensitive matching."""
-        rule = OneOf('red', 'green', 'blue', case_sensitive=False)
-        rule.validate('RED')
-        rule.validate('Green')
+        rule = OneOf("red", "green", "blue", case_sensitive=False)
+        rule.validate("RED")
+        rule.validate("Green")
 
 
 # =============================================================================
 # NoneOf Rule Tests
 # =============================================================================
 
+
 class TestNoneOfRule:
     """Tests for NoneOf validation rule."""
 
     def test_valid_value(self):
         """Test value not in forbidden list."""
-        rule = NoneOf('admin', 'root', 'system')
-        rule.validate('user')
+        rule = NoneOf("admin", "root", "system")
+        rule.validate("user")
 
     def test_forbidden_value(self):
         """Test forbidden value."""
-        rule = NoneOf('admin', 'root', 'system')
+        rule = NoneOf("admin", "root", "system")
         with pytest.raises(ValidationError):
-            rule.validate('admin')
+            rule.validate("admin")
 
 
 # =============================================================================
 # Email Rule Tests
 # =============================================================================
+
 
 class TestEmailRule:
     """Tests for Email validation rule."""
@@ -318,6 +344,7 @@ class TestEmailRule:
 # URL Rule Tests
 # =============================================================================
 
+
 class TestURLRule:
     """Tests for URL validation rule."""
 
@@ -340,6 +367,7 @@ class TestURLRule:
 # =============================================================================
 # IPAddress Rule Tests
 # =============================================================================
+
 
 class TestIPAddressRule:
     """Tests for IPAddress validation rule."""
@@ -376,6 +404,7 @@ class TestIPAddressRule:
 # UUID Rule Tests
 # =============================================================================
 
+
 class TestUUID4Rule:
     """Tests for UUID4 validation rule."""
 
@@ -399,6 +428,7 @@ class TestUUID4Rule:
 # =============================================================================
 # DateFormat Rule Tests
 # =============================================================================
+
 
 class TestDateFormatRule:
     """Tests for DateFormat validation rule."""
@@ -429,6 +459,7 @@ class TestDateFormatRule:
 # Custom Rule Tests
 # =============================================================================
 
+
 class TestCustomRule:
     """Tests for Custom validation rule."""
 
@@ -447,6 +478,7 @@ class TestCustomRule:
 # =============================================================================
 # Composite Rule Tests
 # =============================================================================
+
 
 class TestCompositeRules:
     """Tests for composite rules (All, Any_)."""
@@ -478,6 +510,7 @@ class TestCompositeRules:
 # =============================================================================
 # TypeCoercer Tests
 # =============================================================================
+
 
 class TestTypeCoercer:
     """Tests for TypeCoercer."""
@@ -565,6 +598,7 @@ class TestTypeCoercer:
 # FieldSpec Tests
 # =============================================================================
 
+
 class TestFieldSpec:
     """Tests for FieldSpec."""
 
@@ -612,6 +646,7 @@ class TestFieldSpec:
 # Schema Tests
 # =============================================================================
 
+
 class TestSchema:
     """Tests for Schema."""
 
@@ -647,7 +682,9 @@ class TestSchema:
         schema = Schema(strict=True)
         schema.field("name", str)
 
-        result = schema.validate({"name": "John", "extra": "field"}, raise_on_error=False)
+        result = schema.validate(
+            {"name": "John", "extra": "field"}, raise_on_error=False
+        )
         assert not result.is_valid
 
     def test_coerce_mode(self):
@@ -700,6 +737,7 @@ class TestSchema:
 # DataContract Tests
 # =============================================================================
 
+
 class TestDataContract:
     """Tests for DataContract."""
 
@@ -709,11 +747,7 @@ class TestDataContract:
         schema.field("id", str, rules=[Required()])
         schema.field("value", int)
 
-        contract = DataContract(
-            name="test_contract",
-            version="1.0.0",
-            schema=schema
-        )
+        contract = DataContract(name="test_contract", version="1.0.0", schema=schema)
 
         result = contract.validate({"id": "abc", "value": 42})
         assert result.is_valid
@@ -723,11 +757,7 @@ class TestDataContract:
         schema = Schema()
         schema.field("id", str, rules=[Required()])
 
-        contract = DataContract(
-            name="test_contract",
-            version="1.0.0",
-            schema=schema
-        )
+        contract = DataContract(name="test_contract", version="1.0.0", schema=schema)
 
         data = contract.enforce({"id": "abc"})
         assert data["id"] == "abc"
@@ -737,11 +767,7 @@ class TestDataContract:
         schema = Schema()
         schema.field("id", str, rules=[Required()])
 
-        contract = DataContract(
-            name="test_contract",
-            version="1.0.0",
-            schema=schema
-        )
+        contract = DataContract(name="test_contract", version="1.0.0", schema=schema)
 
         with pytest.raises(ContractViolation):
             contract.enforce({"id": ""})
@@ -751,11 +777,7 @@ class TestDataContract:
         schema = Schema()
         schema.field("id", str)
 
-        contract = DataContract(
-            name="test",
-            version="1.0.0",
-            schema=schema
-        )
+        contract = DataContract(name="test", version="1.0.0", schema=schema)
 
         fp = contract.fingerprint()
         assert len(fp) == 16
@@ -781,6 +803,7 @@ class TestDataContract:
 # =============================================================================
 # ContractRegistry Tests
 # =============================================================================
+
 
 class TestContractRegistry:
     """Tests for ContractRegistry."""
@@ -852,6 +875,7 @@ class TestContractRegistry:
 # SecurityValidators Tests
 # =============================================================================
 
+
 class TestSecurityValidators:
     """Tests for SecurityValidators."""
 
@@ -911,7 +935,9 @@ class TestSecurityValidators:
     def test_sha256_hash(self):
         """Test SHA256 hash validator."""
         rule = SecurityValidators.sha256_hash()
-        rule.validate("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        rule.validate(
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
         with pytest.raises(ValidationError):
             rule.validate("invalid")
 
@@ -959,6 +985,7 @@ class TestSecurityValidators:
 # Utility Function Tests
 # =============================================================================
 
+
 class TestUtilityFunctions:
     """Tests for utility functions."""
 
@@ -984,16 +1011,13 @@ class TestUtilityFunctions:
     def test_create_schema(self):
         """Test create_schema function."""
         schema = create_schema(
-            name=(str, Required()),
-            age=(int, Range(0, 150)),
-            email=(str, Email())
+            name=(str, Required()), age=(int, Range(0, 150)), email=(str, Email())
         )
 
-        result = schema.validate({
-            "name": "John",
-            "age": 30,
-            "email": "john@example.com"
-        }, raise_on_error=False)
+        result = schema.validate(
+            {"name": "John", "age": 30, "email": "john@example.com"},
+            raise_on_error=False,
+        )
 
         assert result.is_valid
 
@@ -1001,6 +1025,7 @@ class TestUtilityFunctions:
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestIntegration:
     """Integration tests for data validation."""
@@ -1025,7 +1050,7 @@ class TestIntegration:
             "source_ip": "192.168.1.100",
             "destination_ip": "10.0.0.1",
             "port": 443,
-            "description": "Suspicious connection attempt"
+            "description": "Suspicious connection attempt",
         }
 
         result = schema.validate(event, raise_on_error=False)
@@ -1046,7 +1071,7 @@ class TestIntegration:
             version="1.0.0",
             schema=schema,
             producer="scanner",
-            consumer="dashboard"
+            consumer="dashboard",
         )
 
         vuln = {
@@ -1054,7 +1079,7 @@ class TestIntegration:
             "cvss_score": 8.5,
             "severity": "high",
             "affected_systems": ["server-1", "server-2"],
-            "description": "Remote code execution vulnerability"
+            "description": "Remote code execution vulnerability",
         }
 
         validated = contract.enforce(vuln)
@@ -1092,6 +1117,6 @@ class TestIntegration:
         result = registry.validate(
             "user",
             {"id": "1", "name": "John", "email": "john@example.com"},
-            version="2.0.0"
+            version="2.0.0",
         )
         assert result.is_valid

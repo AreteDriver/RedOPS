@@ -8,7 +8,7 @@ import pytest
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from redops.pipelines.loader import PipelineLoader
 from redops.pipelines.runner import PipelineRunner
@@ -58,9 +58,7 @@ class TestPipelineLoading:
             ],
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(pipeline_def, f)
             f.flush()
 
@@ -70,9 +68,7 @@ class TestPipelineLoading:
 
     def test_load_invalid_json(self):
         """Test error handling for invalid JSON."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("not valid json {{{")
             f.flush()
 
@@ -91,9 +87,7 @@ class TestPipelineLoading:
             # Missing required 'steps' field
         }
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(pipeline_def, f)
             f.flush()
 
@@ -104,9 +98,7 @@ class TestPipelineLoading:
         """Test saving a pipeline to file."""
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Save Test", version="1.0"),
-            steps=[
-                PipelineStep(name="Step", module="recon.domains.enumerate_dns")
-            ],
+            steps=[PipelineStep(name="Step", module="recon.domains.enumerate_dns")],
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -164,7 +156,9 @@ class TestPipelineValidation:
             steps=[
                 PipelineStep(name="Enabled", module="recon.domains.a", enabled=True),
                 PipelineStep(name="Disabled", module="recon.domains.b", enabled=False),
-                PipelineStep(name="Also Enabled", module="recon.domains.c", enabled=True),
+                PipelineStep(
+                    name="Also Enabled", module="recon.domains.c", enabled=True
+                ),
             ],
         )
 
@@ -179,6 +173,7 @@ class TestPipelineExecution:
 
     def test_simple_pipeline_execution(self):
         """Test execution of a simple single-step pipeline."""
+
         # Create a mock module function
         def mock_module(ctx, params):
             ctx.add("mock_result", {"status": "success"})
@@ -186,16 +181,12 @@ class TestPipelineExecution:
 
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Simple"),
-            steps=[
-                PipelineStep(name="Mock Step", module="recon.domains.mock_fn")
-            ],
+            steps=[PipelineStep(name="Mock Step", module="recon.domains.mock_fn")],
         )
 
         runner = PipelineRunner(pipeline)
 
-        with patch.object(
-            runner, "_resolve_module_function", return_value=mock_module
-        ):
+        with patch.object(runner, "_resolve_module_function", return_value=mock_module):
             ctx = runner.run(target="example.com")
 
         assert ctx.target == "example.com"
@@ -278,6 +269,7 @@ class TestPipelineExecution:
 
     def test_initial_context_preserved(self):
         """Test that initial context data is preserved."""
+
         def mock_module(ctx, params):
             ctx.add("new_data", "added")
             return ctx
@@ -304,6 +296,7 @@ class TestPipelineErrorHandling:
 
     def test_step_failure_stops_pipeline(self):
         """Test that step failure stops pipeline by default."""
+
         def failing_module(ctx, params):
             raise ValueError("Module failed")
 
@@ -320,7 +313,9 @@ class TestPipelineErrorHandling:
 
         runner = PipelineRunner(pipeline)
 
-        with patch.object(runner, "_resolve_module_function", return_value=failing_module):
+        with patch.object(
+            runner, "_resolve_module_function", return_value=failing_module
+        ):
             with pytest.raises(RuntimeError, match="Step failed"):
                 runner.run(target="test.com")
 
@@ -410,6 +405,7 @@ class TestPipelineLogging:
 
     def test_step_logs_captured(self):
         """Test that step execution logs are captured."""
+
         def mock_module(ctx, params):
             ctx.log("Custom log from module", level="INFO")
             return ctx
@@ -433,6 +429,7 @@ class TestPipelineLogging:
 
     def test_error_logs_include_step_info(self):
         """Test that error logs include step information."""
+
         def failing_module(ctx, params):
             raise ValueError("Specific error")
 
@@ -449,7 +446,9 @@ class TestPipelineLogging:
 
         runner = PipelineRunner(pipeline)
 
-        with patch.object(runner, "_resolve_module_function", return_value=failing_module):
+        with patch.object(
+            runner, "_resolve_module_function", return_value=failing_module
+        ):
             ctx = runner.run(target="test.com")
 
         error_logs = ctx.get_logs(level="ERROR")
@@ -492,9 +491,7 @@ class TestPipelinePluginIntegration:
         """Test that plugin: prefix is detected."""
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Plugin"),
-            steps=[
-                PipelineStep(name="Plugin Step", module="plugin:test_plugin")
-            ],
+            steps=[PipelineStep(name="Plugin Step", module="plugin:test_plugin")],
         )
 
         runner = PipelineRunner(pipeline)
@@ -596,6 +593,7 @@ class TestPipelineNetworkErrors:
     def test_network_timeout_handling(self, mock_dns):
         """Test handling of network timeouts."""
         import socket
+
         mock_dns.side_effect = socket.timeout("Connection timed out")
 
         pipeline = Pipeline(
@@ -620,6 +618,7 @@ class TestPipelineNetworkErrors:
     def test_connection_refused_handling(self, mock_dns):
         """Test handling of connection refused errors."""
         import socket
+
         mock_dns.side_effect = socket.error("Connection refused")
 
         pipeline = Pipeline(
@@ -646,6 +645,7 @@ class TestContextSerialization:
 
     def test_context_to_dict(self):
         """Test context serialization to dictionary."""
+
         def mock_module(ctx, params):
             ctx.add("result", {"key": "value"})
             return ctx
@@ -669,6 +669,7 @@ class TestContextSerialization:
 
     def test_context_to_json(self):
         """Test context serialization to JSON."""
+
         def mock_module(ctx, params):
             ctx.add("result", {"key": "value"})
             return ctx
@@ -696,6 +697,7 @@ class TestPipelineEdgeCases:
 
     def test_empty_target(self):
         """Test pipeline execution with no target."""
+
         def mock_module(ctx, params):
             ctx.add("no_target", ctx.target is None)
             return ctx
@@ -723,6 +725,7 @@ class TestPipelineEdgeCases:
                 execution_order.append(index)
                 ctx.add(f"step_{index}", True)
                 return ctx
+
             return module
 
         steps = [
@@ -752,6 +755,7 @@ class TestPipelineEdgeCases:
 
     def test_special_characters_in_target(self):
         """Test handling of special characters in target."""
+
         def mock_module(ctx, params):
             ctx.add("target_received", ctx.target)
             return ctx
@@ -772,8 +776,11 @@ class TestPipelineEdgeCases:
 
     def test_unicode_in_results(self):
         """Test handling of unicode in results."""
+
         def mock_module(ctx, params):
-            ctx.add("unicode_data", {"emoji": "🔒", "chinese": "安全", "arabic": "أمان"})
+            ctx.add(
+                "unicode_data", {"emoji": "🔒", "chinese": "安全", "arabic": "أمان"}
+            )
             return ctx
 
         pipeline = Pipeline(

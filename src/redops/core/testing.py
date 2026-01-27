@@ -28,7 +28,7 @@ from typing import (
     TypeVar,
     Union,
 )
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 
 T = TypeVar("T")
@@ -69,9 +69,7 @@ class RandomGenerator:
         if version == 4:
             return ".".join(str(self._rng.randint(1, 254)) for _ in range(4))
         else:
-            return ":".join(
-                f"{self._rng.randint(0, 65535):04x}" for _ in range(8)
-            )
+            return ":".join(f"{self._rng.randint(0, 65535):04x}" for _ in range(8))
 
     def domain(self, tld: Optional[str] = None) -> str:
         """Generate random domain name."""
@@ -215,14 +213,18 @@ class MockFactory:
         """Create an async mock."""
         mock = MagicMock()
         if side_effect:
+
             async def async_side_effect(*args, **kwargs):
                 if callable(side_effect):
                     return side_effect(*args, **kwargs)
                 raise side_effect
+
             mock.return_value = async_side_effect()
         else:
+
             async def async_return(*args, **kwargs):
                 return return_value
+
             mock.return_value = async_return()
         return mock
 
@@ -248,9 +250,7 @@ class MockFactory:
         response.json = json_method
         response.raise_for_status = MagicMock()
         if not response.ok:
-            response.raise_for_status.side_effect = Exception(
-                f"HTTP {status_code}"
-            )
+            response.raise_for_status.side_effect = Exception(f"HTTP {status_code}")
         return response
 
     @staticmethod
@@ -262,9 +262,7 @@ class MockFactory:
         cursor = MagicMock()
         conn.cursor.return_value = cursor
         cursor.fetchall.return_value = query_results or []
-        cursor.fetchone.return_value = (
-            query_results[0] if query_results else None
-        )
+        cursor.fetchone.return_value = query_results[0] if query_results else None
         cursor.rowcount = len(query_results or [])
         return conn
 
@@ -573,9 +571,7 @@ class AssertionHelpers:
         """Assert that dict has required keys."""
         missing = set(required_keys) - set(actual.keys())
         if missing:
-            raise AssertionError(
-                f"{msg}Missing required keys: {missing}"
-            )
+            raise AssertionError(f"{msg}Missing required keys: {missing}")
 
     @staticmethod
     def assert_list_length(
@@ -610,6 +606,7 @@ class AssertionHelpers:
     ) -> None:
         """Assert string matches regex pattern."""
         import re
+
         if not re.match(pattern, value):
             raise AssertionError(
                 f"{msg}Value '{value}' does not match pattern '{pattern}'"
@@ -627,6 +624,7 @@ class AssertionHelpers:
     def assert_valid_email(value: str, msg: str = "") -> None:
         """Assert value is a valid email format."""
         import re
+
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.match(pattern, value):
             raise AssertionError(f"{msg}Invalid email format: {value}")
@@ -635,6 +633,7 @@ class AssertionHelpers:
     def assert_valid_ip(value: str, version: int = 4, msg: str = "") -> None:
         """Assert value is a valid IP address."""
         import ipaddress
+
         try:
             if version == 4:
                 ipaddress.IPv4Address(value)
@@ -754,6 +753,7 @@ def temp_json_file(data: Any) -> Generator[Path, None, None]:
 def environment_variables(**env_vars) -> Generator[None, None, None]:
     """Temporarily set environment variables."""
     import os
+
     original = {}
     for key, value in env_vars.items():
         original[key] = os.environ.get(key)
@@ -788,6 +788,7 @@ def mock_datetime(
     fixed_time: datetime,
 ) -> Generator[None, None, None]:
     """Mock datetime.now() to return a fixed time."""
+
     class MockDateTime:
         @classmethod
         def now(cls, tz=None):
@@ -811,6 +812,7 @@ def suppress_output() -> Generator[None, None, None]:
     """Suppress stdout and stderr."""
     import io
     import sys
+
     old_stdout, old_stderr = sys.stdout, sys.stderr
     sys.stdout = io.StringIO()
     sys.stderr = io.StringIO()
@@ -839,9 +841,7 @@ class FixtureFactory:
             for severity, num in severity_distribution.items():
                 for _ in range(num):
                     vulns.append(
-                        VulnerabilityBuilder()
-                        .with_field("severity", severity)
-                        .build()
+                        VulnerabilityBuilder().with_field("severity", severity).build()
                     )
             return vulns
         return VulnerabilityBuilder().build_many(count)
@@ -943,11 +943,13 @@ class FakeHTTPClient:
 
     def _make_request(self, method: str, url: str, **kwargs) -> MagicMock:
         """Make a simulated request."""
-        self._requests.append({
-            "method": method,
-            "url": url,
-            "kwargs": kwargs,
-        })
+        self._requests.append(
+            {
+                "method": method,
+                "url": url,
+                "kwargs": kwargs,
+            }
+        )
         key = f"{method}:{url}"
         if key in self._responses:
             return self._responses[key]
@@ -994,8 +996,7 @@ class FakeDatabase:
         records = self._tables[table]
         if where:
             records = [
-                r for r in records
-                if all(r.get(k) == v for k, v in where.items())
+                r for r in records if all(r.get(k) == v for k, v in where.items())
             ]
         return copy.deepcopy(records)
 
@@ -1023,7 +1024,8 @@ class FakeDatabase:
             return 0
         original_count = len(self._tables[table])
         self._tables[table] = [
-            r for r in self._tables[table]
+            r
+            for r in self._tables[table]
             if not all(r.get(k) == v for k, v in where.items())
         ]
         return original_count - len(self._tables[table])

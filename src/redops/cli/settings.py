@@ -433,7 +433,12 @@ class SettingsMenu:
         """Test an API key."""
         print()
         print("Select provider to test:")
-        providers = ["openai", "anthropic", "google", "groq"]  # AI providers with API keys
+        providers = [
+            "openai",
+            "anthropic",
+            "google",
+            "groq",
+        ]  # AI providers with API keys
         for i, provider in enumerate(providers, 1):
             info = API_PROVIDERS[provider]
             key = self._get_api_key(provider)

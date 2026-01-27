@@ -57,10 +57,7 @@ class GrafanaDashboard:
                 "from": self.time_from,
                 "to": self.time_to,
             },
-            "panels": [
-                {**p.to_dict(), "id": i + 1}
-                for i, p in enumerate(self.panels)
-            ],
+            "panels": [{**p.to_dict(), "id": i + 1} for i, p in enumerate(self.panels)],
             "schemaVersion": 38,
             "version": 1,
         }
@@ -94,10 +91,9 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Total Scans",
             panel_type="stat",
             gridPos={"x": 0, "y": 0, "w": 6, "h": 4},
-            targets=[create_prometheus_target(
-                'sum(redops_scans_total)',
-                "Total Scans"
-            )],
+            targets=[
+                create_prometheus_target("sum(redops_scans_total)", "Total Scans")
+            ],
             options={
                 "colorMode": "value",
                 "graphMode": "area",
@@ -111,7 +107,7 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
                         "mode": "absolute",
                         "steps": [
                             {"color": "green", "value": None},
-                        ]
+                        ],
                     },
                 }
             },
@@ -120,10 +116,7 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Active Scans",
             panel_type="stat",
             gridPos={"x": 6, "y": 0, "w": 6, "h": 4},
-            targets=[create_prometheus_target(
-                'redops_active_scans',
-                "Active"
-            )],
+            targets=[create_prometheus_target("redops_active_scans", "Active")],
             options={
                 "colorMode": "value",
                 "graphMode": "none",
@@ -137,7 +130,7 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
                             {"color": "green", "value": None},
                             {"color": "yellow", "value": 5},
                             {"color": "red", "value": 10},
-                        ]
+                        ],
                     },
                 }
             },
@@ -146,10 +139,9 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Total Findings",
             panel_type="stat",
             gridPos={"x": 12, "y": 0, "w": 6, "h": 4},
-            targets=[create_prometheus_target(
-                'sum(redops_findings_total)',
-                "Findings"
-            )],
+            targets=[
+                create_prometheus_target("sum(redops_findings_total)", "Findings")
+            ],
             options={"colorMode": "value"},
             fieldConfig={
                 "defaults": {
@@ -161,7 +153,7 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
                             {"color": "yellow", "value": 100},
                             {"color": "orange", "value": 500},
                             {"color": "red", "value": 1000},
-                        ]
+                        ],
                     },
                 }
             },
@@ -170,10 +162,11 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Error Rate",
             panel_type="stat",
             gridPos={"x": 18, "y": 0, "w": 6, "h": 4},
-            targets=[create_prometheus_target(
-                'sum(rate(redops_errors_total[5m]))',
-                "Errors/sec"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "sum(rate(redops_errors_total[5m]))", "Errors/sec"
+                )
+            ],
             options={"colorMode": "value"},
             fieldConfig={
                 "defaults": {
@@ -185,12 +178,11 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
                             {"color": "green", "value": None},
                             {"color": "yellow", "value": 0.1},
                             {"color": "red", "value": 1},
-                        ]
+                        ],
                     },
                 }
             },
         ),
-
         # Row 2: Scan Metrics
         GrafanaPanel(
             title="Scan Rate",
@@ -198,8 +190,7 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             gridPos={"x": 0, "y": 4, "w": 12, "h": 8},
             targets=[
                 create_prometheus_target(
-                    'sum(rate(redops_scans_total[5m])) by (status)',
-                    "{{status}}"
+                    "sum(rate(redops_scans_total[5m])) by (status)", "{{status}}"
                 ),
             ],
             options={
@@ -220,10 +211,11 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Scan Duration Distribution",
             panel_type="histogram",
             gridPos={"x": 12, "y": 4, "w": 12, "h": 8},
-            targets=[create_prometheus_target(
-                'redops_scan_duration_seconds_bucket',
-                "{{le}}"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "redops_scan_duration_seconds_bucket", "{{le}}"
+                )
+            ],
             options={
                 "legend": {"displayMode": "list"},
             },
@@ -233,16 +225,16 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
                 }
             },
         ),
-
         # Row 3: Findings
         GrafanaPanel(
             title="Findings by Severity",
             panel_type="piechart",
             gridPos={"x": 0, "y": 12, "w": 8, "h": 8},
-            targets=[create_prometheus_target(
-                'sum(redops_findings_total) by (severity)',
-                "{{severity}}"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "sum(redops_findings_total) by (severity)", "{{severity}}"
+                )
+            ],
             options={
                 "legend": {"displayMode": "table", "placement": "right"},
                 "pieType": "donut",
@@ -252,10 +244,11 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Findings by Module",
             panel_type="barchart",
             gridPos={"x": 8, "y": 12, "w": 8, "h": 8},
-            targets=[create_prometheus_target(
-                'sum(redops_findings_total) by (module)',
-                "{{module}}"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "sum(redops_findings_total) by (module)", "{{module}}"
+                )
+            ],
             options={
                 "orientation": "horizontal",
             },
@@ -264,10 +257,11 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Findings Over Time",
             panel_type="timeseries",
             gridPos={"x": 16, "y": 12, "w": 8, "h": 8},
-            targets=[create_prometheus_target(
-                'sum(rate(redops_findings_total[5m])) by (severity)',
-                "{{severity}}"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "sum(rate(redops_findings_total[5m])) by (severity)", "{{severity}}"
+                )
+            ],
             options={
                 "legend": {"displayMode": "list", "placement": "bottom"},
             },
@@ -281,7 +275,6 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
                 }
             },
         ),
-
         # Row 4: API Metrics
         GrafanaPanel(
             title="API Request Rate",
@@ -289,8 +282,7 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             gridPos={"x": 0, "y": 20, "w": 12, "h": 8},
             targets=[
                 create_prometheus_target(
-                    'sum(rate(redops_api_requests_total[5m])) by (method)',
-                    "{{method}}"
+                    "sum(rate(redops_api_requests_total[5m])) by (method)", "{{method}}"
                 ),
             ],
             options={
@@ -306,10 +298,12 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="API Latency (p95)",
             panel_type="timeseries",
             gridPos={"x": 12, "y": 20, "w": 12, "h": 8},
-            targets=[create_prometheus_target(
-                'histogram_quantile(0.95, sum(rate(redops_api_request_duration_seconds_bucket[5m])) by (le, endpoint))',
-                "{{endpoint}}"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "histogram_quantile(0.95, sum(rate(redops_api_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+                    "{{endpoint}}",
+                )
+            ],
             options={
                 "legend": {"displayMode": "list", "placement": "bottom"},
             },
@@ -319,16 +313,17 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
                 }
             },
         ),
-
         # Row 5: Pipeline Metrics
         GrafanaPanel(
             title="Pipeline Steps",
             panel_type="timeseries",
             gridPos={"x": 0, "y": 28, "w": 12, "h": 8},
-            targets=[create_prometheus_target(
-                'sum(rate(redops_pipeline_steps_total[5m])) by (step, status)',
-                "{{step}} ({{status}})"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "sum(rate(redops_pipeline_steps_total[5m])) by (step, status)",
+                    "{{step}} ({{status}})",
+                )
+            ],
             fieldConfig={
                 "defaults": {
                     "unit": "ops",
@@ -339,10 +334,12 @@ def create_redops_overview_dashboard() -> GrafanaDashboard:
             title="Step Duration by Module",
             panel_type="timeseries",
             gridPos={"x": 12, "y": 28, "w": 12, "h": 8},
-            targets=[create_prometheus_target(
-                'histogram_quantile(0.95, sum(rate(redops_step_duration_seconds_bucket[5m])) by (le, module))',
-                "{{module}}"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "histogram_quantile(0.95, sum(rate(redops_step_duration_seconds_bucket[5m])) by (le, module))",
+                    "{{module}}",
+                )
+            ],
             fieldConfig={
                 "defaults": {
                     "unit": "s",
@@ -366,10 +363,12 @@ def create_redops_alerts_dashboard() -> GrafanaDashboard:
             title="Critical Findings (Last 24h)",
             panel_type="stat",
             gridPos={"x": 0, "y": 0, "w": 8, "h": 4},
-            targets=[create_prometheus_target(
-                'sum(increase(redops_findings_total{severity="critical"}[24h]))',
-                "Critical"
-            )],
+            targets=[
+                create_prometheus_target(
+                    'sum(increase(redops_findings_total{severity="critical"}[24h]))',
+                    "Critical",
+                )
+            ],
             fieldConfig={
                 "defaults": {
                     "color": {"mode": "thresholds"},
@@ -378,7 +377,7 @@ def create_redops_alerts_dashboard() -> GrafanaDashboard:
                         "steps": [
                             {"color": "green", "value": None},
                             {"color": "red", "value": 1},
-                        ]
+                        ],
                     },
                 }
             },
@@ -387,10 +386,11 @@ def create_redops_alerts_dashboard() -> GrafanaDashboard:
             title="High Findings (Last 24h)",
             panel_type="stat",
             gridPos={"x": 8, "y": 0, "w": 8, "h": 4},
-            targets=[create_prometheus_target(
-                'sum(increase(redops_findings_total{severity="high"}[24h]))',
-                "High"
-            )],
+            targets=[
+                create_prometheus_target(
+                    'sum(increase(redops_findings_total{severity="high"}[24h]))', "High"
+                )
+            ],
             fieldConfig={
                 "defaults": {
                     "color": {"mode": "thresholds"},
@@ -400,7 +400,7 @@ def create_redops_alerts_dashboard() -> GrafanaDashboard:
                             {"color": "green", "value": None},
                             {"color": "orange", "value": 5},
                             {"color": "red", "value": 20},
-                        ]
+                        ],
                     },
                 }
             },
@@ -409,10 +409,12 @@ def create_redops_alerts_dashboard() -> GrafanaDashboard:
             title="Scan Failures (Last 1h)",
             panel_type="stat",
             gridPos={"x": 16, "y": 0, "w": 8, "h": 4},
-            targets=[create_prometheus_target(
-                'sum(increase(redops_scans_total{status="failure"}[1h]))',
-                "Failures"
-            )],
+            targets=[
+                create_prometheus_target(
+                    'sum(increase(redops_scans_total{status="failure"}[1h]))',
+                    "Failures",
+                )
+            ],
             fieldConfig={
                 "defaults": {
                     "color": {"mode": "thresholds"},
@@ -422,7 +424,7 @@ def create_redops_alerts_dashboard() -> GrafanaDashboard:
                             {"color": "green", "value": None},
                             {"color": "yellow", "value": 1},
                             {"color": "red", "value": 5},
-                        ]
+                        ],
                     },
                 }
             },
@@ -431,10 +433,12 @@ def create_redops_alerts_dashboard() -> GrafanaDashboard:
             title="Error Timeline",
             panel_type="timeseries",
             gridPos={"x": 0, "y": 4, "w": 24, "h": 8},
-            targets=[create_prometheus_target(
-                'sum(rate(redops_errors_total[5m])) by (type, module)',
-                "{{type}} ({{module}})"
-            )],
+            targets=[
+                create_prometheus_target(
+                    "sum(rate(redops_errors_total[5m])) by (type, module)",
+                    "{{type}} ({{module}})",
+                )
+            ],
             fieldConfig={
                 "defaults": {
                     "custom": {
@@ -477,7 +481,6 @@ def get_all_dashboards() -> Dict[str, GrafanaDashboard]:
 
 def export_dashboards(output_dir: str = "./dashboards") -> List[str]:
     """Export all dashboards to JSON files."""
-    import os
     from pathlib import Path
 
     output_path = Path(output_dir)

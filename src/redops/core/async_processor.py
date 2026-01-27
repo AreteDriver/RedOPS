@@ -7,13 +7,10 @@ and concurrency management.
 
 import asyncio
 import concurrent.futures
-import queue
 import threading
 import time
 import uuid
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Coroutine, Generic, TypeVar
 
@@ -23,6 +20,7 @@ R = TypeVar("R")
 
 class TaskState(Enum):
     """Task execution states."""
+
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -34,6 +32,7 @@ class TaskState(Enum):
 
 class TaskPriority(Enum):
     """Task priority levels."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -43,6 +42,7 @@ class TaskPriority(Enum):
 @dataclass
 class TaskResult(Generic[T]):
     """Result of a task execution."""
+
     task_id: str
     state: TaskState
     result: T | None = None
@@ -70,6 +70,7 @@ class TaskResult(Generic[T]):
 @dataclass
 class TaskInfo:
     """Information about a queued task."""
+
     task_id: str
     name: str
     state: TaskState
@@ -84,21 +85,25 @@ class TaskInfo:
 
 class AsyncError(Exception):
     """Base exception for async processing errors."""
+
     pass
 
 
 class TaskCancelledError(AsyncError):
     """Raised when a task is cancelled."""
+
     pass
 
 
 class TaskTimeoutError(AsyncError):
     """Raised when a task times out."""
+
     pass
 
 
 class QueueFullError(AsyncError):
     """Raised when task queue is full."""
+
     pass
 
 
@@ -253,7 +258,7 @@ class WorkerPool:
                 else:
                     return func(*args, **kwargs)
 
-            except Exception as e:
+            except Exception:
                 with self._lock:
                     info.state = TaskState.FAILED
                     info.completed_at = time.time()
@@ -367,8 +372,10 @@ class WorkerPool:
         """Get count of pending/running tasks."""
         with self._lock:
             return sum(
-                1 for info in self._task_info.values()
-                if info.state in (TaskState.PENDING, TaskState.QUEUED, TaskState.RUNNING)
+                1
+                for info in self._task_info.values()
+                if info.state
+                in (TaskState.PENDING, TaskState.QUEUED, TaskState.RUNNING)
             )
 
     @property
@@ -472,10 +479,7 @@ class AsyncExecutor:
         Returns:
             List of TaskResults
         """
-        tasks = [
-            self.run(coro, timeout=timeout)
-            for coro in coros
-        ]
+        tasks = [self.run(coro, timeout=timeout) for coro in coros]
         return await asyncio.gather(*tasks, return_exceptions=return_exceptions)
 
     async def map(
@@ -547,7 +551,8 @@ class ParallelProcessor:
             Task ID
         """
         task_id = self._worker_pool.submit(
-            func, *args,
+            func,
+            *args,
             name=name,
             priority=priority,
             timeout=timeout,
@@ -598,7 +603,8 @@ class ParallelProcessor:
         task_ids = []
         for func, args, kwargs in tasks:
             task_id = self._worker_pool.submit(
-                func, *args,
+                func,
+                *args,
                 timeout=timeout,
                 **kwargs,
             )
@@ -611,7 +617,7 @@ class ParallelProcessor:
 
             if fail_fast and not result.is_success:
                 # Cancel remaining tasks
-                for remaining_id in task_ids[len(results):]:
+                for remaining_id in task_ids[len(results) :]:
                     self._worker_pool.cancel(remaining_id)
                 break
 
@@ -695,11 +701,8 @@ class BatchProcessor:
         total = len(items)
 
         for i in range(0, total, self._batch_size):
-            batch = items[i:i + self._batch_size]
-            batch_tasks = [
-                (processor_func, (item,), {})
-                for item in batch
-            ]
+            batch = items[i : i + self._batch_size]
+            batch_tasks = [(processor_func, (item,), {}) for item in batch]
 
             batch_results = self._processor.run_parallel(batch_tasks)
 

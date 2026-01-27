@@ -1,6 +1,5 @@
 """Tests for the dashboard widgets module."""
 
-import pytest
 from collections import Counter
 from redops.core.context import Context
 from redops.web.dashboard_widgets import (
@@ -37,11 +36,14 @@ class TestGetRiskSummary:
     def test_with_risks(self):
         """Test with risks present."""
         ctx = Context()
-        ctx.add("risks", [
-            {"title": "Critical Issue", "level": "critical"},
-            {"title": "High Issue", "level": "high"},
-            {"title": "Medium Issue", "level": "medium"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"title": "Critical Issue", "level": "critical"},
+                {"title": "High Issue", "level": "high"},
+                {"title": "Medium Issue", "level": "medium"},
+            ],
+        )
 
         summary = get_risk_summary(ctx)
 
@@ -53,12 +55,15 @@ class TestGetRiskSummary:
     def test_percentages(self):
         """Test percentage calculations."""
         ctx = Context()
-        ctx.add("risks", [
-            {"level": "high"},
-            {"level": "high"},
-            {"level": "medium"},
-            {"level": "medium"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"level": "high"},
+                {"level": "high"},
+                {"level": "medium"},
+                {"level": "medium"},
+            ],
+        )
 
         summary = get_risk_summary(ctx)
 
@@ -128,7 +133,9 @@ class TestGetModuleStats:
         ctx = Context()
         ctx.add("finding_0", {"module": "module_a", "title": "F1", "severity": "high"})
         ctx.add("finding_1", {"module": "module_a", "title": "F2", "severity": "low"})
-        ctx.add("finding_2", {"module": "module_b", "title": "F3", "severity": "medium"})
+        ctx.add(
+            "finding_2", {"module": "module_b", "title": "F3", "severity": "medium"}
+        )
 
         stats = get_module_stats(ctx)
 
@@ -209,12 +216,15 @@ class TestGetComplianceStatus:
     def test_with_risks(self):
         """Test compliance derived from risks."""
         ctx = Context()
-        ctx.add("risks", [
-            {"level": "critical"},
-            {"level": "high"},
-            {"level": "medium"},
-            {"level": "low"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"level": "critical"},
+                {"level": "high"},
+                {"level": "medium"},
+                {"level": "low"},
+            ],
+        )
 
         status = get_compliance_status(ctx)
 
@@ -321,6 +331,7 @@ class TestNormalizeSeverity:
 
     def test_enum_severity(self):
         """Test enum-like normalization."""
+
         class MockSeverity:
             name = "CRITICAL"
 

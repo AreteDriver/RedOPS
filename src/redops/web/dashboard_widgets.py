@@ -5,7 +5,7 @@ Provides reusable components for dashboard visualizations,
 metrics calculations, and summary statistics.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime, timedelta, timezone
 from collections import Counter
 from redops.core.context import Context
@@ -39,10 +39,18 @@ def get_risk_summary(ctx: Context) -> Dict[str, Any]:
         "low": severity_counts.get("low", 0),
         "info": severity_counts.get("info", 0),
         "percentages": {
-            "critical": round(severity_counts.get("critical", 0) / total * 100, 1) if total else 0,
-            "high": round(severity_counts.get("high", 0) / total * 100, 1) if total else 0,
-            "medium": round(severity_counts.get("medium", 0) / total * 100, 1) if total else 0,
-            "low": round(severity_counts.get("low", 0) / total * 100, 1) if total else 0,
+            "critical": round(severity_counts.get("critical", 0) / total * 100, 1)
+            if total
+            else 0,
+            "high": round(severity_counts.get("high", 0) / total * 100, 1)
+            if total
+            else 0,
+            "medium": round(severity_counts.get("medium", 0) / total * 100, 1)
+            if total
+            else 0,
+            "low": round(severity_counts.get("low", 0) / total * 100, 1)
+            if total
+            else 0,
         },
         "risk_score": calculate_risk_score(severity_counts),
     }
@@ -67,8 +75,7 @@ def calculate_risk_score(severity_counts: Counter) -> int:
     }
 
     weighted_sum = sum(
-        count * weights.get(severity, 0)
-        for severity, count in severity_counts.items()
+        count * weights.get(severity, 0) for severity, count in severity_counts.items()
     )
 
     # Cap at 100
@@ -93,10 +100,12 @@ def get_findings_timeline(ctx: Context, days: int = 30) -> List[Dict[str, Any]]:
         if key.startswith("finding_") and isinstance(value, dict):
             timestamp = value.get("timestamp") or value.get("discovered_at")
             if timestamp:
-                findings.append({
-                    "timestamp": timestamp,
-                    "severity": value.get("severity", "unknown"),
-                })
+                findings.append(
+                    {
+                        "timestamp": timestamp,
+                        "severity": value.get("severity", "unknown"),
+                    }
+                )
 
     # Group by date
     now = datetime.now(timezone.utc)
@@ -107,20 +116,24 @@ def get_findings_timeline(ctx: Context, days: int = 30) -> List[Dict[str, Any]]:
         date_str = date.strftime("%Y-%m-%d")
 
         day_findings = [
-            f for f in findings
-            if f["timestamp"].startswith(date_str) if isinstance(f["timestamp"], str)
+            f
+            for f in findings
+            if f["timestamp"].startswith(date_str)
+            if isinstance(f["timestamp"], str)
         ]
 
         severity_counts = Counter(f["severity"] for f in day_findings)
 
-        timeline.append({
-            "date": date_str,
-            "total": len(day_findings),
-            "critical": severity_counts.get("critical", 0),
-            "high": severity_counts.get("high", 0),
-            "medium": severity_counts.get("medium", 0),
-            "low": severity_counts.get("low", 0),
-        })
+        timeline.append(
+            {
+                "date": date_str,
+                "total": len(day_findings),
+                "critical": severity_counts.get("critical", 0),
+                "high": severity_counts.get("high", 0),
+                "medium": severity_counts.get("medium", 0),
+                "low": severity_counts.get("low", 0),
+            }
+        )
 
     return timeline
 
@@ -154,14 +167,16 @@ def get_module_stats(ctx: Context) -> List[Dict[str, Any]]:
                 severity = severity.name.lower()
             severity_counts[str(severity).lower()] += 1
 
-        stats.append({
-            "module": module,
-            "total_findings": len(findings),
-            "critical": severity_counts.get("critical", 0),
-            "high": severity_counts.get("high", 0),
-            "medium": severity_counts.get("medium", 0),
-            "low": severity_counts.get("low", 0),
-        })
+        stats.append(
+            {
+                "module": module,
+                "total_findings": len(findings),
+                "critical": severity_counts.get("critical", 0),
+                "high": severity_counts.get("high", 0),
+                "medium": severity_counts.get("medium", 0),
+                "low": severity_counts.get("low", 0),
+            }
+        )
 
     return sorted(stats, key=lambda x: x["total_findings"], reverse=True)
 
@@ -282,34 +297,48 @@ def get_threat_intel_summary(ctx: Context) -> Dict[str, Any]:
 
     # Count threat indicators
     if greynoise.get("noise"):
-        indicators.append({
-            "type": "scanner_ip",
-            "source": "greynoise",
-            "severity": "high" if greynoise.get("classification") == "malicious" else "medium",
-        })
+        indicators.append(
+            {
+                "type": "scanner_ip",
+                "source": "greynoise",
+                "severity": "high"
+                if greynoise.get("classification") == "malicious"
+                else "medium",
+            }
+        )
 
     if abuseipdb.get("abuseConfidenceScore", 0) > 50:
-        indicators.append({
-            "type": "abusive_ip",
-            "source": "abuseipdb",
-            "severity": "high" if abuseipdb.get("abuseConfidenceScore", 0) > 75 else "medium",
-        })
+        indicators.append(
+            {
+                "type": "abusive_ip",
+                "source": "abuseipdb",
+                "severity": "high"
+                if abuseipdb.get("abuseConfidenceScore", 0) > 75
+                else "medium",
+            }
+        )
 
     if urlhaus.get("query_status") == "ok":
-        indicators.append({
-            "type": "malicious_url",
-            "source": "urlhaus",
-            "severity": "critical" if urlhaus.get("url_status") == "online" else "high",
-        })
+        indicators.append(
+            {
+                "type": "malicious_url",
+                "source": "urlhaus",
+                "severity": "critical"
+                if urlhaus.get("url_status") == "online"
+                else "high",
+            }
+        )
 
     return {
         "total_indicators": len(indicators),
         "indicators": indicators,
-        "sources_checked": sum([
-            1 if greynoise else 0,
-            1 if abuseipdb else 0,
-            1 if urlhaus else 0,
-        ]),
+        "sources_checked": sum(
+            [
+                1 if greynoise else 0,
+                1 if abuseipdb else 0,
+                1 if urlhaus else 0,
+            ]
+        ),
         "threat_level": calculate_threat_level(indicators),
     }
 
@@ -367,13 +396,15 @@ def get_recent_findings(ctx: Context, limit: int = 10) -> List[Dict[str, Any]]:
 
     for key, value in ctx.data.items():
         if key.startswith("finding_") and isinstance(value, dict):
-            findings.append({
-                "id": key,
-                "title": value.get("title", "Unknown"),
-                "module": value.get("module", "unknown"),
-                "severity": normalize_severity(value.get("severity", "unknown")),
-                "timestamp": value.get("timestamp", ""),
-            })
+            findings.append(
+                {
+                    "id": key,
+                    "title": value.get("title", "Unknown"),
+                    "module": value.get("module", "unknown"),
+                    "severity": normalize_severity(value.get("severity", "unknown")),
+                    "timestamp": value.get("timestamp", ""),
+                }
+            )
 
     # Sort by timestamp (most recent first)
     findings.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
@@ -407,24 +438,24 @@ def format_dashboard_html(data: Dict[str, Any]) -> str:
     <div class="dashboard-summary">
         <div class="metric-card">
             <h3>Risk Score</h3>
-            <div class="score score-{get_score_class(risk.get('risk_score', 0))}">{risk.get('risk_score', 0)}</div>
+            <div class="score score-{get_score_class(risk.get("risk_score", 0))}">{risk.get("risk_score", 0)}</div>
         </div>
         <div class="metric-card">
             <h3>Total Findings</h3>
-            <div class="count">{risk.get('total', 0)}</div>
+            <div class="count">{risk.get("total", 0)}</div>
             <div class="breakdown">
-                <span class="critical">{risk.get('critical', 0)} Critical</span>
-                <span class="high">{risk.get('high', 0)} High</span>
+                <span class="critical">{risk.get("critical", 0)} Critical</span>
+                <span class="high">{risk.get("high", 0)} High</span>
             </div>
         </div>
         <div class="metric-card">
             <h3>Attack Surface</h3>
-            <div class="count">{surface.get('subdomains_count', 0)}</div>
+            <div class="count">{surface.get("subdomains_count", 0)}</div>
             <div class="label">Subdomains</div>
         </div>
         <div class="metric-card">
             <h3>Exposure Score</h3>
-            <div class="score score-{get_score_class(surface.get('exposure_score', 0))}">{surface.get('exposure_score', 0)}</div>
+            <div class="score score-{get_score_class(surface.get("exposure_score", 0))}">{surface.get("exposure_score", 0)}</div>
         </div>
     </div>
     """

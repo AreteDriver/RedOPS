@@ -5,16 +5,15 @@ Automatically creates Jira issues from security findings.
 """
 
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timezone
 import os
 import json
 from dataclasses import dataclass, field
 from redops.core.context import Context
-from redops.core.models import Finding, RiskLevel
 
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -57,7 +56,7 @@ class JiraConfig:
             custom_fields = {}
 
         labels_str = os.environ.get("JIRA_LABELS", "redops,security")
-        labels = [l.strip() for l in labels_str.split(",") if l.strip()]
+        labels = [label.strip() for label in labels_str.split(",") if label.strip()]
 
         return cls(
             base_url=os.environ.get("JIRA_BASE_URL", ""),
@@ -151,9 +150,9 @@ class JiraClient:
                     "content": [
                         {
                             "type": "paragraph",
-                            "content": [{"type": "text", "text": description}]
+                            "content": [{"type": "text", "text": description}],
                         }
-                    ]
+                    ],
                 },
                 "issuetype": {"name": self.config.issue_type},
                 "priority": {"name": priority},
@@ -164,9 +163,7 @@ class JiraClient:
         # Add components if specified
         if components or self.config.components:
             component_list = components or self.config.components
-            issue_data["fields"]["components"] = [
-                {"name": c} for c in component_list
-            ]
+            issue_data["fields"]["components"] = [{"name": c} for c in component_list]
 
         # Add custom fields
         merged_custom = {**self.config.custom_fields, **(custom_fields or {})}
@@ -198,7 +195,9 @@ class JiraClient:
                 error_data = response.json()
                 errors = error_data.get("errors", {})
                 error_messages = error_data.get("errorMessages", [])
-                error_text = ", ".join(error_messages) if error_messages else str(errors)
+                error_text = (
+                    ", ".join(error_messages) if error_messages else str(errors)
+                )
             except (ValueError, KeyError):
                 error_text = response.text[:200]
 
@@ -235,7 +234,7 @@ class JiraClient:
 
         # Build formatted description
         lines = [
-            f"*Security Finding from RedOPS*",
+            "*Security Finding from RedOPS*",
             "",
             f"*Module:* {module}",
             f"*Severity:* {severity.upper()}",
@@ -246,20 +245,24 @@ class JiraClient:
         if scan_id:
             lines.append(f"*Scan ID:* {scan_id}")
 
-        lines.extend([
-            "",
-            "*Description:*",
-            description_text,
-        ])
+        lines.extend(
+            [
+                "",
+                "*Description:*",
+                description_text,
+            ]
+        )
 
         if data:
-            lines.extend([
-                "",
-                "*Technical Details:*",
-                "{code:json}",
-                json.dumps(data, indent=2, default=str)[:2000],
-                "{code}",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "*Technical Details:*",
+                    "{code:json}",
+                    json.dumps(data, indent=2, default=str)[:2000],
+                    "{code}",
+                ]
+            )
 
         description = "\n".join(lines)
         summary = f"[RedOPS] {title}"
@@ -306,9 +309,7 @@ class JiraClient:
             return {"success": False, "error": str(e)}
 
 
-def create_jira_issue(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def create_jira_issue(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Create a single Jira issue.
 
@@ -387,14 +388,20 @@ def create_jira_issues_from_findings(
 
     # Severity ordering
     severity_order = ["critical", "high", "medium", "low", "info"]
-    min_index = severity_order.index(min_severity) if min_severity in severity_order else 2
+    min_index = (
+        severity_order.index(min_severity) if min_severity in severity_order else 2
+    )
 
     # Collect findings
     findings = []
     for key, value in ctx.data.items():
         if key.startswith("finding_") and isinstance(value, dict):
             finding_severity = value.get("severity", "medium")
-            severity_index = severity_order.index(finding_severity) if finding_severity in severity_order else 2
+            severity_index = (
+                severity_order.index(finding_severity)
+                if finding_severity in severity_order
+                else 2
+            )
             if severity_index <= min_index:
                 findings.append(value)
 
@@ -414,16 +421,20 @@ def create_jira_issues_from_findings(
         )
 
         if result.get("success"):
-            results["issues_created"].append({
-                "finding_title": finding.get("title"),
-                "issue_key": result.get("issue_key"),
-                "url": result.get("url"),
-            })
+            results["issues_created"].append(
+                {
+                    "finding_title": finding.get("title"),
+                    "issue_key": result.get("issue_key"),
+                    "url": result.get("url"),
+                }
+            )
         else:
-            results["errors"].append({
-                "finding_title": finding.get("title"),
-                "error": result.get("error"),
-            })
+            results["errors"].append(
+                {
+                    "finding_title": finding.get("title"),
+                    "error": result.get("error"),
+                }
+            )
 
     ctx.log(f"Created {len(results['issues_created'])} Jira issues", level="INFO")
     ctx.add("jira_issues_result", results)

@@ -2,7 +2,6 @@
 
 import time
 
-import pytest
 
 from redops.api.ratelimit import (
     RateLimitConfig,
@@ -124,9 +123,7 @@ class TestRateLimiter:
 
     def test_basic_usage(self):
         """Basic rate limiter usage."""
-        limiter = RateLimiter(
-            default_config=RateLimitConfig(requests=5, window=60)
-        )
+        limiter = RateLimiter(default_config=RateLimitConfig(requests=5, window=60))
 
         for i in range(5):
             result = limiter.check("test-key")
@@ -179,10 +176,7 @@ class TestUserRateLimiter:
     def test_custom_tier(self):
         """Custom tier configuration."""
         limiter = UserRateLimiter()
-        limiter.set_tier_config(
-            "vip",
-            RateLimitConfig(requests=5, window=60)
-        )
+        limiter.set_tier_config("vip", RateLimitConfig(requests=5, window=60))
 
         for _ in range(5):
             result = limiter.check("vip-user", tier="vip")
@@ -194,10 +188,7 @@ class TestUserRateLimiter:
     def test_per_endpoint_limits(self):
         """Per-endpoint limits."""
         limiter = UserRateLimiter()
-        limiter.set_tier_config(
-            "test",
-            RateLimitConfig(requests=2, window=60)
-        )
+        limiter.set_tier_config("test", RateLimitConfig(requests=2, window=60))
 
         # Same user, different endpoints
         limiter.check("user1", tier="test", endpoint="/api/a")
@@ -230,6 +221,7 @@ class TestAPIKeyRateLimiter:
 
         # Set custom limit for a key (using hash)
         import hashlib
+
         key_hash = hashlib.sha256("premium_key".encode()).hexdigest()[:16]
         limiter.set_key_limit(key_hash, requests=100, window=60)
 

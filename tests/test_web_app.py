@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch, AsyncMock
 try:
     from fastapi.testclient import TestClient
     from fastapi import FastAPI
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -14,7 +15,7 @@ except ImportError:
 # Skip all tests if fastapi not available
 pytestmark = pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
 
-from redops.web.app import (
+from redops.web.app import (  # noqa: E402
     create_app,
     ScanRequest,
     ScanResponse,
@@ -53,7 +54,7 @@ class TestModels:
             target="example.com",
             preset="quick",
             started_at="2024-01-15T10:00:00Z",
-            message="Scan started"
+            message="Scan started",
         )
         assert resp.scan_id == "scan-123"
         assert resp.status == "running"
@@ -67,7 +68,7 @@ class TestModels:
             preset="quick",
             started_at="2024-01-15T10:00:00Z",
             progress=50,
-            current_module="domain_scan"
+            current_module="domain_scan",
         )
         assert status.progress == 50
         assert status.current_module == "domain_scan"
@@ -84,7 +85,7 @@ class TestModels:
             action="analyze",
             result="Analysis complete",
             provider="openai",
-            model="gpt-4"
+            model="gpt-4",
         )
         assert resp.action == "analyze"
         assert resp.result == "Analysis complete"
@@ -92,9 +93,7 @@ class TestModels:
     def test_health_response(self):
         """Test HealthResponse model."""
         resp = HealthResponse(
-            status="healthy",
-            version="1.0.0",
-            timestamp="2024-01-15T10:00:00Z"
+            status="healthy", version="1.0.0", timestamp="2024-01-15T10:00:00Z"
         )
         assert resp.status == "healthy"
 
@@ -144,10 +143,9 @@ class TestScanEndpoints:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/scans", json={
-            "target": "example.com",
-            "preset": "quick"
-        })
+        response = client.post(
+            "/api/scans", json={"target": "example.com", "preset": "quick"}
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -160,10 +158,9 @@ class TestScanEndpoints:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/scans", json={
-            "target": "example.com",
-            "modules": ["domain", "tech"]
-        })
+        response = client.post(
+            "/api/scans", json={"target": "example.com", "modules": ["domain", "tech"]}
+        )
 
         assert response.status_code == 200
 
@@ -182,9 +179,7 @@ class TestScanEndpoints:
         client = TestClient(app)
 
         # First start a scan
-        start_response = client.post("/api/scans", json={
-            "target": "example.com"
-        })
+        start_response = client.post("/api/scans", json={"target": "example.com"})
         scan_id = start_response.json()["scan_id"]
 
         # Then get status
@@ -223,9 +218,7 @@ class TestScanEndpoints:
         client = TestClient(app)
 
         # First start a scan
-        start_response = client.post("/api/scans", json={
-            "target": "example.com"
-        })
+        start_response = client.post("/api/scans", json={"target": "example.com"})
         scan_id = start_response.json()["scan_id"]
 
         response = client.get(f"/api/scans/{scan_id}/results")
@@ -243,15 +236,12 @@ class TestAIEndpoints:
         client = TestClient(app)
 
         # First need a scan
-        start_response = client.post("/api/scans", json={
-            "target": "example.com"
-        })
+        start_response = client.post("/api/scans", json={"target": "example.com"})
         scan_id = start_response.json()["scan_id"]
 
-        response = client.post("/api/ai", json={
-            "action": "analyze",
-            "scan_id": scan_id
-        })
+        response = client.post(
+            "/api/ai", json={"action": "analyze", "scan_id": scan_id}
+        )
 
         # May return 200, 404, or 503 (AI not available)
         assert response.status_code in [200, 404, 503, 400]
@@ -261,10 +251,9 @@ class TestAIEndpoints:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/ai", json={
-            "action": "explain",
-            "query": "What is SQL injection?"
-        })
+        response = client.post(
+            "/api/ai", json={"action": "explain", "query": "What is SQL injection?"}
+        )
 
         # May return 200 or 503 (AI not available)
         assert response.status_code in [200, 503, 400]
@@ -361,9 +350,7 @@ class TestScanResultsEdgeCases:
         client = TestClient(app)
 
         # Start a scan but don't wait for completion
-        start_response = client.post("/api/scans", json={
-            "target": "results-test.com"
-        })
+        start_response = client.post("/api/scans", json={"target": "results-test.com"})
         scan_id = start_response.json()["scan_id"]
 
         # Try to get results immediately (scan should still be pending/running)
@@ -381,10 +368,13 @@ class TestAIEndpointsAdvanced:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/ai", json={
-            "action": "explain"
-            # No query provided
-        })
+        response = client.post(
+            "/api/ai",
+            json={
+                "action": "explain"
+                # No query provided
+            },
+        )
 
         # Should return 400 (query required) or 503 (AI not available)
         assert response.status_code in [400, 503]
@@ -394,10 +384,13 @@ class TestAIEndpointsAdvanced:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/ai", json={
-            "action": "analyze"
-            # No scan_id provided
-        })
+        response = client.post(
+            "/api/ai",
+            json={
+                "action": "analyze"
+                # No scan_id provided
+            },
+        )
 
         # Should return 400 or 503
         assert response.status_code in [400, 503]
@@ -407,10 +400,9 @@ class TestAIEndpointsAdvanced:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/ai", json={
-            "action": "suggest",
-            "scan_id": "nonexistent"
-        })
+        response = client.post(
+            "/api/ai", json={"action": "suggest", "scan_id": "nonexistent"}
+        )
 
         # Should return 404 (scan not found) or 503 (AI not available)
         assert response.status_code in [400, 404, 503]
@@ -420,10 +412,9 @@ class TestAIEndpointsAdvanced:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/ai", json={
-            "action": "summarize",
-            "scan_id": "nonexistent"
-        })
+        response = client.post(
+            "/api/ai", json={"action": "summarize", "scan_id": "nonexistent"}
+        )
 
         # Should return 404 (scan not found) or 503 (AI not available)
         assert response.status_code in [400, 404, 503]
@@ -433,9 +424,7 @@ class TestAIEndpointsAdvanced:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/ai", json={
-            "action": "unknown_action"
-        })
+        response = client.post("/api/ai", json={"action": "unknown_action"})
 
         # Should return 400 or 503
         assert response.status_code in [400, 503]
@@ -445,12 +434,15 @@ class TestAIEndpointsAdvanced:
         app = create_app()
         client = TestClient(app)
 
-        response = client.post("/api/ai", json={
-            "action": "explain",
-            "query": "What is XSS?",
-            "provider": "anthropic",
-            "model": "claude-3"
-        })
+        response = client.post(
+            "/api/ai",
+            json={
+                "action": "explain",
+                "query": "What is XSS?",
+                "provider": "anthropic",
+                "model": "claude-3",
+            },
+        )
 
         # May succeed or fail depending on AI availability
         assert response.status_code in [200, 400, 503]
@@ -523,10 +515,7 @@ class TestWebSocketEndpoint:
             websocket.receive_json()
 
             # Send subscribe message
-            websocket.send_json({
-                "action": "subscribe",
-                "scan_id": "test-scan-123"
-            })
+            websocket.send_json({"action": "subscribe", "scan_id": "test-scan-123"})
 
             # No error means success - subscription is handled internally
 
@@ -540,16 +529,10 @@ class TestWebSocketEndpoint:
             websocket.receive_json()
 
             # Subscribe first
-            websocket.send_json({
-                "action": "subscribe",
-                "scan_id": "test-scan-456"
-            })
+            websocket.send_json({"action": "subscribe", "scan_id": "test-scan-456"})
 
             # Then unsubscribe
-            websocket.send_json({
-                "action": "unsubscribe",
-                "scan_id": "test-scan-456"
-            })
+            websocket.send_json({"action": "unsubscribe", "scan_id": "test-scan-456"})
 
             # No error means success
 
@@ -597,11 +580,15 @@ class TestRunScanTask:
             target="example.com",
             preset="quick",
             started_at="2024-01-01T00:00:00Z",
-            progress=0
+            progress=0,
         )
 
-        with patch.object(app_module, "emit_scan_started", new_callable=AsyncMock) as mock_started:
-            with patch.object(app_module, "emit_scan_failed", new_callable=AsyncMock) as mock_failed:
+        with patch.object(
+            app_module, "emit_scan_started", new_callable=AsyncMock
+        ) as mock_started:
+            with patch.object(
+                app_module, "emit_scan_failed", new_callable=AsyncMock
+            ) as mock_failed:
                 # Make emit_scan_started raise to trigger failure path
                 mock_started.side_effect = Exception("Fatal error")
 
@@ -647,6 +634,7 @@ class TestMainFunction:
     def test_main_function_exists(self):
         """Test main function exists and is callable."""
         from redops.web.app import main
+
         assert callable(main)
 
     def test_main_with_mocked_uvicorn(self):
@@ -656,7 +644,9 @@ class TestMainFunction:
 
         mock_uvicorn = MagicMock()
         with patch.dict("sys.modules", {"uvicorn": mock_uvicorn}):
-            with patch.dict(os.environ, {"REDOPS_HOST": "0.0.0.0", "REDOPS_PORT": "9000"}):
+            with patch.dict(
+                os.environ, {"REDOPS_HOST": "0.0.0.0", "REDOPS_PORT": "9000"}
+            ):
                 with patch("builtins.print"):  # Suppress print output
                     main()
 
@@ -674,8 +664,11 @@ class TestMainFunction:
         mock_uvicorn = MagicMock()
         with patch.dict("sys.modules", {"uvicorn": mock_uvicorn}):
             # Clear environment variables
-            env = {k: v for k, v in os.environ.items()
-                   if k not in ["REDOPS_HOST", "REDOPS_PORT", "REDOPS_DEV"]}
+            env = {
+                k: v
+                for k, v in os.environ.items()
+                if k not in ["REDOPS_HOST", "REDOPS_PORT", "REDOPS_DEV"]
+            }
             with patch.dict(os.environ, env, clear=True):
                 with patch("builtins.print"):
                     main()
@@ -706,11 +699,14 @@ class TestAIWithMockedAssistant:
     def test_ai_explain_success(self):
         """Test AI explain with mocked assistant."""
         import sys
+
         app = create_app()
         client = TestClient(app)
 
         mock_assistant = MagicMock()
-        mock_assistant.explain.return_value = "SQL injection is a security vulnerability..."
+        mock_assistant.explain.return_value = (
+            "SQL injection is a security vulnerability..."
+        )
         mock_assistant.provider = "mock_provider"
         mock_assistant.model = "mock_model"
 
@@ -718,10 +714,9 @@ class TestAIWithMockedAssistant:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "explain",
-                "query": "What is SQL injection?"
-            })
+            response = client.post(
+                "/api/ai", json={"action": "explain", "query": "What is SQL injection?"}
+            )
 
         if response.status_code == 200:
             data = response.json()
@@ -748,10 +743,9 @@ class TestAIWithMockedAssistant:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "analyze",
-                "scan_id": "mock-scan-id"
-            })
+            response = client.post(
+                "/api/ai", json={"action": "analyze", "scan_id": "mock-scan-id"}
+            )
 
         if response.status_code == 200:
             data = response.json()
@@ -781,10 +775,9 @@ class TestAIWithMockedAssistant:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "suggest",
-                "scan_id": "suggest-scan-id"
-            })
+            response = client.post(
+                "/api/ai", json={"action": "suggest", "scan_id": "suggest-scan-id"}
+            )
 
         if response.status_code == 200:
             data = response.json()
@@ -813,10 +806,9 @@ class TestAIWithMockedAssistant:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "summarize",
-                "scan_id": "summarize-scan-id"
-            })
+            response = client.post(
+                "/api/ai", json={"action": "summarize", "scan_id": "summarize-scan-id"}
+            )
 
         if response.status_code == 200:
             data = response.json()
@@ -828,6 +820,7 @@ class TestAIWithMockedAssistant:
     def test_ai_unknown_action_with_mock(self):
         """Test AI with unknown action using mocked module."""
         import sys
+
         app = create_app()
         client = TestClient(app)
 
@@ -839,9 +832,7 @@ class TestAIWithMockedAssistant:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "invalid_action"
-            })
+            response = client.post("/api/ai", json={"action": "invalid_action"})
 
         assert response.status_code == 400
         assert "Unknown action" in response.json()["detail"]
@@ -849,6 +840,7 @@ class TestAIWithMockedAssistant:
     def test_ai_value_error(self):
         """Test AI endpoint handles ValueError."""
         import sys
+
         app = create_app()
         client = TestClient(app)
 
@@ -856,10 +848,9 @@ class TestAIWithMockedAssistant:
         mock_ai_module.AIAssistant.side_effect = ValueError("Invalid configuration")
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "explain",
-                "query": "test"
-            })
+            response = client.post(
+                "/api/ai", json={"action": "explain", "query": "test"}
+            )
 
         assert response.status_code == 400
         assert "Invalid configuration" in response.json()["detail"]
@@ -870,7 +861,7 @@ class TestScanResultsNotAvailable:
 
     def test_get_results_no_results_stored(self):
         """Test getting results when scan completed but results not stored."""
-        from redops.web.app import _scans, _scan_results, ScanStatus
+        from redops.web.app import _scans, ScanStatus
 
         app = create_app()
         client = TestClient(app)
@@ -883,7 +874,7 @@ class TestScanResultsNotAvailable:
             target="test.com",
             preset="quick",
             started_at="2024-01-01T00:00:00Z",
-            progress=100
+            progress=100,
         )
         # Intentionally don't add to _scan_results
 
@@ -910,7 +901,7 @@ class TestScanResultsNotAvailable:
             target="test.com",
             preset="quick",
             started_at="2024-01-01T00:00:00Z",
-            progress=50
+            progress=50,
         )
 
         response = client.get(f"/api/scans/{scan_id}/results")
@@ -936,9 +927,11 @@ class TestScanResultsNotAvailable:
             target="test.com",
             preset="quick",
             started_at="2024-01-01T00:00:00Z",
-            progress=100
+            progress=100,
         )
-        _scan_results[scan_id] = {"findings": [{"severity": "high", "title": "Test Finding"}]}
+        _scan_results[scan_id] = {
+            "findings": [{"severity": "high", "title": "Test Finding"}]
+        }
 
         response = client.get(f"/api/scans/{scan_id}/results")
 
@@ -970,10 +963,9 @@ class TestAIValidationErrors:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "analyze",
-                "scan_id": "nonexistent-scan"
-            })
+            response = client.post(
+                "/api/ai", json={"action": "analyze", "scan_id": "nonexistent-scan"}
+            )
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
@@ -990,10 +982,13 @@ class TestAIValidationErrors:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "suggest"
-                # No scan_id
-            })
+            response = client.post(
+                "/api/ai",
+                json={
+                    "action": "suggest"
+                    # No scan_id
+                },
+            )
 
         assert response.status_code == 400
         assert "scan_id required" in response.json()["detail"]
@@ -1010,10 +1005,9 @@ class TestAIValidationErrors:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "suggest",
-                "scan_id": "missing-results-scan"
-            })
+            response = client.post(
+                "/api/ai", json={"action": "suggest", "scan_id": "missing-results-scan"}
+            )
 
         assert response.status_code == 404
 
@@ -1029,10 +1023,13 @@ class TestAIValidationErrors:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "summarize"
-                # No scan_id
-            })
+            response = client.post(
+                "/api/ai",
+                json={
+                    "action": "summarize"
+                    # No scan_id
+                },
+            )
 
         assert response.status_code == 400
         assert "scan_id required" in response.json()["detail"]
@@ -1049,9 +1046,9 @@ class TestAIValidationErrors:
         mock_ai_module.AIAssistant.return_value = mock_assistant
 
         with patch.dict(sys.modules, {"redops.modules.ai_assistant": mock_ai_module}):
-            response = client.post("/api/ai", json={
-                "action": "summarize",
-                "scan_id": "missing-results-scan"
-            })
+            response = client.post(
+                "/api/ai",
+                json={"action": "summarize", "scan_id": "missing-results-scan"},
+            )
 
         assert response.status_code == 404

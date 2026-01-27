@@ -13,6 +13,7 @@ import uuid
 
 class ScheduleStatus(Enum):
     """Status of a scheduled scan."""
+
     ACTIVE = "active"
     PAUSED = "paused"
     DISABLED = "disabled"
@@ -21,6 +22,7 @@ class ScheduleStatus(Enum):
 
 class JobStatus(Enum):
     """Status of a scan job."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -31,6 +33,7 @@ class JobStatus(Enum):
 
 class RecurrenceType(Enum):
     """Type of schedule recurrence."""
+
     ONCE = "once"
     HOURLY = "hourly"
     DAILY = "daily"
@@ -58,6 +61,7 @@ class ScanPolicy:
         min_severity: Minimum severity to report
         tags: Tags for categorization
     """
+
     name: str
     pipeline: str
     modules: List[str] = field(default_factory=list)
@@ -130,6 +134,7 @@ class ScanSchedule:
         updated_at: Last update timestamp
         metadata: Additional metadata
     """
+
     name: str
     target: str
     policy: ScanPolicy
@@ -152,7 +157,9 @@ class ScanSchedule:
         if self.next_run is None and self.status == ScheduleStatus.ACTIVE:
             self.next_run = self.calculate_next_run()
 
-    def calculate_next_run(self, from_time: Optional[datetime] = None) -> Optional[datetime]:
+    def calculate_next_run(
+        self, from_time: Optional[datetime] = None
+    ) -> Optional[datetime]:
         """
         Calculate the next run time.
 
@@ -203,6 +210,7 @@ class ScanSchedule:
         """
         try:
             from croniter import croniter
+
             cron = croniter(self.cron_expression, base)
             return cron.get_next(datetime)
         except ImportError:
@@ -303,6 +311,7 @@ class ScanSchedule:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ScanSchedule":
         """Create from dictionary."""
+
         def parse_dt(val):
             if val is None:
                 return None
@@ -349,6 +358,7 @@ class ScanJob:
         context_id: Associated context ID
         findings_count: Number of findings discovered
     """
+
     schedule_id: str
     target: str
     policy: ScanPolicy
@@ -394,8 +404,8 @@ class ScanJob:
     def can_retry(self) -> bool:
         """Check if job can be retried."""
         return (
-            self.status in (JobStatus.FAILED, JobStatus.TIMEOUT) and
-            self.retry_count < self.policy.retry_count
+            self.status in (JobStatus.FAILED, JobStatus.TIMEOUT)
+            and self.retry_count < self.policy.retry_count
         )
 
     def increment_retry(self) -> None:
@@ -422,7 +432,9 @@ class ScanJob:
             "policy": self.policy.to_dict(),
             "status": self.status.value,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "result": self.result,
             "error": self.error,
             "retry_count": self.retry_count,
@@ -434,6 +446,7 @@ class ScanJob:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ScanJob":
         """Create from dictionary."""
+
         def parse_dt(val):
             if val is None:
                 return None

@@ -79,13 +79,16 @@ def get_hunter_api_key() -> Optional[str]:
     if not api_key:
         try:
             from redops.cli.settings import get_api_key_direct
+
             api_key = get_api_key_direct("hunter")
         except Exception:
             pass
     return api_key
 
 
-def _make_hunter_request(endpoint: str, api_key: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+def _make_hunter_request(
+    endpoint: str, api_key: str, params: Dict[str, Any] = None
+) -> Optional[Dict[str, Any]]:
     """Make a request to Hunter.io API."""
     try:
         import requests
@@ -152,10 +155,14 @@ def query_hunter_domain(
         ctx.add("hunter_domain", hunter_data)
         return ctx
 
-    result = _make_hunter_request("domain-search", api_key, {
-        "domain": domain,
-        "limit": limit,
-    })
+    result = _make_hunter_request(
+        "domain-search",
+        api_key,
+        {
+            "domain": domain,
+            "limit": limit,
+        },
+    )
 
     if result is None:
         hunter_data["error"] = "requests library not available"
@@ -381,7 +388,9 @@ def analyze_hunter_intel(
 
     if count_data.get("count"):
         hunter_intel["summary"]["total_emails"] = count_data["count"]
-        hunter_intel["summary"]["personal_emails"] = count_data.get("personal_emails", 0)
+        hunter_intel["summary"]["personal_emails"] = count_data.get(
+            "personal_emails", 0
+        )
         hunter_intel["summary"]["generic_emails"] = count_data.get("generic_emails", 0)
 
     ctx.add("hunter_intel", hunter_intel)
@@ -396,6 +405,7 @@ def analyze_hunter_intel(
 
 
 # Helper function
+
 
 def _extract_domain(value: str) -> str:
     """Extract domain from URL or hostname."""

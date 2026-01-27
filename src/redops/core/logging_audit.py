@@ -6,9 +6,6 @@ and context propagation for security operations.
 """
 
 import json
-import logging
-import logging.handlers
-import os
 import re
 import sys
 import threading
@@ -197,23 +194,29 @@ class SensitiveDataMasker:
 
     # Default patterns to mask
     DEFAULT_PATTERNS = [
-        (r'password["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', 'password=***'),
-        (r'api[_-]?key["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', 'api_key=***'),
-        (r'secret["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', 'secret=***'),
-        (r'token["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', 'token=***'),
-        (r'bearer\s+([A-Za-z0-9\-_=]+)', 'Bearer ***'),
-        (r'\b\d{16}\b', '****-****-****-****'),  # Credit card
-        (r'\b\d{3}-\d{2}-\d{4}\b', '***-**-****'),  # SSN
-        (r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '***@***.***'),  # Email
+        (r'password["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', "password=***"),
+        (r'api[_-]?key["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', "api_key=***"),
+        (r'secret["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', "secret=***"),
+        (r'token["\']?\s*[:=]\s*["\']?([^"\'}\s,]+)', "token=***"),
+        (r"bearer\s+([A-Za-z0-9\-_=]+)", "Bearer ***"),
+        (r"\b\d{16}\b", "****-****-****-****"),  # Credit card
+        (r"\b\d{3}-\d{2}-\d{4}\b", "***-**-****"),  # SSN
+        (r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", "***@***.***"),  # Email
     ]
 
-    def __init__(self, patterns: Optional[List[tuple]] = None, mask_emails: bool = False):
+    def __init__(
+        self, patterns: Optional[List[tuple]] = None, mask_emails: bool = False
+    ):
         """Initialize masker with patterns."""
-        self._patterns = list(self.DEFAULT_PATTERNS) if patterns is None else list(patterns)
+        self._patterns = (
+            list(self.DEFAULT_PATTERNS) if patterns is None else list(patterns)
+        )
         if not mask_emails:
             # Remove email pattern if not masking emails
-            self._patterns = [p for p in self._patterns if '@' not in p[1]]
-        self._compiled = [(re.compile(p[0], re.IGNORECASE), p[1]) for p in self._patterns]
+            self._patterns = [p for p in self._patterns if "@" not in p[1]]
+        self._compiled = [
+            (re.compile(p[0], re.IGNORECASE), p[1]) for p in self._patterns
+        ]
 
     def add_pattern(self, pattern: str, replacement: str) -> None:
         """Add a custom pattern to mask."""
@@ -227,10 +230,19 @@ class SensitiveDataMasker:
             result = regex.sub(replacement, result)
         return result
 
-    def mask_dict(self, data: Dict[str, Any], sensitive_keys: Optional[Set[str]] = None) -> Dict[str, Any]:
+    def mask_dict(
+        self, data: Dict[str, Any], sensitive_keys: Optional[Set[str]] = None
+    ) -> Dict[str, Any]:
         """Mask sensitive data in a dictionary."""
         if sensitive_keys is None:
-            sensitive_keys = {"password", "secret", "token", "api_key", "apikey", "credential"}
+            sensitive_keys = {
+                "password",
+                "secret",
+                "token",
+                "api_key",
+                "apikey",
+                "credential",
+            }
 
         result = {}
         for key, value in data.items():
@@ -257,12 +269,16 @@ class LogFormatter(ABC):
 class TextFormatter(LogFormatter):
     """Plain text log formatter."""
 
-    def __init__(self,
-                 format_string: Optional[str] = None,
-                 include_context: bool = True,
-                 include_extra: bool = True):
+    def __init__(
+        self,
+        format_string: Optional[str] = None,
+        include_context: bool = True,
+        include_extra: bool = True,
+    ):
         """Initialize text formatter."""
-        self._format_string = format_string or "{timestamp} [{level}] {logger}: {message}"
+        self._format_string = (
+            format_string or "{timestamp} [{level}] {logger}: {message}"
+        )
         self._include_context = include_context
         self._include_extra = include_extra
 
@@ -286,7 +302,9 @@ class TextFormatter(LogFormatter):
             result += f" {{{extra_str}}}"
 
         if entry.exception:
-            result += f"\n  Exception: {type(entry.exception).__name__}: {entry.exception}"
+            result += (
+                f"\n  Exception: {type(entry.exception).__name__}: {entry.exception}"
+            )
 
         return result
 
@@ -310,10 +328,12 @@ class JSONFormatter(LogFormatter):
 class LogHandler(ABC):
     """Base class for log handlers."""
 
-    def __init__(self,
-                 formatter: Optional[LogFormatter] = None,
-                 level: LogLevel = LogLevel.DEBUG,
-                 masker: Optional[SensitiveDataMasker] = None):
+    def __init__(
+        self,
+        formatter: Optional[LogFormatter] = None,
+        level: LogLevel = LogLevel.DEBUG,
+        masker: Optional[SensitiveDataMasker] = None,
+    ):
         """Initialize handler."""
         self._formatter = formatter or TextFormatter()
         self._level = level
@@ -357,24 +377,23 @@ class LogHandler(ABC):
 class ConsoleHandler(LogHandler):
     """Handler that writes to console."""
 
-    def __init__(self,
-                 stream: Optional[Any] = None,
-                 colorize: bool = True,
-                 **kwargs):
+    def __init__(self, stream: Optional[Any] = None, colorize: bool = True, **kwargs):
         """Initialize console handler."""
         super().__init__(**kwargs)
         self._stream = stream or sys.stderr
-        self._colorize = colorize and hasattr(self._stream, 'isatty') and self._stream.isatty()
+        self._colorize = (
+            colorize and hasattr(self._stream, "isatty") and self._stream.isatty()
+        )
 
         # ANSI color codes
         self._colors = {
-            LogLevel.TRACE: "\033[90m",     # Gray
-            LogLevel.DEBUG: "\033[36m",     # Cyan
-            LogLevel.INFO: "\033[32m",      # Green
-            LogLevel.WARNING: "\033[33m",   # Yellow
-            LogLevel.ERROR: "\033[31m",     # Red
+            LogLevel.TRACE: "\033[90m",  # Gray
+            LogLevel.DEBUG: "\033[36m",  # Cyan
+            LogLevel.INFO: "\033[32m",  # Green
+            LogLevel.WARNING: "\033[33m",  # Yellow
+            LogLevel.ERROR: "\033[31m",  # Red
             LogLevel.CRITICAL: "\033[35m",  # Magenta
-            LogLevel.AUDIT: "\033[34m",     # Blue
+            LogLevel.AUDIT: "\033[34m",  # Blue
         }
         self._reset = "\033[0m"
 
@@ -392,11 +411,9 @@ class ConsoleHandler(LogHandler):
 class FileHandler(LogHandler):
     """Handler that writes to a file."""
 
-    def __init__(self,
-                 path: Union[str, Path],
-                 mode: str = "a",
-                 encoding: str = "utf-8",
-                 **kwargs):
+    def __init__(
+        self, path: Union[str, Path], mode: str = "a", encoding: str = "utf-8", **kwargs
+    ):
         """Initialize file handler."""
         super().__init__(**kwargs)
         self._path = Path(path)
@@ -430,12 +447,14 @@ class FileHandler(LogHandler):
 class RotatingFileHandler(LogHandler):
     """Handler that writes to rotating log files."""
 
-    def __init__(self,
-                 path: Union[str, Path],
-                 max_bytes: int = 10 * 1024 * 1024,  # 10 MB
-                 backup_count: int = 5,
-                 encoding: str = "utf-8",
-                 **kwargs):
+    def __init__(
+        self,
+        path: Union[str, Path],
+        max_bytes: int = 10 * 1024 * 1024,  # 10 MB
+        backup_count: int = 5,
+        encoding: str = "utf-8",
+        **kwargs,
+    ):
         """Initialize rotating file handler."""
         super().__init__(**kwargs)
         self._path = Path(path)
@@ -509,7 +528,7 @@ class MemoryHandler(LogHandler):
         with self._lock:
             self._entries.append(entry)
             if len(self._entries) > self._max_entries:
-                self._entries = self._entries[-self._max_entries:]
+                self._entries = self._entries[-self._max_entries :]
 
     def get_entries(self, level: Optional[LogLevel] = None) -> List[LogEntry]:
         """Get stored log entries."""
@@ -527,9 +546,11 @@ class MemoryHandler(LogHandler):
 class AuditLogger:
     """Dedicated logger for audit events."""
 
-    def __init__(self,
-                 handlers: Optional[List[LogHandler]] = None,
-                 context: Optional[LogContext] = None):
+    def __init__(
+        self,
+        handlers: Optional[List[LogHandler]] = None,
+        context: Optional[LogContext] = None,
+    ):
         """Initialize audit logger."""
         self._handlers = handlers or []
         self._context = context
@@ -564,44 +585,52 @@ class AuditLogger:
 
     def auth_login(self, actor: str, outcome: str = "success", **details) -> None:
         """Log authentication login."""
-        self.log(AuditEvent(
-            event_type=AuditEventType.AUTH_LOGIN,
-            timestamp=datetime.now(timezone.utc),
-            actor=actor,
-            action="login",
-            outcome=outcome,
-            details=details,
-        ))
+        self.log(
+            AuditEvent(
+                event_type=AuditEventType.AUTH_LOGIN,
+                timestamp=datetime.now(timezone.utc),
+                actor=actor,
+                action="login",
+                outcome=outcome,
+                details=details,
+            )
+        )
 
     def auth_logout(self, actor: str, **details) -> None:
         """Log authentication logout."""
-        self.log(AuditEvent(
-            event_type=AuditEventType.AUTH_LOGOUT,
-            timestamp=datetime.now(timezone.utc),
-            actor=actor,
-            action="logout",
-            outcome="success",
-            details=details,
-        ))
+        self.log(
+            AuditEvent(
+                event_type=AuditEventType.AUTH_LOGOUT,
+                timestamp=datetime.now(timezone.utc),
+                actor=actor,
+                action="logout",
+                outcome="success",
+                details=details,
+            )
+        )
 
     def auth_failed(self, actor: str, reason: str, **details) -> None:
         """Log failed authentication."""
         details["reason"] = reason
-        self.log(AuditEvent(
-            event_type=AuditEventType.AUTH_FAILED,
-            timestamp=datetime.now(timezone.utc),
-            actor=actor,
-            action="login",
-            outcome="failure",
-            details=details,
-        ))
+        self.log(
+            AuditEvent(
+                event_type=AuditEventType.AUTH_FAILED,
+                timestamp=datetime.now(timezone.utc),
+                actor=actor,
+                action="login",
+                outcome="failure",
+                details=details,
+            )
+        )
 
-    def data_access(self,
-                    actor: str,
-                    resource: str,
-                    action: str,
-                    outcome: str = "success",
-                    **details) -> None:
+    def data_access(
+        self,
+        actor: str,
+        resource: str,
+        action: str,
+        outcome: str = "success",
+        **details,
+    ) -> None:
         """Log data access event."""
         event_type = {
             "read": AuditEventType.DATA_READ,
@@ -610,52 +639,57 @@ class AuditLogger:
             "export": AuditEventType.DATA_EXPORT,
         }.get(action.lower(), AuditEventType.DATA_READ)
 
-        self.log(AuditEvent(
-            event_type=event_type,
-            timestamp=datetime.now(timezone.utc),
-            actor=actor,
-            resource=resource,
-            action=action,
-            outcome=outcome,
-            details=details,
-        ))
+        self.log(
+            AuditEvent(
+                event_type=event_type,
+                timestamp=datetime.now(timezone.utc),
+                actor=actor,
+                resource=resource,
+                action=action,
+                outcome=outcome,
+                details=details,
+            )
+        )
 
-    def security_event(self,
-                       event_type: AuditEventType,
-                       action: str,
-                       resource: Optional[str] = None,
-                       actor: Optional[str] = None,
-                       outcome: str = "detected",
-                       **details) -> None:
+    def security_event(
+        self,
+        event_type: AuditEventType,
+        action: str,
+        resource: Optional[str] = None,
+        actor: Optional[str] = None,
+        outcome: str = "detected",
+        **details,
+    ) -> None:
         """Log security-related event."""
-        self.log(AuditEvent(
-            event_type=event_type,
-            timestamp=datetime.now(timezone.utc),
-            actor=actor,
-            resource=resource,
-            action=action,
-            outcome=outcome,
-            details=details,
-        ))
+        self.log(
+            AuditEvent(
+                event_type=event_type,
+                timestamp=datetime.now(timezone.utc),
+                actor=actor,
+                resource=resource,
+                action=action,
+                outcome=outcome,
+                details=details,
+            )
+        )
 
-    def config_change(self,
-                      actor: str,
-                      resource: str,
-                      old_value: Any,
-                      new_value: Any,
-                      **details) -> None:
+    def config_change(
+        self, actor: str, resource: str, old_value: Any, new_value: Any, **details
+    ) -> None:
         """Log configuration change."""
         details["old_value"] = old_value
         details["new_value"] = new_value
-        self.log(AuditEvent(
-            event_type=AuditEventType.CONFIG_CHANGE,
-            timestamp=datetime.now(timezone.utc),
-            actor=actor,
-            resource=resource,
-            action="change",
-            outcome="success",
-            details=details,
-        ))
+        self.log(
+            AuditEvent(
+                event_type=AuditEventType.CONFIG_CHANGE,
+                timestamp=datetime.now(timezone.utc),
+                actor=actor,
+                resource=resource,
+                action="change",
+                outcome="success",
+                details=details,
+            )
+        )
 
 
 # Thread-local storage for context
@@ -689,11 +723,13 @@ def log_context(**kwargs):
 class Logger:
     """Main logger class with structured logging support."""
 
-    def __init__(self,
-                 name: str,
-                 handlers: Optional[List[LogHandler]] = None,
-                 level: LogLevel = LogLevel.DEBUG,
-                 context: Optional[LogContext] = None):
+    def __init__(
+        self,
+        name: str,
+        handlers: Optional[List[LogHandler]] = None,
+        level: LogLevel = LogLevel.DEBUG,
+        context: Optional[LogContext] = None,
+    ):
         """Initialize logger."""
         self._name = name
         self._handlers = handlers or []
@@ -727,11 +763,13 @@ class Logger:
             if handler in self._handlers:
                 self._handlers.remove(handler)
 
-    def _log(self,
-             level: LogLevel,
-             message: str,
-             exception: Optional[Exception] = None,
-             **extra) -> None:
+    def _log(
+        self,
+        level: LogLevel,
+        message: str,
+        exception: Optional[Exception] = None,
+        **extra,
+    ) -> None:
         """Internal log method."""
         if level.value < self._level.value:
             return
@@ -775,11 +813,15 @@ class Logger:
         """Log at WARNING level."""
         self._log(LogLevel.WARNING, message, **extra)
 
-    def error(self, message: str, exception: Optional[Exception] = None, **extra) -> None:
+    def error(
+        self, message: str, exception: Optional[Exception] = None, **extra
+    ) -> None:
         """Log at ERROR level."""
         self._log(LogLevel.ERROR, message, exception=exception, **extra)
 
-    def critical(self, message: str, exception: Optional[Exception] = None, **extra) -> None:
+    def critical(
+        self, message: str, exception: Optional[Exception] = None, **extra
+    ) -> None:
         """Log at CRITICAL level."""
         self._log(LogLevel.CRITICAL, message, exception=exception, **extra)
 
@@ -904,10 +946,13 @@ def configure_logging(
         factory.add_default_handler(handler)
 
 
-def logged(level: LogLevel = LogLevel.DEBUG,
-           include_args: bool = False,
-           include_result: bool = False):
+def logged(
+    level: LogLevel = LogLevel.DEBUG,
+    include_args: bool = False,
+    include_result: bool = False,
+):
     """Decorator to log function calls."""
+
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             # Get logger at call time to pick up handlers added after decoration
@@ -935,6 +980,7 @@ def logged(level: LogLevel = LogLevel.DEBUG,
                 raise
 
         return wrapper
+
     return decorator
 
 

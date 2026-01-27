@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import logging
 import traceback
 
-from .models import ScanJob, ScanPolicy, JobStatus
+from .models import ScanJob, ScanPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +177,9 @@ class ScanExecutor:
         severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
 
         findings = []
-        result_data = getattr(result, "data", result) if hasattr(result, "data") else result
+        result_data = (
+            getattr(result, "data", result) if hasattr(result, "data") else result
+        )
 
         if isinstance(result_data, dict):
             for key, value in result_data.items():
@@ -188,11 +190,13 @@ class ScanExecutor:
 
                     # Filter by min_severity
                     if self._severity_meets_threshold(severity, policy.min_severity):
-                        findings.append({
-                            "title": value.get("title", key),
-                            "severity": severity,
-                            "module": value.get("module", "unknown"),
-                        })
+                        findings.append(
+                            {
+                                "title": value.get("title", key),
+                                "severity": severity,
+                                "module": value.get("module", "unknown"),
+                            }
+                        )
 
         data["severity_counts"] = severity_counts
         data["findings_summary"] = findings
@@ -226,6 +230,7 @@ def create_default_executor() -> ScanExecutor:
     # Try to import and register standard pipelines
     try:
         from redops.pipelines import get_pipeline_registry
+
         registry = get_pipeline_registry()
         for name, pipeline in registry.items():
             executor.register_pipeline(name, pipeline)

@@ -3,9 +3,7 @@
 import argparse
 import io
 import json
-import os
-import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -971,10 +969,7 @@ class TestEdgeCases:
                 raise KeyboardInterrupt()
 
         cli = CLI()
-        cli._output = OutputWriter(
-            stream=io.StringIO(),
-            error_stream=io.StringIO()
-        )
+        cli._output = OutputWriter(stream=io.StringIO(), error_stream=io.StringIO())
         cli.add_command(InterruptCmd)
         result = cli.run(["interrupt"])
         assert result == 130  # Standard SIGINT exit code

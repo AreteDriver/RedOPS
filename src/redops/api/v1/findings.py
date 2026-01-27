@@ -4,7 +4,6 @@ Findings API routes.
 
 from datetime import datetime, timezone
 from typing import List, Optional
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -121,7 +120,13 @@ async def update_finding(
         )
 
     if update.status:
-        valid_statuses = ["open", "confirmed", "false_positive", "accepted_risk", "remediated"]
+        valid_statuses = [
+            "open",
+            "confirmed",
+            "false_positive",
+            "accepted_risk",
+            "remediated",
+        ]
         if update.status not in valid_statuses:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

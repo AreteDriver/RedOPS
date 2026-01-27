@@ -15,6 +15,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests for HTTP calls
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -24,9 +25,7 @@ except ImportError:
 CRT_SH_API = "https://crt.sh/"
 
 
-def search_ct_logs(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def search_ct_logs(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Search Certificate Transparency logs for a domain.
 
@@ -80,13 +79,16 @@ def search_ct_logs(
     findings = analyze_certificates(certificates, domain)
 
     # Store results
-    ctx.add("ct_results", {
-        "domain": domain,
-        "certificates": certificates[:100],  # Limit stored certs
-        "subdomains": subdomains,
-        "total_certificates": len(certificates),
-        "search_timestamp": datetime.now().isoformat(),
-    })
+    ctx.add(
+        "ct_results",
+        {
+            "domain": domain,
+            "certificates": certificates[:100],  # Limit stored certs
+            "subdomains": subdomains,
+            "total_certificates": len(certificates),
+            "search_timestamp": datetime.now().isoformat(),
+        },
+    )
     ctx.add("ct_subdomains", subdomains)
     ctx.add("ct_certificates", certificates[:100])
 
@@ -103,9 +105,7 @@ def search_ct_logs(
 
 
 def query_crtsh(
-    domain: str,
-    include_expired: bool = False,
-    timeout: int = 30
+    domain: str, include_expired: bool = False, timeout: int = 30
 ) -> List[Dict[str, Any]]:
     """
     Query crt.sh API for certificates.
@@ -132,10 +132,7 @@ def query_crtsh(
 
         if not include_expired:
             now = datetime.now()
-            certificates = [
-                cert for cert in certificates
-                if is_cert_valid(cert, now)
-            ]
+            certificates = [cert for cert in certificates if is_cert_valid(cert, now)]
 
         return certificates
 
@@ -164,7 +161,9 @@ def is_cert_valid(cert: Dict[str, Any], now: datetime) -> bool:
         not_after = cert.get("not_after", "")
         if not_after:
             # Parse crt.sh date format: "2024-12-31T23:59:59"
-            expiry = datetime.fromisoformat(not_after.replace("Z", "+00:00").split("+")[0])
+            expiry = datetime.fromisoformat(
+                not_after.replace("Z", "+00:00").split("+")[0]
+            )
             return expiry > now
         return True
     except Exception:
@@ -172,8 +171,7 @@ def is_cert_valid(cert: Dict[str, Any], now: datetime) -> bool:
 
 
 def extract_subdomains_from_certs(
-    certificates: List[Dict[str, Any]],
-    base_domain: str
+    certificates: List[Dict[str, Any]], base_domain: str
 ) -> List[str]:
     """
     Extract subdomains from certificate name fields.
@@ -227,15 +225,17 @@ def parse_cert_name(name: str, base_domain: str) -> List[str]:
     # Check if it's a subdomain of the base domain
     if name_lower.endswith(base_domain) or name_lower == base_domain:
         # Validate it looks like a domain
-        if re.match(r'^[a-z0-9]([a-z0-9\-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9\-]*[a-z0-9])?)*$', name_lower):
+        if re.match(
+            r"^[a-z0-9]([a-z0-9\-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9\-]*[a-z0-9])?)*$",
+            name_lower,
+        ):
             results.append(name_lower)
 
     return results
 
 
 def analyze_certificates(
-    certificates: List[Dict[str, Any]],
-    domain: str
+    certificates: List[Dict[str, Any]], domain: str
 ) -> List[Finding]:
     """
     Analyze certificates for security issues.
@@ -264,7 +264,9 @@ def analyze_certificates(
         not_after = cert.get("not_after", "")
         if not_after:
             try:
-                expiry = datetime.fromisoformat(not_after.replace("Z", "+00:00").split("+")[0])
+                expiry = datetime.fromisoformat(
+                    not_after.replace("Z", "+00:00").split("+")[0]
+                )
                 if expiry < now:
                     expired_count += 1
                 elif (expiry - now).days < 30:
@@ -279,45 +281,56 @@ def analyze_certificates(
 
     # Create findings
     if expired_count > 0:
-        findings.append(Finding(
-            module="recon.cert_transparency",
-            title=f"Expired Certificates Found ({expired_count})",
-            description=f"Found {expired_count} expired certificates in CT logs for {domain}. "
-                       "Expired certificates may indicate abandoned subdomains or poor certificate management.",
-            severity=RiskLevel.LOW,
-            data={"expired_count": expired_count, "domain": domain},
-        ))
+        findings.append(
+            Finding(
+                module="recon.cert_transparency",
+                title=f"Expired Certificates Found ({expired_count})",
+                description=f"Found {expired_count} expired certificates in CT logs for {domain}. "
+                "Expired certificates may indicate abandoned subdomains or poor certificate management.",
+                severity=RiskLevel.LOW,
+                data={"expired_count": expired_count, "domain": domain},
+            )
+        )
 
     if expiring_soon_count > 0:
-        findings.append(Finding(
-            module="recon.cert_transparency",
-            title=f"Certificates Expiring Soon ({expiring_soon_count})",
-            description=f"Found {expiring_soon_count} certificates expiring within 30 days for {domain}.",
-            severity=RiskLevel.INFO,
-            data={"expiring_soon_count": expiring_soon_count, "domain": domain},
-        ))
+        findings.append(
+            Finding(
+                module="recon.cert_transparency",
+                title=f"Certificates Expiring Soon ({expiring_soon_count})",
+                description=f"Found {expiring_soon_count} certificates expiring within 30 days for {domain}.",
+                severity=RiskLevel.INFO,
+                data={"expiring_soon_count": expiring_soon_count, "domain": domain},
+            )
+        )
 
     if wildcard_count > 5:
-        findings.append(Finding(
-            module="recon.cert_transparency",
-            title=f"Multiple Wildcard Certificates ({wildcard_count})",
-            description=f"Found {wildcard_count} wildcard certificates for {domain}. "
-                       "While not inherently insecure, wildcard certificates can increase "
-                       "the impact of private key compromise.",
-            severity=RiskLevel.INFO,
-            data={"wildcard_count": wildcard_count, "domain": domain},
-        ))
+        findings.append(
+            Finding(
+                module="recon.cert_transparency",
+                title=f"Multiple Wildcard Certificates ({wildcard_count})",
+                description=f"Found {wildcard_count} wildcard certificates for {domain}. "
+                "While not inherently insecure, wildcard certificates can increase "
+                "the impact of private key compromise.",
+                severity=RiskLevel.INFO,
+                data={"wildcard_count": wildcard_count, "domain": domain},
+            )
+        )
 
     # Check for unusual issuers
     if len(issuers) > 5:
-        findings.append(Finding(
-            module="recon.cert_transparency",
-            title=f"Multiple Certificate Issuers ({len(issuers)})",
-            description=f"Certificates for {domain} were issued by {len(issuers)} different CAs. "
-                       "This may indicate inconsistent certificate management practices.",
-            severity=RiskLevel.INFO,
-            data={"issuer_count": len(issuers), "issuers": dict(list(issuers.items())[:10])},
-        ))
+        findings.append(
+            Finding(
+                module="recon.cert_transparency",
+                title=f"Multiple Certificate Issuers ({len(issuers)})",
+                description=f"Certificates for {domain} were issued by {len(issuers)} different CAs. "
+                "This may indicate inconsistent certificate management practices.",
+                severity=RiskLevel.INFO,
+                data={
+                    "issuer_count": len(issuers),
+                    "issuers": dict(list(issuers.items())[:10]),
+                },
+            )
+        )
 
     return findings
 

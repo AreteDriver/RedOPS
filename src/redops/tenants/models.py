@@ -165,7 +165,8 @@ class TenantLimits:
             "scan_monthly": self.scans_this_month < quota.max_scans_per_month,
             "target": self.active_targets < quota.max_targets,
             "user": self.active_users < quota.max_users,
-            "api_minute": self.api_requests_this_minute < quota.max_api_requests_per_minute,
+            "api_minute": self.api_requests_this_minute
+            < quota.max_api_requests_per_minute,
             "api_daily": self.api_requests_today < quota.max_api_requests_per_day,
             "storage": self.storage_used_mb < quota.max_storage_mb,
             "concurrent_scan": self.active_scans < quota.max_concurrent_scans,
@@ -350,9 +351,10 @@ class Tenant:
     def _generate_slug(self, name: str) -> str:
         """Generate URL-friendly slug from name."""
         import re
+
         slug = name.lower()
-        slug = re.sub(r'[^a-z0-9]+', '-', slug)
-        slug = slug.strip('-')
+        slug = re.sub(r"[^a-z0-9]+", "-", slug)
+        slug = slug.strip("-")
         return slug
 
     def is_active(self) -> bool:
@@ -422,8 +424,12 @@ class Tenant:
             "billing_email": self.billing_email,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "activated_at": self.activated_at.isoformat() if self.activated_at else None,
-            "trial_ends_at": self.trial_ends_at.isoformat() if self.trial_ends_at else None,
+            "activated_at": self.activated_at.isoformat()
+            if self.activated_at
+            else None,
+            "trial_ends_at": self.trial_ends_at.isoformat()
+            if self.trial_ends_at
+            else None,
             "config": self.config.to_dict(),
             "quota": self.quota.to_dict(),
             "limits": self.limits.to_dict(),

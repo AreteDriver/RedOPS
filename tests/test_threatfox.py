@@ -1,7 +1,6 @@
 """Tests for the ThreatFox threat intelligence module."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from redops.core.context import Context
 from redops.modules.threat_intel.threatfox import (
     query_ioc,
@@ -316,14 +315,17 @@ class TestGetThreatfoxSummary:
     def test_with_results(self):
         """Test summary with results."""
         ctx = Context()
-        ctx.add("threatfox_result", {
-            "queried_ioc": "evil.com",
-            "data": [
-                {"malware": "Emotet", "threat_type": "botnet_cc"},
-                {"malware": "TrickBot", "threat_type": "payload"},
-            ],
-            "query_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "threatfox_result",
+            {
+                "queried_ioc": "evil.com",
+                "data": [
+                    {"malware": "Emotet", "threat_type": "botnet_cc"},
+                    {"malware": "TrickBot", "threat_type": "payload"},
+                ],
+                "query_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_threatfox_summary(ctx)
 
@@ -344,11 +346,14 @@ class TestGetThreatfoxSummary:
     def test_with_empty_data(self):
         """Test summary with empty data list."""
         ctx = Context()
-        ctx.add("threatfox_result", {
-            "queried_ioc": "clean.com",
-            "data": [],
-            "query_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "threatfox_result",
+            {
+                "queried_ioc": "clean.com",
+                "data": [],
+                "query_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_threatfox_summary(ctx)
 
@@ -358,11 +363,14 @@ class TestGetThreatfoxSummary:
     def test_with_none_data(self):
         """Test summary with None data."""
         ctx = Context()
-        ctx.add("threatfox_result", {
-            "queried_ioc": "unknown.com",
-            "data": None,
-            "query_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "threatfox_result",
+            {
+                "queried_ioc": "unknown.com",
+                "data": None,
+                "query_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_threatfox_summary(ctx)
 

@@ -9,12 +9,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from abc import ABC, abstractmethod
 from enum import Enum
-import json
 import logging
 import os
 
 try:
     import httpx
+
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class NotificationLevel(Enum):
     """Notification severity level."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -34,6 +35,7 @@ class NotificationLevel(Enum):
 @dataclass
 class NotificationMessage:
     """A notification message to send."""
+
     title: str
     body: str
     level: NotificationLevel = NotificationLevel.INFO
@@ -154,27 +156,31 @@ class SlackWebhook(WebhookProvider):
 
         # Add link button if URL provided
         if message.url:
-            attachment["blocks"].append({
-                "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": "View Details"},
-                        "url": message.url,
-                    }
-                ],
-            })
+            attachment["blocks"].append(
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "View Details"},
+                            "url": message.url,
+                        }
+                    ],
+                }
+            )
 
         # Add timestamp footer
-        attachment["blocks"].append({
-            "type": "context",
-            "elements": [
-                {
-                    "type": "mrkdwn",
-                    "text": f"Source: {message.source} | {message.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}",
-                }
-            ],
-        })
+        attachment["blocks"].append(
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"Source: {message.source} | {message.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}",
+                    }
+                ],
+            }
+        )
 
         payload = {
             "username": self.username,
@@ -259,21 +265,25 @@ class TeamsWebhook(WebhookProvider):
 
         # Add fields as fact set
         if message.fields:
-            body.append({
-                "type": "FactSet",
-                "facts": [
-                    {"title": k, "value": v}
-                    for k, v in list(message.fields.items())[:10]
-                ],
-            })
+            body.append(
+                {
+                    "type": "FactSet",
+                    "facts": [
+                        {"title": k, "value": v}
+                        for k, v in list(message.fields.items())[:10]
+                    ],
+                }
+            )
 
         # Add timestamp
-        body.append({
-            "type": "TextBlock",
-            "text": f"Source: {message.source} | {message.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}",
-            "size": "Small",
-            "isSubtle": True,
-        })
+        body.append(
+            {
+                "type": "TextBlock",
+                "text": f"Source: {message.source} | {message.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}",
+                "size": "Small",
+                "isSubtle": True,
+            }
+        )
 
         card = {
             "type": "AdaptiveCard",
@@ -337,11 +347,11 @@ class DiscordWebhook(WebhookProvider):
     """
 
     LEVEL_COLORS = {
-        NotificationLevel.INFO: 3447003,      # Blue
+        NotificationLevel.INFO: 3447003,  # Blue
         NotificationLevel.WARNING: 16776960,  # Yellow
-        NotificationLevel.ERROR: 15158332,    # Red
-        NotificationLevel.CRITICAL: 10181046, # Purple
-        NotificationLevel.SUCCESS: 3066993,   # Green
+        NotificationLevel.ERROR: 15158332,  # Red
+        NotificationLevel.CRITICAL: 10181046,  # Purple
+        NotificationLevel.SUCCESS: 3066993,  # Green
     }
 
     LEVEL_EMOJI = {
@@ -496,9 +506,13 @@ class GenericWebhook(WebhookProvider):
         try:
             with httpx.Client(timeout=30) as client:
                 if self.method == "PUT":
-                    response = client.put(self.webhook_url, json=payload, headers=headers)
+                    response = client.put(
+                        self.webhook_url, json=payload, headers=headers
+                    )
                 else:
-                    response = client.post(self.webhook_url, json=payload, headers=headers)
+                    response = client.post(
+                        self.webhook_url, json=payload, headers=headers
+                    )
                 response.raise_for_status()
                 logger.info(f"Webhook notification sent: {message.title}")
                 return True

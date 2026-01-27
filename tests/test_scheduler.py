@@ -1,11 +1,9 @@
 """Tests for scheduled scanning module."""
 
-import pytest
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch, MagicMock
 import tempfile
 import os
-import json
 import time
 
 
@@ -72,7 +70,12 @@ class TestScanSchedule:
 
     def test_schedule_creation(self):
         """Test basic schedule creation."""
-        from redops.scheduler import ScanSchedule, ScanPolicy, RecurrenceType, ScheduleStatus
+        from redops.scheduler import (
+            ScanSchedule,
+            ScanPolicy,
+            RecurrenceType,
+            ScheduleStatus,
+        )
 
         policy = ScanPolicy(name="test", pipeline="recon")
         schedule = ScanSchedule(
@@ -146,7 +149,7 @@ class TestScanSchedule:
 
     def test_schedule_is_due(self):
         """Test is_due check."""
-        from redops.scheduler import ScanSchedule, ScanPolicy, ScheduleStatus
+        from redops.scheduler import ScanSchedule, ScanPolicy
 
         policy = ScanPolicy(name="test", pipeline="recon")
         schedule = ScanSchedule(
@@ -361,7 +364,7 @@ class TestScanJob:
 
     def test_job_can_retry(self):
         """Test retry eligibility."""
-        from redops.scheduler import ScanJob, ScanPolicy, JobStatus
+        from redops.scheduler import ScanJob, ScanPolicy
 
         policy = ScanPolicy(name="test", pipeline="recon", retry_count=3)
         job = ScanJob(schedule_id="123", target="example.com", policy=policy)
@@ -443,7 +446,12 @@ class TestScheduleStore:
 
     def test_store_list_schedules(self):
         """Test listing schedules."""
-        from redops.scheduler import ScheduleStore, ScanSchedule, ScanPolicy, ScheduleStatus
+        from redops.scheduler import (
+            ScheduleStore,
+            ScanSchedule,
+            ScanPolicy,
+            ScheduleStatus,
+        )
 
         store = ScheduleStore()
         policy = ScanPolicy(name="test", pipeline="recon")
@@ -529,7 +537,9 @@ class TestScheduleStore:
             # Create store and add schedule
             store1 = ScheduleStore(storage_path)
             policy = ScanPolicy(name="test", pipeline="recon")
-            schedule = ScanSchedule(name="persistent", target="example.com", policy=policy)
+            schedule = ScanSchedule(
+                name="persistent", target="example.com", policy=policy
+            )
             store1.add_schedule(schedule)
 
             # Create new store and verify persistence
@@ -681,7 +691,7 @@ class TestScheduler:
 
     def test_scheduler_cancel_job(self):
         """Test job cancellation."""
-        from redops.scheduler import Scheduler, ScanPolicy, JobStatus
+        from redops.scheduler import Scheduler, ScanPolicy
 
         scheduler = Scheduler()
         policy = ScanPolicy(name="test", pipeline="recon")
@@ -919,6 +929,7 @@ class TestSchedulerIntegration:
 
         with patch.dict("os.environ", env):
             from redops.scheduler import SchedulerConfig
+
             config = SchedulerConfig.from_env()
 
             assert config.check_interval_seconds == 30
@@ -933,19 +944,8 @@ class TestSchedulerModuleImports:
         """Test all expected exports are available."""
         from redops.scheduler import (
             # Models
-            ScanSchedule,
-            ScanPolicy,
-            ScanJob,
-            ScheduleStatus,
-            JobStatus,
-            RecurrenceType,
-            # Scheduler
-            Scheduler,
-            SchedulerConfig,
-            ScheduleStore,
             get_scheduler,
             # Executor
-            ScanExecutor,
             create_default_executor,
             execute_scheduled_scan,
         )

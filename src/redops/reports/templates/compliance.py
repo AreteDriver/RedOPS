@@ -101,7 +101,9 @@ class ComplianceReport(BaseReport):
         elements.append(Spacer(1, 20))
 
         # OWASP Top 10 Mapping
-        elements.append(Paragraph("OWASP Top 10 (2021) Mapping", self.styles["SectionHeader"]))
+        elements.append(
+            Paragraph("OWASP Top 10 (2021) Mapping", self.styles["SectionHeader"])
+        )
         elements.append(self._create_framework_mapping(data, "OWASP"))
         elements.append(Spacer(1, 20))
 
@@ -112,7 +114,9 @@ class ComplianceReport(BaseReport):
 
         # PCI-DSS Assessment
         elements.append(PageBreak())
-        elements.append(Paragraph("PCI DSS 4.0 Assessment", self.styles["SectionHeader"]))
+        elements.append(
+            Paragraph("PCI DSS 4.0 Assessment", self.styles["SectionHeader"])
+        )
         elements.append(self._create_pci_assessment(data))
         elements.append(Spacer(1, 20))
 
@@ -122,7 +126,9 @@ class ComplianceReport(BaseReport):
         elements.append(Spacer(1, 20))
 
         # Compliance Gaps
-        elements.append(Paragraph("Compliance Gaps & Recommendations", self.styles["SectionHeader"]))
+        elements.append(
+            Paragraph("Compliance Gaps & Recommendations", self.styles["SectionHeader"])
+        )
         elements.append(self._create_compliance_gaps(data))
 
         return elements
@@ -152,7 +158,9 @@ class ComplianceReport(BaseReport):
             ["NIST CSF", "2.0", "See Details", str(total_findings)],
         ]
 
-        table = Table(summary_data, colWidths=[1.5 * inch, 0.8 * inch, 1.5 * inch, 1.2 * inch])
+        table = Table(
+            summary_data, colWidths=[1.5 * inch, 0.8 * inch, 1.5 * inch, 1.2 * inch]
+        )
 
         # Status colors
         status_colors = {
@@ -246,7 +254,9 @@ class ComplianceReport(BaseReport):
 
             table_data.append([cat_id, cat_name[:35], str(count), status])
 
-        table = Table(table_data, colWidths=[0.8 * inch, 2.5 * inch, 0.8 * inch, 0.8 * inch])
+        table = Table(
+            table_data, colWidths=[0.8 * inch, 2.5 * inch, 0.8 * inch, 0.8 * inch]
+        )
 
         style = [
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
@@ -255,7 +265,12 @@ class ComplianceReport(BaseReport):
             ("FONTSIZE", (0, 0), (-1, -1), 9),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
             ("ALIGN", (2, 0), (-1, -1), "CENTER"),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+            (
+                "ROWBACKGROUNDS",
+                (0, 1),
+                (-1, -1),
+                [colors.white, colors.HexColor("#f8f9fa")],
+            ),
         ]
 
         # Color status cells
@@ -323,7 +338,9 @@ class ComplianceReport(BaseReport):
 
             table_data.append([req_id, req_name[:40], str(len(findings_list)), status])
 
-        table = Table(table_data, colWidths=[0.8 * inch, 3 * inch, 0.7 * inch, 0.8 * inch])
+        table = Table(
+            table_data, colWidths=[0.8 * inch, 3 * inch, 0.7 * inch, 0.8 * inch]
+        )
 
         style = [
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
@@ -332,7 +349,12 @@ class ComplianceReport(BaseReport):
             ("FONTSIZE", (0, 0), (-1, -1), 9),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
             ("ALIGN", (2, 0), (-1, -1), "CENTER"),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+            (
+                "ROWBACKGROUNDS",
+                (0, 1),
+                (-1, -1),
+                [colors.white, colors.HexColor("#f8f9fa")],
+            ),
         ]
 
         status_colors = {

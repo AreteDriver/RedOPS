@@ -3,10 +3,10 @@ Scan API routes.
 """
 
 from datetime import datetime, timezone
-from typing import Any, List, Optional
-from uuid import UUID, uuid4
+from typing import List, Optional
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..deps import get_current_user, Pagination, ScanFilters
@@ -20,18 +20,24 @@ class ScanCreate(BaseModel):
 
     target: str = Field(..., description="Target URL, IP, or domain")
     pipeline: str = Field(default="default", description="Scan pipeline to use")
-    modules: Optional[List[str]] = Field(default=None, description="Specific modules to run")
+    modules: Optional[List[str]] = Field(
+        default=None, description="Specific modules to run"
+    )
     options: Optional[dict] = Field(default_factory=dict, description="Module options")
-    tags: Optional[List[str]] = Field(default_factory=list, description="Tags for organization")
+    tags: Optional[List[str]] = Field(
+        default_factory=list, description="Tags for organization"
+    )
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "target": "https://example.com",
-            "pipeline": "web_security",
-            "modules": ["ssl_check", "header_scan"],
-            "tags": ["production", "q1-audit"],
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "target": "https://example.com",
+                "pipeline": "web_security",
+                "modules": ["ssl_check", "header_scan"],
+                "tags": ["production", "q1-audit"],
+            }
         }
-    })
+    )
 
 
 class ScanResponse(BaseModel):
@@ -88,7 +94,9 @@ async def list_scans(
     if filters.status:
         scans = [s for s in scans if s.get("status") == filters.status]
     if filters.target:
-        scans = [s for s in scans if filters.target.lower() in s.get("target", "").lower()]
+        scans = [
+            s for s in scans if filters.target.lower() in s.get("target", "").lower()
+        ]
     if filters.pipeline:
         scans = [s for s in scans if s.get("pipeline") == filters.pipeline]
 

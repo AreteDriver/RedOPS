@@ -1,8 +1,6 @@
 """Tests for new threat intelligence modules: URLScan.io, PassiveDNS, AlienVault OTX."""
 
-import pytest
 from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone
 
 from redops.core.context import Context
 
@@ -16,7 +14,7 @@ class TestURLScanModule:
             from redops.modules.threat_intel.urlscan import scan_url
 
             ctx = Context(target="https://example.com")
-            result = scan_url(ctx, {})
+            scan_url(ctx, {})
 
             assert "urlscan_result" not in ctx.data
 
@@ -26,7 +24,7 @@ class TestURLScanModule:
             from redops.modules.threat_intel.urlscan import scan_url
 
             ctx = Context(target=None)
-            result = scan_url(ctx, {})
+            scan_url(ctx, {})
 
             assert "urlscan_result" not in ctx.data
 
@@ -37,7 +35,7 @@ class TestURLScanModule:
                 from redops.modules.threat_intel.urlscan import scan_url
 
                 ctx = Context(target="https://example.com")
-                result = scan_url(ctx, {})
+                scan_url(ctx, {})
 
                 assert ctx.get("urlscan_result", {}).get("error") == "API key required"
 
@@ -66,7 +64,7 @@ class TestURLScanModule:
             from redops.modules.threat_intel.urlscan import scan_url
 
             ctx = Context(target="https://example.com")
-            result = scan_url(ctx, {"api_key": "test-key", "wait_for_result": True})
+            scan_url(ctx, {"api_key": "test-key", "wait_for_result": True})
 
             assert "urlscan_result" in ctx.data
             assert ctx.data["urlscan_result"]["uuid"] == "test-uuid-123"
@@ -82,7 +80,7 @@ class TestURLScanModule:
             from redops.modules.threat_intel.urlscan import scan_url
 
             ctx = Context(target="https://example.com")
-            result = scan_url(ctx, {"api_key": "test-key"})
+            scan_url(ctx, {"api_key": "test-key"})
 
             assert ctx.get("urlscan_result", {}).get("error") == "Rate limit exceeded"
 
@@ -93,8 +91,14 @@ class TestURLScanModule:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "results": [
-                {"page": {"domain": "example.com"}, "verdicts": {"overall": {"malicious": False}}},
-                {"page": {"domain": "example.com"}, "verdicts": {"overall": {"malicious": True}}},
+                {
+                    "page": {"domain": "example.com"},
+                    "verdicts": {"overall": {"malicious": False}},
+                },
+                {
+                    "page": {"domain": "example.com"},
+                    "verdicts": {"overall": {"malicious": True}},
+                },
             ],
             "total": 2,
         }
@@ -104,7 +108,7 @@ class TestURLScanModule:
             from redops.modules.threat_intel.urlscan import search_urlscan
 
             ctx = Context(target="example.com")
-            result = search_urlscan(ctx, {"api_key": "test-key"})
+            search_urlscan(ctx, {"api_key": "test-key"})
 
             assert "urlscan_search" in ctx.data
             assert ctx.data["urlscan_search"]["total"] == 2
@@ -180,7 +184,7 @@ class TestPassiveDNSModule:
             from redops.modules.threat_intel.passivedns import query_passivedns
 
             ctx = Context(target="example.com")
-            result = query_passivedns(ctx, {})
+            query_passivedns(ctx, {})
 
             assert "passivedns_result" not in ctx.data
 
@@ -190,7 +194,7 @@ class TestPassiveDNSModule:
             from redops.modules.threat_intel.passivedns import query_passivedns
 
             ctx = Context(target=None)
-            result = query_passivedns(ctx, {})
+            query_passivedns(ctx, {})
 
             assert "passivedns_result" not in ctx.data
 
@@ -216,7 +220,7 @@ class TestPassiveDNSModule:
             from redops.modules.threat_intel.passivedns import query_passivedns
 
             ctx = Context(target="example.com")
-            result = query_passivedns(ctx, {"api_key": "test-key", "source": "mnemonic"})
+            query_passivedns(ctx, {"api_key": "test-key", "source": "mnemonic"})
 
             assert "passivedns_result" in ctx.data
             assert len(ctx.data["passivedns_result"]["records"]) == 1
@@ -227,14 +231,16 @@ class TestPassiveDNSModule:
         """Test successful CIRCL query."""
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = '{"rrname": "example.com", "rrtype": "A", "rdata": "93.184.216.34"}'
+        mock_response.text = (
+            '{"rrname": "example.com", "rrtype": "A", "rdata": "93.184.216.34"}'
+        )
         mock_requests.get.return_value = mock_response
 
         with patch("redops.modules.threat_intel.passivedns.HAS_REQUESTS", True):
             from redops.modules.threat_intel.passivedns import query_passivedns
 
             ctx = Context(target="example.com")
-            result = query_passivedns(ctx, {"source": "circl"})
+            query_passivedns(ctx, {"source": "circl"})
 
             assert "passivedns_result" in ctx.data
             assert "circl" in ctx.data["passivedns_result"]["sources"]
@@ -250,7 +256,7 @@ class TestPassiveDNSModule:
             from redops.modules.threat_intel.passivedns import query_passivedns
 
             ctx = Context(target="example.com")
-            result = query_passivedns(ctx, {"source": "mnemonic"})
+            query_passivedns(ctx, {"source": "mnemonic"})
 
             assert "passivedns_result" in ctx.data
             assert "mnemonic_error" in ctx.data["passivedns_result"]
@@ -290,7 +296,9 @@ class TestPassiveDNSModule:
         analysis = analyze_passivedns_results(results)
 
         assert len(analysis["unique_ips"]) == 15
-        assert any(p["type"] == "high_ip_churn" for p in analysis["suspicious_patterns"])
+        assert any(
+            p["type"] == "high_ip_churn" for p in analysis["suspicious_patterns"]
+        )
 
     def test_analyze_passivedns_high_domain_count(self):
         """Test detection of high domain count on IP."""
@@ -307,7 +315,9 @@ class TestPassiveDNSModule:
         analysis = analyze_passivedns_results(results)
 
         assert len(analysis["unique_domains"]) == 55
-        assert any(p["type"] == "high_domain_count" for p in analysis["suspicious_patterns"])
+        assert any(
+            p["type"] == "high_domain_count" for p in analysis["suspicious_patterns"]
+        )
 
     def test_get_passivedns_summary(self):
         """Test summary generation."""
@@ -359,7 +369,7 @@ class TestPassiveDNSModule:
             from redops.modules.threat_intel.passivedns import get_domain_history
 
             ctx = Context(target="example.com")
-            result = get_domain_history(ctx, {"api_key": "test-key"})
+            get_domain_history(ctx, {"api_key": "test-key"})
 
             assert "domain_ip_history" in ctx.data
             assert len(ctx.data["domain_ip_history"]["ip_addresses"]) == 2
@@ -389,7 +399,7 @@ class TestPassiveDNSModule:
             from redops.modules.threat_intel.passivedns import get_ip_history
 
             ctx = Context(target="1.2.3.4")
-            result = get_ip_history(ctx, {"api_key": "test-key"})
+            get_ip_history(ctx, {"api_key": "test-key"})
 
             assert "ip_domain_history" in ctx.data
             assert len(ctx.data["ip_domain_history"]["domains"]) == 2
@@ -404,7 +414,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import get_indicator
 
             ctx = Context(target="1.2.3.4")
-            result = get_indicator(ctx, {})
+            get_indicator(ctx, {})
 
             assert "otx_indicator" not in ctx.data
 
@@ -414,7 +424,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import get_indicator
 
             ctx = Context(target=None)
-            result = get_indicator(ctx, {})
+            get_indicator(ctx, {})
 
             assert "otx_indicator" not in ctx.data
 
@@ -425,7 +435,7 @@ class TestAlienVaultOTXModule:
                 from redops.modules.threat_intel.alienvault import get_indicator
 
                 ctx = Context(target="1.2.3.4")
-                result = get_indicator(ctx, {})
+                get_indicator(ctx, {})
 
                 assert ctx.get("otx_indicator", {}).get("error") == "API key required"
 
@@ -448,7 +458,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import get_indicator
 
             ctx = Context(target="1.2.3.4")
-            result = get_indicator(ctx, {"api_key": "test-key", "sections": ["general"]})
+            get_indicator(ctx, {"api_key": "test-key", "sections": ["general"]})
 
             assert "otx_indicator" in ctx.data
             assert ctx.data["otx_indicator"]["indicator"] == "1.2.3.4"
@@ -483,7 +493,9 @@ class TestAlienVaultOTXModule:
         """Test SHA1 hash detection."""
         from redops.modules.threat_intel.alienvault import _detect_indicator_type
 
-        assert _detect_indicator_type("da39a3ee5e6b4b0d3255bfef95601890afd80709") == "file"
+        assert (
+            _detect_indicator_type("da39a3ee5e6b4b0d3255bfef95601890afd80709") == "file"
+        )
 
     def test_detect_indicator_type_sha256(self):
         """Test SHA256 hash detection."""
@@ -569,7 +581,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import get_pulses
 
             ctx = Context(target="test")
-            result = get_pulses(ctx, {"api_key": "test-key"})
+            get_pulses(ctx, {"api_key": "test-key"})
 
             assert "otx_pulses" in ctx.data
             assert ctx.data["otx_pulses"]["count"] == 1
@@ -586,7 +598,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import get_pulses
 
             ctx = Context(target="test")
-            result = get_pulses(ctx, {"api_key": "bad-key"})
+            get_pulses(ctx, {"api_key": "bad-key"})
 
             assert ctx.get("otx_pulses", {}).get("error") == "Authentication failed"
 
@@ -613,7 +625,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import search_pulses
 
             ctx = Context(target="APT28")
-            result = search_pulses(ctx, {"api_key": "test-key"})
+            search_pulses(ctx, {"api_key": "test-key"})
 
             assert "otx_pulse_search" in ctx.data
             assert ctx.data["otx_pulse_search"]["count"] == 1
@@ -641,7 +653,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import get_pulse_details
 
             ctx = Context(target="test")
-            result = get_pulse_details(ctx, {"api_key": "test-key", "pulse_id": "pulse-123"})
+            get_pulse_details(ctx, {"api_key": "test-key", "pulse_id": "pulse-123"})
 
             assert "otx_pulse_details" in ctx.data
             assert ctx.data["otx_pulse_details"]["indicator_count"] == 2
@@ -658,7 +670,7 @@ class TestAlienVaultOTXModule:
             from redops.modules.threat_intel.alienvault import get_pulse_details
 
             ctx = Context(target="test")
-            result = get_pulse_details(ctx, {"api_key": "test-key", "pulse_id": "invalid"})
+            get_pulse_details(ctx, {"api_key": "test-key", "pulse_id": "invalid"})
 
             assert ctx.get("otx_pulse_details", {}).get("error") == "Pulse not found"
 

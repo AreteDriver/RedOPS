@@ -58,7 +58,7 @@ def export_sarif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     # Determine output path
     output_name = params.get(
         "output_name",
-        f"redops_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sarif"
+        f"redops_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sarif",
     )
     output_path = output_dir / output_name
 
@@ -69,7 +69,10 @@ def export_sarif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     # Get stats
     results_count = len(sarif_doc.get("runs", [{}])[0].get("results", []))
     rules_count = len(
-        sarif_doc.get("runs", [{}])[0].get("tool", {}).get("driver", {}).get("rules", [])
+        sarif_doc.get("runs", [{}])[0]
+        .get("tool", {})
+        .get("driver", {})
+        .get("rules", [])
     )
 
     ctx.add("sarif_export_path", str(output_path))
@@ -78,7 +81,7 @@ def export_sarif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
 
     ctx.log(
         f"SARIF report saved to {output_path} ({results_count} results, {rules_count} rules)",
-        level="INFO"
+        level="INFO",
     )
 
     return ctx
@@ -151,9 +154,7 @@ def create_sarif_document(
                 "location": {
                     "uri": ctx.target,
                 },
-                "description": {
-                    "text": "Assessment target"
-                },
+                "description": {"text": "Assessment target"},
             }
         ]
 
@@ -181,13 +182,15 @@ def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
     risks = ctx.get("risks", [])
     for risk in risks:
         if isinstance(risk, dict):
-            findings.append({
-                "module": risk.get("module", "risk"),
-                "title": risk.get("title", "Unknown Risk"),
-                "description": risk.get("description", ""),
-                "severity": risk.get("level", "medium"),
-                "data": risk.get("data", {}),
-            })
+            findings.append(
+                {
+                    "module": risk.get("module", "risk"),
+                    "title": risk.get("title", "Unknown Risk"),
+                    "description": risk.get("description", ""),
+                    "severity": risk.get("level", "medium"),
+                    "data": risk.get("data", {}),
+                }
+            )
 
     return findings
 
@@ -221,9 +224,7 @@ def build_rules(findings: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
                 "shortDescription": {
                     "text": title[:200] if len(title) > 200 else title
                 },
-                "fullDescription": {
-                    "text": finding.get("description", title)
-                },
+                "fullDescription": {"text": finding.get("description", title)},
                 "helpUri": f"https://docs.redops.io/rules/{rule_id}",
                 "defaultConfiguration": {
                     "level": severity_to_sarif_level(severity),
@@ -362,7 +363,13 @@ def create_fingerprint(finding: Dict[str, Any]) -> str:
 def extract_location(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Extract location information from finding data."""
     # Check for common location fields
-    uri = data.get("url") or data.get("uri") or data.get("host") or data.get("ip") or data.get("domain")
+    uri = (
+        data.get("url")
+        or data.get("uri")
+        or data.get("host")
+        or data.get("ip")
+        or data.get("domain")
+    )
 
     if uri:
         return {
@@ -385,27 +392,36 @@ def extract_related_locations(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         items = data.get(key, [])
         for i, item in enumerate(items[:5]):  # Limit to 5 related locations
             if isinstance(item, str):
-                related.append({
-                    "id": i,
-                    "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": item,
+                related.append(
+                    {
+                        "id": i,
+                        "physicalLocation": {
+                            "artifactLocation": {
+                                "uri": item,
+                            },
                         },
-                    },
-                    "message": {
-                        "text": f"Related {key[:-1] if key.endswith('s') else key}: {item}"
-                    },
-                })
+                        "message": {
+                            "text": f"Related {key[:-1] if key.endswith('s') else key}: {item}"
+                        },
+                    }
+                )
             elif isinstance(item, dict):
-                uri = item.get("prefix") or item.get("url") or item.get("host") or str(item)
-                related.append({
-                    "id": i,
-                    "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": uri,
+                uri = (
+                    item.get("prefix")
+                    or item.get("url")
+                    or item.get("host")
+                    or str(item)
+                )
+                related.append(
+                    {
+                        "id": i,
+                        "physicalLocation": {
+                            "artifactLocation": {
+                                "uri": uri,
+                            },
                         },
-                    },
-                })
+                    }
+                )
 
     return related
 

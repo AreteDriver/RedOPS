@@ -86,6 +86,7 @@ def get_censys_client():
         # Try to get from settings
         try:
             from redops.cli.settings import get_api_key_direct
+
             api_id = get_api_key_direct("censys_id")
             api_secret = get_api_key_direct("censys_secret")
         except Exception:
@@ -102,9 +103,7 @@ def get_censys_client():
         return None, None
 
 
-def query_censys_host(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_censys_host(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query Censys for host information.
 
@@ -134,7 +133,9 @@ def query_censys_host(
 
     hosts_client, _ = get_censys_client()
     if not hosts_client:
-        censys_data["error"] = "Censys API not available (missing censys package or API credentials)"
+        censys_data["error"] = (
+            "Censys API not available (missing censys package or API credentials)"
+        )
         ctx.log(censys_data["error"], level="WARNING")
         ctx.add("censys_host", censys_data)
         return ctx
@@ -145,6 +146,7 @@ def query_censys_host(
         if not _is_ip(target):
             try:
                 import socket
+
                 ip = socket.gethostbyname(target)
                 ctx.log(f"Resolved {target} to {ip}", level="DEBUG")
             except Exception as e:
@@ -180,11 +182,13 @@ def query_censys_host(
             # Extract software info
             if service.get("software"):
                 for sw in service["software"]:
-                    svc["software"].append({
-                        "product": sw.get("product"),
-                        "version": sw.get("version"),
-                        "vendor": sw.get("vendor"),
-                    })
+                    svc["software"].append(
+                        {
+                            "product": sw.get("product"),
+                            "version": sw.get("version"),
+                            "vendor": sw.get("vendor"),
+                        }
+                    )
 
             # Extract TLS certificate info
             if service.get("tls") and service["tls"].get("certificates"):
@@ -240,7 +244,9 @@ def query_censys_certificates(
     limit = params.get("limit", 25)
 
     if not domain and not fingerprint:
-        ctx.log("No domain or fingerprint for Censys certificate query", level="WARNING")
+        ctx.log(
+            "No domain or fingerprint for Censys certificate query", level="WARNING"
+        )
         return ctx
 
     ctx.log(f"Querying Censys certificates for: {domain or fingerprint}", level="INFO")
@@ -356,11 +362,13 @@ def search_censys_hosts(
 
             # Parse services
             for svc in result.get("services", []):
-                host["services"].append({
-                    "port": svc.get("port"),
-                    "protocol": svc.get("transport_protocol"),
-                    "service_name": svc.get("service_name"),
-                })
+                host["services"].append(
+                    {
+                        "port": svc.get("port"),
+                        "protocol": svc.get("transport_protocol"),
+                        "service_name": svc.get("service_name"),
+                    }
+                )
 
             search_data["results"].append(host)
             count += 1
@@ -457,6 +465,7 @@ def analyze_censys_intel(
 
 # Helper functions
 
+
 def _parse_certificate(data: Dict[str, Any]) -> CensysCertificate:
     """Parse Censys certificate data."""
     return CensysCertificate(
@@ -478,6 +487,7 @@ def _parse_certificate(data: Dict[str, Any]) -> CensysCertificate:
 def _is_ip(value: str) -> bool:
     """Check if value is an IP address."""
     import re
+
     ip_pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
     return bool(re.match(ip_pattern, value))
 

@@ -1,6 +1,5 @@
 """Tests for the JUnit XML report module."""
 
-import pytest
 import tempfile
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -37,13 +36,16 @@ class TestExportJunit:
     def test_export_with_findings(self):
         """Test exporting context with findings."""
         ctx = Context(target="example.com")
-        ctx.add("finding_test_0", {
-            "module": "test.module",
-            "title": "Critical Finding",
-            "description": "A critical security issue",
-            "severity": "critical",
-            "data": {},
-        })
+        ctx.add(
+            "finding_test_0",
+            {
+                "module": "test.module",
+                "title": "Critical Finding",
+                "description": "A critical security issue",
+                "severity": "critical",
+                "data": {},
+            },
+        )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             result = export_junit(ctx, {"output_dir": tmpdir})
@@ -61,10 +63,13 @@ class TestExportJunit:
         ctx = Context(target="example.com")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = export_junit(ctx, {
-                "output_dir": tmpdir,
-                "suite_name": "Custom Suite",
-            })
+            result = export_junit(
+                ctx,
+                {
+                    "output_dir": tmpdir,
+                    "suite_name": "Custom Suite",
+                },
+            )
 
             tree = ET.parse(result.data["junit_export_path"])
             root = tree.getroot()
@@ -87,9 +92,12 @@ class TestCollectFindings:
     def test_collect_risks(self):
         """Test collecting from risks list."""
         ctx = Context()
-        ctx.add("risks", [
-            {"title": "Risk 1", "level": "high"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"title": "Risk 1", "level": "high"},
+            ],
+        )
 
         findings = collect_findings(ctx)
 
@@ -170,7 +178,8 @@ class TestCreateTestcase:
         finding = {"title": "Critical Issue", "severity": "critical"}
 
         testcase = create_testcase(
-            finding, "module",
+            finding,
+            "module",
             fail_on_critical=True,
             fail_on_high=True,
             fail_on_medium=False,
@@ -183,7 +192,8 @@ class TestCreateTestcase:
         finding = {"title": "High Issue", "severity": "high"}
 
         testcase = create_testcase(
-            finding, "module",
+            finding,
+            "module",
             fail_on_critical=True,
             fail_on_high=True,
             fail_on_medium=False,
@@ -196,7 +206,8 @@ class TestCreateTestcase:
         finding = {"title": "Medium Issue", "severity": "medium"}
 
         testcase = create_testcase(
-            finding, "module",
+            finding,
+            "module",
             fail_on_critical=True,
             fail_on_high=True,
             fail_on_medium=False,
@@ -209,7 +220,8 @@ class TestCreateTestcase:
         finding = {"title": "Low Issue", "severity": "low"}
 
         testcase = create_testcase(
-            finding, "module",
+            finding,
+            "module",
             fail_on_critical=True,
             fail_on_high=True,
             fail_on_medium=False,
@@ -274,6 +286,7 @@ class TestNormalizeSeverity:
 
     def test_enum_severity(self):
         """Test enum-like severity normalization."""
+
         class MockSeverity:
             name = "MEDIUM"
 

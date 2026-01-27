@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Union
 
 class ManifestError(Exception):
     """Error in plugin manifest."""
+
     pass
 
 
@@ -65,10 +66,9 @@ class PluginDependency:
         elif constraint.startswith("~"):
             # Approximately equal (major.minor must match)
             base = constraint[1:]
-            return (
-                _major_version(version) == _major_version(base) and
-                _minor_version(version) == _minor_version(base)
-            )
+            return _major_version(version) == _major_version(base) and _minor_version(
+                version
+            ) == _minor_version(base)
         else:
             return version == constraint
 
@@ -212,12 +212,10 @@ class PluginManifest:
             capabilities=data.get("capabilities", []),
             phases=data.get("phases", []),
             dependencies=[
-                PluginDependency.from_dict(d)
-                for d in data.get("dependencies", [])
+                PluginDependency.from_dict(d) for d in data.get("dependencies", [])
             ],
             requirements=[
-                PluginRequirement.from_dict(r)
-                for r in data.get("requirements", [])
+                PluginRequirement.from_dict(r) for r in data.get("requirements", [])
             ],
             python_requires=data.get("python_requires", ">=3.10"),
             config_schema=data.get("config_schema", {}),
@@ -250,7 +248,7 @@ class PluginManifest:
         # Required fields
         if not self.name:
             errors.append("Missing required field: name")
-        elif not re.match(r'^[a-z][a-z0-9-]*$', self.name):
+        elif not re.match(r"^[a-z][a-z0-9-]*$", self.name):
             errors.append("Invalid name: must be lowercase alphanumeric with hyphens")
 
         if not self.version:
@@ -264,7 +262,14 @@ class PluginManifest:
             errors.append("Invalid entry_point: must be module:ClassName")
 
         # Plugin type
-        valid_types = ["scanner", "enricher", "reporter", "validator", "transformer", "hook"]
+        valid_types = [
+            "scanner",
+            "enricher",
+            "reporter",
+            "validator",
+            "transformer",
+            "hook",
+        ]
         if self.plugin_type not in valid_types:
             errors.append(f"Invalid plugin_type: must be one of {valid_types}")
 
@@ -349,14 +354,15 @@ def validate_manifest(data: Dict[str, Any]) -> List[str]:
 
 def _is_valid_semver(version: str) -> bool:
     """Check if version is valid semver."""
-    pattern = r'^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$'
+    pattern = r"^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$"
     return bool(re.match(pattern, version))
 
 
 def _compare_versions(v1: str, v2: str) -> int:
     """Compare two semver versions. Returns -1, 0, or 1."""
+
     def parse(v):
-        match = re.match(r'^(\d+)\.(\d+)\.(\d+)', v)
+        match = re.match(r"^(\d+)\.(\d+)\.(\d+)", v)
         if match:
             return tuple(int(x) for x in match.groups())
         return (0, 0, 0)
@@ -373,17 +379,17 @@ def _compare_versions(v1: str, v2: str) -> int:
 
 def _major_version(version: str) -> int:
     """Extract major version number."""
-    match = re.match(r'^(\d+)', version)
+    match = re.match(r"^(\d+)", version)
     return int(match.group(1)) if match else 0
 
 
 def _minor_version(version: str) -> int:
     """Extract minor version number."""
-    match = re.match(r'^\d+\.(\d+)', version)
+    match = re.match(r"^\d+\.(\d+)", version)
     return int(match.group(1)) if match else 0
 
 
 def _is_valid_python_constraint(constraint: str) -> bool:
     """Check if Python version constraint is valid."""
-    pattern = r'^[>=<~^]*\d+(\.\d+)*$'
+    pattern = r"^[>=<~^]*\d+(\.\d+)*$"
     return bool(re.match(pattern, constraint))

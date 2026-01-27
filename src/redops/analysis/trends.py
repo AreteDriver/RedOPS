@@ -7,7 +7,7 @@ Analyzes historical scan data to identify patterns and trends.
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 import logging
 import statistics
 
@@ -166,7 +166,9 @@ class TrendData:
             "max": self.max_value,
             "std_dev": round(self.std_dev, 2) if self.std_dev else None,
             "trend": self.trend_direction.value,
-            "percent_change": round(self.percent_change, 2) if self.percent_change else None,
+            "percent_change": round(self.percent_change, 2)
+            if self.percent_change
+            else None,
             "forecast": round(self.forecast_next, 2) if self.forecast_next else None,
             "data_points": [
                 {"timestamp": p.timestamp.isoformat(), "value": p.value}
@@ -272,7 +274,9 @@ class TrendAnalyzer:
 
         # Process each scan
         for scan in filtered_scans:
-            scan_time = self._parse_date(scan.get("started_at", scan.get("completed_at")))
+            scan_time = self._parse_date(
+                scan.get("started_at", scan.get("completed_at"))
+            )
             findings = scan.get("findings", [])
 
             # Count by severity
@@ -311,9 +315,13 @@ class TrendAnalyzer:
 
         # Determine analysis period
         timestamps = [
-            self._parse_date(s.get("started_at")) for s in filtered_scans if s.get("started_at")
+            self._parse_date(s.get("started_at"))
+            for s in filtered_scans
+            if s.get("started_at")
         ]
-        period_start = min(timestamps) if timestamps else datetime.now() - timedelta(days=30)
+        period_start = (
+            min(timestamps) if timestamps else datetime.now() - timedelta(days=30)
+        )
         period_end = max(timestamps) if timestamps else datetime.now()
 
         # Create report
@@ -355,9 +363,7 @@ class TrendAnalyzer:
 
             summary = comp.get("summary", {})
 
-            metrics[MetricType.NEW_FINDINGS].add_point(
-                comp_time, summary.get("new", 0)
-            )
+            metrics[MetricType.NEW_FINDINGS].add_point(comp_time, summary.get("new", 0))
             metrics[MetricType.RESOLVED_FINDINGS].add_point(
                 comp_time, summary.get("resolved", 0)
             )
@@ -371,7 +377,9 @@ class TrendAnalyzer:
         timestamps = [self._parse_date(c.get("current_date")) for c in comparisons]
 
         return TrendReport(
-            target=comparisons[0].get("target", "unknown") if comparisons else "unknown",
+            target=comparisons[0].get("target", "unknown")
+            if comparisons
+            else "unknown",
             period_start=min(timestamps) if timestamps else datetime.now(),
             period_end=max(timestamps) if timestamps else datetime.now(),
             scan_count=len(comparisons),
@@ -395,7 +403,9 @@ class TrendAnalyzer:
                 continue
 
             # Filter by date
-            scan_date = self._parse_date(scan.get("started_at", scan.get("completed_at")))
+            scan_date = self._parse_date(
+                scan.get("started_at", scan.get("completed_at"))
+            )
             if start_date and scan_date < start_date:
                 continue
             if end_date and scan_date > end_date:
@@ -514,7 +524,11 @@ class TrendAnalyzer:
                 )
 
                 if metric.percent_change is not None:
-                    change_str = f"+{metric.percent_change:.1f}%" if metric.percent_change > 0 else f"{metric.percent_change:.1f}%"
+                    change_str = (
+                        f"+{metric.percent_change:.1f}%"
+                        if metric.percent_change > 0
+                        else f"{metric.percent_change:.1f}%"
+                    )
                     lines.append(f"  Change: {change_str} (vs previous)")
 
                 if metric.average is not None:
@@ -544,7 +558,9 @@ class TrendAnalyzer:
             return {"labels": [], "values": []}
 
         return {
-            "labels": [p.timestamp.strftime("%Y-%m-%d") for p in trend_data.data_points],
+            "labels": [
+                p.timestamp.strftime("%Y-%m-%d") for p in trend_data.data_points
+            ],
             "values": [p.value for p in trend_data.data_points],
             "metric": metric.value,
             "trend": trend_data.trend_direction.value,

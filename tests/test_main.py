@@ -1,10 +1,7 @@
 """Tests for RedOps main module."""
 
-import sys
 import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call
-from io import StringIO
+from unittest.mock import MagicMock, patch
 
 
 class TestRunPipeline:
@@ -70,7 +67,7 @@ class TestRunPipeline:
                     result = run_pipeline(
                         "pipeline.json",
                         "example.com",
-                        config_path="/path/to/config.yaml"
+                        config_path="/path/to/config.yaml",
                     )
 
         assert result == 0
@@ -102,9 +99,7 @@ class TestRunPipeline:
                 mock_loader.load.return_value = mock_pipeline
                 with patch("redops.main.PipelineRunner", return_value=mock_runner):
                     result = run_pipeline(
-                        "pipeline.json",
-                        "example.com",
-                        output_dir="./custom_output"
+                        "pipeline.json", "example.com", output_dir="./custom_output"
                     )
 
         assert result == 0
@@ -322,7 +317,7 @@ class TestMain:
         """Test main function exits with CLI return code."""
         from redops.main import main
 
-        with patch("redops.cli.app.main", return_value=1) as mock_cli:
+        with patch("redops.cli.app.main", return_value=1):
             with pytest.raises(SystemExit) as exc_info:
                 main()
 
@@ -342,17 +337,27 @@ class TestMainLegacy:
                     main_legacy()
 
         assert exc_info.value.code == 0
-        mock_run.assert_called_once_with("pipeline.json", "example.com", "./output", None)
+        mock_run.assert_called_once_with(
+            "pipeline.json", "example.com", "./output", None
+        )
 
     def test_main_legacy_run_with_options(self):
         """Test legacy main with run command and options."""
         from redops.main import main_legacy
 
-        with patch("sys.argv", [
-            "redops", "run", "pipeline.json", "example.com",
-            "--output-dir", "./reports",
-            "--config", "config.yaml"
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "redops",
+                "run",
+                "pipeline.json",
+                "example.com",
+                "--output-dir",
+                "./reports",
+                "--config",
+                "config.yaml",
+            ],
+        ):
             with patch("redops.main.run_pipeline", return_value=0) as mock_run:
                 with pytest.raises(SystemExit) as exc_info:
                     main_legacy()
@@ -446,7 +451,7 @@ class TestRunPipelineOutputPaths:
         mock_ctx.data = {
             "html_report_path": "/output/report.html",
             "json_path": "/output/data.json",
-            "other_data": "not a path"
+            "other_data": "not a path",
         }
         mock_ctx.get_logs.return_value = []
 
@@ -489,7 +494,9 @@ class TestRunPipelineManyErrorsWarnings:
 
         # Return 10 errors
         errors = [{"message": f"Error {i}"} for i in range(10)]
-        mock_ctx.get_logs.side_effect = lambda level=None: errors if level == "ERROR" else []
+        mock_ctx.get_logs.side_effect = (
+            lambda level=None: errors if level == "ERROR" else []
+        )
 
         mock_runner = MagicMock()
         mock_runner.run.return_value = mock_ctx

@@ -3,7 +3,6 @@
 import threading
 import time
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,7 +14,6 @@ from redops.core.task_queue import (
     TaskResult,
     Task,
     # Storage
-    TaskStore,
     MemoryTaskStore,
     # Worker
     Worker,
@@ -35,6 +33,7 @@ from redops.core.task_queue import (
 # =============================================================================
 # TaskStatus Tests
 # =============================================================================
+
 
 class TestTaskStatus:
     """Tests for TaskStatus enum."""
@@ -64,6 +63,7 @@ class TestTaskPriority:
 # =============================================================================
 # TaskResult Tests
 # =============================================================================
+
 
 class TestTaskResult:
     """Tests for TaskResult dataclass."""
@@ -126,6 +126,7 @@ class TestTaskResult:
 # Task Tests
 # =============================================================================
 
+
 class TestTask:
     """Tests for Task dataclass."""
 
@@ -139,6 +140,7 @@ class TestTask:
 
     def test_create_with_func(self):
         """Test task with function."""
+
         def my_func(x, y):
             return x + y
 
@@ -206,6 +208,7 @@ class TestTask:
 # =============================================================================
 # MemoryTaskStore Tests
 # =============================================================================
+
 
 class TestMemoryTaskStore:
     """Tests for MemoryTaskStore."""
@@ -293,6 +296,7 @@ class TestMemoryTaskStore:
 # Worker Tests
 # =============================================================================
 
+
 class TestWorker:
     """Tests for Worker."""
 
@@ -373,6 +377,7 @@ class TestWorker:
 # TaskQueue Tests
 # =============================================================================
 
+
 class TestTaskQueue:
     """Tests for TaskQueue."""
 
@@ -384,6 +389,7 @@ class TestTaskQueue:
 
     def test_submit_and_wait(self):
         """Test submitting and waiting for task."""
+
         def add(x, y):
             return x + y
 
@@ -396,6 +402,7 @@ class TestTaskQueue:
 
     def test_submit_with_kwargs(self):
         """Test submitting with keyword arguments."""
+
         def greet(name, greeting="Hello"):
             return f"{greeting}, {name}!"
 
@@ -499,6 +506,7 @@ class TestTaskQueue:
 
     def test_max_retries_exceeded(self):
         """Test max retries exceeded."""
+
         def always_fail():
             raise ValueError("Always fails")
 
@@ -555,6 +563,7 @@ class TestTaskQueue:
 
     def test_timeout(self):
         """Test task timeout."""
+
         def slow_task():
             time.sleep(5)
             return "done"
@@ -583,7 +592,7 @@ class TestTaskQueue:
                 queue.submit(slow_task, i)
 
             time.sleep(0.4)
-            duration = time.time() - start
+            time.time() - start
 
         # With 3 workers and 6 tasks (0.05s each), should finish in ~0.1-0.2s
         # We give 0.4s total and just verify all completed
@@ -593,6 +602,7 @@ class TestTaskQueue:
 # =============================================================================
 # JobScheduler Tests
 # =============================================================================
+
 
 class TestJobScheduler:
     """Tests for JobScheduler."""
@@ -694,11 +704,13 @@ class TestJobScheduler:
 # Task Decorator Tests
 # =============================================================================
 
+
 class TestTaskDecorator:
     """Tests for @task decorator."""
 
     def test_basic_decoration(self):
         """Test basic task decoration."""
+
         @task(name="my_task")
         def my_function():
             return 42
@@ -708,6 +720,7 @@ class TestTaskDecorator:
 
     def test_decoration_with_options(self):
         """Test decoration with options."""
+
         @task(
             name="configured_task",
             priority=TaskPriority.HIGH,
@@ -723,6 +736,7 @@ class TestTaskDecorator:
 
     def test_auto_name(self):
         """Test automatic name from function."""
+
         @task()
         def auto_named_function():
             pass
@@ -734,6 +748,7 @@ class TestTaskDecorator:
 # Convenience Function Tests
 # =============================================================================
 
+
 class TestConvenienceFunctions:
     """Tests for convenience functions."""
 
@@ -744,6 +759,7 @@ class TestConvenienceFunctions:
 
     def test_run_task(self):
         """Test run_task."""
+
         def add(x, y):
             return x + y
 
@@ -752,6 +768,7 @@ class TestConvenienceFunctions:
 
     def test_run_task_failure(self):
         """Test run_task with failure."""
+
         def fail():
             raise ValueError("Failed")
 
@@ -762,6 +779,7 @@ class TestConvenienceFunctions:
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestTaskQueueIntegration:
     """Integration tests for task queue."""

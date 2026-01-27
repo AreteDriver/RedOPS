@@ -1,8 +1,7 @@
 """Tests for STIX/TAXII export module."""
 
 import json
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from redops.modules.intel.stix_export import (
     STIX_VERSION,
@@ -56,6 +55,7 @@ class TestStixTimestamp:
     def test_iso_format(self):
         """Test timestamp is valid ISO format."""
         from datetime import datetime
+
         ts = stix_timestamp()
         # Should not raise
         datetime.fromisoformat(ts.replace("Z", "+00:00"))
@@ -108,15 +108,14 @@ class TestIndicator:
         ind = Indicator(
             name="Test IP",
             pattern="[ipv4-addr:value = '192.168.1.1']",
-            pattern_type="stix"
+            pattern_type="stix",
         )
         assert ind.pattern == "[ipv4-addr:value = '192.168.1.1']"
 
     def test_indicator_types(self):
         """Test indicator types list."""
         ind = Indicator(
-            name="Malware",
-            indicator_types=["malicious-activity", "compromised"]
+            name="Malware", indicator_types=["malicious-activity", "compromised"]
         )
         assert "malicious-activity" in ind.indicator_types
 
@@ -126,7 +125,7 @@ class TestIndicator:
             name="Test",
             description="Test indicator",
             pattern="[domain-name:value = 'evil.com']",
-            confidence=85
+            confidence=85,
         )
         d = ind.to_dict()
         assert d["name"] == "Test"
@@ -148,7 +147,7 @@ class TestThreatActor:
             aliases=["Fancy Bear", "Sofacy"],
             threat_actor_types=["nation-state"],
             sophistication="advanced",
-            primary_motivation="ideology"
+            primary_motivation="ideology",
         )
         assert ta.name == "APT28"
         assert "Fancy Bear" in ta.aliases
@@ -167,10 +166,9 @@ class TestAttackPattern:
         """Test attack pattern with MITRE reference."""
         ap = AttackPattern(
             name="Spearphishing Attachment",
-            external_references=[{
-                "source_name": "mitre-attack",
-                "external_id": "T1566.001"
-            }]
+            external_references=[
+                {"source_name": "mitre-attack", "external_id": "T1566.001"}
+            ],
         )
         assert ap.name == "Spearphishing Attachment"
         assert len(ap.external_references) == 1
@@ -189,10 +187,9 @@ class TestVulnerability:
         vuln = Vulnerability(
             name="CVE-2021-44228",
             description="Log4j RCE",
-            external_references=[{
-                "source_name": "cve",
-                "external_id": "CVE-2021-44228"
-            }]
+            external_references=[
+                {"source_name": "cve", "external_id": "CVE-2021-44228"}
+            ],
         )
         assert vuln.name == "CVE-2021-44228"
 
@@ -210,7 +207,7 @@ class TestInfrastructure:
         infra = Infrastructure(
             name="C2 Server",
             infrastructure_types=["command-and-control"],
-            aliases=["Cobalt Strike"]
+            aliases=["Cobalt Strike"],
         )
         assert "command-and-control" in infra.infrastructure_types
 
@@ -228,7 +225,7 @@ class TestRelationship:
         rel = Relationship(
             relationship_type="indicates",
             source_ref="indicator--123",
-            target_ref="malware--456"
+            target_ref="malware--456",
         )
         assert rel.relationship_type == "indicates"
         assert rel.source_ref == "indicator--123"
@@ -328,11 +325,7 @@ class TestSTIXExporter:
     def test_export_domain_pattern(self):
         """Test domain IOC pattern."""
         exporter = STIXExporter()
-        data = {
-            "threat_intel": {
-                "iocs": [{"type": "domain", "value": "test.com"}]
-            }
-        }
+        data = {"threat_intel": {"iocs": [{"type": "domain", "value": "test.com"}]}}
         bundle = exporter.export(data)
         json_str = bundle.to_json()
         assert "domain-name:value" in json_str
@@ -355,9 +348,18 @@ class TestSTIXExporter:
         data = {
             "threat_intel": {
                 "iocs": [
-                    {"type": "hash", "value": "d41d8cd98f00b204e9800998ecf8427e"},  # MD5
-                    {"type": "hash", "value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"},  # SHA-1
-                    {"type": "hash", "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},  # SHA-256
+                    {
+                        "type": "hash",
+                        "value": "d41d8cd98f00b204e9800998ecf8427e",
+                    },  # MD5
+                    {
+                        "type": "hash",
+                        "value": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                    },  # SHA-1
+                    {
+                        "type": "hash",
+                        "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    },  # SHA-256
                 ]
             }
         }
@@ -370,11 +372,7 @@ class TestSTIXExporter:
     def test_export_email_pattern(self):
         """Test email IOC pattern."""
         exporter = STIXExporter()
-        data = {
-            "threat_intel": {
-                "iocs": [{"type": "email", "value": "bad@evil.com"}]
-            }
-        }
+        data = {"threat_intel": {"iocs": [{"type": "email", "value": "bad@evil.com"}]}}
         bundle = exporter.export(data)
         json_str = bundle.to_json()
         assert "email-addr:value" in json_str
@@ -382,11 +380,7 @@ class TestSTIXExporter:
     def test_export_unknown_ioc_type(self):
         """Test unknown IOC type uses artifact."""
         exporter = STIXExporter()
-        data = {
-            "threat_intel": {
-                "iocs": [{"type": "custom", "value": "some-value"}]
-            }
-        }
+        data = {"threat_intel": {"iocs": [{"type": "custom", "value": "some-value"}]}}
         bundle = exporter.export(data)
         json_str = bundle.to_json()
         assert "artifact:payload_bin" in json_str
@@ -394,11 +388,7 @@ class TestSTIXExporter:
     def test_export_ioc_without_value(self):
         """Test IOC without value is skipped."""
         exporter = STIXExporter()
-        data = {
-            "threat_intel": {
-                "iocs": [{"type": "ip", "value": ""}]
-            }
-        }
+        data = {"threat_intel": {"iocs": [{"type": "ip", "value": ""}]}}
         bundle = exporter.export(data)
         # Should only have identity, no indicator
         assert len(bundle.objects) == 1
@@ -408,7 +398,11 @@ class TestSTIXExporter:
         exporter = STIXExporter()
         data = {
             "findings": [
-                {"title": "CVE-2021-44228", "cve": "CVE-2021-44228", "description": "Log4j"},
+                {
+                    "title": "CVE-2021-44228",
+                    "cve": "CVE-2021-44228",
+                    "description": "Log4j",
+                },
                 {"title": "Other finding"},  # No CVE, should be skipped
             ]
         }
@@ -425,7 +419,7 @@ class TestSTIXExporter:
                     {
                         "technique_id": "T1566.001",
                         "name": "Spearphishing Attachment",
-                        "tactic": "Initial Access"
+                        "tactic": "Initial Access",
                     }
                 ]
             }
@@ -440,10 +434,7 @@ class TestSTIXExporter:
         exporter = STIXExporter()
         data = {
             "target": "example.com",
-            "infrastructure": {
-                "cloud_provider": "AWS",
-                "cdn": "Cloudflare"
-            }
+            "infrastructure": {"cloud_provider": "AWS", "cdn": "Cloudflare"},
         }
         bundle = exporter.export(data)
         json_str = bundle.to_json()
@@ -472,11 +463,7 @@ class TestSTIXExporter:
         """Test unknown exposure type is skipped."""
         exporter = STIXExporter()
         data = {
-            "exposure_scan": {
-                "exposures": [
-                    {"type": "unknown", "value": "something"}
-                ]
-            }
+            "exposure_scan": {"exposures": [{"type": "unknown", "value": "something"}]}
         }
         bundle = exporter.export(data)
         # Only identity

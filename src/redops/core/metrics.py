@@ -6,7 +6,6 @@ for monitoring and observability.
 """
 
 import json
-import math
 import socket
 import threading
 import time
@@ -15,7 +14,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 
 class MetricType(Enum):
@@ -79,11 +78,13 @@ class MetricValue:
 class Metric(ABC):
     """Base class for all metrics."""
 
-    def __init__(self,
-                 name: str,
-                 description: str = "",
-                 labels: Optional[Labels] = None,
-                 unit: str = ""):
+    def __init__(
+        self,
+        name: str,
+        description: str = "",
+        labels: Optional[Labels] = None,
+        unit: str = "",
+    ):
         """Initialize metric."""
         self._name = name
         self._description = description
@@ -255,13 +256,28 @@ class Gauge(Metric):
 class Histogram(Metric):
     """A histogram for measuring distributions."""
 
-    DEFAULT_BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, float("inf"))
+    DEFAULT_BUCKETS = (
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        1.0,
+        2.5,
+        5.0,
+        10.0,
+        float("inf"),
+    )
 
-    def __init__(self,
-                 name: str,
-                 description: str = "",
-                 buckets: Optional[Sequence[float]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        name: str,
+        description: str = "",
+        buckets: Optional[Sequence[float]] = None,
+        **kwargs,
+    ):
         """Initialize histogram."""
         super().__init__(name, description, **kwargs)
         self._buckets = tuple(sorted(buckets or self.DEFAULT_BUCKETS))
@@ -355,17 +371,21 @@ class Summary(Metric):
 
     DEFAULT_QUANTILES = (0.5, 0.9, 0.95, 0.99)
 
-    def __init__(self,
-                 name: str,
-                 description: str = "",
-                 quantiles: Optional[Sequence[float]] = None,
-                 max_age_seconds: float = 600.0,
-                 **kwargs):
+    def __init__(
+        self,
+        name: str,
+        description: str = "",
+        quantiles: Optional[Sequence[float]] = None,
+        max_age_seconds: float = 600.0,
+        **kwargs,
+    ):
         """Initialize summary."""
         super().__init__(name, description, **kwargs)
         self._quantiles = tuple(quantiles or self.DEFAULT_QUANTILES)
         self._max_age = max_age_seconds
-        self._observations: Dict[Labels, List[Tuple[float, float]]] = {}  # (value, timestamp)
+        self._observations: Dict[
+            Labels, List[Tuple[float, float]]
+        ] = {}  # (value, timestamp)
         self._sums: Dict[Labels, float] = {}
         self._counts: Dict[Labels, int] = {}
 
@@ -452,11 +472,13 @@ class Summary(Metric):
 class Timer(Metric):
     """A timer for measuring durations."""
 
-    def __init__(self,
-                 name: str,
-                 description: str = "",
-                 buckets: Optional[Sequence[float]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        name: str,
+        description: str = "",
+        buckets: Optional[Sequence[float]] = None,
+        **kwargs,
+    ):
         """Initialize timer."""
         kwargs["unit"] = kwargs.get("unit", "seconds")
         super().__init__(name, description, **kwargs)
@@ -552,11 +574,19 @@ class PrometheusExporter(MetricExporter):
                         else:
                             label_dict = labels_key.to_dict()
                             label_dict["le"] = le
-                            labels_formatted = ",".join(f'{k}="{v}"' for k, v in label_dict.items())
-                            lines.append(f'{name}_bucket{{{labels_formatted}}} {cumulative}')
+                            labels_formatted = ",".join(
+                                f'{k}="{v}"' for k, v in label_dict.items()
+                            )
+                            lines.append(
+                                f"{name}_bucket{{{labels_formatted}}} {cumulative}"
+                            )
 
-                    lines.append(f"{name}_sum{labels_str} {metric.get_value(labels_key)}")
-                    lines.append(f"{name}_count{labels_str} {metric.get_count(labels_key)}")
+                    lines.append(
+                        f"{name}_sum{labels_str} {metric.get_value(labels_key)}"
+                    )
+                    lines.append(
+                        f"{name}_count{labels_str} {metric.get_count(labels_key)}"
+                    )
 
             elif isinstance(metric, Summary):
                 quantiles = metric.get_quantiles()
@@ -764,11 +794,13 @@ class MetricsRegistry:
 class StatsDClient:
     """Client for sending metrics to StatsD server."""
 
-    def __init__(self,
-                 host: str = "localhost",
-                 port: int = 8125,
-                 prefix: str = "",
-                 max_buffer_size: int = 50):
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 8125,
+        prefix: str = "",
+        max_buffer_size: int = 50,
+    ):
         """Initialize StatsD client."""
         self._host = host
         self._port = port
@@ -893,31 +925,39 @@ def timer(name: str, description: str = "", **kwargs) -> Timer:
 
 def timed(name: Optional[str] = None, labels: Optional[Labels] = None):
     """Decorator to time function execution."""
+
     def decorator(func: Callable) -> Callable:
         metric_name = name or f"{func.__module__}.{func.__name__}"
         timer_metric = get_registry().get(metric_name)
         if timer_metric is None:
-            timer_metric = get_registry().timer(metric_name, f"Timer for {func.__name__}")
+            timer_metric = get_registry().timer(
+                metric_name, f"Timer for {func.__name__}"
+            )
 
         def wrapper(*args, **kwargs):
             with timer_metric.time(labels):
                 return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def counted(name: Optional[str] = None, labels: Optional[Labels] = None):
     """Decorator to count function calls."""
+
     def decorator(func: Callable) -> Callable:
         metric_name = name or f"{func.__module__}.{func.__name__}.calls"
         counter_metric = get_registry().get(metric_name)
         if counter_metric is None:
-            counter_metric = get_registry().counter(metric_name, f"Call count for {func.__name__}")
+            counter_metric = get_registry().counter(
+                metric_name, f"Call count for {func.__name__}"
+            )
 
         def wrapper(*args, **kwargs):
             counter_metric.inc(labels=labels)
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator

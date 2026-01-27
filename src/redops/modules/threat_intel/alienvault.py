@@ -5,7 +5,7 @@ Provides access to the OTX threat intelligence platform for
 IOC lookups, pulse subscriptions, and threat indicator analysis.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 import os
 from redops.core.context import Context
@@ -14,6 +14,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -23,9 +24,7 @@ except ImportError:
 OTX_API = "https://otx.alienvault.com/api/v1"
 
 
-def get_indicator(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def get_indicator(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Get threat intelligence for an indicator (IP, domain, URL, hash).
 
@@ -59,7 +58,10 @@ def get_indicator(
         ctx.add("otx_indicator", {"error": "API key required"})
         return ctx
 
-    ctx.log(f"Querying OTX for indicator: {indicator} (type: {indicator_type})", level="INFO")
+    ctx.log(
+        f"Querying OTX for indicator: {indicator} (type: {indicator_type})",
+        level="INFO",
+    )
 
     headers = {"X-OTX-API-KEY": api_key}
 
@@ -88,19 +90,22 @@ def get_indicator(
             module="threat_intel.alienvault",
             title=f"Malicious Indicator: {indicator}",
             description=f"OTX flagged this indicator as malicious. Pulses: {analysis.get('pulse_count', 0)}",
-            severity=RiskLevel.HIGH if analysis.get("pulse_count", 0) > 5 else RiskLevel.MEDIUM,
+            severity=RiskLevel.HIGH
+            if analysis.get("pulse_count", 0) > 5
+            else RiskLevel.MEDIUM,
             data=analysis,
         )
         ctx.add(f"finding_otx_{indicator.replace('.', '_')[:50]}", finding.model_dump())
 
-    ctx.log(f"OTX query complete: {analysis.get('pulse_count', 0)} pulses found", level="INFO")
+    ctx.log(
+        f"OTX query complete: {analysis.get('pulse_count', 0)} pulses found",
+        level="INFO",
+    )
     ctx.add("otx_indicator", result)
     return ctx
 
 
-def get_pulses(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def get_pulses(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Get user's subscribed pulses from OTX.
 
@@ -187,9 +192,7 @@ def get_pulses(
     return ctx
 
 
-def search_pulses(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def search_pulses(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Search OTX pulses by query.
 
@@ -269,9 +272,7 @@ def search_pulses(
     return ctx
 
 
-def get_pulse_details(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def get_pulse_details(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Get detailed information about a specific pulse.
 
@@ -314,7 +315,9 @@ def get_pulse_details(
 
         if response.status_code == 404:
             ctx.log("Pulse not found", level="WARNING")
-            ctx.add("otx_pulse_details", {"error": "Pulse not found", "pulse_id": pulse_id})
+            ctx.add(
+                "otx_pulse_details", {"error": "Pulse not found", "pulse_id": pulse_id}
+            )
             return ctx
 
         if response.status_code != 200:
@@ -330,11 +333,13 @@ def get_pulse_details(
             ind_type = ind.get("type", "unknown")
             if ind_type not in indicators_by_type:
                 indicators_by_type[ind_type] = []
-            indicators_by_type[ind_type].append({
-                "indicator": ind.get("indicator"),
-                "created": ind.get("created"),
-                "title": ind.get("title"),
-            })
+            indicators_by_type[ind_type].append(
+                {
+                    "indicator": ind.get("indicator"),
+                    "created": ind.get("created"),
+                    "title": ind.get("title"),
+                }
+            )
 
         result = {
             "id": pulse.get("id"),
@@ -353,7 +358,9 @@ def get_pulse_details(
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        ctx.log(f"Retrieved pulse with {result['indicator_count']} indicators", level="INFO")
+        ctx.log(
+            f"Retrieved pulse with {result['indicator_count']} indicators", level="INFO"
+        )
         ctx.add("otx_pulse_details", result)
 
     except requests.exceptions.RequestException as e:

@@ -37,42 +37,19 @@ def scan():
 
 @scan.command("run")
 @click.argument("target")
+@click.option("-p", "--pipeline", default="default", help="Scan pipeline to use")
+@click.option("-o", "--output", type=click.Path(), help="Output file path")
+@click.option("--async", "async_mode", is_flag=True, help="Run scan asynchronously")
+@click.option("--timeout", type=int, default=3600, help="Scan timeout in seconds")
+@click.option("--modules", help="Comma-separated list of modules to run")
+@click.option("--exclude-modules", help="Comma-separated list of modules to exclude")
 @click.option(
-    "-p", "--pipeline",
-    default="default",
-    help="Scan pipeline to use"
-)
-@click.option(
-    "-o", "--output",
-    type=click.Path(),
-    help="Output file path"
-)
-@click.option(
-    "--async", "async_mode",
-    is_flag=True,
-    help="Run scan asynchronously"
-)
-@click.option(
-    "--timeout",
-    type=int,
-    default=3600,
-    help="Scan timeout in seconds"
-)
-@click.option(
-    "--modules",
-    help="Comma-separated list of modules to run"
-)
-@click.option(
-    "--exclude-modules",
-    help="Comma-separated list of modules to exclude"
-)
-@click.option(
-    "--tag",
-    multiple=True,
-    help="Tags to add to scan (can be used multiple times)"
+    "--tag", multiple=True, help="Tags to add to scan (can be used multiple times)"
 )
 @click.pass_context
-def run_cmd(ctx, target, pipeline, output, async_mode, timeout, modules, exclude_modules, tag):
+def run_cmd(
+    ctx, target, pipeline, output, async_mode, timeout, modules, exclude_modules, tag
+):
     """Run a security scan on a target.
 
     TARGET can be a URL, IP address, or domain name.
@@ -213,24 +190,11 @@ def run_scan(
 @click.option(
     "--status",
     type=click.Choice(["pending", "running", "completed", "failed", "cancelled"]),
-    help="Filter by status"
+    help="Filter by status",
 )
-@click.option(
-    "--target",
-    help="Filter by target"
-)
-@click.option(
-    "--limit",
-    type=int,
-    default=20,
-    help="Maximum number of results"
-)
-@click.option(
-    "--offset",
-    type=int,
-    default=0,
-    help="Offset for pagination"
-)
+@click.option("--target", help="Filter by target")
+@click.option("--limit", type=int, default=20, help="Maximum number of results")
+@click.option("--offset", type=int, default=0, help="Offset for pagination")
 @click.pass_context
 def list_cmd(ctx, status, target, limit, offset):
     """List scans.
@@ -285,11 +249,7 @@ def list_cmd(ctx, status, target, limit, offset):
 
 @scan.command("status")
 @click.argument("scan_id")
-@click.option(
-    "--watch", "-w",
-    is_flag=True,
-    help="Watch for status changes"
-)
+@click.option("--watch", "-w", is_flag=True, help="Watch for status changes")
 @click.pass_context
 def status_cmd(ctx, scan_id, watch):
     """Get scan status.
@@ -354,11 +314,7 @@ def status_cmd(ctx, scan_id, watch):
 
 @scan.command("cancel")
 @click.argument("scan_id")
-@click.option(
-    "--force", "-f",
-    is_flag=True,
-    help="Force cancel without confirmation"
-)
+@click.option("--force", "-f", is_flag=True, help="Force cancel without confirmation")
 @click.pass_context
 def cancel_cmd(ctx, scan_id, force):
     """Cancel a running scan.
@@ -403,11 +359,7 @@ def cancel_cmd(ctx, scan_id, force):
 
 @scan.command("delete")
 @click.argument("scan_id")
-@click.option(
-    "--force", "-f",
-    is_flag=True,
-    help="Force delete without confirmation"
-)
+@click.option("--force", "-f", is_flag=True, help="Force delete without confirmation")
 @click.pass_context
 def delete_cmd(ctx, scan_id, force):
     """Delete a scan and its findings.

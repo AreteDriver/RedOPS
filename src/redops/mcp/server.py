@@ -140,7 +140,9 @@ class MCPServer:
             elif method == "tools/call":
                 return await self._handle_tools_call(msg_id, params)
             else:
-                return self._error_response(msg_id, -32601, f"Method not found: {method}")
+                return self._error_response(
+                    msg_id, -32601, f"Method not found: {method}"
+                )
         except Exception as e:
             return self._error_response(msg_id, -32603, str(e))
 
@@ -188,7 +190,9 @@ class MCPServer:
                     "content": [
                         {
                             "type": "text",
-                            "text": result if isinstance(result, str) else json.dumps(result, indent=2),
+                            "text": result
+                            if isinstance(result, str)
+                            else json.dumps(result, indent=2),
                         }
                     ],
                 },
@@ -339,10 +343,15 @@ async def run_server():
     protocol = asyncio.StreamReaderProtocol(reader)
     await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
 
-    writer_transport, writer_protocol = await asyncio.get_event_loop().connect_write_pipe(
+    (
+        writer_transport,
+        writer_protocol,
+    ) = await asyncio.get_event_loop().connect_write_pipe(
         asyncio.streams.FlowControlMixin, sys.stdout
     )
-    writer = asyncio.StreamWriter(writer_transport, writer_protocol, reader, asyncio.get_event_loop())
+    writer = asyncio.StreamWriter(
+        writer_transport, writer_protocol, reader, asyncio.get_event_loop()
+    )
 
     while True:
         try:

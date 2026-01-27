@@ -285,7 +285,9 @@ class TestEmitFunctions:
     @pytest.mark.asyncio
     async def test_emit_scan_started(self):
         """Test emit scan started."""
-        with patch.object(manager, 'broadcast', new_callable=AsyncMock) as mock_broadcast:
+        with patch.object(
+            manager, "broadcast", new_callable=AsyncMock
+        ) as mock_broadcast:
             await emit_scan_started("scan-123", "example.com", "quick")
 
             mock_broadcast.assert_called_once()
@@ -297,7 +299,9 @@ class TestEmitFunctions:
     @pytest.mark.asyncio
     async def test_emit_scan_progress(self):
         """Test emit scan progress."""
-        with patch.object(manager, 'broadcast', new_callable=AsyncMock) as mock_broadcast:
+        with patch.object(
+            manager, "broadcast", new_callable=AsyncMock
+        ) as mock_broadcast:
             await emit_scan_progress("scan-123", 50, "domain_scan")
 
             mock_broadcast.assert_called_once()
@@ -309,7 +313,9 @@ class TestEmitFunctions:
     @pytest.mark.asyncio
     async def test_emit_module_start(self):
         """Test emit module start."""
-        with patch.object(manager, 'broadcast_to_scan', new_callable=AsyncMock) as mock_broadcast:
+        with patch.object(
+            manager, "broadcast_to_scan", new_callable=AsyncMock
+        ) as mock_broadcast:
             await emit_module_start("scan-123", "domain_scan")
 
             mock_broadcast.assert_called_once()
@@ -322,7 +328,9 @@ class TestEmitFunctions:
     @pytest.mark.asyncio
     async def test_emit_module_end(self):
         """Test emit module end."""
-        with patch.object(manager, 'broadcast_to_scan', new_callable=AsyncMock) as mock_broadcast:
+        with patch.object(
+            manager, "broadcast_to_scan", new_callable=AsyncMock
+        ) as mock_broadcast:
             await emit_module_end("scan-123", "domain_scan", success=True)
 
             mock_broadcast.assert_called_once()
@@ -334,7 +342,9 @@ class TestEmitFunctions:
     @pytest.mark.asyncio
     async def test_emit_scan_completed(self):
         """Test emit scan completed."""
-        with patch.object(manager, 'broadcast', new_callable=AsyncMock) as mock_broadcast:
+        with patch.object(
+            manager, "broadcast", new_callable=AsyncMock
+        ) as mock_broadcast:
             await emit_scan_completed("scan-123", findings_count=10)
 
             mock_broadcast.assert_called_once()
@@ -345,7 +355,9 @@ class TestEmitFunctions:
     @pytest.mark.asyncio
     async def test_emit_scan_failed(self):
         """Test emit scan failed."""
-        with patch.object(manager, 'broadcast', new_callable=AsyncMock) as mock_broadcast:
+        with patch.object(
+            manager, "broadcast", new_callable=AsyncMock
+        ) as mock_broadcast:
             await emit_scan_failed("scan-123", "Connection timeout")
 
             mock_broadcast.assert_called_once()
@@ -356,7 +368,9 @@ class TestEmitFunctions:
     @pytest.mark.asyncio
     async def test_emit_finding(self):
         """Test emit finding."""
-        with patch.object(manager, 'broadcast_to_scan', new_callable=AsyncMock) as mock_broadcast:
+        with patch.object(
+            manager, "broadcast_to_scan", new_callable=AsyncMock
+        ) as mock_broadcast:
             await emit_finding("scan-123", "critical", "SQL Injection", "vuln_scan")
 
             mock_broadcast.assert_called_once()

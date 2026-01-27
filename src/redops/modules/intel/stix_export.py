@@ -32,6 +32,7 @@ def stix_timestamp() -> str:
 @dataclass
 class STIXObject:
     """Base STIX Domain Object."""
+
     type: str
     id: str = field(default_factory=lambda: "")
     spec_version: str = STIX_VERSION
@@ -51,6 +52,7 @@ class STIXObject:
 @dataclass
 class Indicator(STIXObject):
     """STIX Indicator object."""
+
     type: str = "indicator"
     name: str = ""
     description: str = ""
@@ -66,6 +68,7 @@ class Indicator(STIXObject):
 @dataclass
 class ThreatActor(STIXObject):
     """STIX Threat Actor object."""
+
     type: str = "threat-actor"
     name: str = ""
     description: str = ""
@@ -81,6 +84,7 @@ class ThreatActor(STIXObject):
 @dataclass
 class AttackPattern(STIXObject):
     """STIX Attack Pattern object (MITRE ATT&CK)."""
+
     type: str = "attack-pattern"
     name: str = ""
     description: str = ""
@@ -91,6 +95,7 @@ class AttackPattern(STIXObject):
 @dataclass
 class Vulnerability(STIXObject):
     """STIX Vulnerability object."""
+
     type: str = "vulnerability"
     name: str = ""
     description: str = ""
@@ -100,6 +105,7 @@ class Vulnerability(STIXObject):
 @dataclass
 class Infrastructure(STIXObject):
     """STIX Infrastructure object."""
+
     type: str = "infrastructure"
     name: str = ""
     description: str = ""
@@ -110,6 +116,7 @@ class Infrastructure(STIXObject):
 @dataclass
 class Relationship(STIXObject):
     """STIX Relationship object."""
+
     type: str = "relationship"
     relationship_type: str = ""
     source_ref: str = ""
@@ -120,6 +127,7 @@ class Relationship(STIXObject):
 @dataclass
 class Bundle:
     """STIX Bundle container."""
+
     type: str = "bundle"
     id: str = field(default_factory=lambda: generate_stix_id("bundle"))
     objects: List[Dict[str, Any]] = field(default_factory=list)
@@ -188,7 +196,9 @@ class STIXExporter:
         # Export infrastructure from scan
         infra_data = scan_data.get("infrastructure", {})
         if infra_data:
-            infra = self._create_infrastructure(scan_data.get("target", "Unknown"), infra_data)
+            infra = self._create_infrastructure(
+                scan_data.get("target", "Unknown"), infra_data
+            )
             bundle.add(infra)
 
         # Export exposures as indicators
@@ -256,11 +266,13 @@ class STIXExporter:
         external_refs = []
 
         if cve:
-            external_refs.append({
-                "source_name": "cve",
-                "external_id": cve,
-                "url": f"https://nvd.nist.gov/vuln/detail/{cve}",
-            })
+            external_refs.append(
+                {
+                    "source_name": "cve",
+                    "external_id": cve,
+                    "url": f"https://nvd.nist.gov/vuln/detail/{cve}",
+                }
+            )
 
         return Vulnerability(
             name=finding.get("title", "Unknown Vulnerability"),
@@ -274,19 +286,23 @@ class STIXExporter:
         external_refs = []
 
         if technique_id:
-            external_refs.append({
-                "source_name": "mitre-attack",
-                "external_id": technique_id,
-                "url": f"https://attack.mitre.org/techniques/{technique_id.replace('.', '/')}/",
-            })
+            external_refs.append(
+                {
+                    "source_name": "mitre-attack",
+                    "external_id": technique_id,
+                    "url": f"https://attack.mitre.org/techniques/{technique_id.replace('.', '/')}/",
+                }
+            )
 
         kill_chain = []
         tactic = technique.get("tactic", "")
         if tactic:
-            kill_chain.append({
-                "kill_chain_name": "mitre-attack",
-                "phase_name": tactic.lower().replace(" ", "-"),
-            })
+            kill_chain.append(
+                {
+                    "kill_chain_name": "mitre-attack",
+                    "phase_name": tactic.lower().replace(" ", "-"),
+                }
+            )
 
         return AttackPattern(
             name=technique.get("name", technique_id),
@@ -295,7 +311,9 @@ class STIXExporter:
             kill_chain_phases=kill_chain,
         )
 
-    def _create_infrastructure(self, target: str, infra_data: Dict[str, Any]) -> Infrastructure:
+    def _create_infrastructure(
+        self, target: str, infra_data: Dict[str, Any]
+    ) -> Infrastructure:
         """Create infrastructure object from scan data."""
         infra_types = []
 
@@ -330,7 +348,9 @@ class STIXExporter:
             return None
 
         severity = exposure.get("severity", "medium")
-        indicator_types = ["compromised" if severity in ("critical", "high") else "anomalous-activity"]
+        indicator_types = [
+            "compromised" if severity in ("critical", "high") else "anomalous-activity"
+        ]
 
         return Indicator(
             name=exposure.get("title", f"Exposure: {exp_type}"),

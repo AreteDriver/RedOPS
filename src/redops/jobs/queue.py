@@ -2,17 +2,13 @@
 Job Queue - Core job definitions and queue interface.
 """
 
-import json
 import logging
-import pickle
-import signal
 import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
 from uuid import uuid4
 
@@ -92,9 +88,13 @@ class Job:
             "priority": self.priority.value,
             "queue": self.queue,
             "created_at": self.created_at.isoformat(),
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "scheduled_at": self.scheduled_at.isoformat()
+            if self.scheduled_at
+            else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "timeout": self.timeout,
             "max_retries": self.max_retries,
             "retry_delay": self.retry_delay,
@@ -119,9 +119,15 @@ class Job:
             priority=JobPriority(data.get("priority", 1)),
             queue=data.get("queue", "default"),
             created_at=datetime.fromisoformat(data["created_at"]),
-            scheduled_at=datetime.fromisoformat(data["scheduled_at"]) if data.get("scheduled_at") else None,
-            started_at=datetime.fromisoformat(data["started_at"]) if data.get("started_at") else None,
-            completed_at=datetime.fromisoformat(data["completed_at"]) if data.get("completed_at") else None,
+            scheduled_at=datetime.fromisoformat(data["scheduled_at"])
+            if data.get("scheduled_at")
+            else None,
+            started_at=datetime.fromisoformat(data["started_at"])
+            if data.get("started_at")
+            else None,
+            completed_at=datetime.fromisoformat(data["completed_at"])
+            if data.get("completed_at")
+            else None,
             timeout=data.get("timeout"),
             max_retries=data.get("max_retries", 0),
             retry_delay=data.get("retry_delay", 60.0),
@@ -147,7 +153,7 @@ class Job:
 
     def get_retry_delay(self) -> float:
         """Calculate retry delay with exponential backoff."""
-        return self.retry_delay * (self.retry_backoff ** self.attempts)
+        return self.retry_delay * (self.retry_backoff**self.attempts)
 
 
 @dataclass
@@ -183,7 +189,9 @@ class JobResult:
             "status": self.status.value,
             "error": self.error,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "duration_seconds": self.duration_seconds,
             "attempts": self.attempts,
             "worker_id": self.worker_id,
@@ -346,6 +354,7 @@ def job(
         queue = get_job_queue()
         queue.enqueue(send_email, "user@example.com", "Hello", "Body")
     """
+
     def decorator(func: Callable) -> Callable:
         job_name = name or func.__name__
 
@@ -439,9 +448,19 @@ class JobQueue:
         job_name = getattr(func, "_job_name", func.__name__)
         job_queue = queue or getattr(func, "_job_queue", self._default_queue)
         job_priority = priority or getattr(func, "_job_priority", JobPriority.NORMAL)
-        job_timeout = timeout if timeout is not None else getattr(func, "_job_timeout", None)
-        job_max_retries = max_retries if max_retries is not None else getattr(func, "_job_max_retries", 0)
-        job_retry_delay = retry_delay if retry_delay is not None else getattr(func, "_job_retry_delay", 60.0)
+        job_timeout = (
+            timeout if timeout is not None else getattr(func, "_job_timeout", None)
+        )
+        job_max_retries = (
+            max_retries
+            if max_retries is not None
+            else getattr(func, "_job_max_retries", 0)
+        )
+        job_retry_delay = (
+            retry_delay
+            if retry_delay is not None
+            else getattr(func, "_job_retry_delay", 60.0)
+        )
 
         # Calculate scheduled time
         job_scheduled_at = scheduled_at
@@ -564,7 +583,9 @@ class JobWorker:
             thread.start()
             self._threads.append(thread)
 
-        logger.info(f"Worker {self._worker_id} started with {self._concurrency} threads")
+        logger.info(
+            f"Worker {self._worker_id} started with {self._concurrency} threads"
+        )
 
     def stop(self, timeout: float = 30.0) -> None:
         """Stop the worker."""
@@ -622,7 +643,9 @@ class JobWorker:
 
             # Execute with timeout
             if job.timeout:
-                result = self._execute_with_timeout(func, job.args, job.kwargs, job.timeout)
+                result = self._execute_with_timeout(
+                    func, job.args, job.kwargs, job.timeout
+                )
             else:
                 result = func(*job.args, **job.kwargs)
 
@@ -684,7 +707,9 @@ class JobWorker:
 
         if job.should_retry():
             job.status = JobStatus.RETRYING
-            job.scheduled_at = datetime.now(timezone.utc) + timedelta(seconds=job.get_retry_delay())
+            job.scheduled_at = datetime.now(timezone.utc) + timedelta(
+                seconds=job.get_retry_delay()
+            )
             logger.warning(f"Job {job.id} failed, retrying in {job.get_retry_delay()}s")
             # Re-enqueue for retry
             self._queue.enqueue_job(job)

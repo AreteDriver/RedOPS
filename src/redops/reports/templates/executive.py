@@ -12,7 +12,6 @@ from reportlab.platypus import (
     PageBreak,
 )
 from reportlab.graphics.shapes import Drawing, Rect, String
-from reportlab.graphics.charts.piecharts import Pie
 
 from ..generator import BaseReport, ScanResult, ReportType, ReportGenerator
 
@@ -41,7 +40,9 @@ class ExecutiveSummaryReport(BaseReport):
         elements.append(Spacer(1, 20))
 
         # Severity Distribution
-        elements.append(Paragraph("Findings Distribution", self.styles["SectionHeader"]))
+        elements.append(
+            Paragraph("Findings Distribution", self.styles["SectionHeader"])
+        )
         elements.append(self._create_severity_chart(data))
         elements.append(Spacer(1, 20))
 
@@ -52,8 +53,14 @@ class ExecutiveSummaryReport(BaseReport):
 
         # Top Findings
         if data.findings:
-            elements.append(Paragraph("Critical & High Severity Findings", self.styles["SectionHeader"]))
-            critical_high = [f for f in data.findings if f.severity.lower() in ("critical", "high")]
+            elements.append(
+                Paragraph(
+                    "Critical & High Severity Findings", self.styles["SectionHeader"]
+                )
+            )
+            critical_high = [
+                f for f in data.findings if f.severity.lower() in ("critical", "high")
+            ]
             if critical_high:
                 elements.append(self._create_findings_table(critical_high[:10]))
             else:
@@ -72,7 +79,9 @@ class ExecutiveSummaryReport(BaseReport):
         # Page break before appendix
         if self.config.include_appendix:
             elements.append(PageBreak())
-            elements.append(Paragraph("Appendix: All Findings", self.styles["SectionHeader"]))
+            elements.append(
+                Paragraph("Appendix: All Findings", self.styles["SectionHeader"])
+            )
             elements.append(self._create_findings_table(data.findings))
 
         return elements
@@ -105,11 +114,11 @@ class ExecutiveSummaryReport(BaseReport):
         with a risk score of <b>{risk_score:.0f}/100</b>.
         <br/><br/>
         <b>Finding Breakdown:</b><br/>
-        • Critical: {counts['critical']} findings<br/>
-        • High: {counts['high']} findings<br/>
-        • Medium: {counts['medium']} findings<br/>
-        • Low: {counts['low']} findings<br/>
-        • Informational: {counts['info']} findings
+        • Critical: {counts["critical"]} findings<br/>
+        • High: {counts["high"]} findings<br/>
+        • Medium: {counts["medium"]} findings<br/>
+        • Low: {counts["low"]} findings<br/>
+        • Informational: {counts["info"]} findings
         """
         return Paragraph(text, self.styles["Normal"])
 
@@ -118,7 +127,9 @@ class ExecutiveSummaryReport(BaseReport):
         drawing = Drawing(400, 120)
 
         # Background rectangle
-        drawing.add(Rect(50, 40, 300, 40, fillColor=colors.HexColor("#e9ecef"), strokeWidth=0))
+        drawing.add(
+            Rect(50, 40, 300, 40, fillColor=colors.HexColor("#e9ecef"), strokeWidth=0)
+        )
 
         # Risk score fill
         risk_score = data.risk_score
@@ -153,7 +164,11 @@ class ExecutiveSummaryReport(BaseReport):
         # Scale markers
         for i, label in enumerate(["0", "25", "50", "75", "100"]):
             x = 50 + (i * 75)
-            drawing.add(String(x, 25, label, fontName="Helvetica", fontSize=9, textAnchor="middle"))
+            drawing.add(
+                String(
+                    x, 25, label, fontName="Helvetica", fontSize=9, textAnchor="middle"
+                )
+            )
 
         return drawing
 
@@ -190,7 +205,12 @@ class ExecutiveSummaryReport(BaseReport):
                     ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
                     ("FONTSIZE", (0, 0), (-1, -1), 10),
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f8f9fa")],
+                    ),
                 ]
             )
         )
@@ -272,7 +292,12 @@ class ExecutiveSummaryReport(BaseReport):
                     ("FONTSIZE", (0, 0), (-1, -1), 10),
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f8f9fa")],
+                    ),
                 ]
             )
         )
@@ -280,4 +305,6 @@ class ExecutiveSummaryReport(BaseReport):
 
 
 # Register the report type
-ReportGenerator.register_report_type(ReportType.EXECUTIVE_SUMMARY, ExecutiveSummaryReport)
+ReportGenerator.register_report_type(
+    ReportType.EXECUTIVE_SUMMARY, ExecutiveSummaryReport
+)

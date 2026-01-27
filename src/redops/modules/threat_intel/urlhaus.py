@@ -7,13 +7,13 @@ URLhaus is a project of abuse.ch tracking malware distribution sites.
 
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-import hashlib
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
 
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -23,9 +23,7 @@ except ImportError:
 URLHAUS_API = "https://urlhaus-api.abuse.ch/v1"
 
 
-def check_url(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def check_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Check if a URL is listed in URLhaus.
 
@@ -225,20 +223,22 @@ def analyze_urlhaus_results(result: Dict[str, Any], queried: str) -> List[Findin
         if url_count > 0:
             online_count = sum(1 for u in urls if u.get("url_status") == "online")
 
-            findings.append(Finding(
-                module="threat_intel.urlhaus",
-                title=f"Malicious Host: {url_count} URLs tracked",
-                description=(
-                    f"Host '{queried}' has {url_count} malicious URL(s) tracked in URLhaus. "
-                    f"{online_count} are currently online."
-                ),
-                severity=RiskLevel.HIGH if online_count > 0 else RiskLevel.MEDIUM,
-                data={
-                    "host": queried,
-                    "total_urls": url_count,
-                    "online_urls": online_count,
-                },
-            ))
+            findings.append(
+                Finding(
+                    module="threat_intel.urlhaus",
+                    title=f"Malicious Host: {url_count} URLs tracked",
+                    description=(
+                        f"Host '{queried}' has {url_count} malicious URL(s) tracked in URLhaus. "
+                        f"{online_count} are currently online."
+                    ),
+                    severity=RiskLevel.HIGH if online_count > 0 else RiskLevel.MEDIUM,
+                    data={
+                        "host": queried,
+                        "total_urls": url_count,
+                        "online_urls": online_count,
+                    },
+                )
+            )
 
     # URL found in database (has threat/url_status fields)
     elif query_status == "ok" and "threat" in result:
@@ -258,66 +258,76 @@ def analyze_urlhaus_results(result: Dict[str, Any], queried: str) -> List[Findin
             severity = RiskLevel.HIGH
             status_desc = f"status: {url_status}"
 
-        findings.append(Finding(
-            module="threat_intel.urlhaus",
-            title=f"Malicious URL Detected: {threat}",
-            description=(
-                f"URL/Host '{queried}' is listed in URLhaus as malicious. "
-                f"Threat type: {threat}. Status: {status_desc}. "
-                f"First seen: {date_added}. Tags: {', '.join(tags) if tags else 'none'}."
-            ),
-            severity=severity,
-            data={
-                "url": queried,
-                "threat": threat,
-                "status": url_status,
-                "date_added": date_added,
-                "tags": tags,
-                "urlhaus_reference": result.get("urlhaus_reference", ""),
-            },
-        ))
-
-        # Check for specific threat types
-        if threat == "malware_download":
-            findings.append(Finding(
+        findings.append(
+            Finding(
                 module="threat_intel.urlhaus",
-                title=f"Malware Distribution Site: {queried}",
+                title=f"Malicious URL Detected: {threat}",
                 description=(
-                    f"URL/Host '{queried}' is known to distribute malware. "
-                    "Direct downloads from this location may infect systems."
+                    f"URL/Host '{queried}' is listed in URLhaus as malicious. "
+                    f"Threat type: {threat}. Status: {status_desc}. "
+                    f"First seen: {date_added}. Tags: {', '.join(tags) if tags else 'none'}."
                 ),
-                severity=RiskLevel.CRITICAL,
+                severity=severity,
                 data={
                     "url": queried,
                     "threat": threat,
+                    "status": url_status,
+                    "date_added": date_added,
+                    "tags": tags,
+                    "urlhaus_reference": result.get("urlhaus_reference", ""),
                 },
-            ))
+            )
+        )
+
+        # Check for specific threat types
+        if threat == "malware_download":
+            findings.append(
+                Finding(
+                    module="threat_intel.urlhaus",
+                    title=f"Malware Distribution Site: {queried}",
+                    description=(
+                        f"URL/Host '{queried}' is known to distribute malware. "
+                        "Direct downloads from this location may infect systems."
+                    ),
+                    severity=RiskLevel.CRITICAL,
+                    data={
+                        "url": queried,
+                        "threat": threat,
+                    },
+                )
+            )
 
         # Check payloads associated with URL
         payloads = result.get("payloads", [])
         if payloads:
-            malware_names = list(set(
-                p.get("signature", "unknown")
-                for p in payloads
-                if p.get("signature")
-            ))
+            malware_names = list(
+                set(
+                    p.get("signature", "unknown")
+                    for p in payloads
+                    if p.get("signature")
+                )
+            )
 
-            findings.append(Finding(
-                module="threat_intel.urlhaus",
-                title=f"Known Malware Payloads ({len(payloads)} samples)",
-                description=(
-                    f"URL '{queried}' has been observed distributing "
-                    f"{len(payloads)} malware payload(s). "
-                    f"Malware families: {', '.join(malware_names[:5])}."
-                ),
-                severity=RiskLevel.CRITICAL,
-                data={
-                    "url": queried,
-                    "payload_count": len(payloads),
-                    "malware_families": malware_names,
-                    "sample_hashes": [p.get("sha256_hash", "") for p in payloads[:5]],
-                },
-            ))
+            findings.append(
+                Finding(
+                    module="threat_intel.urlhaus",
+                    title=f"Known Malware Payloads ({len(payloads)} samples)",
+                    description=(
+                        f"URL '{queried}' has been observed distributing "
+                        f"{len(payloads)} malware payload(s). "
+                        f"Malware families: {', '.join(malware_names[:5])}."
+                    ),
+                    severity=RiskLevel.CRITICAL,
+                    data={
+                        "url": queried,
+                        "payload_count": len(payloads),
+                        "malware_families": malware_names,
+                        "sample_hashes": [
+                            p.get("sha256_hash", "") for p in payloads[:5]
+                        ],
+                    },
+                )
+            )
 
     # Payload found
     if "signature" in result:
@@ -326,23 +336,25 @@ def analyze_urlhaus_results(result: Dict[str, Any], queried: str) -> List[Findin
         first_seen = result.get("firstseen", "")
         url_count = result.get("url_count", 0)
 
-        findings.append(Finding(
-            module="threat_intel.urlhaus",
-            title=f"Known Malware: {signature}",
-            description=(
-                f"Payload hash matches known malware: {signature}. "
-                f"File type: {file_type}. First seen: {first_seen}. "
-                f"Associated with {url_count} distribution URL(s)."
-            ),
-            severity=RiskLevel.CRITICAL,
-            data={
-                "hash": result.get("queried_hash", ""),
-                "signature": signature,
-                "file_type": file_type,
-                "first_seen": first_seen,
-                "url_count": url_count,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.urlhaus",
+                title=f"Known Malware: {signature}",
+                description=(
+                    f"Payload hash matches known malware: {signature}. "
+                    f"File type: {file_type}. First seen: {first_seen}. "
+                    f"Associated with {url_count} distribution URL(s)."
+                ),
+                severity=RiskLevel.CRITICAL,
+                data={
+                    "hash": result.get("queried_hash", ""),
+                    "signature": signature,
+                    "file_type": file_type,
+                    "first_seen": first_seen,
+                    "url_count": url_count,
+                },
+            )
+        )
 
     return findings
 

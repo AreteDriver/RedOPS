@@ -2,21 +2,16 @@
 
 import threading
 import time
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 from redops.core.workflow import (
     ConditionalTask,
     FunctionTask,
     ParallelTask,
     StateMachine,
-    StateTransition,
     SubWorkflowTask,
-    Task,
     TaskResult,
     TaskState,
-    TransitionType,
     Workflow,
     WorkflowBuilder,
     WorkflowContext,
@@ -124,6 +119,7 @@ class TestFunctionTask:
 
     def test_basic_execution(self):
         """Test basic function task execution."""
+
         def my_func(ctx):
             return "hello"
 
@@ -135,6 +131,7 @@ class TestFunctionTask:
 
     def test_uses_context(self):
         """Test that task uses context."""
+
         def my_func(ctx):
             return ctx.get("value") * 2
 
@@ -147,6 +144,7 @@ class TestFunctionTask:
 
     def test_task_name(self):
         """Test task name from function."""
+
         def custom_name(ctx):
             pass
 
@@ -210,7 +208,9 @@ class TestParallelTask:
     def test_parallel_with_failure(self):
         """Test parallel task with failure."""
         task1 = FunctionTask(lambda ctx: "a", task_id="t1")
-        task2 = FunctionTask(lambda ctx: (_ for _ in ()).throw(ValueError("fail")), task_id="t2")
+        task2 = FunctionTask(
+            lambda ctx: (_ for _ in ()).throw(ValueError("fail")), task_id="t2"
+        )
 
         parallel_task = ParallelTask([task1, task2], fail_fast=False)
         ctx = WorkflowContext(workflow_id="wf1")
@@ -362,6 +362,7 @@ class TestWorkflowExecutor:
                     executed.add(name)
                 time.sleep(0.01)
                 return name
+
             return task_func
 
         wf = Workflow()
@@ -376,6 +377,7 @@ class TestWorkflowExecutor:
 
     def test_task_failure(self):
         """Test handling of task failure."""
+
         def failing_task(ctx):
             raise ValueError("intentional failure")
 
@@ -409,6 +411,7 @@ class TestWorkflowExecutor:
 
     def test_skip_dependents_on_failure(self):
         """Test that dependent tasks are skipped on failure."""
+
         def failing(ctx):
             raise ValueError("fail")
 
@@ -472,12 +475,14 @@ class TestStateMachine:
         sm = StateMachine()
         sm.set_initial_state("pending")
         sm.add_transition(
-            "pending", "approved",
+            "pending",
+            "approved",
             "review",
             condition=lambda ctx: ctx.get("score", 0) >= 70,
         )
         sm.add_transition(
-            "pending", "rejected",
+            "pending",
+            "rejected",
             "review",
             condition=lambda ctx: ctx.get("score", 0) < 70,
         )
@@ -595,11 +600,13 @@ class TestWorkflowBuilder:
 
     def test_basic_builder(self):
         """Test basic workflow builder usage."""
-        wf = (WorkflowBuilder("my_workflow")
-              .add_task(lambda ctx: 1, task_id="t1")
-              .add_task(lambda ctx: 2, task_id="t2")
-              .depends_on("t1")
-              .build())
+        wf = (
+            WorkflowBuilder("my_workflow")
+            .add_task(lambda ctx: 1, task_id="t1")
+            .add_task(lambda ctx: 2, task_id="t2")
+            .depends_on("t1")
+            .build()
+        )
 
         assert wf.name == "my_workflow"
         assert len(wf.tasks) == 2
@@ -607,13 +614,15 @@ class TestWorkflowBuilder:
 
     def test_builder_with_conditional(self):
         """Test builder with conditional task."""
-        wf = (WorkflowBuilder()
-              .add_conditional(
-                  condition=lambda ctx: True,
-                  if_true="branch_a",
-                  task_id="check",
-              )
-              .build())
+        wf = (
+            WorkflowBuilder()
+            .add_conditional(
+                condition=lambda ctx: True,
+                if_true="branch_a",
+                task_id="check",
+            )
+            .build()
+        )
 
         task = wf.get_task("check")
         assert isinstance(task, ConditionalTask)
@@ -625,9 +634,7 @@ class TestWorkflowBuilder:
             FunctionTask(lambda ctx: "b", task_id="b"),
         ]
 
-        wf = (WorkflowBuilder()
-              .add_parallel(subtasks, task_id="parallel")
-              .build())
+        wf = WorkflowBuilder().add_parallel(subtasks, task_id="parallel").build()
 
         task = wf.get_task("parallel")
         assert isinstance(task, ParallelTask)
@@ -669,10 +676,11 @@ class TestSubWorkflowTask:
         """Test sub-workflow execution."""
         # Create sub-workflow
         sub_wf = Workflow(name="sub")
-        sub_wf.add_task(FunctionTask(
-            lambda ctx: ctx.set("sub_result", "from_sub"),
-            task_id="sub_t1"
-        ))
+        sub_wf.add_task(
+            FunctionTask(
+                lambda ctx: ctx.set("sub_result", "from_sub"), task_id="sub_t1"
+            )
+        )
 
         # Create main workflow with sub-workflow task
         main_wf = Workflow(name="main")
@@ -694,7 +702,7 @@ class TestThreadSafety:
         sm = StateMachine()
         sm.set_initial_state("count_0")
         for i in range(100):
-            sm.add_transition(f"count_{i}", f"count_{i+1}", "increment")
+            sm.add_transition(f"count_{i}", f"count_{i + 1}", "increment")
 
         def increment_many():
             for _ in range(10):
@@ -717,7 +725,7 @@ class TestEdgeCases:
         """Test executing empty workflow."""
         wf = Workflow()
         executor = WorkflowExecutor()
-        ctx = executor.execute(wf)
+        executor.execute(wf)
 
         assert wf.state == WorkflowState.COMPLETED
 

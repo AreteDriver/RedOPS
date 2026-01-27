@@ -5,7 +5,7 @@ Provides URL scanning and analysis capabilities via the URLScan.io API.
 Can scan URLs for malicious content and retrieve scan results.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 import os
 import time
@@ -15,6 +15,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -24,9 +25,7 @@ except ImportError:
 URLSCAN_API = "https://urlscan.io/api/v1"
 
 
-def scan_url(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def scan_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Submit a URL for scanning via URLScan.io.
 
@@ -88,7 +87,9 @@ def scan_url(
             return ctx
 
         if response.status_code != 200:
-            ctx.log(f"URLScan.io submission failed: {response.status_code}", level="WARNING")
+            ctx.log(
+                f"URLScan.io submission failed: {response.status_code}", level="WARNING"
+            )
             ctx.add("urlscan_result", {"error": f"HTTP {response.status_code}"})
             return ctx
 
@@ -144,9 +145,7 @@ def scan_url(
     return ctx
 
 
-def search_urlscan(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def search_urlscan(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Search URLScan.io for existing scans.
 
@@ -194,7 +193,9 @@ def search_urlscan(
         )
 
         if response.status_code != 200:
-            ctx.log(f"URLScan.io search failed: {response.status_code}", level="WARNING")
+            ctx.log(
+                f"URLScan.io search failed: {response.status_code}", level="WARNING"
+            )
             ctx.add("urlscan_search", {"error": f"HTTP {response.status_code}"})
             return ctx
 
@@ -228,7 +229,10 @@ def search_urlscan(
                 severity=RiskLevel.MEDIUM,
                 data={"query": query, "malicious_count": malicious_count},
             )
-            ctx.add(f"finding_urlscan_search_{query.replace('.', '_')}", finding.model_dump())
+            ctx.add(
+                f"finding_urlscan_search_{query.replace('.', '_')}",
+                finding.model_dump(),
+            )
 
         ctx.add("urlscan_search", search_result)
 
@@ -239,9 +243,7 @@ def search_urlscan(
     return ctx
 
 
-def get_scan_result(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def get_scan_result(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Retrieve results for a specific scan UUID.
 
@@ -292,12 +294,15 @@ def get_scan_result(
         result = response.json()
         analysis = analyze_urlscan_results(result)
 
-        ctx.add("urlscan_result", {
-            "uuid": uuid,
-            "scan_result": result,
-            "analysis": analysis,
-            "retrieved_at": datetime.now(timezone.utc).isoformat(),
-        })
+        ctx.add(
+            "urlscan_result",
+            {
+                "uuid": uuid,
+                "scan_result": result,
+                "analysis": analysis,
+                "retrieved_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
     except requests.exceptions.RequestException as e:
         ctx.log(f"Failed to retrieve URLScan.io result: {e}", level="WARNING")
@@ -371,10 +376,12 @@ def analyze_urlscan_results(result: Dict[str, Any]) -> Dict[str, Any]:
     for source, verdict in verdicts.items():
         if isinstance(verdict, dict):
             if verdict.get("malicious"):
-                analysis["threats"].append({
-                    "source": source,
-                    "categories": verdict.get("categories", []),
-                })
+                analysis["threats"].append(
+                    {
+                        "source": source,
+                        "categories": verdict.get("categories", []),
+                    }
+                )
             analysis["categories"].extend(verdict.get("categories", []))
 
     # Deduplicate categories
@@ -425,7 +432,7 @@ def get_urlscan_summary(result: Dict[str, Any]) -> str:
         return f"URLScan.io error: {result['error']}"
 
     analysis = result.get("analysis", {})
-    scan = result.get("scan_result", {})
+    result.get("scan_result", {})
 
     parts = []
 

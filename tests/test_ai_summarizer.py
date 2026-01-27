@@ -1,7 +1,6 @@
 """Tests for AI Summarizer module."""
 
 import json
-import pytest
 from unittest.mock import MagicMock, patch
 
 
@@ -15,7 +14,9 @@ class TestSummarize:
         mock_assistant = MagicMock()
         mock_assistant.summarize.return_value = "AI generated summary"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = summarize("some security data")
 
         assert result == "AI generated summary"
@@ -33,7 +34,9 @@ class TestSummarize:
 
         json_data = '{"target": "example.com", "findings": []}'
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = summarize(json_data)
 
         assert result == "AI generated summary"
@@ -49,7 +52,9 @@ class TestSummarize:
 
         data_dict = {"target": "example.com", "severity": "high"}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = summarize(data_dict)
 
         assert result == "AI generated summary"
@@ -62,7 +67,10 @@ class TestSummarize:
 
         long_data = "x" * 500
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = summarize(long_data)
 
         assert len(result) == 403  # 400 + "..."
@@ -74,7 +82,10 @@ class TestSummarize:
 
         short_data = "short data"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = summarize(short_data)
 
         assert result == "short data"
@@ -83,7 +94,10 @@ class TestSummarize:
         """Test summarize falls back when AIAssistant import fails."""
         from redops.modules.ai_summarizer import summarize
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ImportError("No module")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ImportError("No module"),
+        ):
             result = summarize("test data")
 
         assert result == "test data"
@@ -95,7 +109,9 @@ class TestSummarize:
         mock_assistant = MagicMock()
         mock_assistant.summarize.return_value = "Custom summary"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = summarize("data", prompt="Custom prompt:")
 
         assert result == "Custom summary"
@@ -109,8 +125,10 @@ class TestSummarize:
 
         invalid_json = "{not valid json"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
-            result = summarize(invalid_json)
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
+            summarize(invalid_json)
 
         call_args = mock_assistant.summarize.call_args[0][0]
         assert call_args == {"raw_data": invalid_json}
@@ -126,7 +144,9 @@ class TestAnalyze:
         mock_assistant = MagicMock()
         mock_assistant.analyze_findings.return_value = "AI analysis result"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = analyze("some security data")
 
         assert result == "AI analysis result"
@@ -143,7 +163,9 @@ class TestAnalyze:
 
         json_data = '{"vulnerabilities": [{"severity": "critical"}]}'
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = analyze(json_data)
 
         assert result == "AI analysis"
@@ -159,7 +181,9 @@ class TestAnalyze:
 
         data_dict = {"scan_results": {"open_ports": [22, 80, 443]}}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = analyze(data_dict)
 
         assert result == "Dict analysis"
@@ -170,7 +194,10 @@ class TestAnalyze:
         """Test analyze falls back to summarize when AI not available."""
         from redops.modules.ai_summarizer import analyze
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = analyze("short data")
 
         # Falls back to summarize which returns data as-is if short
@@ -182,7 +209,10 @@ class TestAnalyze:
 
         long_data = "y" * 500
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = analyze(long_data)
 
         assert len(result) == 403
@@ -192,7 +222,10 @@ class TestAnalyze:
         """Test analyze falls back when AIAssistant import fails."""
         from redops.modules.ai_summarizer import analyze
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ImportError("No module")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ImportError("No module"),
+        ):
             result = analyze("test data")
 
         assert result == "test data"
@@ -204,7 +237,9 @@ class TestAnalyze:
         mock_assistant = MagicMock()
         mock_assistant.analyze_findings.return_value = "Analysis"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = analyze("data", prompt="Analyze this:")
 
         assert result == "Analysis"
@@ -218,8 +253,10 @@ class TestAnalyze:
 
         invalid_json = "not json at all"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
-            result = analyze(invalid_json)
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
+            analyze(invalid_json)
 
         call_args = mock_assistant.analyze_findings.call_args[0][0]
         assert call_args == {"raw_data": invalid_json}
@@ -233,13 +270,19 @@ class TestExplain:
         from redops.modules.ai_summarizer import explain
 
         mock_assistant = MagicMock()
-        mock_assistant.explain.return_value = "SQL injection is a code injection technique..."
+        mock_assistant.explain.return_value = (
+            "SQL injection is a code injection technique..."
+        )
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = explain("What is SQL injection?")
 
         assert result == "SQL injection is a code injection technique..."
-        mock_assistant.explain.assert_called_once_with("What is SQL injection?", context=None)
+        mock_assistant.explain.assert_called_once_with(
+            "What is SQL injection?", context=None
+        )
 
     def test_explain_with_json_context(self):
         """Test explain with JSON context string."""
@@ -250,13 +293,18 @@ class TestExplain:
 
         context_json = '{"cve": "CVE-2021-44228", "severity": "critical"}'
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = explain("Explain this vulnerability", context=context_json)
 
         assert result == "Explanation with context"
         call_args = mock_assistant.explain.call_args
         assert call_args[0][0] == "Explain this vulnerability"
-        assert call_args[1]["context"] == {"cve": "CVE-2021-44228", "severity": "critical"}
+        assert call_args[1]["context"] == {
+            "cve": "CVE-2021-44228",
+            "severity": "critical",
+        }
 
     def test_explain_with_plain_text_context(self):
         """Test explain with plain text context (not JSON)."""
@@ -267,7 +315,9 @@ class TestExplain:
 
         plain_context = "Found in production server logs"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = explain("What does this mean?", context=plain_context)
 
         assert result == "Explanation"
@@ -278,7 +328,10 @@ class TestExplain:
         """Test explain returns error message when AI not available."""
         from redops.modules.ai_summarizer import explain
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = explain("What is XSS?")
 
         assert "AI explanation not available" in result
@@ -288,7 +341,10 @@ class TestExplain:
         """Test explain returns error message when import fails."""
         from redops.modules.ai_summarizer import explain
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ImportError("Module not found")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ImportError("Module not found"),
+        ):
             result = explain("Explain CSRF")
 
         assert "AI explanation not available" in result
@@ -300,7 +356,9 @@ class TestExplain:
         mock_assistant = MagicMock()
         mock_assistant.explain.return_value = "Explanation"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = explain("What is SSRF?", context=None)
 
         assert result == "Explanation"
@@ -314,7 +372,9 @@ class TestExplain:
         mock_assistant = MagicMock()
         mock_assistant.explain.return_value = "Explanation"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             # Empty string is falsy, so context_dict stays None
             result = explain("What is RCE?", context="")
 
@@ -332,7 +392,9 @@ class TestEdgeCases:
 
         data_400 = "a" * 400
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No key")
+        ):
             result = summarize(data_400)
 
         # Exactly 400, no truncation
@@ -345,7 +407,9 @@ class TestEdgeCases:
 
         data_401 = "b" * 401
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No key")
+        ):
             result = summarize(data_401)
 
         assert len(result) == 403  # 400 + "..."
@@ -355,7 +419,9 @@ class TestEdgeCases:
         """Test summarize with empty string."""
         from redops.modules.ai_summarizer import summarize
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No key")
+        ):
             result = summarize("")
 
         assert result == ""
@@ -367,7 +433,9 @@ class TestEdgeCases:
         mock_assistant = MagicMock()
         mock_assistant.analyze_findings.return_value = "No findings"
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = analyze({})
 
         assert result == "No findings"
@@ -383,7 +451,9 @@ class TestEdgeCases:
 
         list_data = [{"finding": 1}, {"finding": 2}]
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = summarize(list_data)
 
         assert result == "List summary"
@@ -399,7 +469,9 @@ class TestEdgeCases:
 
         list_data = [{"vuln": "xss"}, {"vuln": "sqli"}]
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = analyze(list_data)
 
         assert result == "List analysis"
@@ -413,17 +485,21 @@ class TestEdgeCases:
         mock_assistant = MagicMock()
         mock_assistant.explain.return_value = "Complex explanation"
 
-        complex_context = json.dumps({
-            "scan": {
-                "target": "example.com",
-                "findings": [
-                    {"type": "xss", "severity": "high"},
-                    {"type": "sqli", "severity": "critical"}
-                ]
+        complex_context = json.dumps(
+            {
+                "scan": {
+                    "target": "example.com",
+                    "findings": [
+                        {"type": "xss", "severity": "high"},
+                        {"type": "sqli", "severity": "critical"},
+                    ],
+                }
             }
-        })
+        )
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = explain("Summarize these findings", context=complex_context)
 
         assert result == "Complex explanation"

@@ -782,17 +782,18 @@ class TestParsePyprojectToml:
     def test_parse_with_dependencies(self):
         """Test parsing pyproject.toml with dependencies section."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
-            f.write('''[project]
+            f.write("""[project]
 name = "test"
 version = "1.0.0"
 
 [project.dependencies]
 "requests>=2.28.0"
 "flask>=2.0.0"
-''')
+""")
             f.flush()
 
             from redops.modules.metadata.code_artifacts import parse_pyproject_toml
+
             deps = parse_pyproject_toml(Path(f.name))
 
             assert len(deps) >= 1
@@ -805,6 +806,7 @@ version = "1.0.0"
             f.flush()
 
             from redops.modules.metadata.code_artifacts import parse_pyproject_toml
+
             deps = parse_pyproject_toml(Path(f.name))
 
             # Should return empty list on error
@@ -1007,7 +1009,7 @@ class TestScanFileForSecretsEdgeCases:
 
     def test_file_read_exception(self):
         """Test handling exception when reading file."""
-        from unittest.mock import patch, mock_open
+        from unittest.mock import patch
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("test content")
@@ -1028,12 +1030,12 @@ class TestExtractDependenciesEdgeCases:
         """Test extracting dependencies from pyproject.toml."""
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(Path(tmpdir, "pyproject.toml"), "w") as f:
-                f.write('''[project]
+                f.write("""[project]
 name = "test"
 
 [project.dependencies]
 "requests>=2.28.0"
-''')
+""")
 
             deps = extract_dependencies(tmpdir)
 

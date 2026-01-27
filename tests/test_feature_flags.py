@@ -1,33 +1,42 @@
 """Tests for feature flags module."""
 
-import json
 import os
 import tempfile
-import time
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
 
 from redops.core.feature_flags import (
     # Exceptions
-    FlagNotFoundError, FlagConfigurationError,
+    FlagNotFoundError,
+    FlagConfigurationError,
     # Types
-    FlagType, FlagState, Variant, FlagContext,
+    FlagType,
+    FlagState,
+    Variant,
+    FlagContext,
     # Rules
-    TargetingRule, AttributeRule, UserListRule, PercentageRule,
-    TimeWindowRule, EnvironmentRule, CompositeRule,
+    AttributeRule,
+    UserListRule,
+    PercentageRule,
+    TimeWindowRule,
+    EnvironmentRule,
+    CompositeRule,
     # Core
-    FeatureFlag, EvaluationResult,
-    # Storage
-    FlagStorage, MemoryFlagStorage, FileFlagStorage,
+    FeatureFlag,
+    MemoryFlagStorage,
+    FileFlagStorage,
     # Manager
     FeatureFlagManager,
     # A/B Testing
-    Experiment, ExperimentManager,
+    Experiment,
+    ExperimentManager,
     # Rollout
-    RolloutStage, GradualRollout,
+    GradualRollout,
     # Utilities
-    get_default_manager, set_default_manager, is_enabled, get_variant,
+    get_default_manager,
+    set_default_manager,
+    is_enabled,
+    get_variant,
     feature_flag,
 )
 
@@ -35,6 +44,7 @@ from redops.core.feature_flags import (
 # =============================================================================
 # FlagContext Tests
 # =============================================================================
+
 
 class TestFlagContext:
     """Tests for FlagContext."""
@@ -74,6 +84,7 @@ class TestFlagContext:
 # =============================================================================
 # Targeting Rules Tests
 # =============================================================================
+
 
 class TestAttributeRule:
     """Tests for AttributeRule."""
@@ -220,8 +231,7 @@ class TestTimeWindowRule:
         """Test evaluation within time window."""
         now = datetime.now()
         rule = TimeWindowRule(
-            start_time=now - timedelta(hours=1),
-            end_time=now + timedelta(hours=1)
+            start_time=now - timedelta(hours=1), end_time=now + timedelta(hours=1)
         )
         ctx = FlagContext(timestamp=now)
         assert rule.evaluate(ctx) is True
@@ -262,10 +272,13 @@ class TestCompositeRule:
 
     def test_and_operator(self):
         """Test AND operator."""
-        rule = CompositeRule([
-            AttributeRule("plan", "eq", "premium"),
-            AttributeRule("verified", "eq", True)
-        ], operator="and")
+        rule = CompositeRule(
+            [
+                AttributeRule("plan", "eq", "premium"),
+                AttributeRule("verified", "eq", True),
+            ],
+            operator="and",
+        )
 
         ctx = FlagContext(attributes={"plan": "premium", "verified": True})
         assert rule.evaluate(ctx) is True
@@ -275,10 +288,13 @@ class TestCompositeRule:
 
     def test_or_operator(self):
         """Test OR operator."""
-        rule = CompositeRule([
-            AttributeRule("plan", "eq", "premium"),
-            AttributeRule("plan", "eq", "enterprise")
-        ], operator="or")
+        rule = CompositeRule(
+            [
+                AttributeRule("plan", "eq", "premium"),
+                AttributeRule("plan", "eq", "enterprise"),
+            ],
+            operator="or",
+        )
 
         ctx = FlagContext(attributes={"plan": "premium"})
         assert rule.evaluate(ctx) is True
@@ -288,9 +304,7 @@ class TestCompositeRule:
 
     def test_not_operator(self):
         """Test NOT operator."""
-        rule = CompositeRule([
-            AttributeRule("banned", "eq", True)
-        ], operator="not")
+        rule = CompositeRule([AttributeRule("banned", "eq", True)], operator="not")
 
         ctx = FlagContext(attributes={"banned": False})
         assert rule.evaluate(ctx) is True
@@ -300,37 +314,26 @@ class TestCompositeRule:
 # FeatureFlag Tests
 # =============================================================================
 
+
 class TestFeatureFlag:
     """Tests for FeatureFlag."""
 
     def test_disabled_flag(self):
         """Test disabled flag returns default."""
-        flag = FeatureFlag(
-            key="test",
-            state=FlagState.DISABLED,
-            default_value=False
-        )
+        flag = FeatureFlag(key="test", state=FlagState.DISABLED, default_value=False)
         assert flag.evaluate() is False
 
     def test_enabled_boolean_flag(self):
         """Test enabled boolean flag."""
         flag = FeatureFlag(
-            key="test",
-            flag_type=FlagType.BOOLEAN,
-            state=FlagState.ENABLED
+            key="test", flag_type=FlagType.BOOLEAN, state=FlagState.ENABLED
         )
         assert flag.evaluate() is True
 
     def test_conditional_flag(self):
         """Test conditional flag with rules."""
-        flag = FeatureFlag(
-            key="test",
-            default_value=False
-        )
-        flag.add_rule(
-            AttributeRule("plan", "eq", "premium"),
-            True
-        )
+        flag = FeatureFlag(key="test", default_value=False)
+        flag.add_rule(AttributeRule("plan", "eq", "premium"), True)
 
         ctx_premium = FlagContext(attributes={"plan": "premium"})
         ctx_free = FlagContext(attributes={"plan": "free"})
@@ -378,9 +381,7 @@ class TestFeatureFlag:
     def test_to_dict(self):
         """Test flag serialization."""
         flag = FeatureFlag(
-            key="test",
-            flag_type=FlagType.BOOLEAN,
-            description="Test flag"
+            key="test", flag_type=FlagType.BOOLEAN, description="Test flag"
         )
         d = flag.to_dict()
         assert d["key"] == "test"
@@ -391,6 +392,7 @@ class TestFeatureFlag:
 # =============================================================================
 # Flag Storage Tests
 # =============================================================================
+
 
 class TestMemoryFlagStorage:
     """Tests for MemoryFlagStorage."""
@@ -437,8 +439,8 @@ class TestFileFlagStorage:
 
     def test_file_persistence(self):
         """Test file persistence."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            f.write('{}')
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write("{}")
             file_path = f.name
 
         try:
@@ -463,6 +465,7 @@ class TestFileFlagStorage:
 # =============================================================================
 # FeatureFlagManager Tests
 # =============================================================================
+
 
 class TestFeatureFlagManager:
     """Tests for FeatureFlagManager."""
@@ -598,6 +601,7 @@ class TestFeatureFlagManager:
 # Experiment Tests
 # =============================================================================
 
+
 class TestExperiment:
     """Tests for Experiment."""
 
@@ -606,10 +610,7 @@ class TestExperiment:
         exp = Experiment(
             name="test_exp",
             is_active=True,
-            variants=[
-                Variant("control", "A"),
-                Variant("treatment", "B")
-            ]
+            variants=[Variant("control", "A"), Variant("treatment", "B")],
         )
         assert exp.is_running() is True
 
@@ -623,7 +624,7 @@ class TestExperiment:
         exp = Experiment(
             name="test_exp",
             is_active=True,
-            start_time=datetime.now() + timedelta(hours=1)
+            start_time=datetime.now() + timedelta(hours=1),
         )
         assert exp.is_running() is False
 
@@ -632,7 +633,7 @@ class TestExperiment:
         exp = Experiment(
             name="test_exp",
             is_active=True,
-            end_time=datetime.now() - timedelta(hours=1)
+            end_time=datetime.now() - timedelta(hours=1),
         )
         assert exp.is_running() is False
 
@@ -643,8 +644,8 @@ class TestExperiment:
             is_active=True,
             variants=[
                 Variant("control", "A", weight=1),
-                Variant("treatment", "B", weight=1)
-            ]
+                Variant("treatment", "B", weight=1),
+            ],
         )
 
         ctx = FlagContext(user_id="user123")
@@ -657,10 +658,7 @@ class TestExperiment:
         exp = Experiment(
             name="test_exp",
             is_active=True,
-            variants=[
-                Variant("control", "A"),
-                Variant("treatment", "B")
-            ]
+            variants=[Variant("control", "A"), Variant("treatment", "B")],
         )
 
         ctx = FlagContext(user_id="user123")
@@ -676,18 +674,14 @@ class TestExperimentManager:
         """Test creating an experiment."""
         manager = ExperimentManager()
         exp = manager.create_experiment(
-            "test_exp",
-            variants=[Variant("A", 1), Variant("B", 2)]
+            "test_exp", variants=[Variant("A", 1), Variant("B", 2)]
         )
         assert exp.name == "test_exp"
 
     def test_start_stop_experiment(self):
         """Test starting and stopping experiment."""
         manager = ExperimentManager()
-        manager.create_experiment(
-            "test_exp",
-            variants=[Variant("A", 1)]
-        )
+        manager.create_experiment("test_exp", variants=[Variant("A", 1)])
 
         assert manager.start_experiment("test_exp") is True
         exp = manager.get_experiment("test_exp")
@@ -700,8 +694,7 @@ class TestExperimentManager:
         """Test getting variant through manager."""
         manager = ExperimentManager()
         manager.create_experiment(
-            "test_exp",
-            variants=[Variant("control", "A"), Variant("treatment", "B")]
+            "test_exp", variants=[Variant("control", "A"), Variant("treatment", "B")]
         )
         manager.start_experiment("test_exp")
 
@@ -713,8 +706,7 @@ class TestExperimentManager:
         """Test persistent variant assignment."""
         manager = ExperimentManager()
         manager.create_experiment(
-            "test_exp",
-            variants=[Variant("A", 1), Variant("B", 2)]
+            "test_exp", variants=[Variant("A", 1), Variant("B", 2)]
         )
         manager.start_experiment("test_exp")
 
@@ -741,6 +733,7 @@ class TestExperimentManager:
 # =============================================================================
 # GradualRollout Tests
 # =============================================================================
+
 
 class TestGradualRollout:
     """Tests for GradualRollout."""
@@ -835,6 +828,7 @@ class TestGradualRollout:
 # Global Utility Tests
 # =============================================================================
 
+
 class TestGlobalUtilities:
     """Tests for global utility functions."""
 
@@ -897,6 +891,7 @@ class TestGlobalUtilities:
 # Integration Tests
 # =============================================================================
 
+
 class TestIntegration:
     """Integration tests."""
 
@@ -909,14 +904,11 @@ class TestIntegration:
             "premium_feature",
             flag_type=FlagType.BOOLEAN,
             default_value=False,
-            description="Premium-only feature"
+            description="Premium-only feature",
         )
 
         # Add targeting rules
-        flag.add_rule(
-            AttributeRule("plan", "eq", "premium"),
-            True
-        )
+        flag.add_rule(AttributeRule("plan", "eq", "premium"), True)
         manager.update_flag(flag)
 
         # Test evaluation
@@ -966,15 +958,19 @@ class TestIntegration:
         flag = manager.create_flag("complex_feature")
 
         # Premium users OR beta testers AND not banned
-        targeting = CompositeRule([
-            CompositeRule([
-                AttributeRule("plan", "eq", "premium"),
-                UserListRule({"beta_user_1", "beta_user_2"})
-            ], operator="or"),
-            CompositeRule([
-                AttributeRule("banned", "eq", True)
-            ], operator="not")
-        ], operator="and")
+        targeting = CompositeRule(
+            [
+                CompositeRule(
+                    [
+                        AttributeRule("plan", "eq", "premium"),
+                        UserListRule({"beta_user_1", "beta_user_2"}),
+                    ],
+                    operator="or",
+                ),
+                CompositeRule([AttributeRule("banned", "eq", True)], operator="not"),
+            ],
+            operator="and",
+        )
 
         flag.add_rule(targeting, True)
         manager.update_flag(flag)
@@ -985,8 +981,7 @@ class TestIntegration:
 
         # Beta tester
         ctx2 = FlagContext(
-            user_id="beta_user_1",
-            attributes={"plan": "free", "banned": False}
+            user_id="beta_user_1", attributes={"plan": "free", "banned": False}
         )
         assert manager.evaluate("complex_feature", ctx2) is True
 
@@ -996,7 +991,6 @@ class TestIntegration:
 
         # Free non-beta user
         ctx4 = FlagContext(
-            user_id="regular_user",
-            attributes={"plan": "free", "banned": False}
+            user_id="regular_user", attributes={"plan": "free", "banned": False}
         )
         assert manager.evaluate("complex_feature", ctx4) is False

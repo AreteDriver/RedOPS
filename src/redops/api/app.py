@@ -14,7 +14,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from .v1 import router as v1_router
-from .middleware import RequestLoggingMiddleware, RateLimitMiddleware
+from .middleware import RequestLoggingMiddleware
 
 
 @asynccontextmanager
@@ -52,7 +52,9 @@ def create_app(
     )
 
     # Configure CORS
-    cors_origins = os.environ.get("REDOPS_CORS_ORIGINS", "http://localhost:8000").split(",")
+    cors_origins = os.environ.get("REDOPS_CORS_ORIGINS", "http://localhost:8000").split(
+        ","
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,

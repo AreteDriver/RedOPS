@@ -508,6 +508,7 @@ class TestGetDnsRecordsNoDnspython:
         """Test non-A records return empty when dnspython not available."""
         with patch("redops.modules.recon.domains.DNS_AVAILABLE", False):
             from redops.modules.recon import domains
+
             original = domains.DNS_AVAILABLE
             domains.DNS_AVAILABLE = False
 
@@ -523,10 +524,13 @@ class TestGetDnsRecordsNoDnspython:
     def test_get_dns_records_no_dns_a_record_uses_socket(self):
         """Test A records use socket fallback when dnspython not available."""
         with patch("redops.modules.recon.domains.DNS_AVAILABLE", False):
-            with patch("redops.modules.recon.domains._get_dns_records_socket") as mock_socket:
+            with patch(
+                "redops.modules.recon.domains._get_dns_records_socket"
+            ) as mock_socket:
                 mock_socket.return_value = ["1.2.3.4"]
 
                 from redops.modules.recon import domains
+
                 original = domains.DNS_AVAILABLE
                 domains.DNS_AVAILABLE = False
 
@@ -732,7 +736,9 @@ class TestGetDnsRecordsDnspython:
         original = domains.DNS_AVAILABLE
         domains.DNS_AVAILABLE = True
 
-        with patch("redops.modules.recon.domains._get_dns_records_dnspython") as mock_dns:
+        with patch(
+            "redops.modules.recon.domains._get_dns_records_dnspython"
+        ) as mock_dns:
             mock_dns.return_value = ["1.2.3.4"]
 
             records = domains.get_dns_records("example.com", "A")
@@ -785,7 +791,10 @@ class TestProfileDomainExtended:
         with patch("redops.modules.recon.domains.get_all_dns_records") as mock_dns:
             mock_dns.return_value = {
                 "A": ["93.184.216.34"],
-                "TXT": ["v=spf1 -all", "v=DMARC1; p=reject; rua=mailto:dmarc@example.com"],
+                "TXT": [
+                    "v=spf1 -all",
+                    "v=DMARC1; p=reject; rua=mailto:dmarc@example.com",
+                ],
             }
 
             ctx = Context(target="example.com")
@@ -814,7 +823,9 @@ class TestProfileDomainExtended:
 
             # Check that verification records are logged
             info_logs = result.get_logs(level="INFO")
-            assert any("verified with services" in log["message"].lower() for log in info_logs)
+            assert any(
+                "verified with services" in log["message"].lower() for log in info_logs
+            )
 
 
 class TestCheckZoneTransferExtended:
@@ -860,10 +871,15 @@ class TestCheckZoneTransferExtended:
 
                     # Should have warning log
                     warnings = result.get_logs(level="WARNING")
-                    assert any("zone transfer allowed" in log["message"].lower() for log in warnings)
+                    assert any(
+                        "zone transfer allowed" in log["message"].lower()
+                        for log in warnings
+                    )
 
                     # Should create finding
-                    finding_keys = [k for k in result.data.keys() if k.startswith("finding_axfr")]
+                    finding_keys = [
+                        k for k in result.data.keys() if k.startswith("finding_axfr")
+                    ]
                     assert len(finding_keys) > 0
 
     def test_zone_transfer_not_vulnerable_completion(self):
@@ -885,7 +901,9 @@ class TestCheckZoneTransferExtended:
 
                 # Should log completion message
                 info_logs = result.get_logs(level="INFO")
-                assert any("no vulnerabilities" in log["message"].lower() for log in info_logs)
+                assert any(
+                    "no vulnerabilities" in log["message"].lower() for log in info_logs
+                )
 
     def test_zone_transfer_check_vulnerable_logging(self):
         """Test zone transfer vulnerable completion message."""
@@ -907,7 +925,10 @@ class TestCheckZoneTransferExtended:
 
                     # Should log vulnerability found message
                     warnings = result.get_logs(level="WARNING")
-                    assert any("vulnerability found" in log["message"].lower() for log in warnings)
+                    assert any(
+                        "vulnerability found" in log["message"].lower()
+                        for log in warnings
+                    )
 
 
 class TestDnspythonMocked:
@@ -920,9 +941,9 @@ class TestDnspythonMocked:
         mock_dns.exception = mock_exception
 
         return {
-            'dns': mock_dns,
-            'dns.resolver': mock_resolver,
-            'dns.exception': mock_exception,
+            "dns": mock_dns,
+            "dns.resolver": mock_resolver,
+            "dns.exception": mock_exception,
         }
 
     def test_get_dns_records_dnspython_mx_actual(self):
@@ -947,6 +968,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "MX")
@@ -982,6 +1004,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "SOA")
@@ -1011,6 +1034,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "TXT")
@@ -1039,6 +1063,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "A")
@@ -1067,6 +1092,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("nonexistent.invalid", "A")
@@ -1094,6 +1120,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "AAAA")
@@ -1121,6 +1148,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "A")
@@ -1148,6 +1176,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "A")
@@ -1172,6 +1201,7 @@ class TestDnspythonMocked:
 
         with patch.dict(sys.modules, dns_mocks):
             import redops.modules.recon.domains as domains_mod
+
             domains_mod = reload(domains_mod)
 
             records = domains_mod._get_dns_records_dnspython("example.com", "A")
@@ -1194,13 +1224,15 @@ class TestDnspythonMocked:
         mock_resolver_instance.resolve.return_value = mock_answers
         mock_resolver.Resolver.return_value = mock_resolver_instance
 
-        with patch.dict(sys.modules, {
-            'dns': MagicMock(),
-            'dns.resolver': mock_resolver,
-            'dns.exception': mock_exception,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "dns": MagicMock(),
+                "dns.resolver": mock_resolver,
+                "dns.exception": mock_exception,
+            },
+        ):
             # Re-import to pick up mocked modules
-            import importlib
             import redops.modules.recon.domains as domains_mod
 
             # Temporarily set DNS_AVAILABLE to True
@@ -1314,11 +1346,11 @@ class TestZoneTransferMocked:
         mock_exception = MagicMock()
 
         return {
-            'dns': mock_dns,
-            'dns.zone': zone_module,
-            'dns.query': query_module,
-            'dns.resolver': mock_resolver,
-            'dns.exception': mock_exception,
+            "dns": mock_dns,
+            "dns.zone": zone_module,
+            "dns.query": query_module,
+            "dns.resolver": mock_resolver,
+            "dns.exception": mock_exception,
         }
 
     def test_zone_transfer_vulnerable_mocked(self):
@@ -1341,7 +1373,9 @@ class TestZoneTransferMocked:
             original_available = domains_mod.DNS_AVAILABLE
             domains_mod.DNS_AVAILABLE = True
 
-            with patch.object(domains_mod, 'get_dns_records', return_value=["ns1.example.com."]):
+            with patch.object(
+                domains_mod, "get_dns_records", return_value=["ns1.example.com."]
+            ):
                 ctx = Context(target="example.com")
                 result = domains_mod.check_zone_transfer(ctx)
 
@@ -1367,7 +1401,9 @@ class TestZoneTransferMocked:
             original_available = domains_mod.DNS_AVAILABLE
             domains_mod.DNS_AVAILABLE = True
 
-            with patch.object(domains_mod, 'get_dns_records', return_value=["ns1.example.com."]):
+            with patch.object(
+                domains_mod, "get_dns_records", return_value=["ns1.example.com."]
+            ):
                 ctx = Context(target="example.com")
                 result = domains_mod.check_zone_transfer(ctx)
 
@@ -1393,7 +1429,9 @@ class TestZoneTransferMocked:
             original_available = domains_mod.DNS_AVAILABLE
             domains_mod.DNS_AVAILABLE = True
 
-            with patch.object(domains_mod, 'get_dns_records', return_value=["ns1.example.com."]):
+            with patch.object(
+                domains_mod, "get_dns_records", return_value=["ns1.example.com."]
+            ):
                 ctx = Context(target="example.com")
                 result = domains_mod.check_zone_transfer(ctx)
 
@@ -1419,7 +1457,9 @@ class TestZoneTransferMocked:
             original_available = domains_mod.DNS_AVAILABLE
             domains_mod.DNS_AVAILABLE = True
 
-            with patch.object(domains_mod, 'get_dns_records', return_value=["ns1.example.com."]):
+            with patch.object(
+                domains_mod, "get_dns_records", return_value=["ns1.example.com."]
+            ):
                 ctx = Context(target="example.com")
                 result = domains_mod.check_zone_transfer(ctx)
 
@@ -1445,7 +1485,9 @@ class TestZoneTransferMocked:
             original_available = domains_mod.DNS_AVAILABLE
             domains_mod.DNS_AVAILABLE = True
 
-            with patch.object(domains_mod, 'get_dns_records', return_value=["ns1.example.com."]):
+            with patch.object(
+                domains_mod, "get_dns_records", return_value=["ns1.example.com."]
+            ):
                 ctx = Context(target="example.com")
                 result = domains_mod.check_zone_transfer(ctx)
 
@@ -1461,6 +1503,7 @@ class TestZoneTransferMocked:
 
         # First NS vulnerable, second denied
         call_count = [0]
+
         def side_effect(*args, **kwargs):
             call_count[0] += 1
             if call_count[0] == 1:
@@ -1480,7 +1523,11 @@ class TestZoneTransferMocked:
             original_available = domains_mod.DNS_AVAILABLE
             domains_mod.DNS_AVAILABLE = True
 
-            with patch.object(domains_mod, 'get_dns_records', return_value=["ns1.example.com.", "ns2.example.com."]):
+            with patch.object(
+                domains_mod,
+                "get_dns_records",
+                return_value=["ns1.example.com.", "ns2.example.com."],
+            ):
                 ctx = Context(target="example.com")
                 result = domains_mod.check_zone_transfer(ctx)
 

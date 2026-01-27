@@ -1,6 +1,5 @@
 """Tests for the URLhaus threat intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from redops.core.context import Context
 from redops.modules.threat_intel.urlhaus import (
@@ -10,7 +9,6 @@ from redops.modules.threat_intel.urlhaus import (
     get_recent_urls,
     analyze_urlhaus_results,
     get_urlhaus_summary,
-    HAS_REQUESTS,
 )
 
 
@@ -111,7 +109,10 @@ class TestCheckHost:
     def test_request_error(self, mock_requests):
         """Test request error handling."""
         import requests as real_requests
-        mock_requests.post.side_effect = real_requests.exceptions.RequestException("Network error")
+
+        mock_requests.post.side_effect = real_requests.exceptions.RequestException(
+            "Network error"
+        )
         mock_requests.exceptions = real_requests.exceptions
 
         result = check_host("example.com")
@@ -336,16 +337,19 @@ class TestGetUrlhausSummary:
     def test_with_url_results(self):
         """Test summary with URL results."""
         ctx = Context()
-        ctx.add("urlhaus_result", {
-            "queried_url": "http://malware.example.com/bad.exe",
-            "query_status": "ok",
-            "threat": "malware_download",
-            "url_status": "online",
-            "date_added": "2024-01-01",
-            "tags": ["exe", "Emotet"],
-            "payloads": [{"signature": "Emotet"}],
-            "query_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "urlhaus_result",
+            {
+                "queried_url": "http://malware.example.com/bad.exe",
+                "query_status": "ok",
+                "threat": "malware_download",
+                "url_status": "online",
+                "date_added": "2024-01-01",
+                "tags": ["exe", "Emotet"],
+                "payloads": [{"signature": "Emotet"}],
+                "query_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_urlhaus_summary(ctx)
 
@@ -357,11 +361,14 @@ class TestGetUrlhausSummary:
     def test_with_host_results(self):
         """Test summary with host results."""
         ctx = Context()
-        ctx.add("urlhaus_result", {
-            "queried_host": "malware.example.com",
-            "query_status": "ok",
-            "query_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "urlhaus_result",
+            {
+                "queried_host": "malware.example.com",
+                "query_status": "ok",
+                "query_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_urlhaus_summary(ctx)
 

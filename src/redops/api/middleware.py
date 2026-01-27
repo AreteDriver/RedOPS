@@ -8,7 +8,6 @@ import logging
 import time
 import uuid
 from collections import defaultdict
-from datetime import datetime
 from typing import Callable
 
 from fastapi import Request, Response
@@ -39,9 +38,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         duration = (time.time() - start_time) * 1000
 
         # Log response
-        logger.info(
-            f"[{request_id}] {response.status_code} in {duration:.2f}ms"
-        )
+        logger.info(f"[{request_id}] {response.status_code} in {duration:.2f}ms")
 
         # Add headers
         response.headers["X-Request-ID"] = request_id

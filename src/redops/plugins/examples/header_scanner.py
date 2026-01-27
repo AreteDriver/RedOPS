@@ -5,7 +5,7 @@ Demonstrates building a web scanner plugin.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 from urllib.parse import urlparse
 
 from redops.plugins.scanner import (
@@ -241,41 +241,47 @@ class HeaderScannerPlugin(ScannerPlugin):
 
         # Check for unsafe directives
         if "unsafe-inline" in csp:
-            findings.append(self._create_finding(
-                title="CSP allows unsafe-inline",
-                severity=Severity.MEDIUM,
-                target=target,
-                description="CSP policy allows inline scripts/styles which weakens XSS protection",
-                category="web-security",
-                cwe_id="CWE-79",
-                remediation="Remove 'unsafe-inline' and use nonces or hashes instead",
-                evidence=f"CSP: {csp}",
-            ))
+            findings.append(
+                self._create_finding(
+                    title="CSP allows unsafe-inline",
+                    severity=Severity.MEDIUM,
+                    target=target,
+                    description="CSP policy allows inline scripts/styles which weakens XSS protection",
+                    category="web-security",
+                    cwe_id="CWE-79",
+                    remediation="Remove 'unsafe-inline' and use nonces or hashes instead",
+                    evidence=f"CSP: {csp}",
+                )
+            )
 
         if "unsafe-eval" in csp:
-            findings.append(self._create_finding(
-                title="CSP allows unsafe-eval",
-                severity=Severity.MEDIUM,
-                target=target,
-                description="CSP policy allows eval() which can be exploited for code execution",
-                category="web-security",
-                cwe_id="CWE-95",
-                remediation="Remove 'unsafe-eval' from CSP",
-                evidence=f"CSP: {csp}",
-            ))
+            findings.append(
+                self._create_finding(
+                    title="CSP allows unsafe-eval",
+                    severity=Severity.MEDIUM,
+                    target=target,
+                    description="CSP policy allows eval() which can be exploited for code execution",
+                    category="web-security",
+                    cwe_id="CWE-95",
+                    remediation="Remove 'unsafe-eval' from CSP",
+                    evidence=f"CSP: {csp}",
+                )
+            )
 
         # Check for wildcard sources
         if "*" in csp and "script-src" in csp:
-            findings.append(self._create_finding(
-                title="CSP has wildcard script source",
-                severity=Severity.HIGH,
-                target=target,
-                description="CSP allows scripts from any origin",
-                category="web-security",
-                cwe_id="CWE-79",
-                remediation="Specify explicit script sources instead of wildcards",
-                evidence=f"CSP: {csp}",
-            ))
+            findings.append(
+                self._create_finding(
+                    title="CSP has wildcard script source",
+                    severity=Severity.HIGH,
+                    target=target,
+                    description="CSP allows scripts from any origin",
+                    category="web-security",
+                    cwe_id="CWE-79",
+                    remediation="Specify explicit script sources instead of wildcards",
+                    evidence=f"CSP: {csp}",
+                )
+            )
 
         return findings
 
@@ -288,30 +294,34 @@ class HeaderScannerPlugin(ScannerPlugin):
             try:
                 max_age = int(hsts.split("max-age=")[1].split(";")[0].strip())
                 if max_age < 31536000:  # Less than 1 year
-                    findings.append(self._create_finding(
-                        title="HSTS max-age too short",
-                        severity=Severity.LOW,
-                        target=target,
-                        description=f"HSTS max-age is {max_age} seconds, recommend at least 31536000 (1 year)",
-                        category="web-security",
-                        cwe_id="CWE-319",
-                        remediation="Increase HSTS max-age to at least 31536000",
-                        evidence=f"HSTS: {hsts}",
-                    ))
+                    findings.append(
+                        self._create_finding(
+                            title="HSTS max-age too short",
+                            severity=Severity.LOW,
+                            target=target,
+                            description=f"HSTS max-age is {max_age} seconds, recommend at least 31536000 (1 year)",
+                            category="web-security",
+                            cwe_id="CWE-319",
+                            remediation="Increase HSTS max-age to at least 31536000",
+                            evidence=f"HSTS: {hsts}",
+                        )
+                    )
             except (ValueError, IndexError):
                 pass
 
         # Check for includeSubDomains
         if "includeSubDomains" not in hsts.lower():
-            findings.append(self._create_finding(
-                title="HSTS missing includeSubDomains",
-                severity=Severity.INFO,
-                target=target,
-                description="HSTS should include subdomains for complete protection",
-                category="web-security",
-                cwe_id="CWE-319",
-                remediation="Add 'includeSubDomains' to HSTS header",
-                evidence=f"HSTS: {hsts}",
-            ))
+            findings.append(
+                self._create_finding(
+                    title="HSTS missing includeSubDomains",
+                    severity=Severity.INFO,
+                    target=target,
+                    description="HSTS should include subdomains for complete protection",
+                    category="web-security",
+                    cwe_id="CWE-319",
+                    remediation="Add 'includeSubDomains' to HSTS header",
+                    evidence=f"HSTS: {hsts}",
+                )
+            )
 
         return findings

@@ -4,11 +4,8 @@ Main CLI entry point for RedOPS.
 Provides commands for scanning, reporting, and management.
 """
 
-import json
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -32,40 +29,25 @@ pass_context = click.make_pass_decorator(RedOPSContext, ensure=True)
 
 
 @click.group()
+@click.option("-v", "--verbose", is_flag=True, help="Enable verbose output")
+@click.option("-q", "--quiet", is_flag=True, help="Suppress non-essential output")
 @click.option(
-    "-v", "--verbose",
-    is_flag=True,
-    help="Enable verbose output"
-)
-@click.option(
-    "-q", "--quiet",
-    is_flag=True,
-    help="Suppress non-essential output"
-)
-@click.option(
-    "-f", "--format",
+    "-f",
+    "--format",
     "output_format",
     type=click.Choice(["text", "json", "table"]),
     default="text",
-    help="Output format"
+    help="Output format",
 )
 @click.option(
     "--config",
     "config_file",
     type=click.Path(exists=True),
     envvar="REDOPS_CONFIG",
-    help="Path to config file"
+    help="Path to config file",
 )
-@click.option(
-    "--api-url",
-    envvar="REDOPS_API_URL",
-    help="RedOPS API URL"
-)
-@click.option(
-    "--api-key",
-    envvar="REDOPS_API_KEY",
-    help="RedOPS API key"
-)
+@click.option("--api-url", envvar="REDOPS_API_URL", help="RedOPS API URL")
+@click.option("--api-key", envvar="REDOPS_API_KEY", help="RedOPS API key")
 @click.version_option(version="1.5.0", prog_name="redops")
 @pass_context
 def cli(ctx, verbose, quiet, output_format, config_file, api_url, api_key):
@@ -115,27 +97,10 @@ def status(ctx):
 
 @cli.command()
 @click.argument("target")
-@click.option(
-    "-p", "--pipeline",
-    default="default",
-    help="Scan pipeline to use"
-)
-@click.option(
-    "-o", "--output",
-    type=click.Path(),
-    help="Output file path"
-)
-@click.option(
-    "--async", "async_mode",
-    is_flag=True,
-    help="Run scan asynchronously"
-)
-@click.option(
-    "--timeout",
-    type=int,
-    default=3600,
-    help="Scan timeout in seconds"
-)
+@click.option("-p", "--pipeline", default="default", help="Scan pipeline to use")
+@click.option("-o", "--output", type=click.Path(), help="Output file path")
+@click.option("--async", "async_mode", is_flag=True, help="Run scan asynchronously")
+@click.option("--timeout", type=int, default=3600, help="Scan timeout in seconds")
 @pass_context
 def quick_scan(ctx, target, pipeline, output, async_mode, timeout):
     """Run a quick scan on a target.
@@ -227,10 +192,7 @@ pipelines:
 
 
 @cli.command()
-@click.option(
-    "--check", is_flag=True,
-    help="Check dependencies without installing"
-)
+@click.option("--check", is_flag=True, help="Check dependencies without installing")
 def doctor(check):
     """Check RedOPS installation and dependencies.
 

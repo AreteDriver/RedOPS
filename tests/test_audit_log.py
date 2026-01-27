@@ -1,10 +1,7 @@
 """Tests for audit log module."""
 
-import pytest
 import json
-from unittest.mock import MagicMock, patch
-from pathlib import Path
-from datetime import datetime, timezone
+from unittest.mock import MagicMock
 
 from redops.modules.compliance.audit_log import (
     create_audit_entry,
@@ -19,10 +16,7 @@ class TestCreateAuditEntry:
 
     def test_basic_entry(self):
         """Test creating basic audit entry."""
-        entry = create_audit_entry(
-            action="test_action",
-            target="example.com"
-        )
+        entry = create_audit_entry(action="test_action", target="example.com")
 
         assert entry["action"] == "test_action"
         assert entry["target"] == "example.com"
@@ -32,11 +26,7 @@ class TestCreateAuditEntry:
 
     def test_with_user(self):
         """Test entry with custom user."""
-        entry = create_audit_entry(
-            action="scan",
-            target="example.com",
-            user="admin"
-        )
+        entry = create_audit_entry(action="scan", target="example.com", user="admin")
 
         assert entry["user"] == "admin"
 
@@ -45,7 +35,7 @@ class TestCreateAuditEntry:
         entry = create_audit_entry(
             action="scan",
             target="example.com",
-            metadata={"preset": "full", "duration": 120}
+            metadata={"preset": "full", "duration": 120},
         )
 
         assert entry["metadata"]["preset"] == "full"
@@ -53,10 +43,7 @@ class TestCreateAuditEntry:
 
     def test_timestamp_format(self):
         """Test timestamp is ISO format."""
-        entry = create_audit_entry(
-            action="test",
-            target="target"
-        )
+        entry = create_audit_entry(action="test", target="target")
 
         # Should be parseable as ISO format
         timestamp = entry["timestamp"]
@@ -66,11 +53,7 @@ class TestCreateAuditEntry:
 
     def test_none_metadata_becomes_empty_dict(self):
         """Test None metadata becomes empty dict."""
-        entry = create_audit_entry(
-            action="test",
-            target="target",
-            metadata=None
-        )
+        entry = create_audit_entry(action="test", target="target", metadata=None)
 
         assert entry["metadata"] == {}
 
@@ -138,7 +121,7 @@ class TestLogToFile:
                 "modules": ["dns", "tech", "vuln"],
                 "nested": {"key": "value"},
                 "count": 42,
-            }
+            },
         )
         log_to_file(entry, log_file)
 
@@ -296,7 +279,9 @@ class TestAuditPipelineEnd:
 
         ctx.log.assert_called()
         log_args = ctx.log.call_args
-        assert "completed" in log_args[0][0].lower() or "audit" in log_args[0][0].lower()
+        assert (
+            "completed" in log_args[0][0].lower() or "audit" in log_args[0][0].lower()
+        )
         assert log_args[1]["level"] == "INFO"
 
     def test_includes_log_count(self):

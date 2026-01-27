@@ -8,7 +8,6 @@ import json
 import re
 import smtplib
 import threading
-import time
 import urllib.request
 import urllib.error
 from abc import ABC, abstractmethod
@@ -17,26 +16,30 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 
 class NotificationError(Exception):
     """Base exception for notification errors."""
+
     pass
 
 
 class ChannelError(NotificationError):
     """Raised when a channel operation fails."""
+
     pass
 
 
 class TemplateError(NotificationError):
     """Raised when template rendering fails."""
+
     pass
 
 
 class ThrottleError(NotificationError):
     """Raised when notification is throttled."""
+
     pass
 
 
@@ -44,8 +47,10 @@ class ThrottleError(NotificationError):
 # Notification Types
 # =============================================================================
 
+
 class NotificationLevel(Enum):
     """Notification severity levels."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -55,6 +60,7 @@ class NotificationLevel(Enum):
 
 class NotificationStatus(Enum):
     """Status of a notification."""
+
     PENDING = "pending"
     SENT = "sent"
     FAILED = "failed"
@@ -102,7 +108,7 @@ class Notification:
             "status": self.status.value,
             "error": self.error,
             "sent_at": self.sent_at.isoformat() if self.sent_at else None,
-            "retries": self.retries
+            "retries": self.retries,
         }
 
 
@@ -110,20 +116,25 @@ class Notification:
 # Templates
 # =============================================================================
 
+
 class TemplateEngine:
     """Simple template engine for notifications."""
 
-    VARIABLE_PATTERN = re.compile(r'\{\{\s*(\w+(?:\.\w+)*)\s*\}\}')
+    VARIABLE_PATTERN = re.compile(r"\{\{\s*(\w+(?:\.\w+)*)\s*\}\}")
 
     def __init__(self):
         self._templates: Dict[str, str] = {}
         self._filters: Dict[str, Callable[[Any], str]] = {
-            'upper': lambda x: str(x).upper(),
-            'lower': lambda x: str(x).lower(),
-            'title': lambda x: str(x).title(),
-            'json': lambda x: json.dumps(x),
-            'date': lambda x: x.strftime('%Y-%m-%d') if hasattr(x, 'strftime') else str(x),
-            'datetime': lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if hasattr(x, 'strftime') else str(x),
+            "upper": lambda x: str(x).upper(),
+            "lower": lambda x: str(x).lower(),
+            "title": lambda x: str(x).title(),
+            "json": lambda x: json.dumps(x),
+            "date": lambda x: x.strftime("%Y-%m-%d")
+            if hasattr(x, "strftime")
+            else str(x),
+            "datetime": lambda x: x.strftime("%Y-%m-%d %H:%M:%S")
+            if hasattr(x, "strftime")
+            else str(x),
         }
 
     def register_template(self, name: str, template: str) -> None:
@@ -140,20 +151,21 @@ class TemplateEngine:
 
     def render(self, template: str, context: Dict[str, Any]) -> str:
         """Render a template with the given context."""
+
         def replace_var(match):
             var_path = match.group(1)
-            parts = var_path.split('.')
+            parts = var_path.split(".")
             value = context
 
             try:
                 for part in parts:
                     if isinstance(value, dict):
-                        value = value.get(part, '')
+                        value = value.get(part, "")
                     else:
-                        value = getattr(value, part, '')
-                return str(value) if value is not None else ''
+                        value = getattr(value, part, "")
+                return str(value) if value is not None else ""
             except Exception:
-                return ''
+                return ""
 
         return self.VARIABLE_PATTERN.sub(replace_var, template)
 
@@ -168,6 +180,7 @@ class TemplateEngine:
 # =============================================================================
 # Throttling
 # =============================================================================
+
 
 @dataclass
 class ThrottleRule:
@@ -201,7 +214,7 @@ class ThrottleManager:
 
     def check(self, key: str) -> Tuple[bool, Optional[str]]:
         """Check if a notification should be throttled.
-        
+
         Returns (allowed, reason).
         """
         with self._lock:
@@ -229,8 +242,13 @@ class ThrottleManager:
             if count >= rule.max_count:
                 # Enter cooldown
                 if rule.cooldown_seconds > 0:
-                    self._cooldowns[key] = now + timedelta(seconds=rule.cooldown_seconds)
-                    return False, f"Rate limit exceeded, in cooldown for {rule.cooldown_seconds}s"
+                    self._cooldowns[key] = now + timedelta(
+                        seconds=rule.cooldown_seconds
+                    )
+                    return (
+                        False,
+                        f"Rate limit exceeded, in cooldown for {rule.cooldown_seconds}s",
+                    )
                 return False, f"Rate limit exceeded ({count}/{rule.max_count})"
 
             return True, None
@@ -265,7 +283,7 @@ class ThrottleManager:
                 "max_count": rule.max_count,
                 "window_seconds": rule.window_seconds,
                 "in_cooldown": in_cooldown,
-                "cooldown_until": self._cooldowns.get(key, None)
+                "cooldown_until": self._cooldowns.get(key, None),
             }
 
 
@@ -273,11 +291,12 @@ class ThrottleManager:
 # Notification Channels
 # =============================================================================
 
+
 class NotificationChannel(ABC):
     """Base class for notification channels."""
 
     name: str = "base"
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.enabled = True
@@ -299,13 +318,13 @@ class EmailChannel(NotificationChannel):
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
-        self.smtp_host = self.config.get('smtp_host', 'localhost')
-        self.smtp_port = self.config.get('smtp_port', 587)
-        self.smtp_user = self.config.get('smtp_user', '')
-        self.smtp_password = self.config.get('smtp_password', '')
-        self.use_tls = self.config.get('use_tls', True)
-        self.from_address = self.config.get('from_address', '')
-        self.to_addresses = self.config.get('to_addresses', [])
+        self.smtp_host = self.config.get("smtp_host", "localhost")
+        self.smtp_port = self.config.get("smtp_port", 587)
+        self.smtp_user = self.config.get("smtp_user", "")
+        self.smtp_password = self.config.get("smtp_password", "")
+        self.use_tls = self.config.get("use_tls", True)
+        self.from_address = self.config.get("from_address", "")
+        self.to_addresses = self.config.get("to_addresses", [])
 
     def validate_config(self) -> Optional[str]:
         if not self.from_address:
@@ -316,10 +335,12 @@ class EmailChannel(NotificationChannel):
 
     def send(self, notification: Notification) -> bool:
         try:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"[{notification.level.value.upper()}] {notification.title}"
-            msg['From'] = self.from_address
-            msg['To'] = ', '.join(self.to_addresses)
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = (
+                f"[{notification.level.value.upper()}] {notification.title}"
+            )
+            msg["From"] = self.from_address
+            msg["To"] = ", ".join(self.to_addresses)
 
             # Plain text version
             text_body = f"{notification.title}\n\n{notification.message}"
@@ -332,14 +353,14 @@ class EmailChannel(NotificationChannel):
             <body>
             <h2>{notification.title}</h2>
             <p>{notification.message}</p>
-            {f'<pre>{json.dumps(notification.data, indent=2)}</pre>' if notification.data else ''}
+            {f"<pre>{json.dumps(notification.data, indent=2)}</pre>" if notification.data else ""}
             <p><small>Level: {notification.level.value} | Time: {notification.timestamp}</small></p>
             </body>
             </html>
             """
 
-            msg.attach(MIMEText(text_body, 'plain'))
-            msg.attach(MIMEText(html_body, 'html'))
+            msg.attach(MIMEText(text_body, "plain"))
+            msg.attach(MIMEText(html_body, "html"))
 
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 if self.use_tls:
@@ -362,10 +383,10 @@ class WebhookChannel(NotificationChannel):
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
-        self.url = self.config.get('url', '')
-        self.method = self.config.get('method', 'POST')
-        self.headers = self.config.get('headers', {})
-        self.timeout = self.config.get('timeout', 30)
+        self.url = self.config.get("url", "")
+        self.method = self.config.get("method", "POST")
+        self.headers = self.config.get("headers", {})
+        self.timeout = self.config.get("timeout", 30)
 
     def validate_config(self) -> Optional[str]:
         if not self.url:
@@ -375,25 +396,19 @@ class WebhookChannel(NotificationChannel):
     def send(self, notification: Notification) -> bool:
         try:
             payload = {
-                'title': notification.title,
-                'message': notification.message,
-                'level': notification.level.value,
-                'timestamp': notification.timestamp.isoformat(),
-                'data': notification.data,
-                'tags': list(notification.tags)
+                "title": notification.title,
+                "message": notification.message,
+                "level": notification.level.value,
+                "timestamp": notification.timestamp.isoformat(),
+                "data": notification.data,
+                "tags": list(notification.tags),
             }
 
-            headers = {
-                'Content-Type': 'application/json',
-                **self.headers
-            }
+            headers = {"Content-Type": "application/json", **self.headers}
 
-            data = json.dumps(payload).encode('utf-8')
+            data = json.dumps(payload).encode("utf-8")
             request = urllib.request.Request(
-                self.url,
-                data=data,
-                headers=headers,
-                method=self.method
+                self.url, data=data, headers=headers, method=self.method
             )
 
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
@@ -414,7 +429,7 @@ class SlackChannel(NotificationChannel):
         NotificationLevel.INFO: "#0000FF",
         NotificationLevel.WARNING: "#FFA500",
         NotificationLevel.ERROR: "#FF0000",
-        NotificationLevel.CRITICAL: "#8B0000"
+        NotificationLevel.CRITICAL: "#8B0000",
     }
 
     LEVEL_EMOJIS = {
@@ -422,16 +437,16 @@ class SlackChannel(NotificationChannel):
         NotificationLevel.INFO: ":information_source:",
         NotificationLevel.WARNING: ":warning:",
         NotificationLevel.ERROR: ":x:",
-        NotificationLevel.CRITICAL: ":rotating_light:"
+        NotificationLevel.CRITICAL: ":rotating_light:",
     }
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
-        self.webhook_url = self.config.get('webhook_url', '')
-        self.channel = self.config.get('channel', '')
-        self.username = self.config.get('username', 'RedOPS')
-        self.icon_emoji = self.config.get('icon_emoji', ':shield:')
-        self.timeout = self.config.get('timeout', 30)
+        self.webhook_url = self.config.get("webhook_url", "")
+        self.channel = self.config.get("channel", "")
+        self.username = self.config.get("username", "RedOPS")
+        self.icon_emoji = self.config.get("icon_emoji", ":shield:")
+        self.timeout = self.config.get("timeout", 30)
 
     def validate_config(self) -> Optional[str]:
         if not self.webhook_url:
@@ -448,34 +463,32 @@ class SlackChannel(NotificationChannel):
                 "title": f"{emoji} {notification.title}",
                 "text": notification.message,
                 "footer": f"RedOPS | {notification.level.value.upper()}",
-                "ts": int(notification.timestamp.timestamp())
+                "ts": int(notification.timestamp.timestamp()),
             }
 
             if notification.data:
                 fields = []
                 for key, value in notification.data.items():
-                    fields.append({
-                        "title": key,
-                        "value": str(value)[:100],
-                        "short": True
-                    })
+                    fields.append(
+                        {"title": key, "value": str(value)[:100], "short": True}
+                    )
                 attachment["fields"] = fields[:10]
 
             payload = {
                 "username": self.username,
                 "icon_emoji": self.icon_emoji,
-                "attachments": [attachment]
+                "attachments": [attachment],
             }
 
             if self.channel:
                 payload["channel"] = self.channel
 
-            data = json.dumps(payload).encode('utf-8')
+            data = json.dumps(payload).encode("utf-8")
             request = urllib.request.Request(
                 self.webhook_url,
                 data=data,
-                headers={'Content-Type': 'application/json'},
-                method='POST'
+                headers={"Content-Type": "application/json"},
+                method="POST",
             )
 
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
@@ -496,13 +509,13 @@ class ConsoleChannel(NotificationChannel):
         NotificationLevel.INFO: "[INFO]",
         NotificationLevel.WARNING: "[WARN]",
         NotificationLevel.ERROR: "[ERROR]",
-        NotificationLevel.CRITICAL: "[CRITICAL]"
+        NotificationLevel.CRITICAL: "[CRITICAL]",
     }
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
-        self.output_func = self.config.get('output_func', print)
-        self.include_data = self.config.get('include_data', True)
+        self.output_func = self.config.get("output_func", print)
+        self.include_data = self.config.get("include_data", True)
 
     def send(self, notification: Notification) -> bool:
         try:
@@ -527,7 +540,7 @@ class CallbackChannel(NotificationChannel):
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
-        self.callback = self.config.get('callback')
+        self.callback = self.config.get("callback")
 
     def validate_config(self) -> Optional[str]:
         if not self.callback or not callable(self.callback):
@@ -546,6 +559,7 @@ class CallbackChannel(NotificationChannel):
 # =============================================================================
 # Notification Manager
 # =============================================================================
+
 
 @dataclass
 class NotificationResult:
@@ -614,16 +628,22 @@ class NotificationManager:
             raise ChannelError(f"Channel not found: {name}")
         self._default_channel = name
 
-    def add_listener(self, listener: Callable[[Notification, NotificationResult], None]) -> None:
+    def add_listener(
+        self, listener: Callable[[Notification, NotificationResult], None]
+    ) -> None:
         """Add a notification listener."""
         self._listeners.append(listener)
 
-    def notify(self, title: str, message: str,
-               level: NotificationLevel = NotificationLevel.INFO,
-               channel: Optional[str] = None,
-               data: Optional[Dict[str, Any]] = None,
-               tags: Optional[Set[str]] = None,
-               throttle_key: Optional[str] = None) -> NotificationResult:
+    def notify(
+        self,
+        title: str,
+        message: str,
+        level: NotificationLevel = NotificationLevel.INFO,
+        channel: Optional[str] = None,
+        data: Optional[Dict[str, Any]] = None,
+        tags: Optional[Set[str]] = None,
+        throttle_key: Optional[str] = None,
+    ) -> NotificationResult:
         """Send a notification."""
         notification = Notification(
             title=title,
@@ -631,12 +651,13 @@ class NotificationManager:
             level=level,
             channel=channel or self._default_channel or "",
             data=data or {},
-            tags=tags or set()
+            tags=tags or set(),
         )
         return self.send(notification, throttle_key=throttle_key)
 
-    def send(self, notification: Notification,
-             throttle_key: Optional[str] = None) -> NotificationResult:
+    def send(
+        self, notification: Notification, throttle_key: Optional[str] = None
+    ) -> NotificationResult:
         """Send a notification object."""
         # Determine channel
         channel_name = notification.channel or self._default_channel
@@ -645,7 +666,7 @@ class NotificationManager:
                 notification_id=notification.id,
                 success=False,
                 channel="",
-                error="No channel specified and no default channel set"
+                error="No channel specified and no default channel set",
             )
 
         channel = self._channels.get(channel_name)
@@ -654,7 +675,7 @@ class NotificationManager:
                 notification_id=notification.id,
                 success=False,
                 channel=channel_name,
-                error=f"Channel not found: {channel_name}"
+                error=f"Channel not found: {channel_name}",
             )
 
         if not channel.enabled:
@@ -662,7 +683,7 @@ class NotificationManager:
                 notification_id=notification.id,
                 success=False,
                 channel=channel_name,
-                error="Channel is disabled"
+                error="Channel is disabled",
             )
 
         # Check throttling
@@ -676,7 +697,7 @@ class NotificationManager:
                     notification_id=notification.id,
                     success=False,
                     channel=channel_name,
-                    error=reason
+                    error=reason,
                 )
 
         # Send notification
@@ -697,7 +718,7 @@ class NotificationManager:
             success=success,
             channel=channel_name,
             error=notification.error,
-            sent_at=notification.sent_at
+            sent_at=notification.sent_at,
         )
 
         # Notify listeners
@@ -720,7 +741,7 @@ class NotificationManager:
                     level=notification.level,
                     channel=name,
                     data=notification.data.copy(),
-                    tags=notification.tags.copy()
+                    tags=notification.tags.copy(),
                 )
                 results[name] = self.send(notif_copy)
         return results
@@ -730,12 +751,15 @@ class NotificationManager:
         with self._lock:
             self._history.append(notification)
             if len(self._history) > self._max_history:
-                self._history = self._history[-self._max_history:]
+                self._history = self._history[-self._max_history :]
 
-    def get_history(self, limit: int = 100,
-                    level: Optional[NotificationLevel] = None,
-                    channel: Optional[str] = None,
-                    status: Optional[NotificationStatus] = None) -> List[Notification]:
+    def get_history(
+        self,
+        limit: int = 100,
+        level: Optional[NotificationLevel] = None,
+        channel: Optional[str] = None,
+        status: Optional[NotificationStatus] = None,
+    ) -> List[Notification]:
         """Get notification history with optional filters."""
         with self._lock:
             filtered = self._history
@@ -768,7 +792,7 @@ class NotificationManager:
                 "by_level": by_level,
                 "by_channel": by_channel,
                 "channels_registered": list(self._channels.keys()),
-                "default_channel": self._default_channel
+                "default_channel": self._default_channel,
             }
 
 
@@ -793,9 +817,12 @@ def set_notification_manager(manager: NotificationManager) -> None:
     _default_manager = manager
 
 
-def notify(title: str, message: str,
-           level: NotificationLevel = NotificationLevel.INFO,
-           **kwargs) -> NotificationResult:
+def notify(
+    title: str,
+    message: str,
+    level: NotificationLevel = NotificationLevel.INFO,
+    **kwargs,
+) -> NotificationResult:
     """Send a notification using the default manager."""
     return get_notification_manager().notify(title, message, level, **kwargs)
 

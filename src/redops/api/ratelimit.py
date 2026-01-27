@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
+from typing import Any, Callable, Dict, Optional, TypeVar
 
 from fastapi import HTTPException, Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -168,6 +168,7 @@ class RedisRateLimitBackend(RateLimitBackend):
         else:
             try:
                 import redis
+
                 self._redis = redis.from_url(redis_url, decode_responses=True)
             except ImportError:
                 raise ImportError("redis package required: pip install redis")
@@ -357,7 +358,11 @@ class RateLimiter:
             RateLimitResult
         """
         if config is None:
-            config = self._rules.get(rule, self._default_config) if rule else self._default_config
+            config = (
+                self._rules.get(rule, self._default_config)
+                if rule
+                else self._default_config
+            )
 
         return self._backend.check_rate_limit(key, config)
 
@@ -523,6 +528,7 @@ def rate_limit(
 
 # Per-user rate limiting for authenticated requests
 
+
 class UserRateLimiter:
     """
     Rate limiter with per-user limits.
@@ -578,6 +584,7 @@ class UserRateLimiter:
 
 
 # API key rate limiting
+
 
 class APIKeyRateLimiter:
     """

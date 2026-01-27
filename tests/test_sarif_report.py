@@ -1,6 +1,5 @@
 """Tests for the SARIF report module."""
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
@@ -37,13 +36,16 @@ class TestExportSarif:
     def test_export_with_findings(self):
         """Test exporting context with findings."""
         ctx = Context(target="example.com")
-        ctx.add("finding_test_0", {
-            "module": "test.module",
-            "title": "Test Finding",
-            "description": "A test finding",
-            "severity": "high",
-            "data": {"url": "http://example.com"},
-        })
+        ctx.add(
+            "finding_test_0",
+            {
+                "module": "test.module",
+                "title": "Test Finding",
+                "description": "A test finding",
+                "severity": "high",
+                "data": {"url": "http://example.com"},
+            },
+        )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             result = export_sarif(ctx, {"output_dir": tmpdir})
@@ -64,11 +66,14 @@ class TestExportSarif:
         ctx = Context(target="example.com")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = export_sarif(ctx, {
-                "output_dir": tmpdir,
-                "tool_name": "CustomTool",
-                "tool_version": "2.0.0",
-            })
+            result = export_sarif(
+                ctx,
+                {
+                    "output_dir": tmpdir,
+                    "tool_name": "CustomTool",
+                    "tool_version": "2.0.0",
+                },
+            )
 
             with open(result.data["sarif_export_path"]) as f:
                 sarif = json.load(f)
@@ -99,7 +104,9 @@ class TestCreateSarifDocument:
         doc = create_sarif_document(ctx)
 
         assert "artifacts" in doc["runs"][0]
-        assert doc["runs"][0]["artifacts"][0]["location"]["uri"] == "https://example.com"
+        assert (
+            doc["runs"][0]["artifacts"][0]["location"]["uri"] == "https://example.com"
+        )
 
 
 class TestCollectFindings:
@@ -119,10 +126,13 @@ class TestCollectFindings:
     def test_collect_risks(self):
         """Test collecting from risks list."""
         ctx = Context()
-        ctx.add("risks", [
-            {"title": "Risk 1", "level": "high"},
-            {"title": "Risk 2", "level": "medium"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"title": "Risk 1", "level": "high"},
+                {"title": "Risk 2", "level": "medium"},
+            ],
+        )
 
         findings = collect_findings(ctx)
 
@@ -238,6 +248,7 @@ class TestSeverityToSarifLevel:
 
     def test_enum_value(self):
         """Test handling enum-like severity."""
+
         class MockSeverity:
             name = "HIGH"
 

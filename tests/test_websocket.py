@@ -1,7 +1,6 @@
 """Tests for WebSocket manager."""
 
 import pytest
-import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 # Skip tests if fastapi is not installed (optional dependency)

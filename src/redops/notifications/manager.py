@@ -5,8 +5,7 @@ Orchestrates sending notifications to multiple providers.
 """
 
 from typing import Optional, Dict, Any, List, Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
 import os
 import logging
 import threading
@@ -88,7 +87,9 @@ class NotificationManager:
         self._queue: queue.Queue = queue.Queue()
         self._worker_thread: Optional[threading.Thread] = None
         self._running = False
-        self._formatters: List[Callable[[NotificationMessage], NotificationMessage]] = []
+        self._formatters: List[
+            Callable[[NotificationMessage], NotificationMessage]
+        ] = []
 
         self._setup_providers()
 
@@ -107,12 +108,16 @@ class NotificationManager:
             self._providers["discord"] = DiscordWebhook(self.config.discord_webhook_url)
 
         if self.config.pagerduty_routing_key:
-            self._providers["pagerduty"] = PagerDutyWebhook(self.config.pagerduty_routing_key)
+            self._providers["pagerduty"] = PagerDutyWebhook(
+                self.config.pagerduty_routing_key
+            )
 
         if self.config.generic_webhook_url:
             self._providers["generic"] = GenericWebhook(self.config.generic_webhook_url)
 
-        logger.info(f"Notification providers configured: {list(self._providers.keys())}")
+        logger.info(
+            f"Notification providers configured: {list(self._providers.keys())}"
+        )
 
     def _start_worker(self) -> None:
         """Start the async worker thread."""
@@ -163,6 +168,7 @@ class NotificationManager:
 
                 if attempt < retries:
                     import time
+
                     time.sleep(self.config.retry_delay_seconds)
 
             results[name] = success

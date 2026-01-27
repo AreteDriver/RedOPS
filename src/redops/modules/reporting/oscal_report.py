@@ -56,8 +56,7 @@ def export_oscal(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
 
     # Determine output path
     output_name = params.get(
-        "output_name",
-        f"oscal_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        "output_name", f"oscal_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     )
     output_path = output_dir / output_name
 
@@ -67,12 +66,8 @@ def export_oscal(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
 
     # Calculate stats
     results = oscal_doc.get("assessment-results", {}).get("results", [])
-    findings_count = sum(
-        len(r.get("findings", [])) for r in results
-    )
-    observations_count = sum(
-        len(r.get("observations", [])) for r in results
-    )
+    findings_count = sum(len(r.get("findings", [])) for r in results)
+    observations_count = sum(len(r.get("observations", [])) for r in results)
 
     ctx.add("oscal_export_path", str(output_path))
     ctx.add("oscal_findings_count", findings_count)
@@ -81,7 +76,7 @@ def export_oscal(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     ctx.log(
         f"OSCAL report saved to {output_path} "
         f"({findings_count} findings, {observations_count} observations)",
-        level="INFO"
+        level="INFO",
     )
 
     return ctx
@@ -124,9 +119,7 @@ def create_oscal_assessment_results(
                 organization_name,
                 now_str,
             ),
-            "import-ap": {
-                "href": "#assessment-plan"
-            },
+            "import-ap": {"href": "#assessment-plan"},
             "local-definitions": create_local_definitions(ctx, system_name),
             "results": [
                 create_result(
@@ -187,9 +180,7 @@ def create_local_definitions(ctx: Context, system_name: str) -> Dict[str, Any]:
                 "type": "system",
                 "title": system_name,
                 "description": f"Target system for assessment: {ctx.target or 'N/A'}",
-                "status": {
-                    "state": "operational"
-                },
+                "status": {"state": "operational"},
             }
         ],
         "inventory-items": [],
@@ -199,20 +190,16 @@ def create_local_definitions(ctx: Context, system_name: str) -> Dict[str, Any]:
     # Add inventory items from discovered assets
     subdomains = ctx.get("subdomains", []) or ctx.get("ct_subdomains", [])
     for i, subdomain in enumerate(subdomains[:50]):  # Limit to 50
-        definitions["inventory-items"].append({
-            "uuid": str(uuid.uuid4()),
-            "description": f"Discovered subdomain: {subdomain}",
-            "props": [
-                {
-                    "name": "asset-type",
-                    "value": "hostname"
-                },
-                {
-                    "name": "fqdn",
-                    "value": subdomain
-                },
-            ],
-        })
+        definitions["inventory-items"].append(
+            {
+                "uuid": str(uuid.uuid4()),
+                "description": f"Discovered subdomain: {subdomain}",
+                "props": [
+                    {"name": "asset-type", "value": "hostname"},
+                    {"name": "fqdn", "value": subdomain},
+                ],
+            }
+        )
 
     return definitions
 
@@ -235,12 +222,7 @@ def create_result(
         },
         "attestations": [
             {
-                "responsible-parties": [
-                    {
-                        "role-id": "tool",
-                        "party-uuids": []
-                    }
-                ],
+                "responsible-parties": [{"role-id": "tool", "party-uuids": []}],
             }
         ],
         "observations": [],
@@ -267,9 +249,7 @@ def create_assessment_assets() -> Dict[str, Any]:
                 "type": "software",
                 "title": "RedOps Security Framework",
                 "description": "Automated security assessment tool",
-                "status": {
-                    "state": "operational"
-                },
+                "status": {"state": "operational"},
             }
         ],
         "assessment-platforms": [
@@ -320,23 +300,29 @@ def create_observation(
     # Add subjects from data
     subjects = []
     if data.get("url"):
-        subjects.append({
-            "subject-uuid": str(uuid.uuid4()),
-            "type": "resource",
-            "title": str(data["url"]),
-        })
+        subjects.append(
+            {
+                "subject-uuid": str(uuid.uuid4()),
+                "type": "resource",
+                "title": str(data["url"]),
+            }
+        )
     if data.get("ip"):
-        subjects.append({
-            "subject-uuid": str(uuid.uuid4()),
-            "type": "inventory-item",
-            "title": str(data["ip"]),
-        })
+        subjects.append(
+            {
+                "subject-uuid": str(uuid.uuid4()),
+                "type": "inventory-item",
+                "title": str(data["ip"]),
+            }
+        )
     if data.get("domain") or data.get("host"):
-        subjects.append({
-            "subject-uuid": str(uuid.uuid4()),
-            "type": "inventory-item",
-            "title": str(data.get("domain") or data.get("host")),
-        })
+        subjects.append(
+            {
+                "subject-uuid": str(uuid.uuid4()),
+                "type": "inventory-item",
+                "title": str(data.get("domain") or data.get("host")),
+            }
+        )
 
     if subjects:
         observation["subjects"] = subjects
@@ -412,13 +398,15 @@ def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
     risks = ctx.get("risks", [])
     for risk in risks:
         if isinstance(risk, dict):
-            findings.append({
-                "module": risk.get("module", "risk"),
-                "title": risk.get("title", "Unknown Risk"),
-                "description": risk.get("description", ""),
-                "severity": risk.get("level", "medium"),
-                "data": risk.get("data", {}),
-            })
+            findings.append(
+                {
+                    "module": risk.get("module", "risk"),
+                    "title": risk.get("title", "Unknown Risk"),
+                    "description": risk.get("description", ""),
+                    "severity": risk.get("level", "medium"),
+                    "data": risk.get("data", {}),
+                }
+            )
 
     return findings
 
@@ -539,7 +527,9 @@ def export_oscal_catalog(
         }
     }
 
-    output_name = params.get("output_name", f"oscal_catalog_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    output_name = params.get(
+        "output_name", f"oscal_catalog_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     output_path = output_dir / output_name
 
     with open(output_path, "w") as f:

@@ -6,8 +6,7 @@ import tempfile
 import threading
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -27,7 +26,6 @@ from redops.core.event_bus import (
     ModuleExecutedEvent,
     ErrorOccurredEvent,
     # Event stores
-    EventStore,
     MemoryEventStore,
     FileEventStore,
     # Dead letter queue
@@ -54,6 +52,7 @@ from redops.core.event_bus import (
 # EventPriority Tests
 # =============================================================================
 
+
 class TestEventPriority:
     """Tests for EventPriority enum."""
 
@@ -79,6 +78,7 @@ class TestEventStatus:
 # =============================================================================
 # Event Tests
 # =============================================================================
+
 
 class TestEvent:
     """Tests for base Event class."""
@@ -185,6 +185,7 @@ class TestDomainEvent:
 # Specific Event Types Tests
 # =============================================================================
 
+
 class TestSpecificEventTypes:
     """Tests for specific event types."""
 
@@ -258,6 +259,7 @@ class TestSpecificEventTypes:
 # Subscription Tests
 # =============================================================================
 
+
 class TestSubscription:
     """Tests for Subscription class."""
 
@@ -319,6 +321,7 @@ class TestSubscription:
 # =============================================================================
 # MemoryEventStore Tests
 # =============================================================================
+
 
 class TestMemoryEventStore:
     """Tests for MemoryEventStore."""
@@ -419,6 +422,7 @@ class TestMemoryEventStore:
 # FileEventStore Tests
 # =============================================================================
 
+
 class TestFileEventStore:
     """Tests for FileEventStore."""
 
@@ -465,6 +469,7 @@ class TestFileEventStore:
 # =============================================================================
 # DeadLetterQueue Tests
 # =============================================================================
+
 
 class TestDeadLetterQueue:
     """Tests for DeadLetterQueue."""
@@ -514,6 +519,7 @@ class TestDeadLetterQueue:
 # =============================================================================
 # EventBus Tests
 # =============================================================================
+
 
 class TestEventBus:
     """Tests for EventBus."""
@@ -619,6 +625,7 @@ class TestEventBus:
 
     def test_handler_error_caught(self, bus):
         """Test handler errors are caught."""
+
         def bad_handler(event):
             raise ValueError("test error")
 
@@ -676,11 +683,13 @@ class TestEventBus:
 # AsyncEventBus Tests
 # =============================================================================
 
+
 class TestAsyncEventBus:
     """Tests for AsyncEventBus."""
 
     def test_subscribe_and_publish(self):
         """Test basic async subscribe and publish."""
+
         async def run_test():
             bus = AsyncEventBus()
             received = []
@@ -697,6 +706,7 @@ class TestAsyncEventBus:
 
     def test_sync_handler(self):
         """Test sync handler in async bus."""
+
         async def run_test():
             bus = AsyncEventBus()
             received = []
@@ -713,6 +723,7 @@ class TestAsyncEventBus:
 
     def test_concurrent_publish(self):
         """Test concurrent handler execution."""
+
         async def run_test():
             bus = AsyncEventBus()
             call_times = []
@@ -735,6 +746,7 @@ class TestAsyncEventBus:
 
     def test_on_decorator(self):
         """Test @on decorator."""
+
         async def run_test():
             bus = AsyncEventBus()
             received = []
@@ -750,6 +762,7 @@ class TestAsyncEventBus:
 
     def test_clear(self):
         """Test clearing subscriptions."""
+
         async def run_test():
             bus = AsyncEventBus()
             await bus.subscribe(lambda e: None)
@@ -764,6 +777,7 @@ class TestAsyncEventBus:
 # =============================================================================
 # BackgroundEventBus Tests
 # =============================================================================
+
 
 class TestBackgroundEventBus:
     """Tests for BackgroundEventBus."""
@@ -815,6 +829,7 @@ class TestBackgroundEventBus:
         received = []
 
         with BackgroundEventBus() as bus:
+
             @bus.on(Event)
             def handler(event):
                 received.append(event)
@@ -838,6 +853,7 @@ class TestBackgroundEventBus:
 # =============================================================================
 # EventAggregator Tests
 # =============================================================================
+
 
 class TestEventAggregator:
     """Tests for EventAggregator."""
@@ -896,6 +912,7 @@ class TestEventAggregator:
 # EventReplay Tests
 # =============================================================================
 
+
 class TestEventReplay:
     """Tests for EventReplay."""
 
@@ -947,6 +964,7 @@ class TestEventReplay:
 # =============================================================================
 # EventEmitter Tests
 # =============================================================================
+
 
 class TestEventEmitter:
     """Tests for EventEmitter mixin."""
@@ -1009,6 +1027,7 @@ class TestEventEmitter:
 # Convenience Function Tests
 # =============================================================================
 
+
 class TestConvenienceFunctions:
     """Tests for convenience functions."""
 
@@ -1054,6 +1073,7 @@ class TestConvenienceFunctions:
         """Test get_event_bus creates if needed."""
         # Reset global
         import redops.core.event_bus as eb
+
         eb._global_bus = None
 
         bus = get_event_bus()
@@ -1066,6 +1086,7 @@ class TestConvenienceFunctions:
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestEventBusIntegration:
     """Integration tests for event bus."""

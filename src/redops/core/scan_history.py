@@ -170,7 +170,9 @@ class ScanHistoryDB:
 
     # Scan operations
 
-    def create_scan(self, target: str, preset: str = "quick", metadata: Dict[str, Any] = None) -> int:
+    def create_scan(
+        self, target: str, preset: str = "quick", metadata: Dict[str, Any] = None
+    ) -> int:
         """
         Create a new scan record.
 
@@ -219,8 +221,13 @@ class ScanHistoryDB:
         """
         # Allowlist of columns that can be updated dynamically
         ALLOWED_COLUMNS = {
-            "status", "completed_at", "modules_run",
-            "findings_count", "risk_score", "error", "duration_seconds",
+            "status",
+            "completed_at",
+            "modules_run",
+            "findings_count",
+            "risk_score",
+            "error",
+            "duration_seconds",
         }
 
         updates = []
@@ -401,7 +408,16 @@ class ScanHistoryDB:
                 (scan_id, module, severity, title, description, evidence, remediation, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (scan_id, module, severity, title, description, evidence, remediation, metadata_json),
+                (
+                    scan_id,
+                    module,
+                    severity,
+                    title,
+                    description,
+                    evidence,
+                    remediation,
+                    metadata_json,
+                ),
             )
             return cursor.lastrowid
 
@@ -435,7 +451,7 @@ class ScanHistoryDB:
 
         query = f"""
             SELECT * FROM findings
-            WHERE {' AND '.join(conditions)}
+            WHERE {" AND ".join(conditions)}
             ORDER BY
                 CASE severity
                     WHEN 'critical' THEN 1

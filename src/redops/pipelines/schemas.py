@@ -29,11 +29,11 @@ class PipelineStep(BaseModel):
     )
     parallel_group: Optional[str] = Field(
         default=None,
-        description="Group name for parallel execution. Steps with the same group run concurrently."
+        description="Group name for parallel execution. Steps with the same group run concurrently.",
     )
     depends_on: List[str] = Field(
         default_factory=list,
-        description="Step names that must complete before this step runs"
+        description="Step names that must complete before this step runs",
     )
 
     @field_validator("module")

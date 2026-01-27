@@ -64,7 +64,9 @@ class DetailedFindingsReport(BaseReport):
 
         # Table of Contents
         if self.config.include_toc and data.findings:
-            elements.append(Paragraph("Table of Contents", self.styles["SectionHeader"]))
+            elements.append(
+                Paragraph("Table of Contents", self.styles["SectionHeader"])
+            )
             elements.append(self._create_toc(data))
             elements.append(PageBreak())
 
@@ -79,8 +81,12 @@ class DetailedFindingsReport(BaseReport):
             elements.append(Spacer(1, 20))
 
             # Findings overview table
-            elements.append(Paragraph("Findings Overview", self.styles["SectionHeader"]))
-            elements.append(self._create_findings_table(data.findings, include_details=True))
+            elements.append(
+                Paragraph("Findings Overview", self.styles["SectionHeader"])
+            )
+            elements.append(
+                self._create_findings_table(data.findings, include_details=True)
+            )
             elements.append(PageBreak())
 
         # Detailed Findings
@@ -126,7 +132,9 @@ class DetailedFindingsReport(BaseReport):
         for severity in severity_order:
             findings = grouped[severity]
             if findings:
-                toc_entries.append([f"{severity.upper()} Severity Findings", str(page_num)])
+                toc_entries.append(
+                    [f"{severity.upper()} Severity Findings", str(page_num)]
+                )
                 for finding in findings:
                     toc_entries.append([f"    • {finding.title[:60]}...", ""])
                     page_num += 1
@@ -240,7 +248,11 @@ class DetailedFindingsReport(BaseReport):
 
             evidence_str = "\n".join(evidence_text)
             # Escape special characters for Preformatted
-            evidence_str = evidence_str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            evidence_str = (
+                evidence_str.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            )
             elements.append(
                 Preformatted(evidence_str, self.styles["Code"], maxLineLength=80)
             )
@@ -249,9 +261,7 @@ class DetailedFindingsReport(BaseReport):
         # Remediation
         if self.config.include_remediation and finding.remediation:
             elements.append(Paragraph("<b>Remediation:</b>", self.styles["Normal"]))
-            elements.append(
-                Paragraph(finding.remediation, self.styles["Remediation"])
-            )
+            elements.append(Paragraph(finding.remediation, self.styles["Remediation"]))
             elements.append(Spacer(1, 10))
 
         # References
@@ -282,4 +292,6 @@ class DetailedFindingsReport(BaseReport):
 
 
 # Register the report type
-ReportGenerator.register_report_type(ReportType.DETAILED_FINDINGS, DetailedFindingsReport)
+ReportGenerator.register_report_type(
+    ReportType.DETAILED_FINDINGS, DetailedFindingsReport
+)

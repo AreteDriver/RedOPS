@@ -2,10 +2,8 @@
 
 import asyncio
 import socket
-import tempfile
 import time
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -29,7 +27,6 @@ from redops.core.health import (
     RedisCheck,
     TCPHealthCheck,
     check_disk,
-    check_http,
     check_memory,
     check_tcp,
     create_health_manager,
@@ -314,14 +311,22 @@ class TestMemoryCheck:
         check = MemoryCheck(min_free_percent=1.0)
         result = check.check()
         # Should succeed on most systems
-        assert result.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNKNOWN]
+        assert result.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.DEGRADED,
+            HealthStatus.UNKNOWN,
+        ]
 
     def test_high_threshold(self):
         """Test with very high threshold."""
         check = MemoryCheck(min_free_percent=99.9)
         result = check.check()
         # Should fail unless system has tons of free memory
-        assert result.status in [HealthStatus.DEGRADED, HealthStatus.UNHEALTHY, HealthStatus.UNKNOWN]
+        assert result.status in [
+            HealthStatus.DEGRADED,
+            HealthStatus.UNHEALTHY,
+            HealthStatus.UNKNOWN,
+        ]
 
 
 class TestFileExistsCheck:
@@ -793,7 +798,11 @@ class TestConvenienceFunctions:
     def test_check_memory(self):
         """Test check_memory function."""
         result = check_memory(min_free_percent=1.0)
-        assert result.status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNKNOWN]
+        assert result.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.DEGRADED,
+            HealthStatus.UNKNOWN,
+        ]
 
 
 class TestProcessCheck:
@@ -805,7 +814,11 @@ class TestProcessCheck:
         check = ProcessCheck("python")
         result = check.check()
         # May or may not find it depending on how tests are run
-        assert result.status in [HealthStatus.HEALTHY, HealthStatus.UNHEALTHY, HealthStatus.UNKNOWN]
+        assert result.status in [
+            HealthStatus.HEALTHY,
+            HealthStatus.UNHEALTHY,
+            HealthStatus.UNKNOWN,
+        ]
 
     def test_check_nonexistent_process(self):
         """Test checking a nonexistent process."""

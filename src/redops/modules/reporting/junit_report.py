@@ -60,8 +60,7 @@ def export_junit(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
 
     # Determine output path
     output_name = params.get(
-        "output_name",
-        f"redops_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+        "output_name", f"redops_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
     )
     output_path = output_dir / output_name
 
@@ -81,7 +80,7 @@ def export_junit(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     ctx.log(
         f"JUnit report saved to {output_path} "
         f"({stats['tests']} tests, {stats['failures']} failures)",
-        level="INFO"
+        level="INFO",
     )
 
     return ctx
@@ -108,13 +107,15 @@ def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
     risks = ctx.get("risks", [])
     for risk in risks:
         if isinstance(risk, dict):
-            findings.append({
-                "module": risk.get("module", "risk"),
-                "title": risk.get("title", "Unknown Risk"),
-                "description": risk.get("description", ""),
-                "severity": risk.get("level", "medium"),
-                "data": risk.get("data", {}),
-            })
+            findings.append(
+                {
+                    "module": risk.get("module", "risk"),
+                    "title": risk.get("title", "Unknown Risk"),
+                    "description": risk.get("description", ""),
+                    "severity": risk.get("level", "medium"),
+                    "data": risk.get("data", {}),
+                }
+            )
 
     return findings
 
@@ -295,9 +296,9 @@ def create_testcase(
 
     # Determine if this should be a failure based on severity
     is_failure = (
-        (severity == "critical" and fail_on_critical) or
-        (severity == "high" and fail_on_high) or
-        (severity == "medium" and fail_on_medium)
+        (severity == "critical" and fail_on_critical)
+        or (severity == "high" and fail_on_high)
+        or (severity == "medium" and fail_on_medium)
     )
 
     if is_failure:
@@ -322,7 +323,9 @@ def build_failure_text(finding: Dict[str, Any]) -> str:
     """Build failure text from finding."""
     lines = []
     lines.append(f"Title: {finding.get('title', 'Unknown')}")
-    lines.append(f"Severity: {normalize_severity(finding.get('severity', 'unknown')).upper()}")
+    lines.append(
+        f"Severity: {normalize_severity(finding.get('severity', 'unknown')).upper()}"
+    )
     lines.append(f"Module: {finding.get('module', 'unknown')}")
     lines.append("")
     lines.append(f"Description: {finding.get('description', 'No description')}")
@@ -390,9 +393,9 @@ def calculate_stats(
         severity = normalize_severity(finding.get("severity", "medium"))
 
         is_failure = (
-            (severity == "critical" and fail_on_critical) or
-            (severity == "high" and fail_on_high) or
-            (severity == "medium" and fail_on_medium)
+            (severity == "critical" and fail_on_critical)
+            or (severity == "high" and fail_on_high)
+            or (severity == "medium" and fail_on_medium)
         )
 
         if is_failure:

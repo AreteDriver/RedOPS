@@ -3,7 +3,6 @@
 import pytest
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch, MagicMock
-import time
 
 
 class TestCacheEntry:
@@ -602,10 +601,11 @@ class TestCacheDecorators:
 
     def test_cached_decorator(self):
         """Test @cached decorator."""
-        from redops.cache import cached, get_cache
+        from redops.cache import cached
 
         # Reset global cache
         import redops.cache.cache as cache_module
+
         cache_module._cache = None
 
         call_count = []
@@ -632,9 +632,10 @@ class TestCacheDecorators:
 
     def test_cached_with_prefix(self):
         """Test @cached with key prefix."""
-        from redops.cache import cached, get_cache
+        from redops.cache import cached
 
         import redops.cache.cache as cache_module
+
         cache_module._cache = None
 
         @cached(ttl=3600, key_prefix="myprefix")
@@ -649,6 +650,7 @@ class TestCacheDecorators:
         from redops.cache import rate_limited, RateLimitExceeded
 
         import redops.cache.cache as cache_module
+
         cache_module._cache = None
 
         @rate_limited(identifier="test-func", limit=2)
@@ -671,6 +673,7 @@ class TestCacheDecorators:
         from redops.cache import rate_limited
 
         import redops.cache.cache as cache_module
+
         cache_module._cache = None
 
         def on_limit():
@@ -783,6 +786,7 @@ class TestCacheConfig:
 
         with patch.dict("os.environ", env):
             from redops.cache import CacheConfig
+
             config = CacheConfig.from_env()
 
             assert config.backend == "redis"
@@ -799,17 +803,6 @@ class TestCacheModuleImports:
         """Test all expected exports."""
         from redops.cache import (
             # Backends
-            CacheBackend,
-            CacheEntry,
-            MemoryBackend,
-            RedisBackend,
-            TieredBackend,
-            create_key,
-            # Cache
-            Cache,
-            CacheConfig,
-            IntelCache,
-            RateLimitExceeded,
             get_cache,
             get_intel_cache,
             # Decorators
@@ -825,6 +818,7 @@ class TestCacheModuleImports:
     def test_get_cache_singleton(self):
         """Test global cache accessor."""
         import redops.cache.cache as cache_module
+
         cache_module._cache = None
 
         from redops.cache import get_cache

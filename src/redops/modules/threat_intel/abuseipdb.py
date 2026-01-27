@@ -13,6 +13,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -261,104 +262,116 @@ def analyze_abuseipdb_results(result: Dict[str, Any], ip: str) -> List[Finding]:
 
     # Check for whitelisted IPs
     if is_whitelisted:
-        findings.append(Finding(
-            module="threat_intel.abuseipdb",
-            title=f"Whitelisted IP: {ip}",
-            description=(
-                f"IP {ip} is whitelisted on AbuseIPDB. "
-                "This indicates it's a known legitimate service."
-            ),
-            severity=RiskLevel.INFO,
-            data={
-                "ip": ip,
-                "isp": isp,
-                "domain": domain,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.abuseipdb",
+                title=f"Whitelisted IP: {ip}",
+                description=(
+                    f"IP {ip} is whitelisted on AbuseIPDB. "
+                    "This indicates it's a known legitimate service."
+                ),
+                severity=RiskLevel.INFO,
+                data={
+                    "ip": ip,
+                    "isp": isp,
+                    "domain": domain,
+                },
+            )
+        )
         return findings
 
     # High abuse confidence
     if confidence_score >= 75:
-        findings.append(Finding(
-            module="threat_intel.abuseipdb",
-            title=f"High Abuse Confidence: {ip} ({confidence_score}%)",
-            description=(
-                f"IP {ip} has a very high abuse confidence score of {confidence_score}%. "
-                f"Total reports: {total_reports}. ISP: {isp}. Country: {country}."
-            ),
-            severity=RiskLevel.HIGH,
-            data={
-                "ip": ip,
-                "confidence_score": confidence_score,
-                "total_reports": total_reports,
-                "isp": isp,
-                "country": country,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.abuseipdb",
+                title=f"High Abuse Confidence: {ip} ({confidence_score}%)",
+                description=(
+                    f"IP {ip} has a very high abuse confidence score of {confidence_score}%. "
+                    f"Total reports: {total_reports}. ISP: {isp}. Country: {country}."
+                ),
+                severity=RiskLevel.HIGH,
+                data={
+                    "ip": ip,
+                    "confidence_score": confidence_score,
+                    "total_reports": total_reports,
+                    "isp": isp,
+                    "country": country,
+                },
+            )
+        )
     elif confidence_score >= 50:
-        findings.append(Finding(
-            module="threat_intel.abuseipdb",
-            title=f"Medium Abuse Confidence: {ip} ({confidence_score}%)",
-            description=(
-                f"IP {ip} has a moderate abuse confidence score of {confidence_score}%. "
-                f"Total reports: {total_reports}."
-            ),
-            severity=RiskLevel.MEDIUM,
-            data={
-                "ip": ip,
-                "confidence_score": confidence_score,
-                "total_reports": total_reports,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.abuseipdb",
+                title=f"Medium Abuse Confidence: {ip} ({confidence_score}%)",
+                description=(
+                    f"IP {ip} has a moderate abuse confidence score of {confidence_score}%. "
+                    f"Total reports: {total_reports}."
+                ),
+                severity=RiskLevel.MEDIUM,
+                data={
+                    "ip": ip,
+                    "confidence_score": confidence_score,
+                    "total_reports": total_reports,
+                },
+            )
+        )
     elif confidence_score > 0:
-        findings.append(Finding(
-            module="threat_intel.abuseipdb",
-            title=f"Low Abuse Reports: {ip} ({confidence_score}%)",
-            description=(
-                f"IP {ip} has a low abuse confidence score of {confidence_score}%. "
-                f"Total reports: {total_reports}."
-            ),
-            severity=RiskLevel.LOW,
-            data={
-                "ip": ip,
-                "confidence_score": confidence_score,
-                "total_reports": total_reports,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.abuseipdb",
+                title=f"Low Abuse Reports: {ip} ({confidence_score}%)",
+                description=(
+                    f"IP {ip} has a low abuse confidence score of {confidence_score}%. "
+                    f"Total reports: {total_reports}."
+                ),
+                severity=RiskLevel.LOW,
+                data={
+                    "ip": ip,
+                    "confidence_score": confidence_score,
+                    "total_reports": total_reports,
+                },
+            )
+        )
 
     # Tor exit node detection
     if is_tor:
-        findings.append(Finding(
-            module="threat_intel.abuseipdb",
-            title=f"Tor Exit Node: {ip}",
-            description=(
-                f"IP {ip} is identified as a Tor exit node. "
-                "Traffic from this IP may be anonymized."
-            ),
-            severity=RiskLevel.MEDIUM,
-            data={
-                "ip": ip,
-                "is_tor": True,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.abuseipdb",
+                title=f"Tor Exit Node: {ip}",
+                description=(
+                    f"IP {ip} is identified as a Tor exit node. "
+                    "Traffic from this IP may be anonymized."
+                ),
+                severity=RiskLevel.MEDIUM,
+                data={
+                    "ip": ip,
+                    "is_tor": True,
+                },
+            )
+        )
 
     # Analyze usage type
     suspicious_usage_types = ["Data Center/Web Hosting/Transit", "Fixed Line ISP"]
     if usage_type in suspicious_usage_types and total_reports > 10:
-        findings.append(Finding(
-            module="threat_intel.abuseipdb",
-            title=f"Suspicious Infrastructure: {ip}",
-            description=(
-                f"IP {ip} is from {usage_type} with {total_reports} abuse reports. "
-                "This may indicate a compromised or malicious server."
-            ),
-            severity=RiskLevel.MEDIUM,
-            data={
-                "ip": ip,
-                "usage_type": usage_type,
-                "total_reports": total_reports,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.abuseipdb",
+                title=f"Suspicious Infrastructure: {ip}",
+                description=(
+                    f"IP {ip} is from {usage_type} with {total_reports} abuse reports. "
+                    "This may indicate a compromised or malicious server."
+                ),
+                severity=RiskLevel.MEDIUM,
+                data={
+                    "ip": ip,
+                    "usage_type": usage_type,
+                    "total_reports": total_reports,
+                },
+            )
+        )
 
     return findings
 

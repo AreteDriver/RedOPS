@@ -202,11 +202,13 @@ def extract_tenant_from_request(
         Tenant if found, None otherwise
     """
     if resolver is None:
-        resolver = ChainedTenantResolver([
-            HeaderTenantResolver(),
-            SubdomainTenantResolver(),
-            PathTenantResolver(),
-        ])
+        resolver = ChainedTenantResolver(
+            [
+                HeaderTenantResolver(),
+                SubdomainTenantResolver(),
+                PathTenantResolver(),
+            ]
+        )
 
     tenant_identifier = resolver.resolve(request)
     if not tenant_identifier:
@@ -252,11 +254,13 @@ try:
                 exclude_paths: Paths to exclude from tenant requirement
             """
             super().__init__(app)
-            self.resolver = resolver or ChainedTenantResolver([
-                HeaderTenantResolver(),
-                SubdomainTenantResolver(),
-                PathTenantResolver(),
-            ])
+            self.resolver = resolver or ChainedTenantResolver(
+                [
+                    HeaderTenantResolver(),
+                    SubdomainTenantResolver(),
+                    PathTenantResolver(),
+                ]
+            )
             self.require_tenant = require_tenant
             self.exclude_paths = exclude_paths or [
                 "/health",
@@ -339,11 +343,13 @@ def get_tenant_dependency(
         FastAPI dependency function
     """
     if resolver is None:
-        resolver = ChainedTenantResolver([
-            HeaderTenantResolver(),
-            SubdomainTenantResolver(),
-            PathTenantResolver(),
-        ])
+        resolver = ChainedTenantResolver(
+            [
+                HeaderTenantResolver(),
+                SubdomainTenantResolver(),
+                PathTenantResolver(),
+            ]
+        )
 
     try:
         from fastapi import HTTPException, Request
@@ -372,6 +378,7 @@ def get_tenant_dependency(
         return get_tenant
 
     except ImportError:
+
         def get_tenant(*args, **kwargs):
             raise ImportError("Install fastapi to use get_tenant_dependency")
 

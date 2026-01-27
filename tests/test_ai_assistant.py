@@ -1,10 +1,9 @@
 """Tests for AI Assistant module."""
 
-import json
 import os
 import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 
 class TestLoadConfig:
@@ -135,7 +134,9 @@ class TestAIAssistantInit:
         mock_model = MagicMock()
         mock_genai.GenerativeModel.return_value = mock_model
 
-        with patch.dict("sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}):
+        with patch.dict(
+            "sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}
+        ):
             with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}):
                 from redops.modules.ai_assistant import AIAssistant
 
@@ -205,11 +206,14 @@ class TestAIAssistantInit:
 
                 # Remove openai from modules to simulate not installed
                 import sys
+
                 original = sys.modules.get("openai")
                 sys.modules["openai"] = None
 
                 try:
-                    with pytest.raises(ImportError, match="OpenAI library not installed"):
+                    with pytest.raises(
+                        ImportError, match="OpenAI library not installed"
+                    ):
                         AIAssistant(provider="openai")
                 finally:
                     if original:
@@ -222,11 +226,14 @@ class TestAIAssistantInit:
                 from redops.modules.ai_assistant import AIAssistant
 
                 import sys
+
                 original = sys.modules.get("anthropic")
                 sys.modules["anthropic"] = None
 
                 try:
-                    with pytest.raises(ImportError, match="Anthropic library not installed"):
+                    with pytest.raises(
+                        ImportError, match="Anthropic library not installed"
+                    ):
                         AIAssistant(provider="anthropic")
                 finally:
                     if original:
@@ -316,7 +323,7 @@ class TestAIAssistantAPICalls:
         mock_response.choices = [MagicMock(message=MagicMock(content="AI response"))]
         mock_client.chat.completions.create.return_value = mock_response
 
-        result = assistant._call_openai("Test prompt")
+        assistant._call_openai("Test prompt")
 
         call_args = mock_client.chat.completions.create.call_args
         assert len(call_args.kwargs["messages"]) == 1
@@ -345,7 +352,7 @@ class TestAIAssistantAPICalls:
         mock_response.content = [MagicMock(text="Claude response")]
         mock_client.messages.create.return_value = mock_response
 
-        result = assistant._call_anthropic("Test prompt")
+        assistant._call_anthropic("Test prompt")
 
         call_args = mock_client.messages.create.call_args
         assert "security analysis assistant" in call_args.kwargs["system"]
@@ -359,7 +366,9 @@ class TestAIAssistantAPICalls:
         mock_model.generate_content.return_value = mock_response
         mock_genai.GenerativeModel.return_value = mock_model
 
-        with patch.dict("sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}):
+        with patch.dict(
+            "sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}
+        ):
             with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}):
                 from redops.modules.ai_assistant import AIAssistant
 
@@ -379,7 +388,9 @@ class TestAIAssistantAPICalls:
         mock_model.generate_content.return_value = mock_response
         mock_genai.GenerativeModel.return_value = mock_model
 
-        with patch.dict("sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}):
+        with patch.dict(
+            "sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}
+        ):
             with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}):
                 from redops.modules.ai_assistant import AIAssistant
 
@@ -470,7 +481,9 @@ class TestAIAssistantAPICalls:
         mock_model.generate_content.return_value = mock_response
         mock_genai.GenerativeModel.return_value = mock_model
 
-        with patch.dict("sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}):
+        with patch.dict(
+            "sys.modules", {"google.generativeai": mock_genai, "google": MagicMock()}
+        ):
             with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}):
                 from redops.modules.ai_assistant import AIAssistant
 
@@ -872,7 +885,9 @@ class TestModuleWrappers:
         mock_ctx = MagicMock()
         mock_ctx.data = {"target": "example.com"}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = ai_analyze(mock_ctx)
 
         mock_ctx.add.assert_called_once()
@@ -888,7 +903,10 @@ class TestModuleWrappers:
         mock_ctx = MagicMock()
         mock_ctx.data = {"target": "example.com"}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = ai_analyze(mock_ctx)
 
         mock_ctx.log.assert_called_once()
@@ -909,7 +927,9 @@ class TestModuleWrappers:
         mock_ctx = MagicMock()
         mock_ctx.data = {"target": "example.com"}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = ai_summarize(mock_ctx)
 
         mock_ctx.add.assert_called_once()
@@ -924,7 +944,10 @@ class TestModuleWrappers:
         mock_ctx = MagicMock()
         mock_ctx.data = {"target": "example.com"}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = ai_summarize(mock_ctx)
 
         mock_ctx.log.assert_called_once()
@@ -942,7 +965,9 @@ class TestModuleWrappers:
         mock_ctx = MagicMock()
         mock_ctx.data = {"target": "example.com"}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = ai_recommend(mock_ctx)
 
         mock_ctx.add.assert_called_once()
@@ -957,7 +982,10 @@ class TestModuleWrappers:
         mock_ctx = MagicMock()
         mock_ctx.data = {"target": "example.com"}
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = ai_recommend(mock_ctx)
 
         mock_ctx.log.assert_called_once()
@@ -979,7 +1007,7 @@ class TestOllamaWithConfig:
             with patch("redops.modules.ai_assistant.load_config", return_value=config):
                 from redops.modules.ai_assistant import AIAssistant
 
-                assistant = AIAssistant(provider="ollama", model="llama2")
+                AIAssistant(provider="ollama", model="llama2")
 
         mock_ollama.Client.assert_called_with(host="http://custom-server:11434")
 
@@ -992,6 +1020,7 @@ class TestGeminiImportError:
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}):
             with patch("redops.modules.ai_assistant.load_config", return_value={}):
                 import sys
+
                 # Remove google modules to simulate not installed
                 original_google = sys.modules.get("google")
                 original_genai = sys.modules.get("google.generativeai")
@@ -1001,7 +1030,9 @@ class TestGeminiImportError:
                 try:
                     from redops.modules.ai_assistant import AIAssistant
 
-                    with pytest.raises(ImportError, match="Google AI library not installed"):
+                    with pytest.raises(
+                        ImportError, match="Google AI library not installed"
+                    ):
                         AIAssistant(provider="gemini")
                 finally:
                     if original_google:
@@ -1017,6 +1048,7 @@ class TestOllamaImportError:
         """Test initialization fails when ollama not installed."""
         with patch("redops.modules.ai_assistant.load_config", return_value={}):
             import sys
+
             original = sys.modules.get("ollama")
             sys.modules["ollama"] = None
 
@@ -1038,6 +1070,7 @@ class TestGroqImportError:
         with patch.dict(os.environ, {"GROQ_API_KEY": "test-key"}):
             with patch("redops.modules.ai_assistant.load_config", return_value={}):
                 import sys
+
                 original = sys.modules.get("groq")
                 sys.modules["groq"] = None
 

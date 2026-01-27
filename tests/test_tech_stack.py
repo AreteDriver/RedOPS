@@ -14,7 +14,6 @@ from redops.modules.recon.tech_stack import (
     check_version_disclosure,
     get_ssl_info,
     detect_frameworks,
-    REQUESTS_AVAILABLE,
     SECURITY_HEADERS,
     TECH_PATTERNS,
     SERVER_PATTERNS,
@@ -214,7 +213,7 @@ class TestDetectTechnologies:
 
     def test_detect_react_devtools(self):
         """Test detecting React via devtools marker."""
-        html = '<script>window.__REACT_DEVTOOLS_GLOBAL_HOOK__</script>'
+        html = "<script>window.__REACT_DEVTOOLS_GLOBAL_HOOK__</script>"
         techs = detect_technologies(html, {})
         assert "React" in techs
 
@@ -256,7 +255,7 @@ class TestDetectTechnologies:
 
     def test_detect_drupal(self):
         """Test detecting Drupal."""
-        html = '<script>Drupal.settings.basePath</script>'
+        html = "<script>Drupal.settings.basePath</script>"
         techs = detect_technologies(html, {})
         assert "Drupal" in techs
 
@@ -292,7 +291,9 @@ class TestDetectTechnologies:
 
     def test_detect_rails(self):
         """Test detecting Ruby on Rails."""
-        html = '<meta name="csrf-token" content="abc123"><script src="rails-ujs"></script>'
+        html = (
+            '<meta name="csrf-token" content="abc123"><script src="rails-ujs"></script>'
+        )
         techs = detect_technologies(html, {})
         assert "Ruby on Rails" in techs
 
@@ -473,6 +474,7 @@ class TestFingerprint:
     def test_fingerprint_requests_not_available(self):
         """Test fingerprinting when requests not available."""
         import redops.modules.recon.tech_stack as ts_module
+
         original_available = ts_module.REQUESTS_AVAILABLE
 
         ts_module.REQUESTS_AVAILABLE = False
@@ -496,8 +498,9 @@ class TestFingerprintWithMockedRequests:
         self.mock_requests = MagicMock()
 
         # Patch the module to have requests available
-        with patch.dict(sys.modules, {'requests': self.mock_requests}):
+        with patch.dict(sys.modules, {"requests": self.mock_requests}):
             import redops.modules.recon.tech_stack as ts_module
+
             self.original_available = ts_module.REQUESTS_AVAILABLE
             ts_module.REQUESTS_AVAILABLE = True
             ts_module.requests = self.mock_requests
@@ -505,8 +508,8 @@ class TestFingerprintWithMockedRequests:
             # Create mock exceptions
             self.mock_requests.exceptions = MagicMock()
             self.mock_requests.exceptions.RequestException = Exception
-            self.mock_requests.exceptions.SSLError = type('SSLError', (Exception,), {})
-            self.mock_requests.exceptions.Timeout = type('Timeout', (Exception,), {})
+            self.mock_requests.exceptions.SSLError = type("SSLError", (Exception,), {})
+            self.mock_requests.exceptions.Timeout = type("Timeout", (Exception,), {})
 
             self.ts_module = ts_module
             yield
@@ -526,9 +529,9 @@ class TestFingerprintWithMockedRequests:
         mock_response.text = '<script src="jquery.min.js"></script>'
         mock_response.content = b"<html></html>"
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="example.com")
                     result = self.ts_module.fingerprint(ctx)
 
@@ -545,9 +548,9 @@ class TestFingerprintWithMockedRequests:
         mock_response.text = "<html></html>"
         mock_response.content = b"<html></html>"
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="example.com")
                     result = self.ts_module.fingerprint(ctx)
 
@@ -559,9 +562,9 @@ class TestFingerprintWithMockedRequests:
 
     def test_fingerprint_connection_error(self):
         """Test handling connection errors."""
-        with patch.object(self.ts_module, 'make_request', return_value=None):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=None):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="nonexistent.invalid")
                     result = self.ts_module.fingerprint(ctx)
 
@@ -576,9 +579,9 @@ class TestFingerprintWithMockedRequests:
         mock_response.text = ""
         mock_response.content = b""
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response) as mock_req:
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="default.com")
                     result = self.ts_module.fingerprint(
                         ctx,
@@ -601,15 +604,19 @@ class TestFingerprintWithMockedRequests:
         mock_response.text = ""
         mock_response.content = b""
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="example.com")
                     result = self.ts_module.fingerprint(ctx)
 
                     info_logs = result.get_logs(level="INFO")
-                    assert any("fingerprinting" in log["message"].lower() for log in info_logs)
-                    assert any("completed" in log["message"].lower() for log in info_logs)
+                    assert any(
+                        "fingerprinting" in log["message"].lower() for log in info_logs
+                    )
+                    assert any(
+                        "completed" in log["message"].lower() for log in info_logs
+                    )
 
     def test_fingerprint_with_favicon_detection(self):
         """Test fingerprinting with successful favicon detection."""
@@ -619,9 +626,13 @@ class TestFingerprintWithMockedRequests:
         mock_response.text = ""
         mock_response.content = b""
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=("abc123", "Apache Default")):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(
+                self.ts_module,
+                "fetch_favicon_hash",
+                return_value=("abc123", "Apache Default"),
+            ):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="example.com")
                     result = self.ts_module.fingerprint(ctx)
 
@@ -643,26 +654,32 @@ class TestFingerprintWithMockedRequests:
             "not_after": "2025-01-01",
         }
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=ssl_info):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(
+                    self.ts_module, "get_ssl_info", return_value=ssl_info
+                ):
                     ctx = Context(target="example.com")
                     result = self.ts_module.fingerprint(ctx)
 
                     tech_stack = result.data["tech_stack"]
-                    assert tech_stack["fingerprints"]["ssl"]["issuer"] == "Let's Encrypt"
+                    assert (
+                        tech_stack["fingerprints"]["ssl"]["issuer"] == "Let's Encrypt"
+                    )
 
     def test_fingerprint_with_frameworks_detected(self):
         """Test fingerprinting with frameworks in HTML."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.headers = {}
-        mock_response.text = '<script src="react.js"></script><div data-reactroot></div>'
+        mock_response.text = (
+            '<script src="react.js"></script><div data-reactroot></div>'
+        )
         mock_response.content = b"<html></html>"
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="example.com")
                     result = self.ts_module.fingerprint(ctx)
 
@@ -680,9 +697,9 @@ class TestFingerprintWithMockedRequests:
         mock_response.text = ""
         mock_response.content = b""
 
-        with patch.object(self.ts_module, 'make_request', return_value=mock_response):
-            with patch.object(self.ts_module, 'fetch_favicon_hash', return_value=None):
-                with patch.object(self.ts_module, 'get_ssl_info', return_value=None):
+        with patch.object(self.ts_module, "make_request", return_value=mock_response):
+            with patch.object(self.ts_module, "fetch_favicon_hash", return_value=None):
+                with patch.object(self.ts_module, "get_ssl_info", return_value=None):
                     ctx = Context(target="example.com")
                     result = self.ts_module.fingerprint(ctx)
 
@@ -703,8 +720,9 @@ class TestMakeRequest:
         """Setup mock requests module."""
         self.mock_requests = MagicMock()
 
-        with patch.dict(sys.modules, {'requests': self.mock_requests}):
+        with patch.dict(sys.modules, {"requests": self.mock_requests}):
             import redops.modules.recon.tech_stack as ts_module
+
             self.original_available = ts_module.REQUESTS_AVAILABLE
             ts_module.REQUESTS_AVAILABLE = True
             ts_module.requests = self.mock_requests
@@ -728,10 +746,7 @@ class TestMakeRequest:
         self.mock_requests.get.return_value = mock_response
 
         self.ts_module.make_request(
-            "https://example.com",
-            timeout=5,
-            follow_redirects=False,
-            verify_ssl=False
+            "https://example.com", timeout=5, follow_redirects=False, verify_ssl=False
         )
 
         self.mock_requests.get.assert_called_once()
@@ -782,8 +797,9 @@ class TestFetchFaviconHash:
         """Setup mock requests module."""
         self.mock_requests = MagicMock()
 
-        with patch.dict(sys.modules, {'requests': self.mock_requests}):
+        with patch.dict(sys.modules, {"requests": self.mock_requests}):
             import redops.modules.recon.tech_stack as ts_module
+
             self.original_available = ts_module.REQUESTS_AVAILABLE
             ts_module.REQUESTS_AVAILABLE = True
             ts_module.requests = self.mock_requests
@@ -912,8 +928,12 @@ class TestGetSslInfo:
             mock_ssock.getpeercert.return_value = mock_cert
 
             mock_context = MagicMock()
-            mock_context.wrap_socket.return_value.__enter__ = MagicMock(return_value=mock_ssock)
-            mock_context.wrap_socket.return_value.__exit__ = MagicMock(return_value=False)
+            mock_context.wrap_socket.return_value.__enter__ = MagicMock(
+                return_value=mock_ssock
+            )
+            mock_context.wrap_socket.return_value.__exit__ = MagicMock(
+                return_value=False
+            )
 
             mock_sock = MagicMock()
             mock_sock.__enter__ = MagicMock(return_value=mock_sock)

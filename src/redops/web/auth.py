@@ -15,8 +15,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 from dataclasses import dataclass, field
 
-from fastapi import Request, HTTPException, Depends
-from fastapi.security import APIKeyHeader, HTTPBasic, HTTPBasicCredentials
+from fastapi import Request, HTTPException
+from fastapi.security import APIKeyHeader, HTTPBasic
 
 
 # Environment variables for configuration
@@ -38,12 +38,14 @@ class AuthConfig:
     admin_password: Optional[str] = None
     session_secret: str = field(default_factory=lambda: secrets.token_hex(32))
     session_expiry_hours: int = 24
-    allowed_paths: list = field(default_factory=lambda: [
-        "/api/health",
-        "/api/docs",
-        "/api/redoc",
-        "/openapi.json",
-    ])
+    allowed_paths: list = field(
+        default_factory=lambda: [
+            "/api/health",
+            "/api/docs",
+            "/api/redoc",
+            "/openapi.json",
+        ]
+    )
 
     @classmethod
     def from_env(cls) -> "AuthConfig":
@@ -126,7 +128,8 @@ class SessionStore:
         """Remove expired sessions and return count of removed sessions."""
         now = datetime.now(timezone.utc)
         expired = [
-            sid for sid, session in self._sessions.items()
+            sid
+            for sid, session in self._sessions.items()
             if now > session["expires_at"]
         ]
         for sid in expired:
@@ -136,9 +139,7 @@ class SessionStore:
     def _hash_token(self, token: str) -> str:
         """Hash a token for storage."""
         return hmac.new(
-            self._secret.encode(),
-            token.encode(),
-            hashlib.sha256
+            self._secret.encode(), token.encode(), hashlib.sha256
         ).hexdigest()
 
 
@@ -161,6 +162,7 @@ class AuthManager:
 
         if not self.config.enabled:
             import logging
+
             logger = logging.getLogger("redops.auth")
             logger.warning(
                 "SECURITY WARNING: Authentication is DISABLED. "
@@ -240,6 +242,7 @@ class AuthManager:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Basic "):
             import base64
+
             try:
                 credentials = base64.b64decode(auth_header[6:]).decode("utf-8")
                 username, password = credentials.split(":", 1)

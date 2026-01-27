@@ -1,6 +1,5 @@
 """Tests for the ASN lookup module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from redops.core.context import Context
 from redops.modules.recon.asn_lookup import (
@@ -8,7 +7,6 @@ from redops.modules.recon.asn_lookup import (
     is_ip_address,
     is_asn,
     resolve_domain_to_ip,
-    lookup_asn_by_ip,
     lookup_asn_bgpview,
     lookup_asn_cymru,
     lookup_asn_details,
@@ -16,7 +14,6 @@ from redops.modules.recon.asn_lookup import (
     get_asn_peers,
     analyze_asn_info,
     get_asn_summary,
-    HAS_REQUESTS,
 )
 
 
@@ -170,12 +167,19 @@ class TestLookupAsnBgpview:
         mock_response.json.return_value = {
             "status": "ok",
             "data": {
-                "prefixes": [{
-                    "prefix": "8.8.8.0/24",
-                    "asn": {"asn": 15169, "name": "GOOGLE", "description": "Google LLC", "country_code": "US"}
-                }],
-                "rir_allocation": {"rir_name": "ARIN"}
-            }
+                "prefixes": [
+                    {
+                        "prefix": "8.8.8.0/24",
+                        "asn": {
+                            "asn": 15169,
+                            "name": "GOOGLE",
+                            "description": "Google LLC",
+                            "country_code": "US",
+                        },
+                    }
+                ],
+                "rir_allocation": {"rir_name": "ARIN"},
+            },
         }
         mock_requests.get.return_value = mock_response
 
@@ -198,6 +202,7 @@ class TestLookupAsnBgpview:
     def test_api_error(self, mock_requests):
         """Test API error handling."""
         import requests
+
         mock_requests.get.side_effect = requests.exceptions.RequestException()
         mock_requests.exceptions = requests.exceptions
 
@@ -238,7 +243,7 @@ class TestLookupAsnDetails:
                 "website": "https://google.com",
                 "email_contacts": ["noc@google.com"],
                 "abuse_contacts": ["abuse@google.com"],
-            }
+            },
         }
         mock_requests.get.return_value = mock_response
 
@@ -279,8 +284,8 @@ class TestGetAsnPrefixes:
                 ],
                 "ipv6_prefixes": [
                     {"prefix": "2001:4860::/32", "name": "GOOGLE", "country_code": "US"}
-                ]
-            }
+                ],
+            },
         }
         mock_requests.get.return_value = mock_response
 
@@ -310,7 +315,7 @@ class TestGetAsnPeers:
                 "ipv4_upstreams": [{"asn": 1234, "name": "UPSTREAM"}],
                 "ipv4_downstreams": [{"asn": 5678, "name": "DOWNSTREAM"}],
                 "ipv4_peers": [{"asn": 9012, "name": "PEER"}],
-            }
+            },
         }
         mock_requests.get.return_value = mock_response
 
@@ -340,7 +345,11 @@ class TestAnalyzeAsnInfo:
 
     def test_reports_abuse_contacts(self):
         """Test reporting of abuse contacts."""
-        asn_info = {"asn": 15169, "name": "GOOGLE", "abuse_contacts": ["abuse@google.com"]}
+        asn_info = {
+            "asn": 15169,
+            "name": "GOOGLE",
+            "abuse_contacts": ["abuse@google.com"],
+        }
         findings = analyze_asn_info(asn_info, "example.com")
 
         assert any("Abuse Contact" in f.title for f in findings)
@@ -359,13 +368,16 @@ class TestGetAsnSummary:
     def test_with_results(self):
         """Test summary with results."""
         ctx = Context()
-        ctx.add("asn_lookup", {
-            "asn": 15169,
-            "name": "GOOGLE",
-            "country": "US",
-            "prefix_count": 100,
-            "lookup_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "asn_lookup",
+            {
+                "asn": 15169,
+                "name": "GOOGLE",
+                "country": "US",
+                "prefix_count": 100,
+                "lookup_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_asn_summary(ctx)
 

@@ -5,7 +5,6 @@ Provides DAG-based workflows, state machines, conditional branching,
 and parallel execution for orchestrating security operations.
 """
 
-import asyncio
 import threading
 import uuid
 from abc import ABC, abstractmethod
@@ -13,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 
 class TaskState(Enum):
@@ -102,12 +101,14 @@ class WorkflowContext:
 class Task(ABC):
     """Base class for workflow tasks."""
 
-    def __init__(self,
-                 task_id: Optional[str] = None,
-                 name: Optional[str] = None,
-                 retries: int = 0,
-                 retry_delay: float = 1.0,
-                 timeout: Optional[float] = None):
+    def __init__(
+        self,
+        task_id: Optional[str] = None,
+        name: Optional[str] = None,
+        retries: int = 0,
+        retry_delay: float = 1.0,
+        timeout: Optional[float] = None,
+    ):
         """Initialize task."""
         self._id = task_id or str(uuid.uuid4())
         self._name = name or self.__class__.__name__
@@ -164,11 +165,13 @@ class Task(ABC):
 class FunctionTask(Task):
     """Task that executes a function."""
 
-    def __init__(self,
-                 func: Callable[[WorkflowContext], Any],
-                 task_id: Optional[str] = None,
-                 name: Optional[str] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        func: Callable[[WorkflowContext], Any],
+        task_id: Optional[str] = None,
+        name: Optional[str] = None,
+        **kwargs,
+    ):
         """Initialize function task."""
         super().__init__(task_id, name or func.__name__, **kwargs)
         self._func = func
@@ -181,13 +184,15 @@ class FunctionTask(Task):
 class ConditionalTask(Task):
     """Task that branches based on a condition."""
 
-    def __init__(self,
-                 condition: Callable[[WorkflowContext], bool],
-                 if_true: Optional[str] = None,
-                 if_false: Optional[str] = None,
-                 task_id: Optional[str] = None,
-                 name: Optional[str] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        condition: Callable[[WorkflowContext], bool],
+        if_true: Optional[str] = None,
+        if_false: Optional[str] = None,
+        task_id: Optional[str] = None,
+        name: Optional[str] = None,
+        **kwargs,
+    ):
         """Initialize conditional task."""
         super().__init__(task_id, name or "conditional", **kwargs)
         self._condition = condition
@@ -212,13 +217,15 @@ class ConditionalTask(Task):
 class ParallelTask(Task):
     """Task that executes multiple tasks in parallel."""
 
-    def __init__(self,
-                 tasks: List[Task],
-                 task_id: Optional[str] = None,
-                 name: Optional[str] = None,
-                 max_workers: int = 4,
-                 fail_fast: bool = True,
-                 **kwargs):
+    def __init__(
+        self,
+        tasks: List[Task],
+        task_id: Optional[str] = None,
+        name: Optional[str] = None,
+        max_workers: int = 4,
+        fail_fast: bool = True,
+        **kwargs,
+    ):
         """Initialize parallel task."""
         super().__init__(task_id, name or "parallel", **kwargs)
         self._tasks = tasks
@@ -288,11 +295,13 @@ class ParallelTask(Task):
 class SubWorkflowTask(Task):
     """Task that executes a sub-workflow."""
 
-    def __init__(self,
-                 workflow: "Workflow",
-                 task_id: Optional[str] = None,
-                 name: Optional[str] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        workflow: "Workflow",
+        task_id: Optional[str] = None,
+        name: Optional[str] = None,
+        **kwargs,
+    ):
         """Initialize sub-workflow task."""
         super().__init__(task_id, name or f"sub_{workflow.id}", **kwargs)
         self._workflow = workflow
@@ -314,10 +323,12 @@ class SubWorkflowTask(Task):
 class Workflow:
     """DAG-based workflow definition."""
 
-    def __init__(self,
-                 workflow_id: Optional[str] = None,
-                 name: str = "workflow",
-                 description: str = ""):
+    def __init__(
+        self,
+        workflow_id: Optional[str] = None,
+        name: str = "workflow",
+        description: str = "",
+    ):
         """Initialize workflow."""
         self._id = workflow_id or str(uuid.uuid4())
         self._name = name
@@ -469,20 +480,24 @@ class Workflow:
 class WorkflowExecutor:
     """Executes workflows."""
 
-    def __init__(self,
-                 max_parallel: int = 4,
-                 on_task_start: Optional[Callable[[Task], None]] = None,
-                 on_task_complete: Optional[Callable[[Task, TaskResult], None]] = None,
-                 on_workflow_complete: Optional[Callable[[Workflow, WorkflowContext], None]] = None):
+    def __init__(
+        self,
+        max_parallel: int = 4,
+        on_task_start: Optional[Callable[[Task], None]] = None,
+        on_task_complete: Optional[Callable[[Task, TaskResult], None]] = None,
+        on_workflow_complete: Optional[
+            Callable[[Workflow, WorkflowContext], None]
+        ] = None,
+    ):
         """Initialize executor."""
         self._max_parallel = max_parallel
         self._on_task_start = on_task_start
         self._on_task_complete = on_task_complete
         self._on_workflow_complete = on_workflow_complete
 
-    def execute(self,
-                workflow: Workflow,
-                context: Optional[WorkflowContext] = None) -> WorkflowContext:
+    def execute(
+        self, workflow: Workflow, context: Optional[WorkflowContext] = None
+    ) -> WorkflowContext:
         """Execute a workflow."""
         if context is None:
             context = WorkflowContext(workflow_id=workflow.id)
@@ -526,7 +541,9 @@ class WorkflowExecutor:
                         completed.add(ready_tasks[0].id)
                     else:
                         # Task failed - skip dependent tasks
-                        self._skip_dependents(workflow, ready_tasks[0].id, skipped, context)
+                        self._skip_dependents(
+                            workflow, ready_tasks[0].id, skipped, context
+                        )
                         completed.add(ready_tasks[0].id)
                 else:
                     # Multiple tasks - execute in parallel
@@ -540,7 +557,8 @@ class WorkflowExecutor:
 
             # Determine final state
             failed_tasks = [
-                tid for tid, result in context.results.items()
+                tid
+                for tid, result in context.results.items()
                 if result.state == TaskState.FAILED
             ]
             if failed_tasks:
@@ -548,7 +566,7 @@ class WorkflowExecutor:
             else:
                 workflow.state = WorkflowState.COMPLETED
 
-        except Exception as e:
+        except Exception:
             workflow.state = WorkflowState.FAILED
             raise
 
@@ -557,10 +575,9 @@ class WorkflowExecutor:
 
         return context
 
-    def _execute_task(self,
-                      task: Task,
-                      context: WorkflowContext,
-                      workflow: Workflow) -> TaskResult:
+    def _execute_task(
+        self, task: Task, context: WorkflowContext, workflow: Workflow
+    ) -> TaskResult:
         """Execute a single task with retries."""
         if self._on_task_start:
             self._on_task_start(task)
@@ -607,6 +624,7 @@ class WorkflowExecutor:
                 retries += 1
                 if retries <= task._retries:
                     import time
+
                     time.sleep(task._retry_delay)
 
         # All retries failed
@@ -627,14 +645,15 @@ class WorkflowExecutor:
 
         return result
 
-    def _execute_parallel(self,
-                          tasks: List[Task],
-                          context: WorkflowContext,
-                          workflow: Workflow) -> Dict[str, TaskResult]:
+    def _execute_parallel(
+        self, tasks: List[Task], context: WorkflowContext, workflow: Workflow
+    ) -> Dict[str, TaskResult]:
         """Execute multiple tasks in parallel."""
         results = {}
 
-        with ThreadPoolExecutor(max_workers=min(len(tasks), self._max_parallel)) as executor:
+        with ThreadPoolExecutor(
+            max_workers=min(len(tasks), self._max_parallel)
+        ) as executor:
             futures = {
                 executor.submit(self._execute_task, task, context, workflow): task
                 for task in tasks
@@ -654,7 +673,9 @@ class WorkflowExecutor:
 
         return results
 
-    def _skip_task(self, workflow: Workflow, task_id: str, context: WorkflowContext) -> None:
+    def _skip_task(
+        self, workflow: Workflow, task_id: str, context: WorkflowContext
+    ) -> None:
         """Skip a task."""
         task = workflow.get_task(task_id)
         if task and task.state == TaskState.PENDING:
@@ -664,7 +685,13 @@ class WorkflowExecutor:
                 state=TaskState.SKIPPED,
             )
 
-    def _skip_dependents(self, workflow: Workflow, failed_task_id: str, skipped: Set[str], context: WorkflowContext) -> None:
+    def _skip_dependents(
+        self,
+        workflow: Workflow,
+        failed_task_id: str,
+        skipped: Set[str],
+        context: WorkflowContext,
+    ) -> None:
         """Skip all tasks that depend on a failed task."""
         for task_id, task in workflow.tasks.items():
             if failed_task_id in task.dependencies and task.state == TaskState.PENDING:
@@ -692,9 +719,9 @@ class StateTransition:
 class StateMachine:
     """Finite state machine implementation."""
 
-    def __init__(self,
-                 name: str = "state_machine",
-                 initial_state: Optional[str] = None):
+    def __init__(
+        self, name: str = "state_machine", initial_state: Optional[str] = None
+    ):
         """Initialize state machine."""
         self._name = name
         self._states: Set[str] = set()
@@ -739,27 +766,33 @@ class StateMachine:
             self._final_states.add(state)
         return self
 
-    def add_transition(self,
-                       from_state: str,
-                       to_state: str,
-                       event: str,
-                       condition: Optional[Callable[[Dict[str, Any]], bool]] = None,
-                       action: Optional[Callable[[Dict[str, Any]], None]] = None,
-                       transition_type: TransitionType = TransitionType.AUTOMATIC) -> "StateMachine":
+    def add_transition(
+        self,
+        from_state: str,
+        to_state: str,
+        event: str,
+        condition: Optional[Callable[[Dict[str, Any]], bool]] = None,
+        action: Optional[Callable[[Dict[str, Any]], None]] = None,
+        transition_type: TransitionType = TransitionType.AUTOMATIC,
+    ) -> "StateMachine":
         """Add a transition."""
         self._states.add(from_state)
         self._states.add(to_state)
-        self._transitions.append(StateTransition(
-            from_state=from_state,
-            to_state=to_state,
-            event=event,
-            condition=condition,
-            action=action,
-            transition_type=transition_type,
-        ))
+        self._transitions.append(
+            StateTransition(
+                from_state=from_state,
+                to_state=to_state,
+                event=event,
+                condition=condition,
+                action=action,
+                transition_type=transition_type,
+            )
+        )
         return self
 
-    def set_state_handler(self, state: str, handler: Callable[[Dict[str, Any]], None]) -> "StateMachine":
+    def set_state_handler(
+        self, state: str, handler: Callable[[Dict[str, Any]], None]
+    ) -> "StateMachine":
         """Set a handler to be called when entering a state."""
         self._state_handlers[state] = handler
         return self
@@ -782,9 +815,13 @@ class StateMachine:
         """Check if an event can be triggered from current state."""
         with self._lock:
             for transition in self._transitions:
-                if (transition.from_state == self._current_state and
-                    transition.event == event):
-                    if transition.condition is None or transition.condition(self._context):
+                if (
+                    transition.from_state == self._current_state
+                    and transition.event == event
+                ):
+                    if transition.condition is None or transition.condition(
+                        self._context
+                    ):
                         return True
             return False
 
@@ -796,8 +833,10 @@ class StateMachine:
 
             # Find matching transition
             for transition in self._transitions:
-                if (transition.from_state == self._current_state and
-                    transition.event == event):
+                if (
+                    transition.from_state == self._current_state
+                    and transition.event == event
+                ):
                     # Check condition
                     if transition.condition and not transition.condition(self._context):
                         continue
@@ -807,11 +846,13 @@ class StateMachine:
                         transition.action(self._context)
 
                     # Record history
-                    self._history.append((
-                        self._current_state,
-                        event,
-                        transition.to_state,
-                    ))
+                    self._history.append(
+                        (
+                            self._current_state,
+                            event,
+                            transition.to_state,
+                        )
+                    )
 
                     # Transition to new state
                     self._current_state = transition.to_state
@@ -834,7 +875,9 @@ class StateMachine:
             events = []
             for transition in self._transitions:
                 if transition.from_state == self._current_state:
-                    if transition.condition is None or transition.condition(self._context):
+                    if transition.condition is None or transition.condition(
+                        self._context
+                    ):
                         events.append(transition.event)
             return events
 
@@ -868,33 +911,36 @@ class WorkflowBuilder:
         self._workflow = Workflow(name=name)
         self._last_task_id: Optional[str] = None
 
-    def add_task(self,
-                 func: Callable[[WorkflowContext], Any],
-                 task_id: Optional[str] = None,
-                 name: Optional[str] = None,
-                 **kwargs) -> "WorkflowBuilder":
+    def add_task(
+        self,
+        func: Callable[[WorkflowContext], Any],
+        task_id: Optional[str] = None,
+        name: Optional[str] = None,
+        **kwargs,
+    ) -> "WorkflowBuilder":
         """Add a function task."""
         task = FunctionTask(func, task_id, name, **kwargs)
         self._workflow.add_task(task)
         self._last_task_id = task.id
         return self
 
-    def add_conditional(self,
-                        condition: Callable[[WorkflowContext], bool],
-                        if_true: Optional[str] = None,
-                        if_false: Optional[str] = None,
-                        task_id: Optional[str] = None,
-                        **kwargs) -> "WorkflowBuilder":
+    def add_conditional(
+        self,
+        condition: Callable[[WorkflowContext], bool],
+        if_true: Optional[str] = None,
+        if_false: Optional[str] = None,
+        task_id: Optional[str] = None,
+        **kwargs,
+    ) -> "WorkflowBuilder":
         """Add a conditional task."""
         task = ConditionalTask(condition, if_true, if_false, task_id, **kwargs)
         self._workflow.add_task(task)
         self._last_task_id = task.id
         return self
 
-    def add_parallel(self,
-                     tasks: List[Task],
-                     task_id: Optional[str] = None,
-                     **kwargs) -> "WorkflowBuilder":
+    def add_parallel(
+        self, tasks: List[Task], task_id: Optional[str] = None, **kwargs
+    ) -> "WorkflowBuilder":
         """Add a parallel task."""
         task = ParallelTask(tasks, task_id, **kwargs)
         self._workflow.add_task(task)
@@ -925,10 +971,12 @@ def workflow(name: str = "workflow") -> WorkflowBuilder:
     return WorkflowBuilder(name)
 
 
-def task(func: Callable[[WorkflowContext], Any],
-         task_id: Optional[str] = None,
-         name: Optional[str] = None,
-         **kwargs) -> FunctionTask:
+def task(
+    func: Callable[[WorkflowContext], Any],
+    task_id: Optional[str] = None,
+    name: Optional[str] = None,
+    **kwargs,
+) -> FunctionTask:
     """Create a function task."""
     return FunctionTask(func, task_id, name, **kwargs)
 
@@ -938,9 +986,11 @@ def parallel(*tasks: Task, **kwargs) -> ParallelTask:
     return ParallelTask(list(tasks), **kwargs)
 
 
-def conditional(condition: Callable[[WorkflowContext], bool],
-                if_true: Optional[str] = None,
-                if_false: Optional[str] = None,
-                **kwargs) -> ConditionalTask:
+def conditional(
+    condition: Callable[[WorkflowContext], bool],
+    if_true: Optional[str] = None,
+    if_false: Optional[str] = None,
+    **kwargs,
+) -> ConditionalTask:
     """Create a conditional task."""
     return ConditionalTask(condition, if_true, if_false, **kwargs)

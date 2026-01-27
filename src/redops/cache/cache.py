@@ -6,16 +6,12 @@ Provides a unified caching API for threat intel lookups and rate limiting.
 
 from typing import Optional, Any, Dict, List, Callable, TypeVar
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
 import os
 import logging
 import functools
-import hashlib
-import json
 
 from .backends import (
     CacheBackend,
-    CacheEntry,
     MemoryBackend,
     RedisBackend,
     TieredBackend,
@@ -352,6 +348,7 @@ def cached(
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> T:
@@ -402,6 +399,7 @@ def rate_limited(
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> T:

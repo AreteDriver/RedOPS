@@ -3,7 +3,7 @@
 import json
 import threading
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -229,8 +229,8 @@ class TestHistogram:
         """Test bucket counts."""
         h = Histogram("latency", buckets=[0.1, 0.5, 1.0])
         h.observe(0.05)  # <= 0.1
-        h.observe(0.3)   # <= 0.5
-        h.observe(0.8)   # <= 1.0
+        h.observe(0.3)  # <= 0.5
+        h.observe(0.8)  # <= 1.0
 
         counts = h.get_bucket_counts()
         assert counts[0.1] == 1
@@ -584,7 +584,7 @@ class TestStatsDClient:
 
     def test_incr(self):
         """Test increment."""
-        with patch.object(StatsDClient, '_send') as mock_send:
+        with patch.object(StatsDClient, "_send") as mock_send:
             client = StatsDClient()
             client.incr("requests", 5)
             client.flush()
@@ -595,7 +595,7 @@ class TestStatsDClient:
 
     def test_gauge(self):
         """Test gauge."""
-        with patch.object(StatsDClient, '_send') as mock_send:
+        with patch.object(StatsDClient, "_send") as mock_send:
             client = StatsDClient()
             client.gauge("memory", 1024)
             client.flush()
@@ -606,7 +606,7 @@ class TestStatsDClient:
 
     def test_timing(self):
         """Test timing."""
-        with patch.object(StatsDClient, '_send') as mock_send:
+        with patch.object(StatsDClient, "_send") as mock_send:
             client = StatsDClient()
             client.timing("response_time", 150)
             client.flush()
@@ -617,7 +617,7 @@ class TestStatsDClient:
 
     def test_timer_context_manager(self):
         """Test timer context manager."""
-        with patch.object(StatsDClient, '_send') as mock_send:
+        with patch.object(StatsDClient, "_send") as mock_send:
             client = StatsDClient()
 
             with client.timer("operation"):
@@ -628,7 +628,7 @@ class TestStatsDClient:
 
     def test_prefix(self):
         """Test metric prefix."""
-        with patch.object(StatsDClient, '_send') as mock_send:
+        with patch.object(StatsDClient, "_send") as mock_send:
             client = StatsDClient(prefix="myapp")
             client.incr("requests")
             client.flush()
@@ -639,7 +639,7 @@ class TestStatsDClient:
 
     def test_buffering(self):
         """Test metric buffering."""
-        with patch.object(StatsDClient, '_send') as mock_send:
+        with patch.object(StatsDClient, "_send") as mock_send:
             client = StatsDClient(max_buffer_size=3)
 
             client.incr("m1")
@@ -693,6 +693,7 @@ class TestTimedDecorator:
 
     def test_basic_timing(self):
         """Test basic function timing."""
+
         @timed("test_function")
         def my_function():
             time.sleep(0.01)
@@ -707,6 +708,7 @@ class TestTimedDecorator:
 
     def test_auto_naming(self):
         """Test automatic metric naming."""
+
         @timed()
         def another_function():
             return "hello"
@@ -727,6 +729,7 @@ class TestCountedDecorator:
 
     def test_basic_counting(self):
         """Test basic function counting."""
+
         @counted("my_function_calls")
         def my_function():
             return 42

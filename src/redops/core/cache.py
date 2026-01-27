@@ -7,14 +7,11 @@ and cache invalidation strategies.
 
 import hashlib
 import json
-import os
-import shutil
 import sys
 import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, TypeVar
@@ -24,6 +21,7 @@ T = TypeVar("T")
 
 class CacheBackend(Enum):
     """Available cache backends."""
+
     MEMORY = "memory"
     FILE = "file"
     HYBRID = "hybrid"  # Memory with file persistence
@@ -31,16 +29,18 @@ class CacheBackend(Enum):
 
 class InvalidationStrategy(Enum):
     """Cache invalidation strategies."""
-    TTL = "ttl"              # Time-based expiration
-    LRU = "lru"              # Least recently used
-    LFU = "lfu"              # Least frequently used
-    FIFO = "fifo"            # First in, first out
-    MANUAL = "manual"        # Manual invalidation only
+
+    TTL = "ttl"  # Time-based expiration
+    LRU = "lru"  # Least recently used
+    LFU = "lfu"  # Least frequently used
+    FIFO = "fifo"  # First in, first out
+    MANUAL = "manual"  # Manual invalidation only
 
 
 @dataclass
 class CacheEntry:
     """Represents a cached value with metadata."""
+
     key: str
     value: Any
     created_at: float
@@ -74,6 +74,7 @@ class CacheEntry:
 @dataclass
 class CacheStats:
     """Cache statistics."""
+
     hits: int = 0
     misses: int = 0
     evictions: int = 0
@@ -108,16 +109,19 @@ class CacheStats:
 
 class CacheError(Exception):
     """Base exception for cache errors."""
+
     pass
 
 
 class CacheKeyError(CacheError):
     """Raised when there's an issue with cache key."""
+
     pass
 
 
 class CacheStorageError(CacheError):
     """Raised when there's a storage error."""
+
     pass
 
 
@@ -694,7 +698,7 @@ class Cache:
             result = []
             for key in all_keys:
                 if key.startswith(prefix):
-                    short_key = key[len(prefix):]
+                    short_key = key[len(prefix) :]
                     if pattern is None or short_key.startswith(pattern):
                         result.append(short_key)
             return result

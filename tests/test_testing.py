@@ -3,14 +3,12 @@
 import json
 import os
 import time
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
 
 from redops.core.testing import (
-    AssertionHelpers,
     Builder,
     FakeCache,
     FakeDatabase,
@@ -333,9 +331,7 @@ class TestMockFactory:
 
     def test_file_system(self):
         """Test file system mock."""
-        fs = MockFactory.file_system(
-            files={"/test.txt": "content"}
-        )
+        fs = MockFactory.file_system(files={"/test.txt": "content"})
         assert fs.exists("/test.txt") is True
         assert fs.exists("/missing.txt") is False
         assert fs.read_text("/test.txt") == "content"
@@ -717,6 +713,7 @@ class TestContextManagers:
     def test_suppress_output(self):
         """Test suppress_output context manager."""
         import sys
+
         original_stdout = sys.stdout
         with suppress_output():
             print("This should be suppressed")

@@ -6,7 +6,7 @@ Manages scheduled scans with cron-based timing and job execution.
 
 from typing import Optional, Dict, Any, List, Callable
 from datetime import datetime, timezone, timedelta
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import threading
 import time
 import json
@@ -39,7 +39,9 @@ class SchedulerConfig:
     def from_env(cls) -> "SchedulerConfig":
         """Create config from environment variables."""
         return cls(
-            check_interval_seconds=int(os.environ.get("SCHEDULER_CHECK_INTERVAL", "60")),
+            check_interval_seconds=int(
+                os.environ.get("SCHEDULER_CHECK_INTERVAL", "60")
+            ),
             max_concurrent_jobs=int(os.environ.get("SCHEDULER_MAX_CONCURRENT", "5")),
             job_timeout_minutes=int(os.environ.get("SCHEDULER_JOB_TIMEOUT", "120")),
             storage_path=os.environ.get("SCHEDULER_STORAGE_PATH", ""),
@@ -80,7 +82,9 @@ class ScheduleStore:
                 for job_data in data.get("jobs", []):
                     job = ScanJob.from_dict(job_data)
                     self._jobs[job.id] = job
-            logger.info(f"Loaded {len(self._schedules)} schedules from {self._storage_path}")
+            logger.info(
+                f"Loaded {len(self._schedules)} schedules from {self._storage_path}"
+            )
         except Exception as e:
             logger.error(f"Failed to load schedules: {e}")
 
@@ -141,9 +145,14 @@ class ScheduleStore:
             if target:
                 schedules = [s for s in schedules if s.target == target]
 
-            return sorted(schedules, key=lambda s: s.next_run or datetime.max.replace(tzinfo=timezone.utc))
+            return sorted(
+                schedules,
+                key=lambda s: s.next_run or datetime.max.replace(tzinfo=timezone.utc),
+            )
 
-    def get_due_schedules(self, current_time: Optional[datetime] = None) -> List[ScanSchedule]:
+    def get_due_schedules(
+        self, current_time: Optional[datetime] = None
+    ) -> List[ScanSchedule]:
         """Get schedules that are due for execution."""
         with self._lock:
             return [s for s in self._schedules.values() if s.is_due(current_time)]
@@ -199,7 +208,8 @@ class ScheduleStore:
         with self._lock:
             cutoff = datetime.now(timezone.utc) - timedelta(days=days)
             old_jobs = [
-                j for j in self._jobs.values()
+                j
+                for j in self._jobs.values()
                 if j.completed_at and j.completed_at < cutoff
             ]
             for job in old_jobs:

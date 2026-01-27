@@ -1,6 +1,5 @@
 """Tests for dashboard visualizations."""
 
-import pytest
 from datetime import datetime, timezone, timedelta
 import json
 
@@ -170,9 +169,7 @@ class TestModuleDistributionChart:
         """Test max_modules parameter."""
         from redops.web.visualizations import ModuleDistributionChart
 
-        findings = [
-            {"module": f"module{i}"} for i in range(20)
-        ]
+        findings = [{"module": f"module{i}"} for i in range(20)]
 
         chart = ModuleDistributionChart(findings)
         result = chart.generate(max_modules=5)
@@ -314,9 +311,7 @@ class TestThreatIntelSummary:
         """Test GreyNoise result processing."""
         from redops.web.visualizations import ThreatIntelSummary
 
-        results = {
-            "greynoise_result": {"noise": True}
-        }
+        results = {"greynoise_result": {"noise": True}}
 
         summary = ThreatIntelSummary(results)
         data = summary.generate()
@@ -328,11 +323,7 @@ class TestThreatIntelSummary:
         """Test AbuseIPDB result processing."""
         from redops.web.visualizations import ThreatIntelSummary
 
-        results = {
-            "abuseipdb_result": {
-                "data": {"abuseConfidenceScore": 75}
-            }
-        }
+        results = {"abuseipdb_result": {"data": {"abuseConfidenceScore": 75}}}
 
         summary = ThreatIntelSummary(results)
         data = summary.generate()
@@ -347,7 +338,9 @@ class TestThreatIntelSummary:
 
         results = {
             "greynoise_result": {"noise": True},
-            "urlscan_result": {"analysis": {"is_malicious": True, "verdict": "malicious"}},
+            "urlscan_result": {
+                "analysis": {"is_malicious": True, "verdict": "malicious"}
+            },
             "otx_indicator": {"analysis": {"is_malicious": True, "pulse_count": 5}},
         }
 
@@ -378,7 +371,11 @@ class TestScanSummaryDashboard:
         context = {
             "target": "example.com",
             "pipeline_name": "test-pipeline",
-            "finding_sqli": {"title": "SQL Injection", "severity": "critical", "module": "analysis"},
+            "finding_sqli": {
+                "title": "SQL Injection",
+                "severity": "critical",
+                "module": "analysis",
+            },
             "finding_xss": {"title": "XSS", "severity": "high", "module": "analysis"},
             "finding_info": {"title": "Info", "severity": "low", "module": "recon"},
         }
@@ -442,7 +439,13 @@ class TestGenerateDashboardHtml:
         from redops.web.visualizations import generate_dashboard_html, ChartData
 
         dashboard_data = {
-            "summary": {"total_findings": 1, "critical": 0, "high": 0, "medium": 1, "low": 0},
+            "summary": {
+                "total_findings": 1,
+                "critical": 0,
+                "high": 0,
+                "medium": 1,
+                "low": 0,
+            },
             "charts": {
                 "severity": ChartData(
                     chart_type="doughnut",

@@ -1,6 +1,5 @@
 """Tests for Hunter.io intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -78,7 +77,9 @@ class TestQueryHunterDomain:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None
+        ):
             result = query_hunter_domain(ctx)
 
         data = result.get("hunter_domain")
@@ -121,8 +122,14 @@ class TestQueryHunterDomain:
             }
         }
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value=mock_response,
+            ):
                 result = query_hunter_domain(ctx)
 
         data = result.get("hunter_domain")
@@ -136,12 +143,16 @@ class TestQueryHunterDomain:
         """Test API error handling."""
         ctx = Context(target="example.com")
 
-        mock_response = {
-            "errors": [{"details": "Invalid API key"}]
-        }
+        mock_response = {"errors": [{"details": "Invalid API key"}]}
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="bad-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="bad-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value=mock_response,
+            ):
                 result = query_hunter_domain(ctx)
 
         data = result.get("hunter_domain")
@@ -175,8 +186,14 @@ class TestQueryHunterEmailCount:
             }
         }
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value=mock_response,
+            ):
                 result = query_hunter_email_count(ctx)
 
         data = result.get("hunter_count")
@@ -218,8 +235,14 @@ class TestVerifyHunterEmail:
             }
         }
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value=mock_response,
+            ):
                 result = verify_hunter_email(ctx, {"email": "john@example.com"})
 
         data = result.get("hunter_verify")
@@ -260,8 +283,14 @@ class TestAnalyzeHunterIntel:
                     }
                 }
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", side_effect=mock_request):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                side_effect=mock_request,
+            ):
                 result = analyze_hunter_intel(ctx)
 
         intel = result.get("hunter_intel")
@@ -276,7 +305,9 @@ class TestAnalyzeHunterIntel:
         """Test analysis without API key."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None
+        ):
             result = analyze_hunter_intel(ctx)
 
         intel = result.get("hunter_intel")
@@ -300,7 +331,9 @@ class TestGetHunterApiKey:
         from redops.modules.intel.hunter_intel import get_hunter_api_key
 
         with patch.dict("os.environ", {}, clear=True):
-            with patch("redops.cli.settings.get_api_key_direct", return_value="settings-key"):
+            with patch(
+                "redops.cli.settings.get_api_key_direct", return_value="settings-key"
+            ):
                 result = get_hunter_api_key()
                 assert result == "settings-key"
 
@@ -309,7 +342,10 @@ class TestGetHunterApiKey:
         from redops.modules.intel.hunter_intel import get_hunter_api_key
 
         with patch.dict("os.environ", {}, clear=True):
-            with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Settings error")):
+            with patch(
+                "redops.cli.settings.get_api_key_direct",
+                side_effect=Exception("Settings error"),
+            ):
                 result = get_hunter_api_key()
                 assert result is None
 
@@ -328,6 +364,7 @@ class TestMakeHunterRequest:
 
     def test_import_error_returns_none(self):
         """Test that import error returns None."""
+
         # Test the case where requests is not installed by mocking the import to fail
         def mock_import(name, *args, **kwargs):
             if name == "requests":
@@ -335,6 +372,7 @@ class TestMakeHunterRequest:
             return original_import(name, *args, **kwargs)
 
         import builtins
+
         original_import = builtins.__import__
 
         from importlib import reload
@@ -358,12 +396,16 @@ class TestMakeHunterRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.hunter_intel as hunter_mod
+
             reload(hunter_mod)
 
-            result = hunter_mod._make_hunter_request("domain-search", "test-key", {"domain": "test.com"})
+            result = hunter_mod._make_hunter_request(
+                "domain-search", "test-key", {"domain": "test.com"}
+            )
             assert result == {"data": {"domain": "test.com"}}
 
     def test_404_response(self):
@@ -374,9 +416,11 @@ class TestMakeHunterRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.hunter_intel as hunter_mod
+
             reload(hunter_mod)
 
             result = hunter_mod._make_hunter_request("domain-search", "test-key")
@@ -390,9 +434,11 @@ class TestMakeHunterRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.hunter_intel as hunter_mod
+
             reload(hunter_mod)
 
             result = hunter_mod._make_hunter_request("domain-search", "test-key")
@@ -406,9 +452,11 @@ class TestMakeHunterRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.hunter_intel as hunter_mod
+
             reload(hunter_mod)
 
             result = hunter_mod._make_hunter_request("domain-search", "test-key")
@@ -422,9 +470,11 @@ class TestMakeHunterRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.hunter_intel as hunter_mod
+
             reload(hunter_mod)
 
             result = hunter_mod._make_hunter_request("domain-search", "test-key")
@@ -436,9 +486,11 @@ class TestMakeHunterRequest:
         mock_requests.get.side_effect = Exception("Connection error")
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.hunter_intel as hunter_mod
+
             reload(hunter_mod)
 
             result = hunter_mod._make_hunter_request("domain-search", "test-key")
@@ -452,8 +504,14 @@ class TestQueryHunterDomainEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=None):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value=None,
+            ):
                 result = query_hunter_domain(ctx)
 
         data = result.get("hunter_domain")
@@ -463,8 +521,14 @@ class TestQueryHunterDomainEdgeCases:
         """Test when error key in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"error": "rate_limited"}):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value={"error": "rate_limited"},
+            ):
                 result = query_hunter_domain(ctx)
 
         data = result.get("hunter_domain")
@@ -474,8 +538,14 @@ class TestQueryHunterDomainEdgeCases:
         """Test when errors array in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"errors": [{"details": "Domain not found"}]}):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value={"errors": [{"details": "Domain not found"}]},
+            ):
                 result = query_hunter_domain(ctx)
 
         data = result.get("hunter_domain")
@@ -489,7 +559,9 @@ class TestQueryHunterEmailCountEdgeCases:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None
+        ):
             result = query_hunter_email_count(ctx)
 
         data = result.get("hunter_count")
@@ -500,8 +572,14 @@ class TestQueryHunterEmailCountEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=None):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value=None,
+            ):
                 result = query_hunter_email_count(ctx)
 
         data = result.get("hunter_count")
@@ -511,8 +589,14 @@ class TestQueryHunterEmailCountEdgeCases:
         """Test when error key in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"error": "invalid_api_key"}):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value={"error": "invalid_api_key"},
+            ):
                 result = query_hunter_email_count(ctx)
 
         data = result.get("hunter_count")
@@ -526,7 +610,9 @@ class TestVerifyHunterEmailEdgeCases:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key", return_value=None
+        ):
             result = verify_hunter_email(ctx, {"email": "test@example.com"})
 
         data = result.get("hunter_verify")
@@ -537,8 +623,14 @@ class TestVerifyHunterEmailEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value=None):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value=None,
+            ):
                 result = verify_hunter_email(ctx, {"email": "test@example.com"})
 
         data = result.get("hunter_verify")
@@ -548,8 +640,14 @@ class TestVerifyHunterEmailEdgeCases:
         """Test when error key in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.hunter_intel.get_hunter_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.hunter_intel._make_hunter_request", return_value={"error": "not_found"}):
+        with patch(
+            "redops.modules.intel.hunter_intel.get_hunter_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.hunter_intel._make_hunter_request",
+                return_value={"error": "not_found"},
+            ):
                 result = verify_hunter_email(ctx, {"email": "test@example.com"})
 
         data = result.get("hunter_verify")

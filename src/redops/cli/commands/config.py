@@ -40,11 +40,7 @@ def config():
 
 
 @config.command("show")
-@click.option(
-    "--path",
-    type=click.Path(exists=True),
-    help="Config file path"
-)
+@click.option("--path", type=click.Path(exists=True), help="Config file path")
 @click.pass_context
 def show_cmd(ctx, path):
     """Show current configuration.
@@ -73,11 +69,7 @@ def show_cmd(ctx, path):
 
 @config.command("get")
 @click.argument("key")
-@click.option(
-    "--path",
-    type=click.Path(exists=True),
-    help="Config file path"
-)
+@click.option("--path", type=click.Path(exists=True), help="Config file path")
 def get_cmd(key, path):
     """Get a configuration value.
 
@@ -112,11 +104,7 @@ def get_cmd(key, path):
 @config.command("set")
 @click.argument("key")
 @click.argument("value")
-@click.option(
-    "--path",
-    type=click.Path(),
-    help="Config file path"
-)
+@click.option("--path", type=click.Path(), help="Config file path")
 def set_cmd(key, value, path):
     """Set a configuration value.
 
@@ -157,11 +145,7 @@ def set_cmd(key, value, path):
 
 @config.command("unset")
 @click.argument("key")
-@click.option(
-    "--path",
-    type=click.Path(exists=True),
-    help="Config file path"
-)
+@click.option("--path", type=click.Path(exists=True), help="Config file path")
 def unset_cmd(key, path):
     """Remove a configuration value.
 
@@ -220,11 +204,7 @@ def path_cmd():
 
 
 @config.command("validate")
-@click.option(
-    "--path",
-    type=click.Path(exists=True),
-    help="Config file path"
-)
+@click.option("--path", type=click.Path(exists=True), help="Config file path")
 def validate_cmd(path):
     """Validate configuration file.
 
@@ -263,7 +243,10 @@ def validate_cmd(path):
             if not isinstance(scan["timeout"], int) or scan["timeout"] < 0:
                 errors.append("scan.timeout must be a positive integer")
         if "parallel_modules" in scan:
-            if not isinstance(scan["parallel_modules"], int) or scan["parallel_modules"] < 1:
+            if (
+                not isinstance(scan["parallel_modules"], int)
+                or scan["parallel_modules"] < 1
+            ):
                 errors.append("scan.parallel_modules must be a positive integer")
 
     # Validate pipelines

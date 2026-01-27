@@ -82,11 +82,14 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e ".[dev,test]"
+          pip install -e ".[dev,web,full]"
 
       - name: Run tests
+        env:
+          REDOPS_JWT_SECRET: ci-test-secret
         run: |
           python -m pytest tests/ \
+            --ignore=tests/integration \
             --cov=redops \
             --cov-report=xml \
             --junitxml=junit.xml \
@@ -148,7 +151,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e ".[dev,test]"
+          pip install -e ".[dev,web,full]"
 
       - name: Run integration tests
         env:

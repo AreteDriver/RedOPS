@@ -2,8 +2,6 @@
 
 import json
 import os
-import pytest
-from pathlib import Path
 from unittest.mock import patch
 from redops.core.config import (
     ScopeConfig,
@@ -207,7 +205,10 @@ class TestAPIKeysConfig:
         config.set_key("invalid_provider", "some-key")
 
         # Should not raise, just do nothing
-        assert not hasattr(config, "invalid_provider") or getattr(config, "invalid_provider", None) is None
+        assert (
+            not hasattr(config, "invalid_provider")
+            or getattr(config, "invalid_provider", None) is None
+        )
 
     def test_mask_key_none(self):
         """Test mask_key with None value."""
@@ -437,9 +438,7 @@ class TestRedOpsConfig:
 
     def test_get_api_key(self):
         """Test get_api_key wrapper method."""
-        config = RedOpsConfig(
-            api_keys=APIKeysConfig(openai="wrapper-test-key")
-        )
+        config = RedOpsConfig(api_keys=APIKeysConfig(openai="wrapper-test-key"))
 
         result = config.get_api_key("openai")
 
@@ -464,9 +463,7 @@ class TestRedOpsConfig:
 
     def test_set_api_key_updates_existing(self):
         """Test set_api_key updates existing key."""
-        config = RedOpsConfig(
-            api_keys=APIKeysConfig(censys="old-key")
-        )
+        config = RedOpsConfig(api_keys=APIKeysConfig(censys="old-key"))
 
         config.set_api_key("censys", "new-key")
 

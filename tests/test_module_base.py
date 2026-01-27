@@ -1,7 +1,6 @@
 """Tests for the BaseModule and ModuleRegistry classes."""
 
 import pytest
-from unittest.mock import MagicMock, patch
 from redops.core.context import Context
 from redops.core.module_base import BaseModule, ModuleRegistry
 
@@ -87,7 +86,7 @@ class TestBaseModuleExecute:
         module = ConcreteModule()
         ctx = Context(target="example.com")
 
-        result = module.execute(ctx)
+        module.execute(ctx)
 
         assert "params" not in ctx.data
 
@@ -111,7 +110,7 @@ class TestBaseModuleCallable:
         ctx = Context(target="example.com")
         params = {"option": "enabled"}
 
-        result = module(ctx, params=params)
+        module(ctx, params=params)
 
         assert ctx.data.get("params") == params
 

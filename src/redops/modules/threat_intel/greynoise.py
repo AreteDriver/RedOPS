@@ -14,6 +14,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -24,9 +25,7 @@ GREYNOISE_COMMUNITY_API = "https://api.greynoise.io/v3/community"
 GREYNOISE_ENTERPRISE_API = "https://api.greynoise.io/v2"
 
 
-def query_greynoise(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_greynoise(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query GreyNoise for IP reputation information.
 
@@ -224,97 +223,115 @@ def analyze_greynoise_results(result: Dict[str, Any], ip: str) -> List[Finding]:
 
     if noise:
         if classification == "malicious":
-            findings.append(Finding(
-                module="threat_intel.greynoise",
-                title=f"Malicious Scanner Detected: {ip}",
-                description=(
-                    f"IP {ip} is classified as MALICIOUS by GreyNoise. "
-                    "This IP has been observed conducting internet-wide scanning "
-                    "with malicious intent."
-                ),
-                severity=RiskLevel.HIGH,
-                data={
-                    "ip": ip,
-                    "classification": classification,
-                    "noise": noise,
-                    "actor": result.get("actor", ""),
-                    "tags": result.get("tags", []),
-                },
-            ))
+            findings.append(
+                Finding(
+                    module="threat_intel.greynoise",
+                    title=f"Malicious Scanner Detected: {ip}",
+                    description=(
+                        f"IP {ip} is classified as MALICIOUS by GreyNoise. "
+                        "This IP has been observed conducting internet-wide scanning "
+                        "with malicious intent."
+                    ),
+                    severity=RiskLevel.HIGH,
+                    data={
+                        "ip": ip,
+                        "classification": classification,
+                        "noise": noise,
+                        "actor": result.get("actor", ""),
+                        "tags": result.get("tags", []),
+                    },
+                )
+            )
         elif classification == "benign":
-            findings.append(Finding(
-                module="threat_intel.greynoise",
-                title=f"Benign Scanner: {ip}",
-                description=(
-                    f"IP {ip} is classified as a benign scanner by GreyNoise. "
-                    "This is likely a security research or legitimate scanning service."
-                ),
-                severity=RiskLevel.INFO,
-                data={
-                    "ip": ip,
-                    "classification": classification,
-                    "actor": result.get("actor", ""),
-                },
-            ))
+            findings.append(
+                Finding(
+                    module="threat_intel.greynoise",
+                    title=f"Benign Scanner: {ip}",
+                    description=(
+                        f"IP {ip} is classified as a benign scanner by GreyNoise. "
+                        "This is likely a security research or legitimate scanning service."
+                    ),
+                    severity=RiskLevel.INFO,
+                    data={
+                        "ip": ip,
+                        "classification": classification,
+                        "actor": result.get("actor", ""),
+                    },
+                )
+            )
         else:
-            findings.append(Finding(
-                module="threat_intel.greynoise",
-                title=f"Internet Scanner Detected: {ip}",
-                description=(
-                    f"IP {ip} has been observed conducting internet-wide scanning. "
-                    "Classification: {classification or 'unknown'}."
-                ),
-                severity=RiskLevel.MEDIUM,
-                data={
-                    "ip": ip,
-                    "classification": classification,
-                    "noise": noise,
-                },
-            ))
+            findings.append(
+                Finding(
+                    module="threat_intel.greynoise",
+                    title=f"Internet Scanner Detected: {ip}",
+                    description=(
+                        f"IP {ip} has been observed conducting internet-wide scanning. "
+                        "Classification: {classification or 'unknown'}."
+                    ),
+                    severity=RiskLevel.MEDIUM,
+                    data={
+                        "ip": ip,
+                        "classification": classification,
+                        "noise": noise,
+                    },
+                )
+            )
 
     # Check RIOT (known benign services)
     riot_data = result.get("riot", {})
     if riot_data.get("riot"):
-        findings.append(Finding(
-            module="threat_intel.greynoise",
-            title=f"Known Benign Service: {ip}",
-            description=(
-                f"IP {ip} belongs to a known benign service: "
-                f"{riot_data.get('name', 'Unknown')}. "
-                f"Category: {riot_data.get('category', 'Unknown')}."
-            ),
-            severity=RiskLevel.INFO,
-            data={
-                "ip": ip,
-                "service_name": riot_data.get("name", ""),
-                "category": riot_data.get("category", ""),
-                "trust_level": riot_data.get("trust_level", ""),
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.greynoise",
+                title=f"Known Benign Service: {ip}",
+                description=(
+                    f"IP {ip} belongs to a known benign service: "
+                    f"{riot_data.get('name', 'Unknown')}. "
+                    f"Category: {riot_data.get('category', 'Unknown')}."
+                ),
+                severity=RiskLevel.INFO,
+                data={
+                    "ip": ip,
+                    "service_name": riot_data.get("name", ""),
+                    "category": riot_data.get("category", ""),
+                    "trust_level": riot_data.get("trust_level", ""),
+                },
+            )
+        )
 
     # Check for specific threat tags
     tags = result.get("tags", [])
     dangerous_tags = [
-        "Mirai", "Emotet", "Cobalt Strike", "Metasploit",
-        "Ransomware", "Botnet", "C2", "Tor Exit Node"
+        "Mirai",
+        "Emotet",
+        "Cobalt Strike",
+        "Metasploit",
+        "Ransomware",
+        "Botnet",
+        "C2",
+        "Tor Exit Node",
     ]
 
-    matched_tags = [t for t in tags if any(d.lower() in t.lower() for d in dangerous_tags)]
+    matched_tags = [
+        t for t in tags if any(d.lower() in t.lower() for d in dangerous_tags)
+    ]
     if matched_tags:
-        findings.append(Finding(
-            module="threat_intel.greynoise",
-            title=f"Dangerous Activity Tags: {ip}",
-            description=(
-                f"IP {ip} has been tagged with potentially dangerous activity: "
-                f"{', '.join(matched_tags)}."
-            ),
-            severity=RiskLevel.HIGH,
-            data={
-                "ip": ip,
-                "dangerous_tags": matched_tags,
-                "all_tags": tags,
-            },
-        ))
+        findings.append(
+            Finding(
+                module="threat_intel.greynoise",
+                title=f"Dangerous Activity Tags: {ip}",
+                description=(
+                    f"IP {ip} has been tagged with potentially dangerous activity: "
+                    f"{', '.join(matched_tags)}."
+                ),
+                severity=RiskLevel.HIGH,
+                data={
+                    "ip": ip,
+                    "dangerous_tags": matched_tags,
+                    "all_tags": tags,
+                },
+            )
+        )
 
     return findings
 
@@ -345,6 +362,7 @@ def get_greynoise_summary(ctx: Context) -> Dict[str, Any]:
 def _is_valid_ip(ip: str) -> bool:
     """Validate IP address format."""
     import socket
+
     try:
         socket.inet_aton(ip)
         return True

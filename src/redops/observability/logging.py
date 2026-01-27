@@ -4,8 +4,8 @@ Structured logging for RedOPS.
 Provides JSON-formatted logging with trace correlation and context propagation.
 """
 
-from typing import Optional, Dict, Any, Callable
-from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from contextlib import contextmanager
 import logging
@@ -17,6 +17,7 @@ import threading
 # Try to import OpenTelemetry for trace correlation
 try:
     from opentelemetry import trace
+
     HAS_OTEL = True
 except ImportError:
     HAS_OTEL = False
@@ -150,10 +151,27 @@ class JsonFormatter(logging.Formatter):
         # Add extra fields from the record
         for key, value in record.__dict__.items():
             if key not in (
-                "name", "msg", "args", "levelname", "levelno", "pathname",
-                "filename", "module", "exc_info", "exc_text", "stack_info",
-                "lineno", "funcName", "created", "msecs", "relativeCreated",
-                "thread", "threadName", "processName", "process", "message",
+                "name",
+                "msg",
+                "args",
+                "levelname",
+                "levelno",
+                "pathname",
+                "filename",
+                "module",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+                "lineno",
+                "funcName",
+                "created",
+                "msecs",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "processName",
+                "process",
+                "message",
             ):
                 try:
                     json.dumps(value)  # Check if serializable
@@ -168,10 +186,10 @@ class TextFormatter(logging.Formatter):
     """Human-readable text formatter with colors."""
 
     COLORS = {
-        "DEBUG": "\033[36m",     # Cyan
-        "INFO": "\033[32m",      # Green
-        "WARNING": "\033[33m",   # Yellow
-        "ERROR": "\033[31m",     # Red
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
         "CRITICAL": "\033[35m",  # Magenta
     }
     RESET = "\033[0m"

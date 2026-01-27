@@ -66,6 +66,7 @@ def get_st_api_key() -> Optional[str]:
     if not api_key:
         try:
             from redops.cli.settings import get_api_key_direct
+
             api_key = get_api_key_direct("securitytrails")
         except Exception:
             pass
@@ -96,9 +97,7 @@ def _make_st_request(endpoint: str, api_key: str) -> Optional[Dict[str, Any]]:
         return {"error": str(e)}
 
 
-def query_st_domain(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_st_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query SecurityTrails for domain information.
 
@@ -177,7 +176,9 @@ def query_st_subdomains(
     target = params.get("domain") or ctx.target
 
     if not target:
-        ctx.log("No target specified for SecurityTrails subdomain query", level="WARNING")
+        ctx.log(
+            "No target specified for SecurityTrails subdomain query", level="WARNING"
+        )
         return ctx
 
     domain = _extract_domain(target)
@@ -216,9 +217,7 @@ def query_st_subdomains(
     return ctx
 
 
-def query_st_history(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_st_history(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query SecurityTrails for historical DNS data.
 
@@ -240,7 +239,9 @@ def query_st_history(
         return ctx
 
     domain = _extract_domain(target)
-    ctx.log(f"Querying SecurityTrails history for: {domain} ({record_type})", level="INFO")
+    ctx.log(
+        f"Querying SecurityTrails history for: {domain} ({record_type})", level="INFO"
+    )
 
     st_data = {
         "domain": domain,
@@ -298,7 +299,9 @@ def query_st_associated(
     target = params.get("domain") or ctx.target
 
     if not target:
-        ctx.log("No target specified for SecurityTrails associated query", level="WARNING")
+        ctx.log(
+            "No target specified for SecurityTrails associated query", level="WARNING"
+        )
         return ctx
 
     domain = _extract_domain(target)
@@ -407,6 +410,7 @@ def analyze_securitytrails_intel(
 
 
 # Helper function
+
 
 def _extract_domain(value: str) -> str:
     """Extract domain from URL or hostname."""

@@ -13,13 +13,14 @@ from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Callable, TypeVar
 
 T = TypeVar("T")
 
 
 class RateLimitAlgorithm(Enum):
     """Rate limiting algorithms."""
+
     TOKEN_BUCKET = "token_bucket"
     SLIDING_WINDOW = "sliding_window"
     FIXED_WINDOW = "fixed_window"
@@ -28,6 +29,7 @@ class RateLimitAlgorithm(Enum):
 
 class BackoffStrategy(Enum):
     """Backoff strategies for rate limit handling."""
+
     NONE = "none"
     LINEAR = "linear"
     EXPONENTIAL = "exponential"
@@ -38,6 +40,7 @@ class BackoffStrategy(Enum):
 @dataclass
 class RateLimitConfig:
     """Configuration for rate limiting."""
+
     requests_per_second: float = 1.0
     burst_size: int = 1
     algorithm: RateLimitAlgorithm = RateLimitAlgorithm.TOKEN_BUCKET
@@ -51,6 +54,7 @@ class RateLimitConfig:
 @dataclass
 class RateLimitState:
     """Current state of rate limiting."""
+
     tokens: float = 0.0
     last_update: float = field(default_factory=time.time)
     window_start: float = field(default_factory=time.time)
@@ -61,6 +65,7 @@ class RateLimitState:
 @dataclass
 class RateLimitResult:
     """Result of a rate limit check."""
+
     allowed: bool
     wait_time: float = 0.0
     remaining: int = 0
@@ -83,6 +88,7 @@ class RateLimitResult:
 @dataclass
 class QuotaInfo:
     """Quota information for a resource."""
+
     limit: int
     used: int
     remaining: int
@@ -439,11 +445,11 @@ class BackoffCalculator:
             delay = self._base_delay * (attempt + 1)
 
         elif self._strategy == BackoffStrategy.EXPONENTIAL:
-            delay = self._base_delay * (self._multiplier ** attempt)
+            delay = self._base_delay * (self._multiplier**attempt)
 
         elif self._strategy == BackoffStrategy.EXPONENTIAL_JITTER:
             # Full jitter: random between 0 and exponential delay
-            exp_delay = self._base_delay * (self._multiplier ** attempt)
+            exp_delay = self._base_delay * (self._multiplier**attempt)
             delay = random.uniform(0, exp_delay)
 
         elif self._strategy == BackoffStrategy.DECORRELATED_JITTER:
@@ -710,11 +716,11 @@ class RateLimiter:
 
         for attempt in range(self._config.max_retries + 1):
             # Wait for rate limit
-            result = self.acquire_or_wait(key)
+            self.acquire_or_wait(key)
 
             try:
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 with self._lock:
                     self._attempt_counts[key] = attempt + 1
 

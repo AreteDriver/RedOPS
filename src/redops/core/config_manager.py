@@ -15,16 +15,19 @@ from typing import Any
 # Optional imports for config file formats
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
 
 try:
     import tomllib
+
     TOML_AVAILABLE = True
 except ImportError:
     try:
         import tomli as tomllib
+
         TOML_AVAILABLE = True
     except ImportError:
         TOML_AVAILABLE = False
@@ -32,6 +35,7 @@ except ImportError:
 
 class ConfigFormat(Enum):
     """Supported configuration file formats."""
+
     YAML = "yaml"
     TOML = "toml"
     JSON = "json"
@@ -40,6 +44,7 @@ class ConfigFormat(Enum):
 
 class ConfigProfile(Enum):
     """Pre-defined configuration profiles."""
+
     DEFAULT = "default"
     DEVELOPMENT = "development"
     PRODUCTION = "production"
@@ -51,6 +56,7 @@ class ConfigProfile(Enum):
 @dataclass
 class ModuleConfig:
     """Configuration for a specific module."""
+
     enabled: bool = True
     timeout: int = 30
     retries: int = 3
@@ -60,6 +66,7 @@ class ModuleConfig:
 @dataclass
 class OutputConfig:
     """Output configuration settings."""
+
     directory: str = "./output"
     format: str = "json"
     include_raw: bool = False
@@ -70,6 +77,7 @@ class OutputConfig:
 @dataclass
 class NetworkConfig:
     """Network-related configuration."""
+
     timeout: int = 30
     max_connections: int = 10
     rate_limit: float = 1.0  # requests per second
@@ -81,6 +89,7 @@ class NetworkConfig:
 @dataclass
 class LoggingConfig:
     """Logging configuration."""
+
     level: str = "INFO"
     file: str | None = None
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -91,6 +100,7 @@ class LoggingConfig:
 @dataclass
 class CacheConfig:
     """Cache configuration."""
+
     enabled: bool = True
     directory: str = "./.cache"
     ttl_seconds: int = 3600
@@ -100,6 +110,7 @@ class CacheConfig:
 @dataclass
 class RedOPSConfiguration:
     """Complete RedOPS configuration."""
+
     profile: str = "default"
     modules: dict[str, ModuleConfig] = field(default_factory=dict)
     output: OutputConfig = field(default_factory=OutputConfig)
@@ -390,6 +401,7 @@ class ConfigManager:
             content = self.to_toml()
         elif format == ConfigFormat.JSON:
             import json
+
             content = json.dumps(self._raw_config, indent=2)
         else:
             raise ValueError(f"Unsupported format for saving: {format}")
@@ -418,7 +430,9 @@ class ConfigManager:
 # See documentation for all available options
 
 """
-            return header + yaml.dump(defaults, default_flow_style=False, sort_keys=False)
+            return header + yaml.dump(
+                defaults, default_flow_style=False, sort_keys=False
+            )
 
         elif format == ConfigFormat.TOML:
             header = """# RedOPS Configuration File
@@ -429,6 +443,7 @@ class ConfigManager:
 
         elif format == ConfigFormat.JSON:
             import json
+
             return json.dumps(defaults, indent=2)
 
         raise ValueError(f"Unsupported format: {format}")
@@ -525,6 +540,7 @@ class ConfigManager:
 
         elif suffix == ".json":
             import json
+
             return json.loads(content)
 
         else:
@@ -542,7 +558,7 @@ class ConfigManager:
                 continue
 
             # Convert REDOPS_NETWORK_TIMEOUT to network.timeout
-            config_key = key[len(self.ENV_PREFIX):].lower().replace("__", ".")
+            config_key = key[len(self.ENV_PREFIX) :].lower().replace("__", ".")
 
             # Parse value
             parsed_value = self._parse_env_value(value)
@@ -586,7 +602,11 @@ class ConfigManager:
         result = base.copy()
 
         for key, value in override.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._deep_merge(result[key], value)
             else:
                 result[key] = value
@@ -634,7 +654,9 @@ class ConfigManager:
         logging_config = LoggingConfig(
             level=logging_data.get("level", "INFO"),
             file=logging_data.get("file"),
-            format=logging_data.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"),
+            format=logging_data.get(
+                "format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            ),
             max_size_mb=logging_data.get("max_size_mb", 10),
             backup_count=logging_data.get("backup_count", 5),
         )
@@ -679,8 +701,7 @@ class ConfigManager:
                 lines.append(f"{key} = {value}")
             elif isinstance(value, list):
                 items = ", ".join(
-                    f'"{v}"' if isinstance(v, str) else str(v)
-                    for v in value
+                    f'"{v}"' if isinstance(v, str) else str(v) for v in value
                 )
                 lines.append(f"{key} = [{items}]")
 

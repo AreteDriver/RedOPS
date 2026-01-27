@@ -20,18 +20,24 @@ class ScheduleCreate(BaseModel):
     name: str = Field(..., description="Schedule name")
     target: str = Field(..., description="Target to scan")
     pipeline: str = Field(default="default", description="Scan pipeline")
-    recurrence: str = Field(default="daily", description="Recurrence: daily, weekly, monthly, custom")
-    cron_expression: Optional[str] = Field(None, description="Cron expression for custom schedules")
+    recurrence: str = Field(
+        default="daily", description="Recurrence: daily, weekly, monthly, custom"
+    )
+    cron_expression: Optional[str] = Field(
+        None, description="Cron expression for custom schedules"
+    )
     enabled: bool = Field(default=True, description="Enable or disable schedule")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "name": "Daily Production Scan",
-            "target": "https://example.com",
-            "pipeline": "web_security",
-            "recurrence": "daily",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "Daily Production Scan",
+                "target": "https://example.com",
+                "pipeline": "web_security",
+                "recurrence": "daily",
+            }
         }
-    })
+    )
 
 
 class ScheduleUpdate(BaseModel):
@@ -88,7 +94,9 @@ async def list_schedules(
     if status:
         schedules = [s for s in schedules if s.get("status") == status]
     if target:
-        schedules = [s for s in schedules if target.lower() in s.get("target", "").lower()]
+        schedules = [
+            s for s in schedules if target.lower() in s.get("target", "").lower()
+        ]
 
     total = len(schedules)
     schedules = schedules[pagination.skip : pagination.skip + pagination.limit]

@@ -585,6 +585,7 @@ class TestRateLimitedDecorator:
 
     def test_rate_limiting_slows_down(self):
         """Test rate limiting slows down calls."""
+
         @rate_limited(requests_per_second=10.0, burst_size=1)
         def fast_function():
             return time.time()
@@ -600,6 +601,7 @@ class TestRateLimitedDecorator:
 
     def test_custom_key_func(self):
         """Test custom key function."""
+
         @rate_limited(
             requests_per_second=10.0,
             burst_size=1,
@@ -635,6 +637,7 @@ class TestWithBackoffDecorator:
 
     def test_raises_after_max_retries(self):
         """Test raises after max retries."""
+
         @with_backoff(max_retries=2, base_delay=0.01)
         def always_fails():
             raise ValueError("Always fails")
@@ -644,6 +647,7 @@ class TestWithBackoffDecorator:
 
     def test_specific_exceptions(self):
         """Test only catches specific exceptions."""
+
         @with_backoff(
             max_retries=3,
             base_delay=0.01,

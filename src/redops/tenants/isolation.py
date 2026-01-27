@@ -4,12 +4,9 @@ Tenant data isolation for multi-tenant support.
 Provides isolated storage and data access patterns.
 """
 
-import hashlib
 import logging
-import os
 import shutil
 import threading
-from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar
@@ -137,10 +134,7 @@ class TenantIsolation:
         if tenant is None:
             return items
 
-        return [
-            item for item in items
-            if item.get(tenant_key) == tenant.id
-        ]
+        return [item for item in items if item.get(tenant_key) == tenant.id]
 
 
 class TenantDataStore(Generic[T]):
@@ -648,6 +642,7 @@ class TenantAwareCache:
         ttl = ttl or self._default_ttl
 
         from datetime import timedelta
+
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         with self._lock:
@@ -693,8 +688,7 @@ class TenantAwareCache:
 
         with self._lock:
             keys_to_delete = [
-                k for k in self._memory_cache.keys()
-                if k.startswith(prefix)
+                k for k in self._memory_cache.keys() if k.startswith(prefix)
             ]
             for key in keys_to_delete:
                 del self._memory_cache[key]

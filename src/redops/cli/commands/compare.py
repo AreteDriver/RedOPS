@@ -3,14 +3,12 @@
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 import httpx
 
 from ..utils import (
     console,
-    output_result,
     print_error,
     print_success,
 )
@@ -19,25 +17,19 @@ from ..utils import (
 @click.command()
 @click.argument("baseline_scan_id")
 @click.argument("current_scan_id")
-@click.option(
-    "-o", "--output",
-    type=click.Path(),
-    help="Output file path"
-)
+@click.option("-o", "--output", type=click.Path(), help="Output file path")
 @click.option(
     "--format",
     "output_format",
     type=click.Choice(["text", "json", "markdown"]),
     default="text",
-    help="Output format"
+    help="Output format",
 )
-@click.option(
-    "--show-unchanged",
-    is_flag=True,
-    help="Show unchanged findings"
-)
+@click.option("--show-unchanged", is_flag=True, help="Show unchanged findings")
 @click.pass_context
-def compare(ctx, baseline_scan_id, current_scan_id, output, output_format, show_unchanged):
+def compare(
+    ctx, baseline_scan_id, current_scan_id, output, output_format, show_unchanged
+):
     """Compare two scans to identify changes.
 
     Shows new, resolved, and modified findings between scans.
@@ -58,7 +50,7 @@ def compare(ctx, baseline_scan_id, current_scan_id, output, output_format, show_
     if ctx.api_key:
         headers["Authorization"] = f"Bearer {ctx.api_key}"
 
-    console.print(f"[bold]Comparing scans[/bold]")
+    console.print("[bold]Comparing scans[/bold]")
     console.print(f"  Baseline: {baseline_scan_id}")
     console.print(f"  Current:  {current_scan_id}")
     console.print()
@@ -168,9 +160,15 @@ def _print_comparison(result: dict, show_unchanged: bool = False) -> None:
             finding = item.get("finding", {})
             changes = item.get("changes", {})
             severity = finding.get("severity", "unknown").lower()
-            console.print(f"  [{_severity_color(severity)}]● {finding.get('title')}[/{_severity_color(severity)}]")
+            console.print(
+                f"  [{_severity_color(severity)}]● {finding.get('title')}[/{_severity_color(severity)}]"
+            )
             for change_key, change_val in changes.items():
-                old_val, new_val = change_val if isinstance(change_val, (list, tuple)) else (change_val, change_val)
+                old_val, new_val = (
+                    change_val
+                    if isinstance(change_val, (list, tuple))
+                    else (change_val, change_val)
+                )
                 console.print(f"    [dim]{change_key}: {old_val} → {new_val}[/dim]")
         console.print()
 
@@ -191,7 +189,6 @@ def _print_comparison(result: dict, show_unchanged: bool = False) -> None:
 
 def _print_findings_list(findings: list, dim: bool = False) -> None:
     """Print a list of findings."""
-    style = "dim" if dim else ""
 
     for item in findings[:20]:  # Limit to 20
         finding = item.get("finding", item)
@@ -201,7 +198,9 @@ def _print_findings_list(findings: list, dim: bool = False) -> None:
         if dim:
             console.print(f"  [dim]● [{severity.upper()}] {title}[/dim]")
         else:
-            console.print(f"  [{_severity_color(severity)}]● [{severity.upper()}] {title}[/{_severity_color(severity)}]")
+            console.print(
+                f"  [{_severity_color(severity)}]● [{severity.upper()}] {title}[/{_severity_color(severity)}]"
+            )
 
     if len(findings) > 20:
         console.print(f"  [dim]... and {len(findings) - 20} more[/dim]")
@@ -228,8 +227,8 @@ def _format_markdown(result: dict, show_unchanged: bool = False) -> str:
         "",
         "## Summary",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Baseline Findings | {summary.get('baseline_total', 0)} |",
         f"| Current Findings | {summary.get('current_total', 0)} |",
         f"| New Findings | {summary.get('new', 0)} |",
@@ -243,43 +242,55 @@ def _format_markdown(result: dict, show_unchanged: bool = False) -> str:
     # New findings
     new_findings = result.get("new_findings", [])
     if new_findings:
-        lines.extend([
-            "## New Findings",
-            "",
-            "| Severity | Title |",
-            "|----------|-------|",
-        ])
+        lines.extend(
+            [
+                "## New Findings",
+                "",
+                "| Severity | Title |",
+                "|----------|-------|",
+            ]
+        )
         for item in new_findings:
             finding = item.get("finding", item)
-            lines.append(f"| {finding.get('severity', 'N/A').upper()} | {finding.get('title', 'N/A')} |")
+            lines.append(
+                f"| {finding.get('severity', 'N/A').upper()} | {finding.get('title', 'N/A')} |"
+            )
         lines.append("")
 
     # Resolved findings
     resolved_findings = result.get("resolved_findings", [])
     if resolved_findings:
-        lines.extend([
-            "## Resolved Findings",
-            "",
-            "| Severity | Title |",
-            "|----------|-------|",
-        ])
+        lines.extend(
+            [
+                "## Resolved Findings",
+                "",
+                "| Severity | Title |",
+                "|----------|-------|",
+            ]
+        )
         for item in resolved_findings:
             finding = item.get("finding", item)
-            lines.append(f"| {finding.get('severity', 'N/A').upper()} | {finding.get('title', 'N/A')} |")
+            lines.append(
+                f"| {finding.get('severity', 'N/A').upper()} | {finding.get('title', 'N/A')} |"
+            )
         lines.append("")
 
     # Regressions
     regressions = result.get("regression_findings", [])
     if regressions:
-        lines.extend([
-            "## Regressions",
-            "",
-            "| Severity | Title |",
-            "|----------|-------|",
-        ])
+        lines.extend(
+            [
+                "## Regressions",
+                "",
+                "| Severity | Title |",
+                "|----------|-------|",
+            ]
+        )
         for item in regressions:
             finding = item.get("finding", item)
-            lines.append(f"| {finding.get('severity', 'N/A').upper()} | {finding.get('title', 'N/A')} |")
+            lines.append(
+                f"| {finding.get('severity', 'N/A').upper()} | {finding.get('title', 'N/A')} |"
+            )
         lines.append("")
 
     return "\n".join(lines)

@@ -1,9 +1,7 @@
 """Tests for webhook notifications module."""
 
 import pytest
-from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
-import json
 
 
 class TestNotificationMessage:
@@ -76,7 +74,11 @@ class TestSlackWebhook:
 
     def test_slack_format_payload(self):
         """Test Slack payload formatting."""
-        from redops.notifications import SlackWebhook, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            SlackWebhook,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         slack = SlackWebhook(webhook_url="https://hooks.slack.com/test")
 
@@ -100,10 +102,16 @@ class TestSlackWebhook:
 
     def test_slack_format_info_level(self):
         """Test Slack formatting for info level."""
-        from redops.notifications import SlackWebhook, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            SlackWebhook,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         slack = SlackWebhook(webhook_url="https://test.com")
-        msg = NotificationMessage(title="Info", body="Test", level=NotificationLevel.INFO)
+        msg = NotificationMessage(
+            title="Info", body="Test", level=NotificationLevel.INFO
+        )
 
         payload = slack.format_payload(msg)
 
@@ -154,7 +162,11 @@ class TestTeamsWebhook:
 
     def test_teams_format_payload(self):
         """Test Teams payload formatting."""
-        from redops.notifications import TeamsWebhook, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            TeamsWebhook,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         teams = TeamsWebhook(webhook_url="https://teams.webhook.url")
 
@@ -169,7 +181,10 @@ class TestTeamsWebhook:
 
         assert payload["type"] == "message"
         assert "attachments" in payload
-        assert payload["attachments"][0]["contentType"] == "application/vnd.microsoft.card.adaptive"
+        assert (
+            payload["attachments"][0]["contentType"]
+            == "application/vnd.microsoft.card.adaptive"
+        )
 
         card = payload["attachments"][0]["content"]
         assert card["type"] == "AdaptiveCard"
@@ -210,7 +225,11 @@ class TestDiscordWebhook:
 
     def test_discord_format_payload(self):
         """Test Discord payload formatting."""
-        from redops.notifications import DiscordWebhook, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            DiscordWebhook,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         discord = DiscordWebhook(webhook_url="https://test.com")
 
@@ -234,10 +253,16 @@ class TestDiscordWebhook:
 
     def test_discord_format_success_level(self):
         """Test Discord formatting for success level."""
-        from redops.notifications import DiscordWebhook, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            DiscordWebhook,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         discord = DiscordWebhook(webhook_url="https://test.com")
-        msg = NotificationMessage(title="Success", body="Done", level=NotificationLevel.SUCCESS)
+        msg = NotificationMessage(
+            title="Success", body="Done", level=NotificationLevel.SUCCESS
+        )
 
         payload = discord.format_payload(msg)
 
@@ -263,7 +288,11 @@ class TestGenericWebhook:
 
     def test_generic_format_payload(self):
         """Test generic payload formatting."""
-        from redops.notifications import GenericWebhook, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            GenericWebhook,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         webhook = GenericWebhook(webhook_url="https://test.com")
 
@@ -323,7 +352,11 @@ class TestPagerDutyWebhook:
 
     def test_pagerduty_format_payload(self):
         """Test PagerDuty payload formatting."""
-        from redops.notifications import PagerDutyWebhook, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            PagerDutyWebhook,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         pd = PagerDutyWebhook(routing_key="test-key")
 
@@ -369,6 +402,7 @@ class TestNotificationConfig:
 
         with patch.dict("os.environ", env):
             from redops.notifications import NotificationConfig, NotificationLevel
+
             config = NotificationConfig.from_env()
 
             assert config.enabled is True
@@ -395,7 +429,11 @@ class TestNotificationManager:
 
     def test_manager_add_provider(self):
         """Test adding custom provider."""
-        from redops.notifications import NotificationManager, NotificationConfig, SlackWebhook
+        from redops.notifications import (
+            NotificationManager,
+            NotificationConfig,
+            SlackWebhook,
+        )
 
         config = NotificationConfig(enabled=True, async_send=False)
         manager = NotificationManager(config)
@@ -408,7 +446,11 @@ class TestNotificationManager:
 
     def test_manager_remove_provider(self):
         """Test removing provider."""
-        from redops.notifications import NotificationManager, NotificationConfig, SlackWebhook
+        from redops.notifications import (
+            NotificationManager,
+            NotificationConfig,
+            SlackWebhook,
+        )
 
         config = NotificationConfig(enabled=True, async_send=False)
         manager = NotificationManager(config)
@@ -438,15 +480,21 @@ class TestNotificationManager:
         manager = NotificationManager(config)
 
         # Info should be filtered
-        msg_info = NotificationMessage(title="Info", body="Test", level=NotificationLevel.INFO)
+        msg_info = NotificationMessage(
+            title="Info", body="Test", level=NotificationLevel.INFO
+        )
         assert manager._should_send(msg_info.level) is False
 
         # Warning should pass
-        msg_warning = NotificationMessage(title="Warning", body="Test", level=NotificationLevel.WARNING)
+        msg_warning = NotificationMessage(
+            title="Warning", body="Test", level=NotificationLevel.WARNING
+        )
         assert manager._should_send(msg_warning.level) is True
 
         # Error should pass
-        msg_error = NotificationMessage(title="Error", body="Test", level=NotificationLevel.ERROR)
+        msg_error = NotificationMessage(
+            title="Error", body="Test", level=NotificationLevel.ERROR
+        )
         assert manager._should_send(msg_error.level) is True
 
         manager.stop()
@@ -471,7 +519,6 @@ class TestNotificationManager:
             NotificationManager,
             NotificationConfig,
             NotificationLevel,
-            SlackWebhook,
         )
 
         config = NotificationConfig(enabled=True, async_send=False)
@@ -521,7 +568,11 @@ class TestNotificationManager:
 
     def test_manager_notify_scan_error(self):
         """Test scan error notification."""
-        from redops.notifications import NotificationManager, NotificationConfig, NotificationLevel
+        from redops.notifications import (
+            NotificationManager,
+            NotificationConfig,
+            NotificationLevel,
+        )
 
         config = NotificationConfig(enabled=True, async_send=False)
         manager = NotificationManager(config)
@@ -546,7 +597,11 @@ class TestNotificationManager:
 
     def test_manager_notify_critical_finding(self):
         """Test critical finding notification."""
-        from redops.notifications import NotificationManager, NotificationConfig, NotificationLevel
+        from redops.notifications import (
+            NotificationManager,
+            NotificationConfig,
+            NotificationLevel,
+        )
 
         config = NotificationConfig(enabled=True, async_send=False)
         manager = NotificationManager(config)
@@ -622,9 +677,14 @@ class TestGlobalNotify:
     def test_notify_function(self):
         """Test global notify function."""
         import redops.notifications.manager as manager_module
+
         manager_module._notification_manager = None
 
-        from redops.notifications import notify, NotificationLevel, get_notification_manager
+        from redops.notifications import (
+            notify,
+            NotificationLevel,
+            get_notification_manager,
+        )
 
         # Get manager and add mock provider
         mgr = get_notification_manager()
@@ -646,6 +706,7 @@ class TestGlobalNotify:
     def test_get_notification_manager_singleton(self):
         """Test global manager is singleton."""
         import redops.notifications.manager as manager_module
+
         manager_module._notification_manager = None
 
         from redops.notifications import get_notification_manager
@@ -710,6 +771,7 @@ class TestEmailConfig:
 
         with patch.dict("os.environ", env):
             from redops.notifications import EmailConfig
+
             config = EmailConfig.from_env()
 
             assert config.smtp_host == "smtp.test.com"
@@ -751,10 +813,12 @@ class TestEmailTemplate:
             text_body="$title\n\n$body",
         )
 
-        subject, html, text = template.render({
-            "title": "Security Alert",
-            "body": "A critical issue was found",
-        })
+        subject, html, text = template.render(
+            {
+                "title": "Security Alert",
+                "body": "A critical issue was found",
+            }
+        )
 
         assert subject == "Alert: Security Alert"
         assert "<h1>Security Alert</h1>" in html
@@ -1103,7 +1167,12 @@ class TestEmailBackend:
 
     def test_backend_format_html(self):
         """Test HTML formatting of message."""
-        from redops.notifications import EmailBackend, EmailConfig, NotificationMessage, NotificationLevel
+        from redops.notifications import (
+            EmailBackend,
+            EmailConfig,
+            NotificationMessage,
+            NotificationLevel,
+        )
 
         backend = EmailBackend(EmailConfig())
         msg = NotificationMessage(
@@ -1129,9 +1198,6 @@ class TestEmailModuleIntegration:
     def test_email_exports(self):
         """Test email module exports."""
         from redops.notifications import (
-            EmailConfig,
-            EmailBackend,
-            EmailTemplate,
             render_email_template,
             EMAIL_TEMPLATES,
         )
@@ -1149,24 +1215,7 @@ class TestNotificationModuleImports:
         """Test all expected exports."""
         from redops.notifications import (
             # Message types
-            NotificationMessage,
-            NotificationLevel,
-            # Providers
-            WebhookProvider,
-            SlackWebhook,
-            TeamsWebhook,
-            DiscordWebhook,
-            GenericWebhook,
-            PagerDutyWebhook,
-            # Email
-            EmailConfig,
-            EmailBackend,
-            EmailTemplate,
             render_email_template,
-            EMAIL_TEMPLATES,
-            # Manager
-            NotificationConfig,
-            NotificationManager,
             get_notification_manager,
             notify,
         )

@@ -1,28 +1,36 @@
 """Tests for core notifications module."""
 
-import json
 import time
 import pytest
-from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from redops.core.notifications import (
     # Exceptions
-    NotificationError, ChannelError, TemplateError, ThrottleError,
-    # Types
-    NotificationLevel, NotificationStatus, Notification,
+    ChannelError,
+    TemplateError,
+    NotificationLevel,
+    NotificationStatus,
+    Notification,
     # Templates
     TemplateEngine,
     # Throttling
-    ThrottleRule, ThrottleManager,
+    ThrottleRule,
+    ThrottleManager,
     # Channels
-    NotificationChannel, EmailChannel, WebhookChannel, SlackChannel,
-    ConsoleChannel, CallbackChannel,
+    EmailChannel,
+    WebhookChannel,
+    SlackChannel,
+    ConsoleChannel,
+    CallbackChannel,
     # Manager
-    NotificationResult, NotificationManager,
+    NotificationManager,
     # Utilities
-    get_notification_manager, set_notification_manager,
-    notify, notify_info, notify_warning, notify_error, notify_critical,
+    get_notification_manager,
+    set_notification_manager,
+    notify_info,
+    notify_warning,
+    notify_error,
+    notify_critical,
 )
 
 
@@ -41,9 +49,7 @@ class TestNotification:
     def test_with_level(self):
         """Test notification with custom level."""
         n = Notification(
-            title="Alert",
-            message="Critical issue",
-            level=NotificationLevel.CRITICAL
+            title="Alert", message="Critical issue", level=NotificationLevel.CRITICAL
         )
         assert n.level == NotificationLevel.CRITICAL
 
@@ -59,7 +65,7 @@ class TestNotification:
             title="Test",
             message="Test message",
             level=NotificationLevel.WARNING,
-            tags={"tag1", "tag2"}
+            tags={"tag1", "tag2"},
         )
         d = n.to_dict()
         assert d["title"] == "Test"
@@ -89,7 +95,7 @@ class TestTemplateEngine:
         engine = TemplateEngine()
         result = engine.render(
             "{{ user.name }} - {{ user.email }}",
-            {"user": {"name": "John", "email": "john@example.com"}}
+            {"user": {"name": "John", "email": "john@example.com"}},
         )
         assert result == "John - john@example.com"
 
@@ -148,12 +154,14 @@ class TestThrottleManager:
     def test_cooldown(self):
         """Test cooldown period."""
         throttle = ThrottleManager()
-        throttle.add_rule(ThrottleRule(
-            key="test",
-            max_count=1,
-            window_seconds=1,  # Short window so it expires with cooldown
-            cooldown_seconds=1
-        ))
+        throttle.add_rule(
+            ThrottleRule(
+                key="test",
+                max_count=1,
+                window_seconds=1,  # Short window so it expires with cooldown
+                cooldown_seconds=1,
+            )
+        )
 
         # First allowed
         throttle.check("test")
@@ -381,18 +389,20 @@ class TestNotificationManager:
         channel.name = "test"
         manager.register_channel(channel)
 
-        manager.throttle.add_rule(ThrottleRule(
-            key="test_throttle",
-            max_count=1,
-            window_seconds=60
-        ))
+        manager.throttle.add_rule(
+            ThrottleRule(key="test_throttle", max_count=1, window_seconds=60)
+        )
 
         # First should succeed
-        result1 = manager.notify("Test", "Test", channel="test", throttle_key="test_throttle")
+        result1 = manager.notify(
+            "Test", "Test", channel="test", throttle_key="test_throttle"
+        )
         assert result1.success is True
 
         # Second should be throttled
-        result2 = manager.notify("Test", "Test", channel="test", throttle_key="test_throttle")
+        result2 = manager.notify(
+            "Test", "Test", channel="test", throttle_key="test_throttle"
+        )
         assert result2.success is False
 
     def test_send_to_all(self):
@@ -500,23 +510,23 @@ class TestIntegration:
 
         # Register channels
         events = []
-        callback = lambda n: (events.append(n), True)[1]
+
+        def callback(n):
+            return (events.append(n), True)[1]
+
         channel = CallbackChannel(config={"callback": callback})
         channel.name = "test"
         manager.register_channel(channel)
 
         # Add templates
         manager.templates.register_template(
-            "alert",
-            "[{{ level }}] {{ title }}: {{ message }}"
+            "alert", "[{{ level }}] {{ title }}: {{ message }}"
         )
 
         # Add throttling
-        manager.throttle.add_rule(ThrottleRule(
-            key="alert",
-            max_count=5,
-            window_seconds=60
-        ))
+        manager.throttle.add_rule(
+            ThrottleRule(key="alert", max_count=5, window_seconds=60)
+        )
 
         # Send notifications
         for i in range(3):
@@ -525,7 +535,7 @@ class TestIntegration:
                 f"Message {i}",
                 level=NotificationLevel.WARNING,
                 channel="test",
-                throttle_key="alert"
+                throttle_key="alert",
             )
             assert result.success is True
 

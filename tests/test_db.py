@@ -1,10 +1,7 @@
 """Tests for database module."""
 
-import uuid
-from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from redops.db import (
     Base,
@@ -84,7 +81,9 @@ class TestDatabaseConfig:
 
     def test_default_config(self):
         """Default config requires DATABASE_URL."""
-        with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"}):
+        with patch.dict(
+            "os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+        ):
             config = DatabaseConfig()
             assert "postgresql" in config.url
         assert config.pool_size == 5
@@ -135,7 +134,9 @@ class TestDatabaseConfig:
 class TestDatabase:
     """Test Database class."""
 
-    @patch.dict("os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        "os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     def test_engine_creation(self):
         """Engine is created lazily."""
         db = Database()
@@ -150,7 +151,9 @@ class TestDatabase:
                 mock_create.assert_called_once()
         assert db._engine is not None
 
-    @patch.dict("os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        "os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     def test_session_factory_creation(self):
         """Session factory is created lazily."""
         db = Database()
@@ -165,7 +168,9 @@ class TestDatabase:
                     _ = db.session_factory
                     mock_sessionmaker.assert_called_once()
 
-    @patch.dict("os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"})
+    @patch.dict(
+        "os.environ", {"DATABASE_URL": "postgresql://test:test@localhost:5432/test"}
+    )
     def test_dispose(self):
         """Dispose clears engine and session factory."""
         db = Database()

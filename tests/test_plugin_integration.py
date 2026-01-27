@@ -1,7 +1,5 @@
 """Tests for plugin system integration with pipeline runner."""
 
-import pytest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from redops.core.context import Context
@@ -214,7 +212,9 @@ class TestPipelineRunnerPluginIntegration:
         # Check hooks were called
         assert ("before_pipeline", "example.com") in hook_instance.calls
         assert ("before_module", "test_step") in hook_instance.calls
-        assert any(c[0] == "after_module" and c[1] == "test_step" for c in hook_instance.calls)
+        assert any(
+            c[0] == "after_module" and c[1] == "test_step" for c in hook_instance.calls
+        )
         assert ("after_pipeline", "example.com") in hook_instance.calls
 
     def test_plugin_module_execution(self):
@@ -353,6 +353,7 @@ class TestPluginMetadataDecorator:
 
     def test_plugin_decorator(self):
         """Test that @plugin decorator sets metadata correctly."""
+
         # Create a fresh plugin class with the decorator
         @plugin(
             name="decorated_plugin",

@@ -23,20 +23,24 @@ class ReportCreate(BaseModel):
         default="executive",
         description="Report type: executive, detailed, compliance",
     )
-    format: str = Field(default="pdf", description="Output format: pdf, html, markdown, json")
+    format: str = Field(
+        default="pdf", description="Output format: pdf, html, markdown, json"
+    )
     title: Optional[str] = Field(None, description="Custom report title")
     organization: Optional[str] = Field(None, description="Organization name")
     options: Optional[dict] = Field(default_factory=dict, description="Report options")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "scan_id": "123e4567-e89b-12d3-a456-426614174000",
-            "report_type": "executive",
-            "format": "pdf",
-            "title": "Q1 Security Assessment",
-            "organization": "ACME Corp",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "scan_id": "123e4567-e89b-12d3-a456-426614174000",
+                "report_type": "executive",
+                "format": "pdf",
+                "title": "Q1 Security Assessment",
+                "organization": "ACME Corp",
+            }
         }
-    })
+    )
 
 
 class ReportResponse(BaseModel):

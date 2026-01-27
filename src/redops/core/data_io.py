@@ -7,13 +7,10 @@ for threat intelligence data exchange.
 
 import csv
 import gzip
-import io
 import json
-import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import (
@@ -45,7 +42,9 @@ class DataFormat(Enum):
 class ImportError(Exception):
     """Error during data import."""
 
-    def __init__(self, message: str, line: Optional[int] = None, details: Optional[Dict] = None):
+    def __init__(
+        self, message: str, line: Optional[int] = None, details: Optional[Dict] = None
+    ):
         super().__init__(message)
         self.line = line
         self.details = details or {}
@@ -149,7 +148,9 @@ class DataValidator:
         self._required_fields.extend(fields)
         return self
 
-    def add_rule(self, field: str, rule: Callable[[Any], bool], message: str = "") -> "DataValidator":
+    def add_rule(
+        self, field: str, rule: Callable[[Any], bool], message: str = ""
+    ) -> "DataValidator":
         """Add validation rule for a field."""
         if field not in self._rules:
             self._rules[field] = []
@@ -166,37 +167,45 @@ class DataValidator:
         errors = []
 
         # Check required fields
-        for field in self._required_fields:
-            if field not in record or record[field] is None:
-                errors.append(ValidationError(f"Missing required field: {field}", field))
+        for field_name in self._required_fields:
+            if field_name not in record or record[field_name] is None:
+                errors.append(
+                    ValidationError(f"Missing required field: {field_name}", field_name)
+                )
 
         # Check field types
-        for field, expected_type in self._field_types.items():
-            if field in record and record[field] is not None:
-                if not isinstance(record[field], expected_type):
-                    errors.append(ValidationError(
-                        f"Invalid type for {field}: expected {expected_type.__name__}",
-                        field,
-                        record[field],
-                    ))
+        for field_name, expected_type in self._field_types.items():
+            if field_name in record and record[field_name] is not None:
+                if not isinstance(record[field_name], expected_type):
+                    errors.append(
+                        ValidationError(
+                            f"Invalid type for {field_name}: expected {expected_type.__name__}",
+                            field_name,
+                            record[field_name],
+                        )
+                    )
 
         # Check custom rules
-        for field, rules in self._rules.items():
-            if field in record:
+        for field_name, rules in self._rules.items():
+            if field_name in record:
                 for rule, message in rules:
                     try:
-                        if not rule(record[field]):
-                            errors.append(ValidationError(
-                                message or f"Validation failed for {field}",
-                                field,
-                                record[field],
-                            ))
+                        if not rule(record[field_name]):
+                            errors.append(
+                                ValidationError(
+                                    message or f"Validation failed for {field_name}",
+                                    field_name,
+                                    record[field_name],
+                                )
+                            )
                     except Exception as e:
-                        errors.append(ValidationError(
-                            f"Validation error for {field}: {e}",
-                            field,
-                            record[field],
-                        ))
+                        errors.append(
+                            ValidationError(
+                                f"Validation error for {field_name}: {e}",
+                                field_name,
+                                record[field_name],
+                            )
+                        )
 
         return errors
 
@@ -218,18 +227,22 @@ class DataTransformer:
         self._mappings.append(mapping)
         return self
 
-    def map_field(self,
-                  source: str,
-                  target: str,
-                  transform: Optional[Callable[[Any], Any]] = None,
-                  default: Any = None) -> "DataTransformer":
+    def map_field(
+        self,
+        source: str,
+        target: str,
+        transform: Optional[Callable[[Any], Any]] = None,
+        default: Any = None,
+    ) -> "DataTransformer":
         """Add a simple field mapping."""
-        self._mappings.append(FieldMapping(
-            source=source,
-            target=target,
-            transform=transform,
-            default=default,
-        ))
+        self._mappings.append(
+            FieldMapping(
+                source=source,
+                target=target,
+                transform=transform,
+                default=default,
+            )
+        )
         return self
 
     def add_transform(self, transform: Callable[[Dict], Dict]) -> "DataTransformer":
@@ -282,12 +295,14 @@ class DataTransformer:
 class DataImporter(ABC):
     """Base class for data importers."""
 
-    def __init__(self,
-                 validator: Optional[DataValidator] = None,
-                 transformer: Optional[DataTransformer] = None,
-                 on_record: Optional[Callable[[Dict], None]] = None,
-                 on_error: Optional[Callable[[Exception, Dict], None]] = None,
-                 skip_invalid: bool = True):
+    def __init__(
+        self,
+        validator: Optional[DataValidator] = None,
+        transformer: Optional[DataTransformer] = None,
+        on_record: Optional[Callable[[Dict], None]] = None,
+        on_error: Optional[Callable[[Exception, Dict], None]] = None,
+        skip_invalid: bool = True,
+    ):
         """Initialize importer."""
         self._validator = validator
         self._transformer = transformer
@@ -305,7 +320,9 @@ class DataImporter(ABC):
         """Import data from a stream."""
         pass
 
-    def _process_record(self, record: Dict[str, Any], result: ImportResult) -> Optional[Dict]:
+    def _process_record(
+        self, record: Dict[str, Any], result: ImportResult
+    ) -> Optional[Dict]:
         """Process a single record."""
         result.total_records += 1
 
@@ -315,11 +332,13 @@ class DataImporter(ABC):
             if errors:
                 result.failed += 1
                 for error in errors:
-                    result.errors.append({
-                        "record": result.total_records,
-                        "field": error.field,
-                        "message": str(error),
-                    })
+                    result.errors.append(
+                        {
+                            "record": result.total_records,
+                            "field": error.field,
+                            "message": str(error),
+                        }
+                    )
                 if self._skip_invalid:
                     result.skipped += 1
                     return None
@@ -350,6 +369,7 @@ class JSONImporter(DataImporter):
     def import_stream(self, stream: TextIO) -> ImportResult:
         """Import from JSON stream."""
         import time
+
         start = time.time()
         result = ImportResult()
 
@@ -387,6 +407,7 @@ class JSONLImporter(DataImporter):
     def import_stream(self, stream: TextIO) -> ImportResult:
         """Import from JSONL stream."""
         import time
+
         start = time.time()
         result = ImportResult()
 
@@ -400,10 +421,12 @@ class JSONLImporter(DataImporter):
                 self._process_record(record, result)
             except json.JSONDecodeError as e:
                 result.failed += 1
-                result.errors.append({
-                    "line": line_num,
-                    "message": f"JSON parse error: {e}",
-                })
+                result.errors.append(
+                    {
+                        "line": line_num,
+                        "message": f"JSON parse error: {e}",
+                    }
+                )
 
         result.duration_seconds = time.time() - start
         return result
@@ -413,9 +436,13 @@ class JSONLImporter(DataImporter):
         path = Path(path)
 
         if str(path).endswith(".gz"):
-            opener = lambda: gzip.open(path, "rt", encoding="utf-8")
+
+            def opener():
+                return gzip.open(path, "rt", encoding="utf-8")
         else:
-            opener = lambda: open(path, "r", encoding="utf-8")
+
+            def opener():
+                return open(path, "r", encoding="utf-8")
 
         with opener() as f:
             for line in f:
@@ -427,12 +454,14 @@ class JSONLImporter(DataImporter):
 class CSVImporter(DataImporter):
     """Imports CSV data."""
 
-    def __init__(self,
-                 delimiter: str = ",",
-                 quotechar: str = '"',
-                 has_header: bool = True,
-                 fieldnames: Optional[List[str]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        delimiter: str = ",",
+        quotechar: str = '"',
+        has_header: bool = True,
+        fieldnames: Optional[List[str]] = None,
+        **kwargs,
+    ):
         """Initialize CSV importer."""
         super().__init__(**kwargs)
         self._delimiter = delimiter
@@ -449,6 +478,7 @@ class CSVImporter(DataImporter):
     def import_stream(self, stream: TextIO) -> ImportResult:
         """Import from CSV stream."""
         import time
+
         start = time.time()
         result = ImportResult()
 
@@ -479,10 +509,22 @@ class STIXImporter(DataImporter):
     """Imports STIX 2.1 data."""
 
     STIX_TYPES = {
-        "indicator", "malware", "threat-actor", "attack-pattern",
-        "campaign", "intrusion-set", "tool", "vulnerability",
-        "identity", "location", "infrastructure", "observed-data",
-        "report", "grouping", "note", "opinion",
+        "indicator",
+        "malware",
+        "threat-actor",
+        "attack-pattern",
+        "campaign",
+        "intrusion-set",
+        "tool",
+        "vulnerability",
+        "identity",
+        "location",
+        "infrastructure",
+        "observed-data",
+        "report",
+        "grouping",
+        "note",
+        "opinion",
     }
 
     def import_file(self, path: Union[str, Path]) -> ImportResult:
@@ -494,6 +536,7 @@ class STIXImporter(DataImporter):
     def import_stream(self, stream: TextIO) -> ImportResult:
         """Import from STIX stream."""
         import time
+
         start = time.time()
         result = ImportResult()
 
@@ -515,7 +558,9 @@ class STIXImporter(DataImporter):
                     self._process_record(obj, result)
                 else:
                     result.skipped += 1
-                    result.warnings.append(f"Skipped non-STIX object: {obj.get('type', 'unknown')}")
+                    result.warnings.append(
+                        f"Skipped non-STIX object: {obj.get('type', 'unknown')}"
+                    )
 
         except json.JSONDecodeError as e:
             raise ImportError(f"STIX JSON parse error: {e}")
@@ -541,9 +586,9 @@ class STIXImporter(DataImporter):
 class DataExporter(ABC):
     """Base class for data exporters."""
 
-    def __init__(self,
-                 transformer: Optional[DataTransformer] = None,
-                 compress: bool = False):
+    def __init__(
+        self, transformer: Optional[DataTransformer] = None, compress: bool = False
+    ):
         """Initialize exporter."""
         self._transformer = transformer
         self._compress = compress
@@ -554,7 +599,9 @@ class DataExporter(ABC):
         pass
 
     @abstractmethod
-    def export_stream(self, records: Iterator[Dict], stream: Union[TextIO, BinaryIO]) -> ExportResult:
+    def export_stream(
+        self, records: Iterator[Dict], stream: Union[TextIO, BinaryIO]
+    ) -> ExportResult:
         """Export data to a stream."""
         pass
 
@@ -576,6 +623,7 @@ class JSONExporter(DataExporter):
     def export_file(self, records: List[Dict], path: Union[str, Path]) -> ExportResult:
         """Export to JSON file."""
         import time
+
         start = time.time()
         result = ExportResult()
         path = Path(path)
@@ -590,10 +638,14 @@ class JSONExporter(DataExporter):
         if self._compress:
             path = Path(str(path) + ".gz") if not str(path).endswith(".gz") else path
             with gzip.open(path, "wt", encoding="utf-8") as f:
-                json.dump(transformed, f, indent=2 if self._pretty else None, default=str)
+                json.dump(
+                    transformed, f, indent=2 if self._pretty else None, default=str
+                )
         else:
             with open(path, "w", encoding="utf-8") as f:
-                json.dump(transformed, f, indent=2 if self._pretty else None, default=str)
+                json.dump(
+                    transformed, f, indent=2 if self._pretty else None, default=str
+                )
 
         result.file_path = str(path)
         result.file_size_bytes = path.stat().st_size
@@ -603,6 +655,7 @@ class JSONExporter(DataExporter):
     def export_stream(self, records: Iterator[Dict], stream: TextIO) -> ExportResult:
         """Export to JSON stream."""
         import time
+
         start = time.time()
         result = ExportResult()
 
@@ -624,15 +677,20 @@ class JSONLExporter(DataExporter):
     def export_file(self, records: List[Dict], path: Union[str, Path]) -> ExportResult:
         """Export to JSONL file."""
         import time
+
         start = time.time()
         result = ExportResult()
         path = Path(path)
 
         if self._compress:
             path = Path(str(path) + ".gz") if not str(path).endswith(".gz") else path
-            opener = lambda: gzip.open(path, "wt", encoding="utf-8")
+
+            def opener():
+                return gzip.open(path, "wt", encoding="utf-8")
         else:
-            opener = lambda: open(path, "w", encoding="utf-8")
+
+            def opener():
+                return open(path, "w", encoding="utf-8")
 
         with opener() as f:
             for record in records:
@@ -649,6 +707,7 @@ class JSONLExporter(DataExporter):
     def export_stream(self, records: Iterator[Dict], stream: TextIO) -> ExportResult:
         """Export to JSONL stream."""
         import time
+
         start = time.time()
         result = ExportResult()
 
@@ -665,11 +724,13 @@ class JSONLExporter(DataExporter):
 class CSVExporter(DataExporter):
     """Exports CSV data."""
 
-    def __init__(self,
-                 delimiter: str = ",",
-                 quotechar: str = '"',
-                 fieldnames: Optional[List[str]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        delimiter: str = ",",
+        quotechar: str = '"',
+        fieldnames: Optional[List[str]] = None,
+        **kwargs,
+    ):
         """Initialize CSV exporter."""
         super().__init__(**kwargs)
         self._delimiter = delimiter
@@ -679,6 +740,7 @@ class CSVExporter(DataExporter):
     def export_file(self, records: List[Dict], path: Union[str, Path]) -> ExportResult:
         """Export to CSV file."""
         import time
+
         start = time.time()
         result = ExportResult()
         path = Path(path)
@@ -717,6 +779,7 @@ class CSVExporter(DataExporter):
     def export_stream(self, records: Iterator[Dict], stream: TextIO) -> ExportResult:
         """Export to CSV stream."""
         import time
+
         start = time.time()
         result = ExportResult()
 
@@ -749,10 +812,12 @@ class CSVExporter(DataExporter):
 class STIXExporter(DataExporter):
     """Exports STIX 2.1 data."""
 
-    def __init__(self,
-                 bundle_id: Optional[str] = None,
-                 created_by: Optional[str] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        bundle_id: Optional[str] = None,
+        created_by: Optional[str] = None,
+        **kwargs,
+    ):
         """Initialize STIX exporter."""
         super().__init__(**kwargs)
         self._bundle_id = bundle_id
@@ -761,6 +826,7 @@ class STIXExporter(DataExporter):
     def export_file(self, records: List[Dict], path: Union[str, Path]) -> ExportResult:
         """Export to STIX file."""
         import time
+
         start = time.time()
         result = ExportResult()
         path = Path(path)
@@ -779,6 +845,7 @@ class STIXExporter(DataExporter):
     def export_stream(self, records: Iterator[Dict], stream: TextIO) -> ExportResult:
         """Export to STIX stream."""
         import time
+
         start = time.time()
         result = ExportResult()
 
@@ -819,18 +886,18 @@ class STIXExporter(DataExporter):
 class BulkProcessor:
     """Processes data in bulk with batching."""
 
-    def __init__(self,
-                 batch_size: int = 1000,
-                 on_batch: Optional[Callable[[List[Dict]], None]] = None,
-                 on_progress: Optional[Callable[[int, int], None]] = None):
+    def __init__(
+        self,
+        batch_size: int = 1000,
+        on_batch: Optional[Callable[[List[Dict]], None]] = None,
+        on_progress: Optional[Callable[[int, int], None]] = None,
+    ):
         """Initialize bulk processor."""
         self._batch_size = batch_size
         self._on_batch = on_batch
         self._on_progress = on_progress
 
-    def process(self,
-                records: Iterator[Dict],
-                total: Optional[int] = None) -> int:
+    def process(self, records: Iterator[Dict], total: Optional[int] = None) -> int:
         """Process records in batches."""
         batch = []
         processed = 0
@@ -856,9 +923,9 @@ class BulkProcessor:
 
         return processed
 
-    def process_file(self,
-                     path: Union[str, Path],
-                     format: DataFormat = DataFormat.JSONL) -> int:
+    def process_file(
+        self, path: Union[str, Path], format: DataFormat = DataFormat.JSONL
+    ) -> int:
         """Process records from a file."""
         path = Path(path)
 
@@ -876,11 +943,13 @@ class FormatConverter:
         """Initialize converter."""
         self._transformer = transformer
 
-    def convert(self,
-                input_path: Union[str, Path],
-                output_path: Union[str, Path],
-                input_format: DataFormat,
-                output_format: DataFormat) -> Tuple[ImportResult, ExportResult]:
+    def convert(
+        self,
+        input_path: Union[str, Path],
+        output_path: Union[str, Path],
+        input_format: DataFormat,
+        output_format: DataFormat,
+    ) -> Tuple[ImportResult, ExportResult]:
         """Convert file from one format to another."""
         # Get importer
         importer = self._get_importer(input_format)
@@ -890,6 +959,7 @@ class FormatConverter:
 
         # Collect records (we need to re-import since importer doesn't store)
         records = []
+
         def collect(record):
             records.append(record)
 

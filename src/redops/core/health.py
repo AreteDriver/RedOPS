@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 from urllib.parse import urlparse
 
 
@@ -392,7 +392,9 @@ class DiskSpaceCheck(HealthCheck):
 
             if free_percent < self.min_free_percent:
                 return self._create_result(
-                    HealthStatus.DEGRADED if free_percent > 5 else HealthStatus.UNHEALTHY,
+                    HealthStatus.DEGRADED
+                    if free_percent > 5
+                    else HealthStatus.UNHEALTHY,
                     f"Low disk space: {free_percent:.1f}% free",
                     details,
                     error=f"Below minimum {self.min_free_percent}%",
@@ -452,7 +454,7 @@ class MemoryCheck(HealthCheck):
                 # Fallback for non-Linux
                 import resource
 
-                rusage = resource.getrusage(resource.RUSAGE_SELF)
+                resource.getrusage(resource.RUSAGE_SELF)
                 # This is a rough approximation
                 total = 0
                 available = 0
@@ -469,7 +471,9 @@ class MemoryCheck(HealthCheck):
 
                 if free_percent < self.min_free_percent:
                     return self._create_result(
-                        HealthStatus.DEGRADED if free_percent > 5 else HealthStatus.UNHEALTHY,
+                        HealthStatus.DEGRADED
+                        if free_percent > 5
+                        else HealthStatus.UNHEALTHY,
                         f"Low memory: {free_percent:.1f}% available",
                         details,
                         error=f"Below minimum {self.min_free_percent}%",
@@ -504,7 +508,7 @@ class ProcessCheck(HealthCheck):
     """Check if a process is running."""
 
     # Safe characters for process names (alphanumeric, dash, underscore, dot, slash)
-    _SAFE_PROCESS_NAME = re.compile(r'^[\w./:-]+$')
+    _SAFE_PROCESS_NAME = re.compile(r"^[\w./:-]+$")
 
     def __init__(
         self,
@@ -947,7 +951,9 @@ class HealthCheckManager:
             status=overall_status,
             checks=results,
             version=self._version,
-            uptime_seconds=(datetime.now(timezone.utc) - self._start_time).total_seconds(),
+            uptime_seconds=(
+                datetime.now(timezone.utc) - self._start_time
+            ).total_seconds(),
         )
 
         self._last_report = report
@@ -963,7 +969,9 @@ class HealthCheckManager:
             else:
                 # Wrap sync check in executor
                 loop = asyncio.get_event_loop()
-                tasks.append(loop.run_in_executor(None, lambda c=check: self._run_check(c)))
+                tasks.append(
+                    loop.run_in_executor(None, lambda c=check: self._run_check(c))
+                )
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -988,7 +996,9 @@ class HealthCheckManager:
             status=overall_status,
             checks=check_results,
             version=self._version,
-            uptime_seconds=(datetime.now(timezone.utc) - self._start_time).total_seconds(),
+            uptime_seconds=(
+                datetime.now(timezone.utc) - self._start_time
+            ).total_seconds(),
         )
 
         self._last_report = report

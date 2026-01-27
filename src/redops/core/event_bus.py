@@ -12,7 +12,6 @@ import threading
 import time
 import uuid
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -22,22 +21,21 @@ from typing import (
     Callable,
     Coroutine,
     Dict,
-    Generic,
     List,
     Optional,
-    Set,
     Type,
     TypeVar,
     Union,
 )
-from weakref import WeakSet
 
 logger = logging.getLogger(__name__)
 
 
 # Type variables
 T = TypeVar("T", bound="Event")
-HandlerType = Union[Callable[["Event"], None], Callable[["Event"], Coroutine[Any, Any, None]]]
+HandlerType = Union[
+    Callable[["Event"], None], Callable[["Event"], Coroutine[Any, Any, None]]
+]
 
 
 class EventPriority(Enum):
@@ -96,12 +94,16 @@ class Event:
     def _get_data(self) -> Dict[str, Any]:
         """Get event-specific data (override in subclasses)."""
         # Get all fields that aren't base Event fields
-        base_fields = {"id", "timestamp", "source", "correlation_id",
-                       "causation_id", "priority", "metadata"}
-        return {
-            k: v for k, v in self.__dict__.items()
-            if k not in base_fields
+        base_fields = {
+            "id",
+            "timestamp",
+            "source",
+            "correlation_id",
+            "causation_id",
+            "priority",
+            "metadata",
         }
+        return {k: v for k, v in self.__dict__.items() if k not in base_fields}
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Event":
@@ -142,9 +144,11 @@ class DomainEvent(Event):
 
 # Common event types
 
+
 @dataclass
 class ScanStartedEvent(Event):
     """Emitted when a scan starts."""
+
     target: str = ""
     scan_type: str = ""
     options: Dict[str, Any] = field(default_factory=dict)
@@ -153,6 +157,7 @@ class ScanStartedEvent(Event):
 @dataclass
 class ScanCompletedEvent(Event):
     """Emitted when a scan completes."""
+
     target: str = ""
     scan_type: str = ""
     duration_seconds: float = 0.0
@@ -162,6 +167,7 @@ class ScanCompletedEvent(Event):
 @dataclass
 class ScanFailedEvent(Event):
     """Emitted when a scan fails."""
+
     target: str = ""
     scan_type: str = ""
     error: str = ""
@@ -171,6 +177,7 @@ class ScanFailedEvent(Event):
 @dataclass
 class FindingDiscoveredEvent(Event):
     """Emitted when a finding is discovered."""
+
     finding_id: str = ""
     severity: str = ""
     category: str = ""
@@ -181,6 +188,7 @@ class FindingDiscoveredEvent(Event):
 @dataclass
 class ModuleExecutedEvent(Event):
     """Emitted when a pipeline module executes."""
+
     module_name: str = ""
     duration_seconds: float = 0.0
     success: bool = True
@@ -190,6 +198,7 @@ class ModuleExecutedEvent(Event):
 @dataclass
 class ErrorOccurredEvent(Event):
     """Emitted when an error occurs."""
+
     error_type: str = ""
     error_message: str = ""
     stack_trace: Optional[str] = None
@@ -308,8 +317,8 @@ class MemoryEventStore(EventStore):
 
             # Trim if over limit
             if len(self._events) > self._max_events:
-                removed = self._events[:-self._max_events]
-                self._events = self._events[-self._max_events:]
+                removed = self._events[: -self._max_events]
+                self._events = self._events[-self._max_events :]
                 for e in removed:
                     self._by_id.pop(e.id, None)
 
@@ -453,17 +462,19 @@ class DeadLetterQueue:
     ) -> None:
         """Add a failed event to the queue."""
         with self._lock:
-            self._queue.append({
-                "event": event,
-                "handler": str(handler),
-                "error": str(error),
-                "error_type": type(error).__name__,
-                "attempt": attempt,
-                "failed_at": datetime.now().isoformat(),
-            })
+            self._queue.append(
+                {
+                    "event": event,
+                    "handler": str(handler),
+                    "error": str(error),
+                    "error_type": type(error).__name__,
+                    "attempt": attempt,
+                    "failed_at": datetime.now().isoformat(),
+                }
+            )
 
             if len(self._queue) > self._max_size:
-                self._queue = self._queue[-self._max_size:]
+                self._queue = self._queue[-self._max_size :]
 
     def get_all(self) -> List[Dict[str, Any]]:
         """Get all dead letter entries."""
@@ -635,9 +646,11 @@ class EventBus:
             def handle_scan_started(event: ScanStartedEvent):
                 print(f"Scan started: {event.target}")
         """
+
         def decorator(handler: Callable[[T], None]) -> Callable[[T], None]:
             self.subscribe(handler, event_type=event_type, priority=priority)
             return handler
+
         return decorator
 
     def once(
@@ -645,9 +658,11 @@ class EventBus:
         event_type: Type[T],
     ) -> Callable[[Callable[[T], None]], Callable[[T], None]]:
         """Decorator for one-time subscription."""
+
         def decorator(handler: Callable[[T], None]) -> Callable[[T], None]:
             self.subscribe(handler, event_type=event_type, once=True)
             return handler
+
         return decorator
 
     def clear(self) -> None:
@@ -809,6 +824,7 @@ class AsyncEventBus:
         priority: int = 0,
     ) -> Callable:
         """Decorator for subscribing to events."""
+
         def decorator(handler: Callable) -> Callable:
             # Create subscription synchronously (will be added on first use)
             sub = Subscription(
@@ -819,6 +835,7 @@ class AsyncEventBus:
             self._subscriptions.append(sub)
             self._subscriptions.sort(key=lambda s: s.priority, reverse=True)
             return handler
+
         return decorator
 
     async def clear(self) -> None:
@@ -1146,6 +1163,7 @@ class EventEmitter:
 
 
 # Convenience functions
+
 
 def create_event_bus(
     store_type: str = "memory",

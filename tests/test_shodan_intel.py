@@ -1,6 +1,5 @@
 """Tests for Shodan intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -86,7 +85,9 @@ class TestQueryShodanHost:
         """Test when Shodan client not available."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=None):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client", return_value=None
+        ):
             result = query_shodan_host(ctx)
 
         data = result.get("shodan_host")
@@ -112,7 +113,10 @@ class TestQueryShodanHost:
             ],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = query_shodan_host(ctx)
 
         data = result.get("shodan_host")
@@ -137,7 +141,10 @@ class TestQueryShodanHost:
             "data": [],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             with patch("socket.gethostbyname", return_value="93.184.216.34"):
                 result = query_shodan_host(ctx)
 
@@ -167,7 +174,10 @@ class TestQueryShodanDNS:
             "data": [],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = query_shodan_dns(ctx)
 
         data = result.get("shodan_dns")
@@ -190,7 +200,10 @@ class TestSearchShodan:
             "matches": [],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = search_shodan(ctx)
 
         data = result.get("shodan_search")
@@ -206,7 +219,10 @@ class TestSearchShodan:
             "matches": [],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = search_shodan(ctx)
 
         data = result.get("shodan_search")
@@ -230,7 +246,10 @@ class TestSearchShodan:
             ],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = search_shodan(ctx, {"query": "hostname:example.com"})
 
         data = result.get("shodan_search")
@@ -260,7 +279,10 @@ class TestAnalyzeShodanIntel:
             "data": [],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             with patch("socket.gethostbyname", return_value="93.184.216.34"):
                 result = analyze_shodan_intel(ctx)
 
@@ -288,6 +310,7 @@ class TestGetShodanClient:
         try:
             from importlib import reload
             import redops.modules.intel.shodan_intel as shodan_mod
+
             reload(shodan_mod)
 
             # Without shodan installed, should return None
@@ -301,12 +324,14 @@ class TestGetShodanClient:
         mock_shodan = MagicMock()
 
         import sys
+
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {}, clear=True):
                 # Mock settings to return None
                 with patch("redops.cli.settings.get_api_key_direct", return_value=None):
                     from importlib import reload
                     import redops.modules.intel.shodan_intel as shodan_mod
+
                     reload(shodan_mod)
                     result = shodan_mod.get_shodan_client()
                     assert result is None
@@ -318,10 +343,12 @@ class TestGetShodanClient:
         mock_shodan.Shodan.return_value = mock_client
 
         import sys
+
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {"SHODAN_API_KEY": "test-api-key"}):
                 from importlib import reload
                 import redops.modules.intel.shodan_intel as shodan_mod
+
                 reload(shodan_mod)
                 result = shodan_mod.get_shodan_client()
 
@@ -335,11 +362,16 @@ class TestGetShodanClient:
         mock_shodan.Shodan.return_value = mock_client
 
         import sys
+
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {}, clear=True):
-                with patch("redops.cli.settings.get_api_key_direct", return_value="settings-api-key"):
+                with patch(
+                    "redops.cli.settings.get_api_key_direct",
+                    return_value="settings-api-key",
+                ):
                     from importlib import reload
                     import redops.modules.intel.shodan_intel as shodan_mod
+
                     reload(shodan_mod)
                     result = shodan_mod.get_shodan_client()
 
@@ -351,11 +383,16 @@ class TestGetShodanClient:
         mock_shodan = MagicMock()
 
         import sys
+
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {}, clear=True):
-                with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Settings error")):
+                with patch(
+                    "redops.cli.settings.get_api_key_direct",
+                    side_effect=Exception("Settings error"),
+                ):
                     from importlib import reload
                     import redops.modules.intel.shodan_intel as shodan_mod
+
                     reload(shodan_mod)
                     result = shodan_mod.get_shodan_client()
                     assert result is None
@@ -370,8 +407,13 @@ class TestQueryShodanHostEdgeCases:
 
         mock_client = MagicMock()
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
-            with patch("socket.gethostbyname", side_effect=Exception("DNS resolution failed")):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
+            with patch(
+                "socket.gethostbyname", side_effect=Exception("DNS resolution failed")
+            ):
                 result = query_shodan_host(ctx)
 
         data = result.get("shodan_host")
@@ -385,7 +427,10 @@ class TestQueryShodanHostEdgeCases:
         mock_client = MagicMock()
         mock_client.host.side_effect = Exception("No information available for that IP")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = query_shodan_host(ctx)
 
         data = result.get("shodan_host")
@@ -398,7 +443,10 @@ class TestQueryShodanHostEdgeCases:
         mock_client = MagicMock()
         mock_client.host.side_effect = Exception("Rate limit exceeded")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = query_shodan_host(ctx)
 
         data = result.get("shodan_host")
@@ -416,7 +464,10 @@ class TestQueryShodanHostEdgeCases:
             # No vulns field
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = query_shodan_host(ctx)
 
         data = result.get("shodan_host")
@@ -430,7 +481,9 @@ class TestQueryShodanDNSEdgeCases:
         """Test when Shodan client not available for DNS."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=None):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client", return_value=None
+        ):
             result = query_shodan_dns(ctx)
 
         data = result.get("shodan_dns")
@@ -444,7 +497,10 @@ class TestQueryShodanDNSEdgeCases:
         mock_client = MagicMock()
         mock_client.dns.domain_info.side_effect = Exception("DNS lookup failed")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = query_shodan_dns(ctx)
 
         data = result.get("shodan_dns")
@@ -466,7 +522,9 @@ class TestSearchShodanEdgeCases:
         """Test when Shodan client not available for search."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=None):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client", return_value=None
+        ):
             result = search_shodan(ctx)
 
         data = result.get("shodan_search")
@@ -480,7 +538,10 @@ class TestSearchShodanEdgeCases:
         mock_client = MagicMock()
         mock_client.search.side_effect = Exception("Search failed")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = search_shodan(ctx, {"query": "test"})
 
         data = result.get("shodan_search")
@@ -504,7 +565,10 @@ class TestAnalyzeShodanIntelEdgeCases:
             "data": [],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = analyze_shodan_intel(ctx)
 
         intel = result.get("shodan_intel")
@@ -517,7 +581,9 @@ class TestAnalyzeShodanIntelEdgeCases:
         """Test analysis when no hosts returned."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=None):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client", return_value=None
+        ):
             result = analyze_shodan_intel(ctx)
 
         intel = result.get("shodan_intel")
@@ -538,7 +604,10 @@ class TestAnalyzeShodanIntelEdgeCases:
             "data": [],
         }
 
-        with patch("redops.modules.intel.shodan_intel.get_shodan_client", return_value=mock_client):
+        with patch(
+            "redops.modules.intel.shodan_intel.get_shodan_client",
+            return_value=mock_client,
+        ):
             result = analyze_shodan_intel(ctx)
 
         intel = result.get("shodan_intel")

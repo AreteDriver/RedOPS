@@ -1,6 +1,5 @@
 """Tests for observability module: metrics, tracing, logging."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 import json
 import logging
@@ -18,6 +17,7 @@ class TestMetricsCollector:
         }
         with patch.dict("os.environ", env):
             from redops.observability.metrics import MetricsConfig
+
             config = MetricsConfig.from_env()
 
             assert config.enabled is True
@@ -114,6 +114,7 @@ class TestTracingProvider:
         }
         with patch.dict("os.environ", env):
             from redops.observability.tracing import TracingConfig
+
             config = TracingConfig.from_env()
 
             assert config.enabled is True
@@ -214,6 +215,7 @@ class TestStructuredLogging:
         }
         with patch.dict("os.environ", env):
             from redops.observability.logging import LoggingConfig
+
             config = LoggingConfig.from_env()
 
             assert config.level == "DEBUG"
@@ -401,11 +403,8 @@ class TestObservabilityImports:
     def test_metrics_imports(self):
         """Test metrics imports."""
         from redops.observability import (
-            MetricsCollector,
             get_metrics_collector,
             record_scan_duration,
-            record_finding_count,
-            record_api_request,
         )
 
         assert callable(get_metrics_collector)
@@ -414,7 +413,6 @@ class TestObservabilityImports:
     def test_tracing_imports(self):
         """Test tracing imports."""
         from redops.observability import (
-            TracingProvider,
             get_tracer,
             trace_function,
             trace_pipeline,
@@ -431,7 +429,6 @@ class TestObservabilityImports:
         from redops.observability import (
             setup_structured_logging,
             get_logger,
-            LogContext,
         )
 
         assert callable(setup_structured_logging)

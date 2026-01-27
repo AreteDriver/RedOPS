@@ -1,9 +1,8 @@
 """Tests for job queue system."""
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
-import pytest
 
 from redops.jobs.queue import (
     Job,

@@ -90,6 +90,7 @@ def get_hibp_api_key() -> Optional[str]:
     if not api_key:
         try:
             from redops.cli.settings import get_api_key_direct
+
             api_key = get_api_key_direct("hibp")
         except Exception:
             pass
@@ -99,7 +100,7 @@ def get_hibp_api_key() -> Optional[str]:
 def _make_hibp_request(
     endpoint: str,
     api_key: Optional[str] = None,
-    user_agent: str = "RedOPS-Security-Scanner"
+    user_agent: str = "RedOPS-Security-Scanner",
 ) -> Optional[Dict[str, Any]]:
     """Make a request to HIBP API."""
     try:
@@ -198,9 +199,7 @@ def query_hibp_breaches(
     return ctx
 
 
-def query_hibp_domain(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_hibp_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query HIBP for breaches affecting a domain (requires API key).
 
@@ -253,9 +252,7 @@ def query_hibp_domain(
     return ctx
 
 
-def query_hibp_email(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_hibp_email(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query HIBP for breaches affecting an email (requires API key).
 
@@ -306,7 +303,9 @@ def query_hibp_email(
             )
             hibp_data["breaches"].append(breach.to_dict())
 
-        ctx.log(f"HIBP: {len(hibp_data['breaches'])} breaches for {email}", level="INFO")
+        ctx.log(
+            f"HIBP: {len(hibp_data['breaches'])} breaches for {email}", level="INFO"
+        )
     elif isinstance(result, dict) and "error" in result:
         hibp_data["error"] = result["error"]
     elif isinstance(result, dict) and result.get("result") == "not_found":
@@ -317,9 +316,7 @@ def query_hibp_email(
     return ctx
 
 
-def query_hibp_pastes(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_hibp_pastes(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query HIBP for pastes containing an email (requires API key).
 
@@ -430,7 +427,9 @@ def analyze_hibp_intel(
         hibp_intel["summary"]["breached_accounts"] = 0
         hibp_intel["summary"]["unique_breaches"] = 0
 
-    hibp_intel["summary"]["has_breaches"] = hibp_intel["summary"]["breached_accounts"] > 0
+    hibp_intel["summary"]["has_breaches"] = (
+        hibp_intel["summary"]["breached_accounts"] > 0
+    )
 
     ctx.add("hibp_intel", hibp_intel)
 
@@ -444,6 +443,7 @@ def analyze_hibp_intel(
 
 
 # Helper function
+
 
 def _extract_domain(value: str) -> str:
     """Extract domain from URL or hostname."""

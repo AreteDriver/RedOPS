@@ -90,7 +90,13 @@ class FindingDiff:
             return True
         if self.diff_type == DiffType.MODIFIED and self.previous_finding:
             # Severity decreased
-            severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1, "info": 0}
+            severity_order = {
+                "critical": 4,
+                "high": 3,
+                "medium": 2,
+                "low": 1,
+                "info": 0,
+            }
             old_sev = severity_order.get(self.previous_finding.severity.lower(), 0)
             new_sev = severity_order.get(self.finding.severity.lower(), 0)
             return new_sev < old_sev
@@ -102,7 +108,13 @@ class FindingDiff:
         if self.diff_type in (DiffType.NEW, DiffType.REGRESSION):
             return True
         if self.diff_type == DiffType.MODIFIED and self.previous_finding:
-            severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1, "info": 0}
+            severity_order = {
+                "critical": 4,
+                "high": 3,
+                "medium": 2,
+                "low": 1,
+                "info": 0,
+            }
             old_sev = severity_order.get(self.previous_finding.severity.lower(), 0)
             new_sev = severity_order.get(self.finding.severity.lower(), 0)
             return new_sev > old_sev
@@ -426,24 +438,24 @@ class ScanComparator:
     def generate_summary(self, result: ComparisonResult) -> str:
         """Generate a text summary of comparison results."""
         lines = [
-            f"Scan Comparison Summary",
-            f"=" * 50,
+            "Scan Comparison Summary",
+            "=" * 50,
             f"Target: {result.target}",
             f"Baseline: {result.baseline_scan_id} ({result.baseline_date.strftime('%Y-%m-%d')})",
             f"Current:  {result.current_scan_id} ({result.current_date.strftime('%Y-%m-%d')})",
             "",
-            f"Findings Overview:",
+            "Findings Overview:",
             f"  Baseline total: {result.total_baseline}",
             f"  Current total:  {result.total_current}",
             "",
-            f"Changes:",
+            "Changes:",
             f"  New findings:      {len(result.new_findings):3d}",
             f"  Resolved:          {len(result.resolved_findings):3d}",
             f"  Unchanged:         {len(result.unchanged_findings):3d}",
             f"  Modified:          {len(result.modified_findings):3d}",
             f"  Regressions:       {len(result.regression_findings):3d}",
             "",
-            f"Metrics:",
+            "Metrics:",
             f"  Remediation rate:  {result.remediation_rate:.1f}%",
             f"  New finding rate:  {result.new_finding_rate:.1f}%",
         ]

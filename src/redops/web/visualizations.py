@@ -4,7 +4,7 @@ Dashboard visualizations for RedOPS.
 Provides chart data generation and visualization components for the web dashboard.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
 from collections import Counter
@@ -47,10 +47,10 @@ class SeverityDistributionChart:
 
     COLORS = {
         "critical": "#dc3545",  # Red
-        "high": "#fd7e14",       # Orange
-        "medium": "#ffc107",     # Yellow
-        "low": "#28a745",        # Green
-        "info": "#17a2b8",       # Cyan
+        "high": "#fd7e14",  # Orange
+        "medium": "#ffc107",  # Yellow
+        "low": "#28a745",  # Green
+        "info": "#17a2b8",  # Cyan
     }
 
     def __init__(self, findings: List[Dict[str, Any]]):
@@ -73,9 +73,7 @@ class SeverityDistributionChart:
             ChartData for the visualization
         """
         # Count by severity
-        severity_counts = Counter(
-            f.get("severity", "unknown") for f in self.findings
-        )
+        severity_counts = Counter(f.get("severity", "unknown") for f in self.findings)
 
         # Order by severity
         severity_order = ["critical", "high", "medium", "low", "info"]
@@ -100,11 +98,13 @@ class SeverityDistributionChart:
         return ChartData(
             chart_type=chart_type,
             labels=labels,
-            datasets=[{
-                "data": data,
-                "backgroundColor": colors,
-                "borderWidth": 1,
-            }],
+            datasets=[
+                {
+                    "data": data,
+                    "backgroundColor": colors,
+                    "borderWidth": 1,
+                }
+            ],
             title="Findings by Severity",
             options={
                 "responsive": True,
@@ -143,9 +143,7 @@ class ModuleDistributionChart:
             ChartData for the visualization
         """
         # Count by module
-        module_counts = Counter(
-            f.get("module", "unknown") for f in self.findings
-        )
+        module_counts = Counter(f.get("module", "unknown") for f in self.findings)
 
         # Get top modules
         top_modules = module_counts.most_common(max_modules)
@@ -156,12 +154,14 @@ class ModuleDistributionChart:
         return ChartData(
             chart_type="bar",
             labels=labels,
-            datasets=[{
-                "label": "Findings",
-                "data": data,
-                "backgroundColor": "#007bff",
-                "borderWidth": 1,
-            }],
+            datasets=[
+                {
+                    "label": "Findings",
+                    "data": data,
+                    "backgroundColor": "#007bff",
+                    "borderWidth": 1,
+                }
+            ],
             title="Findings by Module",
             options={
                 "responsive": True,
@@ -257,20 +257,22 @@ class TimelineChart:
         return ChartData(
             chart_type="line",
             labels=labels,
-            datasets=[{
-                "label": "Count",
-                "data": data,
-                "fill": True,
-                "borderColor": "#007bff",
-                "backgroundColor": "rgba(0, 123, 255, 0.1)",
-                "tension": 0.4,
-            }],
+            datasets=[
+                {
+                    "label": "Count",
+                    "data": data,
+                    "fill": True,
+                    "borderColor": "#007bff",
+                    "backgroundColor": "rgba(0, 123, 255, 0.1)",
+                    "tension": 0.4,
+                }
+            ],
             title=f"Activity Over Time ({days} days)",
             options={
                 "responsive": True,
                 "plugins": {
                     "legend": {"display": False},
-                    "title": {"display": True, "text": f"Activity Over Time"},
+                    "title": {"display": True, "text": "Activity Over Time"},
                 },
                 "scales": {
                     "y": {"beginAtZero": True},
@@ -408,7 +410,9 @@ class ThreatIntelSummary:
             score = ab.get("data", {}).get("abuseConfidenceScore", 0)
             summary["reputation_scores"]["AbuseIPDB"] = score
             if score > 50:
-                summary["malicious_indicators"].append(f"AbuseIPDB: {score}% confidence")
+                summary["malicious_indicators"].append(
+                    f"AbuseIPDB: {score}% confidence"
+                )
 
         if "urlhaus_result" in self.intel_results:
             uh = self.intel_results["urlhaus_result"]
@@ -423,7 +427,9 @@ class ThreatIntelSummary:
             analysis = us.get("analysis", {})
             if analysis.get("is_malicious"):
                 summary["total_hits"] += 1
-                summary["malicious_indicators"].append(f"URLScan: {analysis.get('verdict')}")
+                summary["malicious_indicators"].append(
+                    f"URLScan: {analysis.get('verdict')}"
+                )
 
         if "otx_indicator" in self.intel_results:
             otx = self.intel_results["otx_indicator"]
@@ -440,13 +446,15 @@ class ThreatIntelSummary:
             summary["reputation_chart"] = ChartData(
                 chart_type="radar",
                 labels=list(summary["reputation_scores"].keys()),
-                datasets=[{
-                    "label": "Reputation Score",
-                    "data": list(summary["reputation_scores"].values()),
-                    "fill": True,
-                    "backgroundColor": "rgba(255, 99, 132, 0.2)",
-                    "borderColor": "rgb(255, 99, 132)",
-                }],
+                datasets=[
+                    {
+                        "label": "Reputation Score",
+                        "data": list(summary["reputation_scores"].values()),
+                        "fill": True,
+                        "backgroundColor": "rgba(255, 99, 132, 0.2)",
+                        "borderColor": "rgb(255, 99, 132)",
+                    }
+                ],
                 title="Reputation Scores",
             ).to_dict()
 
@@ -515,7 +523,8 @@ class ScanSummaryDashboard:
 
         # Threat intel summary
         intel_results = {
-            k: v for k, v in self.context_data.items()
+            k: v
+            for k, v in self.context_data.items()
             if k.endswith("_result") or k.endswith("_indicator")
         }
         if intel_results:
@@ -568,28 +577,28 @@ def generate_dashboard_html(dashboard_data: Dict[str, Any]) -> str:
     <div class="dashboard">
         <div class="header">
             <h1>Security Scan Results</h1>
-            <p>Target: {summary.get('target', 'N/A')} | Pipeline: {summary.get('pipeline', 'N/A')}</p>
+            <p>Target: {summary.get("target", "N/A")} | Pipeline: {summary.get("pipeline", "N/A")}</p>
         </div>
 
         <div class="summary-cards">
             <div class="card">
-                <div class="count">{summary.get('total_findings', 0)}</div>
+                <div class="count">{summary.get("total_findings", 0)}</div>
                 <div class="label">Total Findings</div>
             </div>
             <div class="card critical">
-                <div class="count" style="color: #dc3545;">{summary.get('critical', 0)}</div>
+                <div class="count" style="color: #dc3545;">{summary.get("critical", 0)}</div>
                 <div class="label">Critical</div>
             </div>
             <div class="card high">
-                <div class="count" style="color: #fd7e14;">{summary.get('high', 0)}</div>
+                <div class="count" style="color: #fd7e14;">{summary.get("high", 0)}</div>
                 <div class="label">High</div>
             </div>
             <div class="card medium">
-                <div class="count" style="color: #ffc107;">{summary.get('medium', 0)}</div>
+                <div class="count" style="color: #ffc107;">{summary.get("medium", 0)}</div>
                 <div class="label">Medium</div>
             </div>
             <div class="card low">
-                <div class="count" style="color: #28a745;">{summary.get('low', 0)}</div>
+                <div class="count" style="color: #28a745;">{summary.get("low", 0)}</div>
                 <div class="label">Low</div>
             </div>
         </div>
@@ -605,8 +614,8 @@ def generate_dashboard_html(dashboard_data: Dict[str, Any]) -> str:
     </div>
 
     <script>
-        const severityData = {json.dumps(charts.get('severity', {}))};
-        const modulesData = {json.dumps(charts.get('modules', {}))};
+        const severityData = {json.dumps(charts.get("severity", {}))};
+        const modulesData = {json.dumps(charts.get("modules", {}))};
 
         if (severityData.data) {{
             new Chart(document.getElementById('severityChart'), severityData);

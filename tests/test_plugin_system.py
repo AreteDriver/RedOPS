@@ -9,7 +9,6 @@ import pytest
 
 from redops.core.context import Context as PipelineContext
 from redops.core.plugin_system import (
-    BasePlugin,
     EnricherPlugin,
     HookPlugin,
     HookPoint,
@@ -159,7 +158,9 @@ class SampleHookPlugin(HookPlugin):
     def on_before_module(self, module_name: str, ctx: PipelineContext) -> None:
         self.calls.append(("before_module", module_name))
 
-    def on_after_module(self, module_name: str, result: dict, ctx: PipelineContext) -> None:
+    def on_after_module(
+        self, module_name: str, result: dict, ctx: PipelineContext
+    ) -> None:
         self.calls.append(("after_module", module_name, result))
 
     def on_error(self, error: Exception, ctx: PipelineContext) -> None:
@@ -639,9 +640,7 @@ class TestPluginRegistry:
         registry.register(SampleHookPlugin)
         ctx = PipelineContext(target="test.com")
 
-        registry.execute_hooks(
-            HookPoint.BEFORE_MODULE, ctx, module_name="test_module"
-        )
+        registry.execute_hooks(HookPoint.BEFORE_MODULE, ctx, module_name="test_module")
 
         hook = registry.get_instance("sample_hook")
         assert ("before_module", "test_module") in hook.calls
@@ -730,7 +729,7 @@ class DiscoveredPlugin(ModulePlugin):
 """)
 
             registry.add_plugin_directory(tmpdir)
-            discovered = registry.discover_plugins()
+            registry.discover_plugins()
 
             assert "discovered_plugin" in registry.plugins
 

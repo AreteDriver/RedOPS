@@ -1,12 +1,8 @@
 """Tests for ticketing integrations: Jira and GitHub Issues."""
 
-import pytest
 from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone
-import json
 
 from redops.core.context import Context
-from redops.core.models import Finding, RiskLevel
 
 
 class TestJiraClient:
@@ -23,6 +19,7 @@ class TestJiraClient:
         }
         with patch.dict("os.environ", env):
             from redops.modules.ticketing.jira import JiraConfig
+
             config = JiraConfig.from_env()
 
             assert config.base_url == env["JIRA_BASE_URL"]
@@ -135,9 +132,7 @@ class TestJiraClient:
         """Test issue creation with error response."""
         mock_response = MagicMock()
         mock_response.status_code = 400
-        mock_response.json.return_value = {
-            "errorMessages": ["Project does not exist"]
-        }
+        mock_response.json.return_value = {"errorMessages": ["Project does not exist"]}
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.ticketing.jira.HAS_REQUESTS", True):
@@ -209,32 +204,44 @@ class TestJiraClient:
             from redops.modules.ticketing.jira import create_jira_issues_from_findings
 
             ctx = Context(target="example.com")
-            ctx.add("finding_sqli", {
-                "title": "SQL Injection",
-                "severity": "critical",
-                "module": "test",
-                "description": "Found SQLi",
-            })
-            ctx.add("finding_xss", {
-                "title": "XSS",
-                "severity": "medium",
-                "module": "test",
-                "description": "Found XSS",
-            })
-            ctx.add("finding_info", {
-                "title": "Info Disclosure",
-                "severity": "low",  # Below threshold
-                "module": "test",
-                "description": "Minor info",
-            })
+            ctx.add(
+                "finding_sqli",
+                {
+                    "title": "SQL Injection",
+                    "severity": "critical",
+                    "module": "test",
+                    "description": "Found SQLi",
+                },
+            )
+            ctx.add(
+                "finding_xss",
+                {
+                    "title": "XSS",
+                    "severity": "medium",
+                    "module": "test",
+                    "description": "Found XSS",
+                },
+            )
+            ctx.add(
+                "finding_info",
+                {
+                    "title": "Info Disclosure",
+                    "severity": "low",  # Below threshold
+                    "module": "test",
+                    "description": "Minor info",
+                },
+            )
 
-            result = create_jira_issues_from_findings(ctx, {
-                "base_url": "https://test.atlassian.net",
-                "username": "user",
-                "api_token": "token",
-                "project_key": "SEC",
-                "min_severity": "medium",
-            })
+            create_jira_issues_from_findings(
+                ctx,
+                {
+                    "base_url": "https://test.atlassian.net",
+                    "username": "user",
+                    "api_token": "token",
+                    "project_key": "SEC",
+                    "min_severity": "medium",
+                },
+            )
 
             assert "jira_issues_result" in ctx.data
             # Should create 2 issues (critical and medium, but not low)
@@ -255,6 +262,7 @@ class TestGitHubClient:
         }
         with patch.dict("os.environ", env):
             from redops.modules.ticketing.github import GitHubConfig
+
             config = GitHubConfig.from_env()
 
             assert config.token == env["GITHUB_TOKEN"]
@@ -326,7 +334,11 @@ class TestGitHubClient:
         """Test issue creation with labels and assignees."""
         mock_response = MagicMock()
         mock_response.status_code = 201
-        mock_response.json.return_value = {"id": 1, "number": 1, "html_url": "https://github.com/test"}
+        mock_response.json.return_value = {
+            "id": 1,
+            "number": 1,
+            "html_url": "https://github.com/test",
+        }
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.ticketing.github.HAS_REQUESTS", True):
@@ -341,7 +353,7 @@ class TestGitHubClient:
             )
             client = GitHubClient(config)
 
-            result = client.create_issue(
+            client.create_issue(
                 title="Test",
                 body="Body",
                 labels=["extra-label"],
@@ -467,7 +479,9 @@ class TestGitHubClient:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_requests.patch.return_value = mock_response
-        mock_requests.post.return_value = MagicMock(status_code=201, json=MagicMock(return_value={}))
+        mock_requests.post.return_value = MagicMock(
+            status_code=201, json=MagicMock(return_value={})
+        )
 
         with patch("redops.modules.ticketing.github.HAS_REQUESTS", True):
             from redops.modules.ticketing.github import GitHubClient, GitHubConfig
@@ -484,38 +498,56 @@ class TestGitHubClient:
         """Test creating multiple issues from findings."""
         mock_response = MagicMock()
         mock_response.status_code = 201
-        mock_response.json.return_value = {"id": 1, "number": 1, "html_url": "https://github.com/test"}
+        mock_response.json.return_value = {
+            "id": 1,
+            "number": 1,
+            "html_url": "https://github.com/test",
+        }
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.ticketing.github.HAS_REQUESTS", True):
-            from redops.modules.ticketing.github import create_github_issues_from_findings
+            from redops.modules.ticketing.github import (
+                create_github_issues_from_findings,
+            )
 
             ctx = Context(target="example.com")
-            ctx.add("finding_high", {
-                "title": "High Severity",
-                "severity": "high",
-                "module": "test",
-                "description": "High issue",
-            })
-            ctx.add("finding_medium", {
-                "title": "Medium Severity",
-                "severity": "medium",
-                "module": "test",
-                "description": "Medium issue",
-            })
-            ctx.add("finding_low", {
-                "title": "Low Severity",
-                "severity": "low",  # Below threshold
-                "module": "test",
-                "description": "Low issue",
-            })
+            ctx.add(
+                "finding_high",
+                {
+                    "title": "High Severity",
+                    "severity": "high",
+                    "module": "test",
+                    "description": "High issue",
+                },
+            )
+            ctx.add(
+                "finding_medium",
+                {
+                    "title": "Medium Severity",
+                    "severity": "medium",
+                    "module": "test",
+                    "description": "Medium issue",
+                },
+            )
+            ctx.add(
+                "finding_low",
+                {
+                    "title": "Low Severity",
+                    "severity": "low",  # Below threshold
+                    "module": "test",
+                    "description": "Low issue",
+                },
+            )
 
-            result = create_github_issues_from_findings(ctx, {
-                "token": "test-token",
-                "owner": "myorg",
-                "repo": "myrepo",
-                "min_severity": "medium",
-            })
+            create_github_issues_from_findings(
+                ctx,
+                {
+                    "token": "test-token",
+                    "owner": "myorg",
+                    "repo": "myrepo",
+                    "min_severity": "medium",
+                },
+            )
 
             assert "github_issues_result" in ctx.data
             # Should create 2 issues (high and medium, but not low)
@@ -530,8 +562,6 @@ class TestTicketingModuleImports:
         from redops.modules.ticketing import (
             create_jira_issue,
             create_jira_issues_from_findings,
-            JiraClient,
-            JiraConfig,
         )
 
         assert callable(create_jira_issue)
@@ -542,8 +572,6 @@ class TestTicketingModuleImports:
         from redops.modules.ticketing import (
             create_github_issue,
             create_github_issues_from_findings,
-            GitHubClient,
-            GitHubConfig,
         )
 
         assert callable(create_github_issue)

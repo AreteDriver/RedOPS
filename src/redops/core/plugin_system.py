@@ -23,16 +23,18 @@ PipelineContext = Context
 
 class PluginType(Enum):
     """Types of plugins supported."""
-    MODULE = "module"           # Analysis/recon modules
-    REPORTER = "reporter"       # Output formatters
-    ENRICHER = "enricher"       # Data enrichment
-    VALIDATOR = "validator"     # Data validation
-    TRANSFORMER = "transformer" # Data transformation
-    HOOK = "hook"              # Event hooks
+
+    MODULE = "module"  # Analysis/recon modules
+    REPORTER = "reporter"  # Output formatters
+    ENRICHER = "enricher"  # Data enrichment
+    VALIDATOR = "validator"  # Data validation
+    TRANSFORMER = "transformer"  # Data transformation
+    HOOK = "hook"  # Event hooks
 
 
 class PluginState(Enum):
     """Plugin lifecycle states."""
+
     DISCOVERED = "discovered"
     LOADED = "loaded"
     INITIALIZED = "initialized"
@@ -43,6 +45,7 @@ class PluginState(Enum):
 
 class HookPoint(Enum):
     """Available hook points in the pipeline."""
+
     BEFORE_PIPELINE = "before_pipeline"
     AFTER_PIPELINE = "after_pipeline"
     BEFORE_MODULE = "before_module"
@@ -57,6 +60,7 @@ class HookPoint(Enum):
 @dataclass
 class PluginMetadata:
     """Metadata for a plugin."""
+
     name: str
     version: str
     description: str = ""
@@ -72,6 +76,7 @@ class PluginMetadata:
 @dataclass
 class PluginInfo:
     """Information about a registered plugin."""
+
     metadata: PluginMetadata
     state: PluginState
     instance: Any = None
@@ -82,21 +87,25 @@ class PluginInfo:
 
 class PluginError(Exception):
     """Base exception for plugin errors."""
+
     pass
 
 
 class PluginLoadError(PluginError):
     """Raised when a plugin fails to load."""
+
     pass
 
 
 class PluginNotFoundError(PluginError):
     """Raised when a plugin is not found."""
+
     pass
 
 
 class PluginValidationError(PluginError):
     """Raised when plugin validation fails."""
+
     pass
 
 
@@ -251,7 +260,9 @@ class HookPlugin(BasePlugin):
         """Called before each module execution."""
         pass
 
-    def on_after_module(self, module_name: str, result: dict, ctx: PipelineContext) -> None:
+    def on_after_module(
+        self, module_name: str, result: dict, ctx: PipelineContext
+    ) -> None:
         """Called after each module execution."""
         pass
 
@@ -361,8 +372,15 @@ class PluginRegistry:
         if not issubclass(obj, BasePlugin):
             return False
 
-        if obj in (BasePlugin, ModulePlugin, ReporterPlugin,
-                   EnricherPlugin, ValidatorPlugin, TransformerPlugin, HookPlugin):
+        if obj in (
+            BasePlugin,
+            ModulePlugin,
+            ReporterPlugin,
+            EnricherPlugin,
+            ValidatorPlugin,
+            TransformerPlugin,
+            HookPlugin,
+        ):
             return False
 
         # Must have get_metadata method
@@ -560,15 +578,15 @@ class PluginRegistry:
             List of matching plugins
         """
         return [
-            info for info in self._plugins.values()
+            info
+            for info in self._plugins.values()
             if info.metadata.plugin_type == plugin_type
         ]
 
     def get_active(self) -> list[PluginInfo]:
         """Get all active plugins."""
         return [
-            info for info in self._plugins.values()
-            if info.state == PluginState.ACTIVE
+            info for info in self._plugins.values() if info.state == PluginState.ACTIVE
         ]
 
     def get_by_tag(self, tag: str) -> list[PluginInfo]:
@@ -581,10 +599,7 @@ class PluginRegistry:
         Returns:
             List of matching plugins
         """
-        return [
-            info for info in self._plugins.values()
-            if tag in info.metadata.tags
-        ]
+        return [info for info in self._plugins.values() if tag in info.metadata.tags]
 
     def enable(self, name: str) -> bool:
         """
@@ -775,9 +790,10 @@ def plugin(
             def execute(self, ctx):
                 ...
     """
+
     def decorator(cls: type) -> type:
         # Store metadata on the class
-        original_get_metadata = getattr(cls, "get_metadata", None)
+        getattr(cls, "get_metadata", None)
 
         @classmethod
         def get_metadata(cls) -> PluginMetadata:

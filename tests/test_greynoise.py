@@ -1,6 +1,5 @@
 """Tests for the GreyNoise threat intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from redops.core.context import Context
 from redops.modules.threat_intel.greynoise import (
@@ -10,7 +9,6 @@ from redops.modules.threat_intel.greynoise import (
     analyze_greynoise_results,
     get_greynoise_summary,
     _is_valid_ip,
-    HAS_REQUESTS,
 )
 
 
@@ -261,14 +259,17 @@ class TestGetGreynoiseSummary:
     def test_with_results(self):
         """Test summary with results."""
         ctx = Context()
-        ctx.add("greynoise_result", {
-            "ip": "8.8.8.8",
-            "noise": False,
-            "classification": "benign",
-            "actor": "GOOGLE",
-            "tags": ["DNS"],
-            "query_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "greynoise_result",
+            {
+                "ip": "8.8.8.8",
+                "noise": False,
+                "classification": "benign",
+                "actor": "GOOGLE",
+                "tags": ["DNS"],
+                "query_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_greynoise_summary(ctx)
 

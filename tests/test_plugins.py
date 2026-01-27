@@ -9,17 +9,14 @@ import pytest
 from redops.plugins.scanner import (
     Finding,
     ScannerCapability,
-    ScannerConfig,
     ScannerPlugin,
     ScannerResult,
-    ScanPhase,
     Severity,
     CompositeScanner,
 )
 from redops.plugins.manifest import (
     PluginManifest,
     PluginDependency,
-    PluginRequirement,
     ManifestError,
     load_manifest,
     save_manifest,

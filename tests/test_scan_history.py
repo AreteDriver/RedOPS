@@ -3,7 +3,6 @@
 import pytest
 import tempfile
 import os
-from pathlib import Path
 
 from redops.core.scan_history import (
     ScanHistoryDB,
@@ -92,7 +91,7 @@ class TestScanHistoryDB:
     def test_list_scans_filter_by_status(self, db):
         """Test listing scans filtered by status."""
         scan1 = db.create_scan("example.com")
-        scan2 = db.create_scan("test.org")
+        db.create_scan("test.org")
 
         db.update_scan(scan1, status="completed")
         # scan2 stays as "running"
@@ -276,7 +275,7 @@ class TestStats:
     def test_get_stats_with_data(self, db):
         """Test stats with data."""
         scan1 = db.create_scan("example.com")
-        scan2 = db.create_scan("test.org")
+        db.create_scan("test.org")
         db.update_scan(scan1, status="completed")
 
         db.add_finding(scan1, "mod", "critical", "F1")

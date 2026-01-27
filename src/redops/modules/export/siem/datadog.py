@@ -7,7 +7,6 @@ Exports RedOPS findings and scan results to Datadog Logs and Events API.
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 import os
-import json
 from dataclasses import dataclass
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -15,6 +14,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -175,7 +175,11 @@ class DatadogExporter:
             "finding_data": finding.data,
         }
 
-        tags = [f"severity:{finding.severity.value}" if finding.severity else "severity:unknown"]
+        tags = [
+            f"severity:{finding.severity.value}"
+            if finding.severity
+            else "severity:unknown"
+        ]
         self.add_log(f"Security Finding: {finding.title}", data, level, tags)
 
     def flush_logs(self) -> Dict[str, Any]:
@@ -299,7 +303,9 @@ class DatadogExporter:
         except requests.exceptions.RequestException as e:
             return {"success": False, "error": str(e)}
 
-    def export_context(self, ctx: Context, scan_id: Optional[str] = None) -> Dict[str, Any]:
+    def export_context(
+        self, ctx: Context, scan_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Export all context data to Datadog.
 
@@ -340,7 +346,13 @@ class DatadogExporter:
                     **value,
                 }
                 severity = value.get("severity", "unknown")
-                level = "error" if severity in ("critical", "high") else "warning" if severity == "medium" else "info"
+                level = (
+                    "error"
+                    if severity in ("critical", "high")
+                    else "warning"
+                    if severity == "medium"
+                    else "info"
+                )
                 self.add_log(
                     f"Finding: {value.get('title', 'Unknown')}",
                     finding_data,
@@ -381,7 +393,8 @@ class DatadogExporter:
         if high_severity_findings:
             event_result = self.send_event(
                 title=f"RedOPS Scan Alert: {finding_count} findings for {ctx.target}",
-                text=f"High severity findings:\n" + "\n".join(f"- {f}" for f in high_severity_findings[:10]),
+                text="High severity findings:\n"
+                + "\n".join(f"- {f}" for f in high_severity_findings[:10]),
                 alert_type="error",
                 tags=[f"target:{ctx.target}", f"scan_id:{scan_id}"],
                 aggregation_key=f"redops_scan_{ctx.target}",
@@ -391,9 +404,7 @@ class DatadogExporter:
         return result
 
 
-def export_to_datadog(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def export_to_datadog(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Export scan results to Datadog.
 

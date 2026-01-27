@@ -1,9 +1,7 @@
 """Tests for API client module."""
 
-import json
 import threading
 import time
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,20 +20,17 @@ from redops.core.api_client import (
     HttpError,
     RateLimiter,
     ResponseCache,
-    HttpTransport,
-    UrllibTransport,
     MockTransport,
     ApiClient,
     # Convenience
     create_api_client,
-    simple_get,
-    simple_post,
 )
 
 
 # =============================================================================
 # HttpMethod Tests
 # =============================================================================
+
 
 class TestHttpMethod:
     """Tests for HttpMethod enum."""
@@ -64,6 +59,7 @@ class TestCircuitState:
 # =============================================================================
 # RetryConfig Tests
 # =============================================================================
+
 
 class TestRetryConfig:
     """Tests for RetryConfig."""
@@ -117,6 +113,7 @@ class TestRetryConfig:
 # =============================================================================
 # CircuitBreaker Tests
 # =============================================================================
+
 
 class TestCircuitBreaker:
     """Tests for CircuitBreaker."""
@@ -198,6 +195,7 @@ class TestCircuitBreaker:
 # HttpRequest Tests
 # =============================================================================
 
+
 class TestHttpRequest:
     """Tests for HttpRequest."""
 
@@ -244,6 +242,7 @@ class TestHttpRequest:
 # =============================================================================
 # HttpResponse Tests
 # =============================================================================
+
 
 class TestHttpResponse:
     """Tests for HttpResponse."""
@@ -301,6 +300,7 @@ class TestHttpResponse:
 # RateLimiter Tests
 # =============================================================================
 
+
 class TestRateLimiter:
     """Tests for RateLimiter."""
 
@@ -345,6 +345,7 @@ class TestRateLimiter:
 # =============================================================================
 # ResponseCache Tests
 # =============================================================================
+
 
 class TestResponseCache:
     """Tests for ResponseCache."""
@@ -409,12 +410,14 @@ class TestResponseCache:
 
         for i in range(5):
             req = HttpRequest(method=HttpMethod.GET, url=f"https://api.example.com/{i}")
-            resp = HttpResponse(status_code=200, headers={}, body=f"{i}".encode(), request=req)
+            resp = HttpResponse(
+                status_code=200, headers={}, body=f"{i}".encode(), request=req
+            )
             cache.set(req, resp)
 
         # Should only have 3 entries
         # Oldest should be evicted
-        req0 = HttpRequest(method=HttpMethod.GET, url="https://api.example.com/0")
+        HttpRequest(method=HttpMethod.GET, url="https://api.example.com/0")
         req4 = HttpRequest(method=HttpMethod.GET, url="https://api.example.com/4")
 
         assert cache.get(req4) is not None
@@ -431,6 +434,7 @@ class TestResponseCache:
 # =============================================================================
 # MockTransport Tests
 # =============================================================================
+
 
 class TestMockTransport:
     """Tests for MockTransport."""
@@ -495,6 +499,7 @@ class TestMockTransport:
 # =============================================================================
 # ApiClient Tests
 # =============================================================================
+
 
 class TestApiClient:
     """Tests for ApiClient."""
@@ -712,6 +717,7 @@ class TestApiClient:
 # Convenience Function Tests
 # =============================================================================
 
+
 class TestConvenienceFunctions:
     """Tests for convenience functions."""
 
@@ -735,6 +741,7 @@ class TestConvenienceFunctions:
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestApiClientIntegration:
     """Integration tests for API client."""

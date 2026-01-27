@@ -16,6 +16,7 @@ from redops.core.models import Finding
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -81,6 +82,7 @@ class ElasticExporter:
             headers["Authorization"] = f"ApiKey {self.config.api_key}"
         elif self.config.username and self.config.password:
             import base64
+
             credentials = f"{self.config.username}:{self.config.password}"
             encoded = base64.b64encode(credentials.encode()).decode()
             headers["Authorization"] = f"Basic {encoded}"
@@ -120,11 +122,13 @@ class ElasticExporter:
         if "@timestamp" not in data:
             data["@timestamp"] = datetime.now(timezone.utc).isoformat()
 
-        self._pending_docs.append({
-            "index": index_name,
-            "id": doc_id,
-            "doc": data,
-        })
+        self._pending_docs.append(
+            {
+                "index": index_name,
+                "id": doc_id,
+                "doc": data,
+            }
+        )
 
     def add_finding(self, finding: Finding, scan_id: Optional[str] = None) -> None:
         """
@@ -226,7 +230,9 @@ class ElasticExporter:
                 "attempted": total_docs,
             }
 
-    def export_context(self, ctx: Context, scan_id: Optional[str] = None) -> Dict[str, Any]:
+    def export_context(
+        self, ctx: Context, scan_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Export all context data to Elasticsearch.
 
@@ -322,8 +328,8 @@ class ElasticExporter:
                         "pipeline_name": {"type": "keyword"},
                         "result_type": {"type": "keyword"},
                     }
-                }
-            }
+                },
+            },
         }
 
         headers = self._get_auth_headers()
@@ -350,9 +356,7 @@ class ElasticExporter:
             return {"success": False, "error": str(e)}
 
 
-def export_to_elastic(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def export_to_elastic(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Export scan results to Elasticsearch.
 
@@ -390,7 +394,10 @@ def export_to_elastic(
     result = exporter.export_context(ctx, scan_id=params.get("scan_id"))
 
     if result.get("success"):
-        ctx.log(f"Elasticsearch export complete: {result.get('indexed', 0)} documents", level="INFO")
+        ctx.log(
+            f"Elasticsearch export complete: {result.get('indexed', 0)} documents",
+            level="INFO",
+        )
     else:
         ctx.log(f"Elasticsearch export failed: {result.get('error')}", level="WARNING")
 

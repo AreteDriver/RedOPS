@@ -111,8 +111,7 @@ class AIAssistant:
                 self.client = ollama.Client(host=base_url)
             except ImportError:
                 raise ImportError(
-                    "Ollama library not installed. "
-                    "Install with: pip install ollama"
+                    "Ollama library not installed. Install with: pip install ollama"
                 )
         elif self.provider == "groq":
             try:
@@ -121,8 +120,7 @@ class AIAssistant:
                 self.client = Groq(api_key=self.api_key)
             except ImportError:
                 raise ImportError(
-                    "Groq library not installed. "
-                    "Install with: pip install groq"
+                    "Groq library not installed. Install with: pip install groq"
                 )
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
@@ -193,7 +191,8 @@ class AIAssistant:
             messages=[
                 {
                     "role": "system",
-                    "content": system_prompt or "You are a security analysis assistant.",
+                    "content": system_prompt
+                    or "You are a security analysis assistant.",
                 },
                 {"role": "user", "content": prompt},
             ],

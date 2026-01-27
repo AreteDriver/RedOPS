@@ -6,11 +6,9 @@ and code structure with multiple output formats.
 """
 
 import ast
-import importlib
 import inspect
 import json
 import re
-import textwrap
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
@@ -475,7 +473,9 @@ class CodeAnalyzer:
 
         return class_doc
 
-    def _analyze_function(self, node: Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> FunctionDoc:
+    def _analyze_function(
+        self, node: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+    ) -> FunctionDoc:
         """Analyze a function definition."""
         func_doc = FunctionDoc(
             name=node.name,
@@ -883,13 +883,19 @@ class HTMLFormatter(DocFormatter):
         html = []
 
         html.append(f'<div class="{self._prefix}-module">')
-        html.append(f'<h1 class="{self._prefix}-title">Module: <code>{doc.name}</code></h1>')
+        html.append(
+            f'<h1 class="{self._prefix}-title">Module: <code>{doc.name}</code></h1>'
+        )
 
         if doc.summary:
-            html.append(f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>')
+            html.append(
+                f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>'
+            )
 
         if doc.description:
-            html.append(f'<div class="{self._prefix}-description">{self._escape(doc.description)}</div>')
+            html.append(
+                f'<div class="{self._prefix}-description">{self._escape(doc.description)}</div>'
+            )
 
         # Classes
         for cls in doc.classes:
@@ -908,14 +914,16 @@ class HTMLFormatter(DocFormatter):
         html = []
 
         html.append(f'<div class="{self._prefix}-class" id="{doc.name.lower()}">')
-        html.append(f'<h2>Class: <code>{doc.name}</code></h2>')
+        html.append(f"<h2>Class: <code>{doc.name}</code></h2>")
 
         if doc.bases:
             bases = ", ".join(f"<code>{b}</code>" for b in doc.bases)
             html.append(f'<p class="{self._prefix}-bases">Inherits from: {bases}</p>')
 
         if doc.summary:
-            html.append(f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>')
+            html.append(
+                f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>'
+            )
 
         # Methods
         if doc.methods:
@@ -940,15 +948,21 @@ class HTMLFormatter(DocFormatter):
         )
 
         if doc.summary:
-            html.append(f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>')
+            html.append(
+                f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>'
+            )
 
         if doc.parameters:
             html.append(f'<div class="{self._prefix}-params">')
             html.append("<h4>Parameters</h4>")
             html.append("<ul>")
             for param in doc.parameters:
-                type_str = f" (<code>{param.type_hint}</code>)" if param.type_hint else ""
-                desc = f" - {self._escape(param.description)}" if param.description else ""
+                type_str = (
+                    f" (<code>{param.type_hint}</code>)" if param.type_hint else ""
+                )
+                desc = (
+                    f" - {self._escape(param.description)}" if param.description else ""
+                )
                 html.append(f"<li><strong>{param.name}</strong>{type_str}{desc}</li>")
             html.append("</ul>")
             html.append("</div>")
@@ -981,7 +995,9 @@ class HTMLFormatter(DocFormatter):
         html.append(f"<h1>Package: <code>{doc.name}</code></h1>")
 
         if doc.summary:
-            html.append(f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>')
+            html.append(
+                f'<p class="{self._prefix}-summary">{self._escape(doc.summary)}</p>'
+            )
 
         if doc.modules:
             html.append("<h2>Modules</h2>")

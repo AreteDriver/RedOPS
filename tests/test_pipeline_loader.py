@@ -2,7 +2,6 @@
 
 import pytest
 import json
-from pathlib import Path
 
 from redops.pipelines.loader import PipelineLoader
 from redops.pipelines.schemas import Pipeline, PipelineStep, PipelineMetadata
@@ -17,15 +16,15 @@ class TestPipelineLoaderLoad:
             "metadata": {
                 "name": "test_pipeline",
                 "description": "Test pipeline",
-                "version": "1.0"
+                "version": "1.0",
             },
             "steps": [
                 {
                     "name": "Step 1",
                     "module": "recon.domains.profile_domain",
-                    "params": {}
+                    "params": {},
                 }
-            ]
+            ],
         }
 
         pipeline_file = tmp_path / "pipeline.json"
@@ -41,7 +40,7 @@ class TestPipelineLoaderLoad:
         """Test loading with string path."""
         pipeline_data = {
             "metadata": {"name": "test", "version": "1.0"},
-            "steps": [{"name": "Step", "module": "mod.func"}]
+            "steps": [{"name": "Step", "module": "mod.func"}],
         }
 
         pipeline_file = tmp_path / "pipeline.json"
@@ -67,9 +66,7 @@ class TestPipelineLoaderLoad:
     def test_load_validation_failure(self, tmp_path):
         """Test loading file that fails validation."""
         # Missing required 'metadata' field
-        pipeline_data = {
-            "steps": [{"name": "Step", "module": "mod.func"}]
-        }
+        pipeline_data = {"steps": [{"name": "Step", "module": "mod.func"}]}
 
         pipeline_file = tmp_path / "pipeline.json"
         pipeline_file.write_text(json.dumps(pipeline_data))
@@ -79,10 +76,7 @@ class TestPipelineLoaderLoad:
 
     def test_load_empty_steps(self, tmp_path):
         """Test loading pipeline with no steps."""
-        pipeline_data = {
-            "metadata": {"name": "test", "version": "1.0"},
-            "steps": []
-        }
+        pipeline_data = {"metadata": {"name": "test", "version": "1.0"}, "steps": []}
 
         pipeline_file = tmp_path / "pipeline.json"
         pipeline_file.write_text(json.dumps(pipeline_data))
@@ -94,9 +88,7 @@ class TestPipelineLoaderLoad:
         """Test loading pipeline with all steps disabled."""
         pipeline_data = {
             "metadata": {"name": "test", "version": "1.0"},
-            "steps": [
-                {"name": "Step", "module": "mod.func", "enabled": False}
-            ]
+            "steps": [{"name": "Step", "module": "mod.func", "enabled": False}],
         }
 
         pipeline_file = tmp_path / "pipeline.json"
@@ -113,7 +105,7 @@ class TestPipelineLoaderLoad:
                 {"name": "DNS", "module": "recon.dns.scan"},
                 {"name": "Tech", "module": "recon.tech.detect"},
                 {"name": "Vuln", "module": "vuln.scan.basic"},
-            ]
+            ],
         }
 
         pipeline_file = tmp_path / "pipeline.json"
@@ -137,10 +129,10 @@ class TestPipelineLoaderLoad:
                     "params": {
                         "depth": 3,
                         "timeout": 30,
-                        "options": ["verbose", "force"]
-                    }
+                        "options": ["verbose", "force"],
+                    },
                 }
-            ]
+            ],
         }
 
         pipeline_file = tmp_path / "pipeline.json"
@@ -157,10 +149,7 @@ class TestPipelineLoaderLoad:
         pipeline_data = {
             "metadata": {"name": "test", "version": "1.0"},
             "steps": [{"name": "Step", "module": "mod.func"}],
-            "config": {
-                "max_retries": 3,
-                "output_format": "json"
-            }
+            "config": {"max_retries": 3, "output_format": "json"},
         }
 
         pipeline_file = tmp_path / "pipeline.json"
@@ -175,9 +164,7 @@ class TestPipelineLoaderLoad:
         """Test loading pipeline with plugin reference."""
         pipeline_data = {
             "metadata": {"name": "test", "version": "1.0"},
-            "steps": [
-                {"name": "Custom", "module": "plugin:my_custom_plugin"}
-            ]
+            "steps": [{"name": "Custom", "module": "plugin:my_custom_plugin"}],
         }
 
         pipeline_file = tmp_path / "pipeline.json"
@@ -195,7 +182,7 @@ class TestPipelineLoaderLoadFromDict:
         """Test loading from valid dictionary."""
         data = {
             "metadata": {"name": "test", "version": "1.0"},
-            "steps": [{"name": "Step", "module": "mod.func"}]
+            "steps": [{"name": "Step", "module": "mod.func"}],
         }
 
         pipeline = PipelineLoader.load_from_dict(data)
@@ -220,9 +207,9 @@ class TestPipelineLoaderLoadFromDict:
                 "description": "A complete description",
                 "version": "2.5.1",
                 "author": "Test Author",
-                "tags": ["security", "recon", "automated"]
+                "tags": ["security", "recon", "automated"],
             },
-            "steps": [{"name": "Step", "module": "mod.func"}]
+            "steps": [{"name": "Step", "module": "mod.func"}],
         }
 
         pipeline = PipelineLoader.load_from_dict(data)
@@ -238,9 +225,17 @@ class TestPipelineLoaderLoadFromDict:
         data = {
             "metadata": {"name": "test", "version": "1.0"},
             "steps": [
-                {"name": "Critical", "module": "mod.critical", "continue_on_error": False},
-                {"name": "Optional", "module": "mod.optional", "continue_on_error": True},
-            ]
+                {
+                    "name": "Critical",
+                    "module": "mod.critical",
+                    "continue_on_error": False,
+                },
+                {
+                    "name": "Optional",
+                    "module": "mod.optional",
+                    "continue_on_error": True,
+                },
+            ],
         }
 
         pipeline = PipelineLoader.load_from_dict(data)
@@ -258,7 +253,7 @@ class TestPipelineLoaderSave:
             metadata=PipelineMetadata(name="saved_pipeline", version="1.0"),
             steps=[
                 PipelineStep(name="Step 1", module="mod.step1"),
-            ]
+            ],
         )
 
         output_file = tmp_path / "output.json"
@@ -274,7 +269,7 @@ class TestPipelineLoaderSave:
         """Test saving with string path."""
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="test", version="1.0"),
-            steps=[PipelineStep(name="Step", module="mod.func")]
+            steps=[PipelineStep(name="Step", module="mod.func")],
         )
 
         output_file = tmp_path / "output.json"
@@ -286,7 +281,7 @@ class TestPipelineLoaderSave:
         """Test save creates parent directories."""
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="test", version="1.0"),
-            steps=[PipelineStep(name="Step", module="mod.func")]
+            steps=[PipelineStep(name="Step", module="mod.func")],
         )
 
         output_file = tmp_path / "nested" / "path" / "output.json"
@@ -303,7 +298,7 @@ class TestPipelineLoaderSave:
                 description="Full description",
                 version="3.0",
                 author="Author",
-                tags=["tag1", "tag2"]
+                tags=["tag1", "tag2"],
             ),
             steps=[
                 PipelineStep(
@@ -311,10 +306,10 @@ class TestPipelineLoaderSave:
                     module="mod.full",
                     params={"key": "value"},
                     enabled=True,
-                    continue_on_error=True
+                    continue_on_error=True,
                 )
             ],
-            config={"global_setting": "value"}
+            config={"global_setting": "value"},
         )
 
         output_file = tmp_path / "output.json"
@@ -333,7 +328,7 @@ class TestPipelineLoaderSave:
         """Test saved JSON is indented for readability."""
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="test", version="1.0"),
-            steps=[PipelineStep(name="Step", module="mod.func")]
+            steps=[PipelineStep(name="Step", module="mod.func")],
         )
 
         output_file = tmp_path / "output.json"
@@ -350,7 +345,7 @@ class TestPipelineLoaderSave:
 
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="new", version="1.0"),
-            steps=[PipelineStep(name="Step", module="mod.func")]
+            steps=[PipelineStep(name="Step", module="mod.func")],
         )
 
         PipelineLoader.save(pipeline, output_file)
@@ -370,21 +365,15 @@ class TestRoundTrip:
                 name="round_trip",
                 description="Test round trip",
                 version="1.0",
-                tags=["test"]
+                tags=["test"],
             ),
             steps=[
                 PipelineStep(
-                    name="Step 1",
-                    module="mod.step1",
-                    params={"param1": "value1"}
+                    name="Step 1", module="mod.step1", params={"param1": "value1"}
                 ),
-                PipelineStep(
-                    name="Step 2",
-                    module="mod.step2",
-                    enabled=False
-                ),
+                PipelineStep(name="Step 2", module="mod.step2", enabled=False),
             ],
-            config={"setting": True}
+            config={"setting": True},
         )
 
         file_path = tmp_path / "round_trip.json"
@@ -403,9 +392,7 @@ class TestRoundTrip:
         """Test round trip with plugin references."""
         original = Pipeline(
             metadata=PipelineMetadata(name="plugin_test", version="1.0"),
-            steps=[
-                PipelineStep(name="Plugin", module="plugin:custom_scanner")
-            ]
+            steps=[PipelineStep(name="Plugin", module="plugin:custom_scanner")],
         )
 
         file_path = tmp_path / "plugin_test.json"
@@ -426,7 +413,7 @@ class TestEnabledSteps:
                 {"name": "Enabled 1", "module": "mod.e1", "enabled": True},
                 {"name": "Disabled", "module": "mod.d1", "enabled": False},
                 {"name": "Enabled 2", "module": "mod.e2", "enabled": True},
-            ]
+            ],
         }
 
         pipeline = PipelineLoader.load_from_dict(data)

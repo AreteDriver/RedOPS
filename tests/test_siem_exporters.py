@@ -1,9 +1,7 @@
 """Tests for SIEM export modules: Splunk, Elasticsearch, Datadog."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
-import json
 
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -21,6 +19,7 @@ class TestSplunkExporter:
         }
         with patch.dict("os.environ", env):
             from redops.modules.export.siem.splunk import SplunkConfig
+
             config = SplunkConfig.from_env()
 
             assert config.hec_url == env["SPLUNK_HEC_URL"]
@@ -101,7 +100,10 @@ class TestSplunkExporter:
     def test_splunk_flush_no_requests(self):
         """Test flush when requests not available."""
         with patch("redops.modules.export.siem.splunk.HAS_REQUESTS", False):
-            from redops.modules.export.siem.splunk import SplunkHECExporter, SplunkConfig
+            from redops.modules.export.siem.splunk import (
+                SplunkHECExporter,
+                SplunkConfig,
+            )
 
             config = SplunkConfig(hec_url="https://test", hec_token="token")
             exporter = SplunkHECExporter(config)
@@ -134,7 +136,10 @@ class TestSplunkExporter:
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.export.siem.splunk.HAS_REQUESTS", True):
-            from redops.modules.export.siem.splunk import SplunkHECExporter, SplunkConfig
+            from redops.modules.export.siem.splunk import (
+                SplunkHECExporter,
+                SplunkConfig,
+            )
 
             config = SplunkConfig(hec_url="https://splunk:8088", hec_token="token")
             exporter = SplunkHECExporter(config)
@@ -156,7 +161,10 @@ class TestSplunkExporter:
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.export.siem.splunk.HAS_REQUESTS", True):
-            from redops.modules.export.siem.splunk import SplunkHECExporter, SplunkConfig
+            from redops.modules.export.siem.splunk import (
+                SplunkHECExporter,
+                SplunkConfig,
+            )
 
             config = SplunkConfig(hec_url="https://splunk:8088", hec_token="bad-token")
             exporter = SplunkHECExporter(config)
@@ -181,10 +189,13 @@ class TestSplunkExporter:
             ctx.add("pipeline_name", "test-pipeline")
             ctx.add("finding_test", {"title": "Test", "severity": "high"})
 
-            result = export_to_splunk(ctx, {
-                "hec_url": "https://splunk:8088",
-                "hec_token": "token",
-            })
+            export_to_splunk(
+                ctx,
+                {
+                    "hec_url": "https://splunk:8088",
+                    "hec_token": "token",
+                },
+            )
 
             assert "splunk_export_result" in ctx.data
             assert ctx.data["splunk_export_result"]["success"] is True
@@ -202,6 +213,7 @@ class TestElasticExporter:
         }
         with patch.dict("os.environ", env):
             from redops.modules.export.siem.elastic import ElasticConfig
+
             config = ElasticConfig.from_env()
 
             assert config.hosts == ["http://es1:9200", "http://es2:9200"]
@@ -285,7 +297,10 @@ class TestElasticExporter:
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.export.siem.elastic.HAS_REQUESTS", True):
-            from redops.modules.export.siem.elastic import ElasticExporter, ElasticConfig
+            from redops.modules.export.siem.elastic import (
+                ElasticExporter,
+                ElasticConfig,
+            )
 
             config = ElasticConfig(hosts=["http://localhost:9200"])
             exporter = ElasticExporter(config)
@@ -307,12 +322,15 @@ class TestElasticExporter:
             "items": [
                 {"index": {"status": 201}},
                 {"index": {"status": 400, "error": {"reason": "Parse error"}}},
-            ]
+            ],
         }
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.export.siem.elastic.HAS_REQUESTS", True):
-            from redops.modules.export.siem.elastic import ElasticExporter, ElasticConfig
+            from redops.modules.export.siem.elastic import (
+                ElasticExporter,
+                ElasticConfig,
+            )
 
             config = ElasticConfig(hosts=["http://localhost:9200"])
             exporter = ElasticExporter(config)
@@ -333,7 +351,10 @@ class TestElasticExporter:
         mock_requests.put.return_value = mock_response
 
         with patch("redops.modules.export.siem.elastic.HAS_REQUESTS", True):
-            from redops.modules.export.siem.elastic import ElasticExporter, ElasticConfig
+            from redops.modules.export.siem.elastic import (
+                ElasticExporter,
+                ElasticConfig,
+            )
 
             config = ElasticConfig(hosts=["http://localhost:9200"])
             exporter = ElasticExporter(config)
@@ -357,9 +378,12 @@ class TestElasticExporter:
             ctx.add("pipeline_name", "test-pipeline")
             ctx.add("finding_test", {"title": "Test", "severity": "high"})
 
-            result = export_to_elastic(ctx, {
-                "hosts": "http://localhost:9200",
-            })
+            export_to_elastic(
+                ctx,
+                {
+                    "hosts": "http://localhost:9200",
+                },
+            )
 
             assert "elastic_export_result" in ctx.data
             assert ctx.data["elastic_export_result"]["success"] is True
@@ -378,6 +402,7 @@ class TestDatadogExporter:
         }
         with patch.dict("os.environ", env):
             from redops.modules.export.siem.datadog import DatadogConfig
+
             config = DatadogConfig.from_env()
 
             assert config.api_key == "test-api-key"
@@ -487,7 +512,10 @@ class TestDatadogExporter:
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.export.siem.datadog.HAS_REQUESTS", True):
-            from redops.modules.export.siem.datadog import DatadogExporter, DatadogConfig
+            from redops.modules.export.siem.datadog import (
+                DatadogExporter,
+                DatadogConfig,
+            )
 
             config = DatadogConfig(api_key="test-key")
             exporter = DatadogExporter(config)
@@ -508,7 +536,10 @@ class TestDatadogExporter:
         mock_requests.post.return_value = mock_response
 
         with patch("redops.modules.export.siem.datadog.HAS_REQUESTS", True):
-            from redops.modules.export.siem.datadog import DatadogExporter, DatadogConfig
+            from redops.modules.export.siem.datadog import (
+                DatadogExporter,
+                DatadogConfig,
+            )
 
             config = DatadogConfig(api_key="test-key")
             exporter = DatadogExporter(config)
@@ -536,9 +567,12 @@ class TestDatadogExporter:
             ctx.add("pipeline_name", "test-pipeline")
             ctx.add("finding_test", {"title": "Test", "severity": "high"})
 
-            result = export_to_datadog(ctx, {
-                "api_key": "test-key",
-            })
+            export_to_datadog(
+                ctx,
+                {
+                    "api_key": "test-key",
+                },
+            )
 
             assert "datadog_export_result" in ctx.data
             assert ctx.data["datadog_export_result"]["success"] is True
@@ -551,11 +585,8 @@ class TestSIEMModuleImports:
         """Test imports from export module."""
         from redops.modules.export import (
             export_to_splunk,
-            SplunkHECExporter,
             export_to_elastic,
-            ElasticExporter,
             export_to_datadog,
-            DatadogExporter,
         )
 
         assert callable(export_to_splunk)
@@ -566,11 +597,8 @@ class TestSIEMModuleImports:
         """Test imports from siem module."""
         from redops.modules.export.siem import (
             export_to_splunk,
-            SplunkHECExporter,
             export_to_elastic,
-            ElasticExporter,
             export_to_datadog,
-            DatadogExporter,
         )
 
         assert callable(export_to_splunk)

@@ -1,7 +1,6 @@
 """Tests for the web authentication module."""
 
 import pytest
-import secrets
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch, MagicMock
 
@@ -13,7 +12,6 @@ from redops.web.auth import (
     generate_api_key,
     require_auth,
     optional_auth,
-    get_auth_manager,
     set_auth_manager,
 )
 
@@ -34,13 +32,16 @@ class TestAuthConfig:
 
     def test_from_env(self):
         """Test loading config from environment."""
-        with patch.dict("os.environ", {
-            "REDOPS_AUTH_ENABLED": "true",
-            "REDOPS_API_KEY": "test_key",
-            "REDOPS_ADMIN_USER": "testuser",
-            "REDOPS_ADMIN_PASSWORD": "testpass",
-            "REDOPS_SESSION_EXPIRY_HOURS": "48",
-        }):
+        with patch.dict(
+            "os.environ",
+            {
+                "REDOPS_AUTH_ENABLED": "true",
+                "REDOPS_API_KEY": "test_key",
+                "REDOPS_ADMIN_USER": "testuser",
+                "REDOPS_ADMIN_PASSWORD": "testpass",
+                "REDOPS_SESSION_EXPIRY_HOURS": "48",
+            },
+        ):
             config = AuthConfig.from_env()
 
             assert config.enabled is True
@@ -106,7 +107,9 @@ class TestSessionStore:
 
         # Force expiry by manipulating session
         session_id = store._hash_token(token)
-        store._sessions[session_id]["expires_at"] = datetime.now(timezone.utc) - timedelta(hours=1)
+        store._sessions[session_id]["expires_at"] = datetime.now(
+            timezone.utc
+        ) - timedelta(hours=1)
 
         username = store.validate_session(token)
 
@@ -139,7 +142,9 @@ class TestSessionStore:
         for i in range(3):
             token = store.create_session(f"user{i}")
             session_id = store._hash_token(token)
-            store._sessions[session_id]["expires_at"] = datetime.now(timezone.utc) - timedelta(hours=1)
+            store._sessions[session_id]["expires_at"] = datetime.now(
+                timezone.utc
+            ) - timedelta(hours=1)
 
         # Add one valid session
         store.create_session("valid_user")
@@ -437,6 +442,7 @@ class TestGenerateApiKey:
 
         # URL-safe base64 uses only alphanumeric, -, and _
         import re
+
         assert re.match(r"^redops_[a-zA-Z0-9_-]+$", key)
 
 

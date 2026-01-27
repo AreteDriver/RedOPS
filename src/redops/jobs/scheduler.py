@@ -5,16 +5,14 @@ Provides cron-like scheduling for recurring jobs.
 """
 
 import logging
-import re
 import threading
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, Set
 from uuid import uuid4
 
-from redops.jobs.queue import Job, JobPriority, JobQueue, get_job_queue
+from redops.jobs.queue import JobPriority, JobQueue, get_job_queue
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +47,7 @@ class IntervalSchedule(Schedule):
     @property
     def total_seconds(self) -> int:
         """Get total interval in seconds."""
-        return (
-            self.seconds +
-            self.minutes * 60 +
-            self.hours * 3600 +
-            self.days * 86400
-        )
+        return self.seconds + self.minutes * 60 + self.hours * 3600 + self.days * 86400
 
     def get_next_run(self, after: datetime) -> datetime:
         """Get next run time."""
@@ -140,11 +133,11 @@ class CronSchedule(Schedule):
         max_iterations = 525600  # minutes in a year
         for _ in range(max_iterations):
             if (
-                dt.minute in self._minute_set and
-                dt.hour in self._hour_set and
-                dt.day in self._day_set and
-                dt.month in self._month_set and
-                dt.weekday() in self._weekday_set
+                dt.minute in self._minute_set
+                and dt.hour in self._hour_set
+                and dt.day in self._day_set
+                and dt.month in self._month_set
+                and dt.weekday() in self._weekday_set
             ):
                 return dt
             dt += timedelta(minutes=1)
@@ -271,8 +264,12 @@ class ScheduledJob:
             timeout=data.get("timeout"),
             max_retries=data.get("max_retries", 0),
             enabled=data.get("enabled", True),
-            last_run=datetime.fromisoformat(data["last_run"]) if data.get("last_run") else None,
-            next_run=datetime.fromisoformat(data["next_run"]) if data.get("next_run") else None,
+            last_run=datetime.fromisoformat(data["last_run"])
+            if data.get("last_run")
+            else None,
+            next_run=datetime.fromisoformat(data["next_run"])
+            if data.get("next_run")
+            else None,
             run_count=data.get("run_count", 0),
             error_count=data.get("error_count", 0),
             last_error=data.get("last_error"),
@@ -544,7 +541,9 @@ class JobScheduler:
                         if job.next_run <= now:
                             try:
                                 self._enqueue_job(job)
-                                logger.debug(f"Triggered scheduled job {job.id}: {job.name}")
+                                logger.debug(
+                                    f"Triggered scheduled job {job.id}: {job.name}"
+                                )
                             except Exception as e:
                                 job.error_count += 1
                                 job.last_error = str(e)

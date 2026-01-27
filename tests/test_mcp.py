@@ -2,7 +2,7 @@
 
 import asyncio
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from redops.mcp.server import MCPServer, create_server
 
@@ -120,7 +120,10 @@ class TestMCPServer:
 
     def test_tool_call_explain_no_ai(self, server):
         """Test explain tool when AI is not configured."""
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             message = {
                 "jsonrpc": "2.0",
                 "id": 5,
@@ -169,4 +172,7 @@ class TestMCPServer:
         assert response["id"] == 7
         assert "result" in response
         # Should indicate error
-        assert response["result"].get("isError") or "Error" in response["result"]["content"][0]["text"]
+        assert (
+            response["result"].get("isError")
+            or "Error" in response["result"]["content"][0]["text"]
+        )

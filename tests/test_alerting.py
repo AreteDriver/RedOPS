@@ -1,11 +1,9 @@
 """Tests for the Alerting System module."""
 
 import threading
-import time
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from redops.core.alerting import (
     Alert,
@@ -17,10 +15,8 @@ from redops.core.alerting import (
     CallbackChannel,
     ConditionOperator,
     EmailChannel,
-    EscalationLevel,
     EscalationPolicy,
     LogChannel,
-    NotificationChannel,
     SilenceRule,
     WebhookChannel,
     create_rule,
@@ -801,10 +797,7 @@ class TestThreadSafety:
         def evaluate_rule(value):
             manager.evaluate({"value": value})
 
-        threads = [
-            threading.Thread(target=evaluate_rule, args=(i,))
-            for i in range(10)
-        ]
+        threads = [threading.Thread(target=evaluate_rule, args=(i,)) for i in range(10)]
         for t in threads:
             t.start()
         for t in threads:

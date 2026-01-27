@@ -3,10 +3,9 @@
 import os
 import tempfile
 import threading
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -19,10 +18,8 @@ from redops.core.secrets import (
     Secret,
     RotationPolicy,
     # Encryption
-    EncryptionProvider,
     FernetEncryption,
     # Backends
-    SecretBackend,
     MemoryBackend,
     FileBackend,
     EnvironmentBackend,
@@ -45,6 +42,7 @@ from redops.core.secrets import (
 # =============================================================================
 # SecretType Tests
 # =============================================================================
+
 
 class TestSecretType:
     """Tests for SecretType enum."""
@@ -76,6 +74,7 @@ class TestEncryptionAlgorithm:
 # =============================================================================
 # SecretMetadata Tests
 # =============================================================================
+
 
 class TestSecretMetadata:
     """Tests for SecretMetadata dataclass."""
@@ -171,6 +170,7 @@ class TestSecretMetadata:
 # Secret Tests
 # =============================================================================
 
+
 class TestSecret:
     """Tests for Secret dataclass."""
 
@@ -215,6 +215,7 @@ class TestSecret:
 # FernetEncryption Tests
 # =============================================================================
 
+
 class TestFernetEncryption:
     """Tests for FernetEncryption provider."""
 
@@ -258,6 +259,7 @@ class TestFernetEncryption:
 # =============================================================================
 # MemoryBackend Tests
 # =============================================================================
+
 
 class TestMemoryBackend:
     """Tests for MemoryBackend."""
@@ -334,7 +336,9 @@ class TestMemoryBackend:
         def writer():
             try:
                 for i in range(100):
-                    meta = SecretMetadata(name=f"thread-{threading.current_thread().name}-{i}")
+                    meta = SecretMetadata(
+                        name=f"thread-{threading.current_thread().name}-{i}"
+                    )
                     backend.set(Secret(value="v", metadata=meta))
             except Exception as e:
                 errors.append(e)
@@ -351,6 +355,7 @@ class TestMemoryBackend:
 # =============================================================================
 # FileBackend Tests
 # =============================================================================
+
 
 class TestFileBackend:
     """Tests for FileBackend."""
@@ -428,6 +433,7 @@ class TestFileBackend:
 # EnvironmentBackend Tests
 # =============================================================================
 
+
 class TestEnvironmentBackend:
     """Tests for EnvironmentBackend."""
 
@@ -483,6 +489,7 @@ class TestEnvironmentBackend:
 # SecretValidator Tests
 # =============================================================================
 
+
 class TestSecretValidator:
     """Tests for SecretValidator."""
 
@@ -499,7 +506,9 @@ class TestSecretValidator:
 
     def test_validate_api_key_valid(self, validator):
         """Test valid API key."""
-        is_valid, _ = validator.validate("api_key_abcdefgh12345678901234", SecretType.API_KEY)
+        is_valid, _ = validator.validate(
+            "api_key_abcdefgh12345678901234", SecretType.API_KEY
+        )
         assert is_valid
 
     def test_validate_api_key_invalid(self, validator):
@@ -547,6 +556,7 @@ class TestSecretValidator:
 # =============================================================================
 # SecretGenerator Tests
 # =============================================================================
+
 
 class TestSecretGenerator:
     """Tests for SecretGenerator."""
@@ -611,6 +621,7 @@ class TestSecretGenerator:
 # =============================================================================
 # AuditLog Tests
 # =============================================================================
+
 
 class TestAuditLog:
     """Tests for AuditLog."""
@@ -686,6 +697,7 @@ class TestAuditLog:
 # RotationPolicy Tests
 # =============================================================================
 
+
 class TestRotationPolicy:
     """Tests for RotationPolicy."""
 
@@ -737,6 +749,7 @@ class TestRotationPolicy:
 # =============================================================================
 # SecretsManager Tests
 # =============================================================================
+
 
 class TestSecretsManager:
     """Tests for SecretsManager."""
@@ -959,11 +972,14 @@ class TestSecretsManager:
 
     def test_import_from_env(self, manager):
         """Test importing from environment."""
-        with patch.dict(os.environ, {
-            "APP_DB_URL": "postgres://...",
-            "APP_API_KEY": "sk_test_123",
-            "OTHER_VAR": "ignored",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "APP_DB_URL": "postgres://...",
+                "APP_API_KEY": "sk_test_123",
+                "OTHER_VAR": "ignored",
+            },
+        ):
             count = manager.import_from_env(prefix="APP_")
             assert count == 2
             assert manager.exists("db-url")
@@ -984,6 +1000,7 @@ class TestSecretsManager:
 # =============================================================================
 # Convenience Function Tests
 # =============================================================================
+
 
 class TestConvenienceFunctions:
     """Tests for convenience functions."""
@@ -1061,6 +1078,7 @@ class TestConvenienceFunctions:
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestSecretsManagerIntegration:
     """Integration tests for SecretsManager."""

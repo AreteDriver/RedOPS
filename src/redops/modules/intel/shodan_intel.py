@@ -91,6 +91,7 @@ def get_shodan_client():
         # Try to get from settings
         try:
             from redops.cli.settings import get_api_key_direct
+
             api_key = get_api_key_direct("shodan")
         except Exception:
             pass
@@ -101,9 +102,7 @@ def get_shodan_client():
     return shodan.Shodan(api_key)
 
 
-def query_shodan_host(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_shodan_host(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query Shodan for host information.
 
@@ -134,7 +133,9 @@ def query_shodan_host(
 
     client = get_shodan_client()
     if not client:
-        shodan_data["error"] = "Shodan API not available (missing shodan package or API key)"
+        shodan_data["error"] = (
+            "Shodan API not available (missing shodan package or API key)"
+        )
         ctx.log(shodan_data["error"], level="WARNING")
         ctx.add("shodan_host", shodan_data)
         return ctx
@@ -145,6 +146,7 @@ def query_shodan_host(
         if not _is_ip(target):
             try:
                 import socket
+
                 ip = socket.gethostbyname(target)
                 ctx.log(f"Resolved {target} to {ip}", level="DEBUG")
             except Exception as e:
@@ -204,9 +206,7 @@ def query_shodan_host(
     return ctx
 
 
-def query_shodan_dns(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_shodan_dns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query Shodan for DNS information.
 
@@ -272,9 +272,7 @@ def query_shodan_dns(
     return ctx
 
 
-def search_shodan(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def search_shodan(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Search Shodan with a query.
 
@@ -421,9 +419,11 @@ def analyze_shodan_intel(
 
 # Helper functions
 
+
 def _is_ip(value: str) -> bool:
     """Check if value is an IP address."""
     import re
+
     ip_pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
     return bool(re.match(ip_pattern, value))
 

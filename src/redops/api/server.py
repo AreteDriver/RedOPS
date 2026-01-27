@@ -8,16 +8,17 @@ import json
 import re
 import threading
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Any, Callable
+from typing import Callable
 from urllib.parse import parse_qs, urlparse
 
 
 class HTTPMethod(Enum):
     """HTTP methods."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -28,6 +29,7 @@ class HTTPMethod(Enum):
 
 class HTTPStatus(Enum):
     """HTTP status codes."""
+
     OK = 200
     CREATED = 201
     ACCEPTED = 202
@@ -47,6 +49,7 @@ class HTTPStatus(Enum):
 @dataclass
 class APIRequest:
     """Represents an API request."""
+
     method: str
     path: str
     headers: dict[str, str]
@@ -60,6 +63,7 @@ class APIRequest:
 @dataclass
 class APIResponse:
     """Represents an API response."""
+
     status: int = 200
     body: dict | list | str | None = None
     headers: dict[str, str] = field(default_factory=dict)
@@ -76,6 +80,7 @@ class APIResponse:
 @dataclass
 class RouteMatch:
     """Result of matching a route."""
+
     handler: Callable
     path_params: dict[str, str]
     methods: list[str]
@@ -84,6 +89,7 @@ class RouteMatch:
 @dataclass
 class APIError:
     """Standard API error response."""
+
     error: str
     message: str
     status: int
@@ -162,30 +168,38 @@ class Router:
 
     def get(self, path: str, **kwargs) -> Callable:
         """Decorator for GET routes."""
+
         def decorator(handler: Callable) -> Callable:
             self.add_route(path, handler, ["GET"], **kwargs)
             return handler
+
         return decorator
 
     def post(self, path: str, **kwargs) -> Callable:
         """Decorator for POST routes."""
+
         def decorator(handler: Callable) -> Callable:
             self.add_route(path, handler, ["POST"], **kwargs)
             return handler
+
         return decorator
 
     def put(self, path: str, **kwargs) -> Callable:
         """Decorator for PUT routes."""
+
         def decorator(handler: Callable) -> Callable:
             self.add_route(path, handler, ["PUT"], **kwargs)
             return handler
+
         return decorator
 
     def delete(self, path: str, **kwargs) -> Callable:
         """Decorator for DELETE routes."""
+
         def decorator(handler: Callable) -> Callable:
             self.add_route(path, handler, ["DELETE"], **kwargs)
             return handler
+
         return decorator
 
     def match(self, path: str, method: str) -> RouteMatch | None:
@@ -241,21 +255,33 @@ class APIServer:
         self.router.add_route("/api/v1/scans", self._create_scan, ["POST"])
         self.router.add_route("/api/v1/scans/{scan_id}", self._get_scan, ["GET"])
         self.router.add_route("/api/v1/scans/{scan_id}", self._delete_scan, ["DELETE"])
-        self.router.add_route("/api/v1/scans/{scan_id}/status", self._get_scan_status, ["GET"])
-        self.router.add_route("/api/v1/scans/{scan_id}/results", self._get_scan_results, ["GET"])
-        self.router.add_route("/api/v1/scans/{scan_id}/cancel", self._cancel_scan, ["POST"])
+        self.router.add_route(
+            "/api/v1/scans/{scan_id}/status", self._get_scan_status, ["GET"]
+        )
+        self.router.add_route(
+            "/api/v1/scans/{scan_id}/results", self._get_scan_results, ["GET"]
+        )
+        self.router.add_route(
+            "/api/v1/scans/{scan_id}/cancel", self._cancel_scan, ["POST"]
+        )
 
         # Modules
         self.router.add_route("/api/v1/modules", self._list_modules, ["GET"])
-        self.router.add_route("/api/v1/modules/{module_name}", self._get_module, ["GET"])
+        self.router.add_route(
+            "/api/v1/modules/{module_name}", self._get_module, ["GET"]
+        )
 
         # Presets
         self.router.add_route("/api/v1/presets", self._list_presets, ["GET"])
-        self.router.add_route("/api/v1/presets/{preset_name}", self._get_preset, ["GET"])
+        self.router.add_route(
+            "/api/v1/presets/{preset_name}", self._get_preset, ["GET"]
+        )
 
         # Reports
         self.router.add_route("/api/v1/reports", self._list_reports, ["GET"])
-        self.router.add_route("/api/v1/reports/{scan_id}", self._generate_report, ["POST"])
+        self.router.add_route(
+            "/api/v1/reports/{scan_id}", self._generate_report, ["POST"]
+        )
         self.router.add_route("/api/v1/reports/{report_id}", self._get_report, ["GET"])
 
         # Config
@@ -265,27 +291,31 @@ class APIServer:
     # Health & Info Handlers
     def _health(self, request: APIRequest) -> APIResponse:
         """Health check endpoint."""
-        return APIResponse(body={
-            "status": "healthy",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": self.VERSION,
-        })
+        return APIResponse(
+            body={
+                "status": "healthy",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "version": self.VERSION,
+            }
+        )
 
     def _info(self, request: APIRequest) -> APIResponse:
         """API information endpoint."""
-        return APIResponse(body={
-            "name": "RedOPS API",
-            "version": self.VERSION,
-            "description": "RESTful API for RedOPS security intelligence framework",
-            "endpoints": {
-                "scans": f"{self.API_PREFIX}/scans",
-                "modules": f"{self.API_PREFIX}/modules",
-                "presets": f"{self.API_PREFIX}/presets",
-                "reports": f"{self.API_PREFIX}/reports",
-                "config": f"{self.API_PREFIX}/config",
-            },
-            "documentation": f"{self.API_PREFIX}/openapi.json",
-        })
+        return APIResponse(
+            body={
+                "name": "RedOPS API",
+                "version": self.VERSION,
+                "description": "RESTful API for RedOPS security intelligence framework",
+                "endpoints": {
+                    "scans": f"{self.API_PREFIX}/scans",
+                    "modules": f"{self.API_PREFIX}/modules",
+                    "presets": f"{self.API_PREFIX}/presets",
+                    "reports": f"{self.API_PREFIX}/reports",
+                    "config": f"{self.API_PREFIX}/config",
+                },
+                "documentation": f"{self.API_PREFIX}/openapi.json",
+            }
+        )
 
     def _openapi_spec(self, request: APIRequest) -> APIResponse:
         """OpenAPI specification."""
@@ -307,14 +337,16 @@ class APIServer:
 
         # Paginate
         total = len(scans)
-        scans = scans[offset:offset + limit]
+        scans = scans[offset : offset + limit]
 
-        return APIResponse(body={
-            "scans": scans,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-        })
+        return APIResponse(
+            body={
+                "scans": scans,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+            }
+        )
 
     def _create_scan(self, request: APIRequest) -> APIResponse:
         """Create a new scan."""
@@ -402,14 +434,16 @@ class APIServer:
                 request.request_id,
             )
 
-        return APIResponse(body={
-            "id": scan_id,
-            "status": scan["status"],
-            "progress": scan["progress"],
-            "started_at": scan["started_at"],
-            "completed_at": scan["completed_at"],
-            "error": scan["error"],
-        })
+        return APIResponse(
+            body={
+                "id": scan_id,
+                "status": scan["status"],
+                "progress": scan["progress"],
+                "started_at": scan["started_at"],
+                "completed_at": scan["completed_at"],
+                "error": scan["error"],
+            }
+        )
 
     def _get_scan_results(self, request: APIRequest) -> APIResponse:
         """Get scan results."""
@@ -432,11 +466,13 @@ class APIServer:
                 request.request_id,
             )
 
-        return APIResponse(body={
-            "id": scan_id,
-            "results": scan["results"],
-            "completed_at": scan["completed_at"],
-        })
+        return APIResponse(
+            body={
+                "id": scan_id,
+                "results": scan["results"],
+                "completed_at": scan["completed_at"],
+            }
+        )
 
     def _cancel_scan(self, request: APIRequest) -> APIResponse:
         """Cancel a running scan."""
@@ -576,9 +612,15 @@ class APIServer:
                 "name": "full",
                 "description": "Comprehensive security assessment",
                 "modules": [
-                    "domain_profile", "tech_stack", "social_osint",
-                    "exposure_scan", "infrastructure", "threat_intel",
-                    "compliance", "correlation", "executive_report",
+                    "domain_profile",
+                    "tech_stack",
+                    "social_osint",
+                    "exposure_scan",
+                    "infrastructure",
+                    "threat_intel",
+                    "compliance",
+                    "correlation",
+                    "executive_report",
                 ],
             },
             {
@@ -615,9 +657,15 @@ class APIServer:
                 "name": "full",
                 "description": "Comprehensive security assessment",
                 "modules": [
-                    "domain_profile", "tech_stack", "social_osint",
-                    "exposure_scan", "infrastructure", "threat_intel",
-                    "compliance", "correlation", "executive_report",
+                    "domain_profile",
+                    "tech_stack",
+                    "social_osint",
+                    "exposure_scan",
+                    "infrastructure",
+                    "threat_intel",
+                    "compliance",
+                    "correlation",
+                    "executive_report",
                 ],
                 "estimated_duration": "5-10 minutes",
             },
@@ -685,20 +733,22 @@ class APIServer:
     # Config Handlers
     def _get_config(self, request: APIRequest) -> APIResponse:
         """Get current configuration."""
-        return APIResponse(body={
-            "output": {
-                "directory": "./output",
-                "format": "json",
-            },
-            "network": {
-                "timeout": 30,
-                "rate_limit": 1.0,
-            },
-            "cache": {
-                "enabled": True,
-                "ttl_seconds": 3600,
-            },
-        })
+        return APIResponse(
+            body={
+                "output": {
+                    "directory": "./output",
+                    "format": "json",
+                },
+                "network": {
+                    "timeout": 30,
+                    "rate_limit": 1.0,
+                },
+                "cache": {
+                    "enabled": True,
+                    "ttl_seconds": 3600,
+                },
+            }
+        )
 
     def _update_config(self, request: APIRequest) -> APIResponse:
         """Update configuration."""
@@ -783,7 +833,9 @@ class APIServer:
                                 "description": "List of scans",
                                 "content": {
                                     "application/json": {
-                                        "schema": {"$ref": "#/components/schemas/ScanList"},
+                                        "schema": {
+                                            "$ref": "#/components/schemas/ScanList"
+                                        },
                                     },
                                 },
                             },
@@ -797,7 +849,9 @@ class APIServer:
                             "required": True,
                             "content": {
                                 "application/json": {
-                                    "schema": {"$ref": "#/components/schemas/CreateScan"},
+                                    "schema": {
+                                        "$ref": "#/components/schemas/CreateScan"
+                                    },
                                 },
                             },
                         },
@@ -839,7 +893,9 @@ class APIServer:
                                 "description": "Scan not found",
                                 "content": {
                                     "application/json": {
-                                        "schema": {"$ref": "#/components/schemas/Error"},
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        },
                                     },
                                 },
                             },
@@ -873,7 +929,9 @@ class APIServer:
                                 "description": "List of modules",
                                 "content": {
                                     "application/json": {
-                                        "schema": {"$ref": "#/components/schemas/ModuleList"},
+                                        "schema": {
+                                            "$ref": "#/components/schemas/ModuleList"
+                                        },
                                     },
                                 },
                             },
@@ -890,7 +948,9 @@ class APIServer:
                                 "description": "List of presets",
                                 "content": {
                                     "application/json": {
-                                        "schema": {"$ref": "#/components/schemas/PresetList"},
+                                        "schema": {
+                                            "$ref": "#/components/schemas/PresetList"
+                                        },
                                     },
                                 },
                             },
@@ -909,9 +969,19 @@ class APIServer:
                             "modules": {"type": "array", "items": {"type": "string"}},
                             "status": {
                                 "type": "string",
-                                "enum": ["pending", "running", "completed", "failed", "cancelled"],
+                                "enum": [
+                                    "pending",
+                                    "running",
+                                    "completed",
+                                    "failed",
+                                    "cancelled",
+                                ],
                             },
-                            "progress": {"type": "integer", "minimum": 0, "maximum": 100},
+                            "progress": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 100,
+                            },
                             "created_at": {"type": "string", "format": "date-time"},
                             "started_at": {"type": "string", "format": "date-time"},
                             "completed_at": {"type": "string", "format": "date-time"},
@@ -930,7 +1000,10 @@ class APIServer:
                     "ScanList": {
                         "type": "object",
                         "properties": {
-                            "scans": {"type": "array", "items": {"$ref": "#/components/schemas/Scan"}},
+                            "scans": {
+                                "type": "array",
+                                "items": {"$ref": "#/components/schemas/Scan"},
+                            },
                             "total": {"type": "integer"},
                             "limit": {"type": "integer"},
                             "offset": {"type": "integer"},
@@ -948,7 +1021,10 @@ class APIServer:
                     "ModuleList": {
                         "type": "object",
                         "properties": {
-                            "modules": {"type": "array", "items": {"$ref": "#/components/schemas/Module"}},
+                            "modules": {
+                                "type": "array",
+                                "items": {"$ref": "#/components/schemas/Module"},
+                            },
                             "total": {"type": "integer"},
                         },
                     },
@@ -963,7 +1039,10 @@ class APIServer:
                     "PresetList": {
                         "type": "object",
                         "properties": {
-                            "presets": {"type": "array", "items": {"$ref": "#/components/schemas/Preset"}},
+                            "presets": {
+                                "type": "array",
+                                "items": {"$ref": "#/components/schemas/Preset"},
+                            },
                             "total": {"type": "integer"},
                         },
                     },

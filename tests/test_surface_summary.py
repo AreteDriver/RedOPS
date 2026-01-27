@@ -1,6 +1,5 @@
 """Tests for surface summary module."""
 
-import pytest
 from unittest.mock import MagicMock
 
 from redops.modules.corp_assessment.surface_summary import (
@@ -122,8 +121,7 @@ class TestExtractKeyFindings:
         """Test respects limit parameter."""
         ctx = MagicMock()
         ctx.get.return_value = [
-            {"title": f"Risk {i}", "score": 10 - i}
-            for i in range(10)
+            {"title": f"Risk {i}", "score": 10 - i} for i in range(10)
         ]
 
         findings = extract_key_findings(ctx, limit=3)
@@ -133,8 +131,7 @@ class TestExtractKeyFindings:
         """Test default limit is 5."""
         ctx = MagicMock()
         ctx.get.return_value = [
-            {"title": f"Risk {i}", "score": 10 - i}
-            for i in range(10)
+            {"title": f"Risk {i}", "score": 10 - i} for i in range(10)
         ]
 
         findings = extract_key_findings(ctx)

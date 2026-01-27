@@ -11,23 +11,18 @@ import random
 import threading
 import time
 from abc import ABC, abstractmethod
-from collections import defaultdict
-from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
 from enum import Enum
 from typing import (
     Any,
     Callable,
     Dict,
-    Generator,
     List,
     Optional,
     Tuple,
     Type,
-    Union,
 )
-from urllib.parse import urlencode, urljoin, urlparse
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +65,7 @@ class RetryConfig:
     def get_delay(self, attempt: int) -> float:
         """Calculate delay for retry attempt."""
         delay = min(
-            self.base_delay * (self.exponential_base ** attempt),
+            self.base_delay * (self.exponential_base**attempt),
             self.max_delay,
         )
         if self.jitter:
@@ -435,6 +430,7 @@ class UrllibTransport(HttpTransport):
         # Add auth
         if request.auth:
             import base64
+
             credentials = f"{request.auth[0]}:{request.auth[1]}"
             encoded = base64.b64encode(credentials.encode()).decode()
             req.add_header("Authorization", f"Basic {encoded}")
@@ -486,12 +482,14 @@ class MockTransport(HttpTransport):
         headers: Optional[Dict[str, str]] = None,
     ) -> None:
         """Add a mock response."""
-        self._responses.append(HttpResponse(
-            status_code=status_code,
-            body=body,
-            headers=headers or {},
-            request=HttpRequest(method=HttpMethod.GET, url=""),
-        ))
+        self._responses.append(
+            HttpResponse(
+                status_code=status_code,
+                body=body,
+                headers=headers or {},
+                request=HttpRequest(method=HttpMethod.GET, url=""),
+            )
+        )
 
     def set_default_response(
         self,
@@ -830,6 +828,7 @@ class ApiClient:
 
 
 # Convenience functions
+
 
 def create_api_client(
     base_url: str = "",

@@ -5,11 +5,10 @@ Provides JWT tokens, API key management, and RBAC.
 """
 
 import hashlib
-import hmac
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from typing import Optional
 from uuid import uuid4
 
 import bcrypt
@@ -24,7 +23,7 @@ if not JWT_SECRET_KEY:
     else:
         raise RuntimeError(
             "REDOPS_JWT_SECRET environment variable is required. "
-            "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+            'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(64))"'
         )
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -226,7 +225,7 @@ def generate_api_key() -> tuple[str, str]:
         Tuple of (full_key, key_hash)
     """
     # Generate random bytes
-    random_bytes = secrets.token_bytes(API_KEY_LENGTH)
+    secrets.token_bytes(API_KEY_LENGTH)
     key_secret = secrets.token_urlsafe(API_KEY_LENGTH)
 
     # Create full key with prefix

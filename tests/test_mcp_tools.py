@@ -1,7 +1,7 @@
 """Tests for the extended MCP tools module."""
 
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch
 from redops.mcp.tools import (
     EXTENDED_TOOLS,
     MCP_PROMPTS,
@@ -33,7 +33,9 @@ class TestExtendedTools:
         """Test that all tools have input schemas."""
         for tool_name, tool_def in EXTENDED_TOOLS.items():
             assert "inputSchema" in tool_def, f"{tool_name} missing inputSchema"
-            assert "properties" in tool_def["inputSchema"], f"{tool_name} missing properties"
+            assert "properties" in tool_def["inputSchema"], (
+                f"{tool_name} missing properties"
+            )
 
     def test_tool_has_description(self):
         """Test that all tools have descriptions."""
@@ -57,7 +59,7 @@ class TestExecuteExtendedTool:
         """Test routing to check_ip tool."""
         mock_tool.return_value = {"result": "ok"}
 
-        result = await execute_extended_tool("redops_check_ip", {"ip": "8.8.8.8"})
+        await execute_extended_tool("redops_check_ip", {"ip": "8.8.8.8"})
 
         mock_tool.assert_called_once_with({"ip": "8.8.8.8"})
 
@@ -67,7 +69,7 @@ class TestExecuteExtendedTool:
         """Test routing to check_url tool."""
         mock_tool.return_value = {"result": "ok"}
 
-        result = await execute_extended_tool("redops_check_url", {"url": "http://example.com"})
+        await execute_extended_tool("redops_check_url", {"url": "http://example.com"})
 
         mock_tool.assert_called_once()
 
@@ -77,7 +79,9 @@ class TestExecuteExtendedTool:
         """Test routing to cert_transparency tool."""
         mock_tool.return_value = {"result": "ok"}
 
-        result = await execute_extended_tool("redops_cert_transparency", {"domain": "example.com"})
+        await execute_extended_tool(
+            "redops_cert_transparency", {"domain": "example.com"}
+        )
 
         mock_tool.assert_called_once()
 
@@ -87,7 +91,7 @@ class TestExecuteExtendedTool:
         """Test routing to asn_lookup tool."""
         mock_tool.return_value = {"result": "ok"}
 
-        result = await execute_extended_tool("redops_asn_lookup", {"target": "8.8.8.8"})
+        await execute_extended_tool("redops_asn_lookup", {"target": "8.8.8.8"})
 
         mock_tool.assert_called_once()
 
@@ -97,7 +101,9 @@ class TestExecuteExtendedTool:
         """Test routing to enumerate_subdomains tool."""
         mock_tool.return_value = {"result": "ok"}
 
-        result = await execute_extended_tool("redops_enumerate_subdomains", {"domain": "example.com"})
+        await execute_extended_tool(
+            "redops_enumerate_subdomains", {"domain": "example.com"}
+        )
 
         mock_tool.assert_called_once()
 
@@ -107,7 +113,7 @@ class TestExecuteExtendedTool:
         """Test routing to dashboard_summary tool."""
         mock_tool.return_value = {"result": "ok"}
 
-        result = await execute_extended_tool("redops_dashboard_summary", {"scan_data": {}})
+        await execute_extended_tool("redops_dashboard_summary", {"scan_data": {}})
 
         mock_tool.assert_called_once()
 
@@ -129,7 +135,6 @@ class TestToolCheckIp:
     async def test_queries_sources(self, mock_abuseipdb, mock_greynoise):
         """Test that both sources are queried."""
         from redops.mcp.tools import _tool_check_ip
-        from redops.core.context import Context
 
         # Mock the module functions to return the context
         def mock_gn(ctx):
@@ -165,7 +170,6 @@ class TestToolCheckUrl:
     async def test_checks_url(self, mock_check):
         """Test that URL is checked."""
         from redops.mcp.tools import _tool_check_url
-        from redops.core.context import Context
 
         def mock_fn(ctx):
             ctx.add("urlhaus_result", {"query_status": "no_results"})
@@ -194,7 +198,6 @@ class TestToolCertTransparency:
     async def test_searches_ct_logs(self, mock_search):
         """Test that CT logs are searched."""
         from redops.mcp.tools import _tool_cert_transparency
-        from redops.core.context import Context
 
         def mock_fn(ctx, params=None):
             ctx.add("ct_results", {})
@@ -225,7 +228,6 @@ class TestToolAsnLookup:
     async def test_looks_up_asn(self, mock_lookup):
         """Test that ASN is looked up."""
         from redops.mcp.tools import _tool_asn_lookup
-        from redops.core.context import Context
 
         def mock_fn(ctx, params=None):
             ctx.add("asn_lookup", {"asn": 15169})
@@ -255,7 +257,6 @@ class TestToolEnumerateSubdomains:
     async def test_enumerates_subdomains(self, mock_enum):
         """Test that subdomains are enumerated."""
         from redops.mcp.tools import _tool_enumerate_subdomains
-        from redops.core.context import Context
 
         def mock_fn(ctx, params=None):
             ctx.add("subdomains", ["www.example.com", "api.example.com"])
@@ -292,7 +293,11 @@ class TestMcpPrompts:
 
     def test_prompts_defined(self):
         """Test that prompts are defined."""
-        expected_prompts = ["security-assessment", "vulnerability-report", "threat-analysis"]
+        expected_prompts = [
+            "security-assessment",
+            "vulnerability-report",
+            "threat-analysis",
+        ]
 
         prompt_names = [p["name"] for p in MCP_PROMPTS]
         for expected in expected_prompts:
@@ -317,7 +322,9 @@ class TestGetPromptContent:
 
     def test_vulnerability_report_prompt(self):
         """Test vulnerability report prompt content."""
-        content = get_prompt_content("vulnerability-report", {"findings": '{"test": true}'})
+        content = get_prompt_content(
+            "vulnerability-report", {"findings": '{"test": true}'}
+        )
 
         assert '{"test": true}' in content
         assert "vulnerability report" in content.lower()

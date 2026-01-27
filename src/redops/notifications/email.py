@@ -9,12 +9,10 @@ import os
 import smtplib
 import ssl
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-from pathlib import Path
 from string import Template
 from typing import Any, Dict, List, Optional
 
@@ -58,7 +56,9 @@ class EmailConfig:
             from_address=os.environ.get("EMAIL_FROM", "redops@localhost"),
             from_name=os.environ.get("EMAIL_FROM_NAME", "RedOPS Security"),
             reply_to=os.environ.get("EMAIL_REPLY_TO", ""),
-            default_recipients=os.environ.get("EMAIL_RECIPIENTS", "").split(",") if os.environ.get("EMAIL_RECIPIENTS") else [],
+            default_recipients=os.environ.get("EMAIL_RECIPIENTS", "").split(",")
+            if os.environ.get("EMAIL_RECIPIENTS")
+            else [],
         )
 
 
@@ -182,7 +182,18 @@ View Full Report: $report_url
 ---
 This is an automated message from RedOPS Security Assessment Framework
     """,
-    variables=["target", "timestamp", "critical", "high", "medium", "low", "info", "total_findings", "details", "report_url"],
+    variables=[
+        "target",
+        "timestamp",
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info",
+        "total_findings",
+        "details",
+        "report_url",
+    ],
 )
 
 
@@ -263,7 +274,14 @@ View Finding Details: $finding_url
 ---
 ⚠️ This finding requires immediate attention
     """,
-    variables=["title", "target", "timestamp", "description", "remediation", "finding_url"],
+    variables=[
+        "title",
+        "target",
+        "timestamp",
+        "description",
+        "remediation",
+        "finding_url",
+    ],
 )
 
 
@@ -343,7 +361,16 @@ $scans_list
 ---
 RedOPS Security Assessment Framework - Daily Digest
     """,
-    variables=["date", "scans_completed", "new_findings", "resolved_findings", "findings_table", "scans_table", "findings_list", "scans_list"],
+    variables=[
+        "date",
+        "scans_completed",
+        "new_findings",
+        "resolved_findings",
+        "findings_table",
+        "scans_table",
+        "findings_list",
+        "scans_list",
+    ],
 )
 
 
@@ -586,7 +613,7 @@ class EmailBackend(WebhookProvider):
 <body>
     <div class="container">
         <div class="header">
-            <h1>{self.LEVEL_SUBJECTS.get(message.level, '')} {message.title}</h1>
+            <h1>{self.LEVEL_SUBJECTS.get(message.level, "")} {message.title}</h1>
         </div>
         <div class="content">
             <p>{message.body}</p>
@@ -594,7 +621,7 @@ class EmailBackend(WebhookProvider):
             {button_html}
         </div>
         <div class="footer">
-            <p>Source: {message.source} | {message.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+            <p>Source: {message.source} | {message.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
         </div>
     </div>
 </body>

@@ -96,6 +96,7 @@ def require_role(required_roles: list[str]):
     Returns:
         Dependency function
     """
+
     async def role_checker(
         current_user: dict = Depends(get_current_user),
     ) -> dict:

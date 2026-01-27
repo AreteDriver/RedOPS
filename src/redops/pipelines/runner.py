@@ -8,10 +8,9 @@ Supports:
 """
 
 import importlib
-import asyncio
 import copy
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable, Optional, List, Dict, Set, TYPE_CHECKING
+from typing import Callable, Optional, List, Dict, TYPE_CHECKING
 from redops.pipelines.schemas import Pipeline, PipelineStep
 from redops.core.context import Context
 from redops.core.plugin_system import (
@@ -286,7 +285,9 @@ class PipelineRunner:
                 return (step.name, {}, [], str(e))
 
         # Run steps in parallel using ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=min(len(batch), self.max_workers)) as executor:
+        with ThreadPoolExecutor(
+            max_workers=min(len(batch), self.max_workers)
+        ) as executor:
             futures = {executor.submit(run_step, step): step for step in batch}
 
             for future in as_completed(futures):

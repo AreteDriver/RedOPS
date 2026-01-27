@@ -671,7 +671,6 @@ class TestPdfMetadataWithMocking:
 
     def test_pdf_with_full_metadata_mocked(self):
         """Test PDF extraction with all metadata fields mocked."""
-        import sys
 
         # Create mock pypdf module
         mock_reader_class = MagicMock()
@@ -699,7 +698,11 @@ class TestPdfMetadataWithMocking:
         mock_instance.attachments = {}
 
         with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+            with patch(
+                "redops.modules.metadata.documents.PdfReader",
+                mock_reader_class,
+                create=True,
+            ):
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(b"fake pdf content")
                     f.flush()
@@ -737,7 +740,11 @@ class TestPdfMetadataWithMocking:
         mock_instance.attachments = {}
 
         with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+            with patch(
+                "redops.modules.metadata.documents.PdfReader",
+                mock_reader_class,
+                create=True,
+            ):
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(b"encrypted pdf")
                     f.flush()
@@ -769,7 +776,11 @@ class TestPdfMetadataWithMocking:
         mock_instance.attachments = {"secret.txt": b"data", "config.json": b"{}"}
 
         with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+            with patch(
+                "redops.modules.metadata.documents.PdfReader",
+                mock_reader_class,
+                create=True,
+            ):
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(b"pdf with attachments")
                     f.flush()
@@ -787,7 +798,11 @@ class TestPdfMetadataWithMocking:
         mock_reader_class.side_effect = Exception("Corrupted PDF")
 
         with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+            with patch(
+                "redops.modules.metadata.documents.PdfReader",
+                mock_reader_class,
+                create=True,
+            ):
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(b"corrupted pdf")
                     f.flush()
@@ -810,7 +825,11 @@ class TestPdfMetadataWithMocking:
         mock_instance.attachments = {}
 
         with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.PdfReader", mock_reader_class, create=True):
+            with patch(
+                "redops.modules.metadata.documents.PdfReader",
+                mock_reader_class,
+                create=True,
+            ):
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                     f.write(b"pdf no metadata")
                     f.flush()
@@ -860,8 +879,16 @@ class TestDocxMetadataWithMocking:
             pass
 
         with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
-                with patch("redops.modules.metadata.documents.PackageNotFoundError", FakePackageNotFoundError, create=True):
+            with patch(
+                "redops.modules.metadata.documents.DocxDocument",
+                mock_doc_class,
+                create=True,
+            ):
+                with patch(
+                    "redops.modules.metadata.documents.PackageNotFoundError",
+                    FakePackageNotFoundError,
+                    create=True,
+                ):
                     with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
                         f.write(b"fake docx")
                         f.flush()
@@ -870,7 +897,9 @@ class TestDocxMetadataWithMocking:
 
                         assert result is not None
                         assert result.author == "Document Author"
-                        assert result.metadata.get("last_modified_by") == "Editor Person"
+                        assert (
+                            result.metadata.get("last_modified_by") == "Editor Person"
+                        )
                         assert result.metadata.get("title") == "Document Title"
                         assert result.metadata.get("subject") == "Document Subject"
                         assert result.metadata.get("keywords") == "keyword1, keyword2"
@@ -882,6 +911,7 @@ class TestDocxMetadataWithMocking:
 
     def test_docx_package_not_found_error(self):
         """Test DOCX extraction handles PackageNotFoundError."""
+
         # Create a real exception class
         class MockPackageNotFoundError(Exception):
             pass
@@ -890,8 +920,16 @@ class TestDocxMetadataWithMocking:
         mock_doc_class.side_effect = MockPackageNotFoundError("Not found")
 
         with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
-                with patch("redops.modules.metadata.documents.PackageNotFoundError", MockPackageNotFoundError, create=True):
+            with patch(
+                "redops.modules.metadata.documents.DocxDocument",
+                mock_doc_class,
+                create=True,
+            ):
+                with patch(
+                    "redops.modules.metadata.documents.PackageNotFoundError",
+                    MockPackageNotFoundError,
+                    create=True,
+                ):
                     with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
                         f.write(b"invalid docx")
                         f.flush()
@@ -899,7 +937,10 @@ class TestDocxMetadataWithMocking:
                         result = extract_docx_metadata(f.name)
 
                         assert result is not None
-                        assert any("Invalid" in w or "corrupted" in w.lower() for w in result.warnings)
+                        assert any(
+                            "Invalid" in w or "corrupted" in w.lower()
+                            for w in result.warnings
+                        )
 
     def test_docx_generic_exception(self):
         """Test DOCX extraction handles generic exceptions."""
@@ -911,8 +952,16 @@ class TestDocxMetadataWithMocking:
             pass
 
         with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
-                with patch("redops.modules.metadata.documents.PackageNotFoundError", FakePackageNotFoundError, create=True):
+            with patch(
+                "redops.modules.metadata.documents.DocxDocument",
+                mock_doc_class,
+                create=True,
+            ):
+                with patch(
+                    "redops.modules.metadata.documents.PackageNotFoundError",
+                    FakePackageNotFoundError,
+                    create=True,
+                ):
                     with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
                         f.write(b"broken docx")
                         f.flush()
@@ -920,7 +969,9 @@ class TestDocxMetadataWithMocking:
                         result = extract_docx_metadata(f.name)
 
                         assert result is not None
-                        assert any("Error reading Word document" in w for w in result.warnings)
+                        assert any(
+                            "Error reading Word document" in w for w in result.warnings
+                        )
 
     def test_docx_without_hidden_check(self):
         """Test DOCX extraction without hidden data check."""
@@ -948,13 +999,23 @@ class TestDocxMetadataWithMocking:
             pass
 
         with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
-                with patch("redops.modules.metadata.documents.PackageNotFoundError", FakePackageNotFoundError, create=True):
+            with patch(
+                "redops.modules.metadata.documents.DocxDocument",
+                mock_doc_class,
+                create=True,
+            ):
+                with patch(
+                    "redops.modules.metadata.documents.PackageNotFoundError",
+                    FakePackageNotFoundError,
+                    create=True,
+                ):
                     with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
                         f.write(b"docx")
                         f.flush()
 
-                        result = extract_docx_metadata(f.name, include_hidden_check=False)
+                        result = extract_docx_metadata(
+                            f.name, include_hidden_check=False
+                        )
 
                         assert result is not None
                         assert result.author == "Author"
@@ -1018,7 +1079,11 @@ class TestCheckForHiddenDataAdvanced:
         mock_instance.part.rels.values.return_value = [mock_rel]
 
         with patch("redops.modules.metadata.documents.DOCX_AVAILABLE", True):
-            with patch("redops.modules.metadata.documents.DocxDocument", mock_doc_class, create=True):
+            with patch(
+                "redops.modules.metadata.documents.DocxDocument",
+                mock_doc_class,
+                create=True,
+            ):
                 with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
                     f.write(b"docx with hidden data")
                     f.flush()
@@ -1101,7 +1166,9 @@ class TestExtractMetadataAdvanced:
 
     def test_extract_metadata_logs_author_files(self):
         """Test that extraction logs files with author info."""
-        with patch("redops.modules.metadata.documents.extract_from_file") as mock_extract:
+        with patch(
+            "redops.modules.metadata.documents.extract_from_file"
+        ) as mock_extract:
             mock_extract.return_value = DocumentMetadata(
                 filename="test.pdf",
                 file_type=".pdf",
@@ -1122,7 +1189,9 @@ class TestExtractMetadataAdvanced:
 
     def test_extract_metadata_logs_warning_files(self):
         """Test that extraction logs files with warnings."""
-        with patch("redops.modules.metadata.documents.extract_from_file") as mock_extract:
+        with patch(
+            "redops.modules.metadata.documents.extract_from_file"
+        ) as mock_extract:
             mock_extract.return_value = DocumentMetadata(
                 filename="test.pdf",
                 file_type=".pdf",
@@ -1138,11 +1207,15 @@ class TestExtractMetadataAdvanced:
 
                 # Check for warning log
                 warning_logs = result.get_logs(level="WARNING")
-                assert any("hidden content" in log["message"].lower() for log in warning_logs)
+                assert any(
+                    "hidden content" in log["message"].lower() for log in warning_logs
+                )
 
     def test_extract_metadata_both_file_and_directory(self):
         """Test extraction with both file_path and directory params."""
-        with patch("redops.modules.metadata.documents.extract_from_file") as mock_extract:
+        with patch(
+            "redops.modules.metadata.documents.extract_from_file"
+        ) as mock_extract:
             mock_extract.return_value = DocumentMetadata(
                 filename="test.doc",
                 file_type=".doc",

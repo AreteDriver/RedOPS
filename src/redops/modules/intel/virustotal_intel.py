@@ -101,6 +101,7 @@ def get_vt_api_key() -> Optional[str]:
     if not api_key:
         try:
             from redops.cli.settings import get_api_key_direct
+
             api_key = get_api_key_direct("virustotal")
         except Exception:
             pass
@@ -129,9 +130,7 @@ def _make_vt_request(endpoint: str, api_key: str) -> Optional[Dict[str, Any]]:
         return {"error": str(e)}
 
 
-def query_vt_domain(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_vt_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query VirusTotal for domain information.
 
@@ -203,9 +202,7 @@ def query_vt_domain(
     return ctx
 
 
-def query_vt_ip(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_vt_ip(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query VirusTotal for IP information.
 
@@ -229,6 +226,7 @@ def query_vt_ip(
     if not _is_ip(target):
         try:
             import socket
+
             ip = socket.gethostbyname(target)
         except Exception as e:
             ctx.log(f"Could not resolve {target}: {e}", level="WARNING")
@@ -277,9 +275,7 @@ def query_vt_ip(
     return ctx
 
 
-def query_vt_url(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_vt_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query VirusTotal for URL analysis.
 
@@ -320,6 +316,7 @@ def query_vt_url(
 
     # URL ID is base64 of URL without padding
     import base64
+
     url_id = base64.urlsafe_b64encode(url.encode()).decode().rstrip("=")
 
     result = _make_vt_request(f"urls/{url_id}", api_key)
@@ -396,7 +393,9 @@ def analyze_virustotal_intel(
         stats = domain_data["report"].get("last_analysis_stats", {})
         total_malicious += stats.get("malicious", 0)
         total_suspicious += stats.get("suspicious", 0)
-        vt_intel["summary"]["domain_reputation"] = domain_data["report"].get("reputation", 0)
+        vt_intel["summary"]["domain_reputation"] = domain_data["report"].get(
+            "reputation", 0
+        )
 
     if ip_data.get("report"):
         stats = ip_data["report"].get("last_analysis_stats", {})
@@ -422,9 +421,11 @@ def analyze_virustotal_intel(
 
 # Helper functions
 
+
 def _is_ip(value: str) -> bool:
     """Check if value is an IP address."""
     import re
+
     ip_pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
     return bool(re.match(ip_pattern, value))
 

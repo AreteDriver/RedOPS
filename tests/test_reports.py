@@ -1,7 +1,6 @@
 """Tests for report generation module."""
 
 from datetime import datetime, timezone
-from io import BytesIO
 import json
 
 import pytest
@@ -32,7 +31,10 @@ def sample_findings():
             description="User input is not sanitized before database query.",
             module="sql_scanner",
             category="injection",
-            evidence={"url": "http://example.com/search?q=test", "payload": "' OR 1=1--"},
+            evidence={
+                "url": "http://example.com/search?q=test",
+                "payload": "' OR 1=1--",
+            },
             remediation="Use parameterized queries.",
             cvss_score=9.8,
             cve_ids=["CVE-2024-1234"],
@@ -316,7 +318,7 @@ class TestExecutiveSummaryReport:
     def test_risk_levels(self, sample_findings):
         """Risk levels are calculated correctly."""
         config = ReportConfig()
-        report = ExecutiveSummaryReport(config)
+        ExecutiveSummaryReport(config)
 
         # High risk (critical findings)
         high_risk = ScanResult(

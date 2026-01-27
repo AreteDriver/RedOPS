@@ -1,6 +1,5 @@
 """Tests for the AbuseIPDB threat intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from redops.core.context import Context
 from redops.modules.threat_intel.abuseipdb import (
@@ -9,7 +8,6 @@ from redops.modules.threat_intel.abuseipdb import (
     get_blacklist,
     analyze_abuseipdb_results,
     get_abuseipdb_summary,
-    HAS_REQUESTS,
 )
 
 
@@ -118,9 +116,12 @@ class TestReportIp:
     def test_invalid_api_key(self, mock_requests):
         """Test handling invalid API key."""
         import requests as real_requests
+
         mock_response = MagicMock()
         mock_response.status_code = 401
-        mock_response.raise_for_status.side_effect = real_requests.exceptions.HTTPError(response=mock_response)
+        mock_response.raise_for_status.side_effect = real_requests.exceptions.HTTPError(
+            response=mock_response
+        )
         mock_requests.post.return_value = mock_response
         mock_requests.exceptions = real_requests.exceptions
 
@@ -266,18 +267,21 @@ class TestGetAbuseipdbSummary:
     def test_with_results(self):
         """Test summary with results."""
         ctx = Context()
-        ctx.add("abuseipdb_result", {
-            "ipAddress": "8.8.8.8",
-            "abuseConfidenceScore": 0,
-            "totalReports": 0,
-            "isWhitelisted": True,
-            "isTor": False,
-            "isp": "Google LLC",
-            "domain": "google.com",
-            "countryCode": "US",
-            "usageType": "Data Center",
-            "query_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "abuseipdb_result",
+            {
+                "ipAddress": "8.8.8.8",
+                "abuseConfidenceScore": 0,
+                "totalReports": 0,
+                "isWhitelisted": True,
+                "isTor": False,
+                "isp": "Google LLC",
+                "domain": "google.com",
+                "countryCode": "US",
+                "usageType": "Data Center",
+                "query_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_abuseipdb_summary(ctx)
 

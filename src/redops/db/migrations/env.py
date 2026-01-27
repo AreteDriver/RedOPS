@@ -12,7 +12,9 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 # Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+)
 
 from redops.db.models import Base
 
@@ -31,7 +33,9 @@ def get_url() -> str:
     """Get database URL from environment or config."""
     return os.environ.get(
         "DATABASE_URL",
-        config.get_main_option("sqlalchemy.url", "postgresql://redops:redops@localhost:5432/redops")
+        config.get_main_option(
+            "sqlalchemy.url", "postgresql://redops:redops@localhost:5432/redops"
+        ),
     )
 
 

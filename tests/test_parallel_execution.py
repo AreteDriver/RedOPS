@@ -3,7 +3,7 @@
 import pytest
 import time
 import threading
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from redops.pipelines.loader import PipelineLoader
 from redops.pipelines.runner import PipelineRunner
@@ -36,9 +36,15 @@ class TestParallelGrouping:
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Parallel"),
             steps=[
-                PipelineStep(name="Step 1", module="test.step1", parallel_group="group1"),
-                PipelineStep(name="Step 2", module="test.step2", parallel_group="group1"),
-                PipelineStep(name="Step 3", module="test.step3", parallel_group="group1"),
+                PipelineStep(
+                    name="Step 1", module="test.step1", parallel_group="group1"
+                ),
+                PipelineStep(
+                    name="Step 2", module="test.step2", parallel_group="group1"
+                ),
+                PipelineStep(
+                    name="Step 3", module="test.step3", parallel_group="group1"
+                ),
             ],
         )
 
@@ -118,8 +124,12 @@ class TestParallelExecution:
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Concurrent"),
             steps=[
-                PipelineStep(name="Slow 1", module="test.slow1", parallel_group="parallel"),
-                PipelineStep(name="Slow 2", module="test.slow2", parallel_group="parallel"),
+                PipelineStep(
+                    name="Slow 1", module="test.slow1", parallel_group="parallel"
+                ),
+                PipelineStep(
+                    name="Slow 2", module="test.slow2", parallel_group="parallel"
+                ),
             ],
         )
 
@@ -143,7 +153,9 @@ class TestParallelExecution:
         assert elapsed < 0.2, f"Parallel execution took {elapsed}s, expected <0.2s"
 
         # Steps should have started at nearly the same time
-        assert abs(execution_times["step1_start"] - execution_times["step2_start"]) < 0.05
+        assert (
+            abs(execution_times["step1_start"] - execution_times["step2_start"]) < 0.05
+        )
 
     def test_sequential_execution_flag(self):
         """Test that parallel=False forces sequential execution."""
@@ -162,8 +174,12 @@ class TestParallelExecution:
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Sequential Flag"),
             steps=[
-                PipelineStep(name="Step 1", module="test.step1", parallel_group="group"),
-                PipelineStep(name="Step 2", module="test.step2", parallel_group="group"),
+                PipelineStep(
+                    name="Step 1", module="test.step1", parallel_group="group"
+                ),
+                PipelineStep(
+                    name="Step 2", module="test.step2", parallel_group="group"
+                ),
             ],
         )
 
@@ -183,6 +199,7 @@ class TestParallelExecution:
 
     def test_parallel_results_merged(self):
         """Test that results from parallel steps are merged into context."""
+
         def step1(ctx, params):
             ctx.add("data_from_step1", {"key1": "value1"})
             ctx.add("shared_key", "from_step1")
@@ -196,8 +213,12 @@ class TestParallelExecution:
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Merge"),
             steps=[
-                PipelineStep(name="Step 1", module="test.step1", parallel_group="parallel"),
-                PipelineStep(name="Step 2", module="test.step2", parallel_group="parallel"),
+                PipelineStep(
+                    name="Step 1", module="test.step1", parallel_group="parallel"
+                ),
+                PipelineStep(
+                    name="Step 2", module="test.step2", parallel_group="parallel"
+                ),
             ],
         )
 
@@ -218,6 +239,7 @@ class TestParallelExecution:
 
     def test_parallel_error_with_continue_on_error(self):
         """Test that continue_on_error works in parallel execution."""
+
         def success_step(ctx, params):
             ctx.add("success_result", True)
             return ctx
@@ -257,6 +279,7 @@ class TestParallelExecution:
 
     def test_parallel_error_without_continue_on_error(self):
         """Test that errors propagate when continue_on_error is False."""
+
         def success_step(ctx, params):
             time.sleep(0.05)  # Give failing step time to fail first
             ctx.add("success_result", True)
@@ -338,8 +361,7 @@ class TestMaxWorkers:
             with lock:
                 concurrent_count["current"] += 1
                 concurrent_count["max"] = max(
-                    concurrent_count["max"],
-                    concurrent_count["current"]
+                    concurrent_count["max"], concurrent_count["current"]
                 )
             time.sleep(0.05)
             with lock:
@@ -350,14 +372,21 @@ class TestMaxWorkers:
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Concurrency"),
             steps=[
-                PipelineStep(name=f"Step {i}", module=f"test.step{i}", parallel_group="all", params={"id": i})
+                PipelineStep(
+                    name=f"Step {i}",
+                    module=f"test.step{i}",
+                    parallel_group="all",
+                    params={"id": i},
+                )
                 for i in range(6)
             ],
         )
 
         runner = PipelineRunner(pipeline, max_workers=2)
 
-        with patch.object(runner, "_resolve_module_function", return_value=counting_step):
+        with patch.object(
+            runner, "_resolve_module_function", return_value=counting_step
+        ):
             runner.run(target="test.com")
 
         # Should never exceed max_workers
@@ -369,6 +398,7 @@ class TestContextIsolation:
 
     def test_parallel_steps_get_isolated_contexts(self):
         """Test that parallel steps don't interfere with each other."""
+
         def step1(ctx, params):
             # Modify context
             initial_value = ctx.get("shared_data", 0)
@@ -388,8 +418,12 @@ class TestContextIsolation:
         pipeline = Pipeline(
             metadata=PipelineMetadata(name="Isolation"),
             steps=[
-                PipelineStep(name="Step 1", module="test.step1", parallel_group="parallel"),
-                PipelineStep(name="Step 2", module="test.step2", parallel_group="parallel"),
+                PipelineStep(
+                    name="Step 1", module="test.step1", parallel_group="parallel"
+                ),
+                PipelineStep(
+                    name="Step 2", module="test.step2", parallel_group="parallel"
+                ),
             ],
         )
 
@@ -423,9 +457,7 @@ class TestSchemaParallelFields:
     def test_parallel_group_set(self):
         """Test that parallel_group can be set."""
         step = PipelineStep(
-            name="Test",
-            module="test.module",
-            parallel_group="my_group"
+            name="Test", module="test.module", parallel_group="my_group"
         )
         assert step.parallel_group == "my_group"
 
@@ -437,9 +469,7 @@ class TestSchemaParallelFields:
     def test_depends_on_can_be_set(self):
         """Test that depends_on can be set."""
         step = PipelineStep(
-            name="Test",
-            module="test.module",
-            depends_on=["step1", "step2"]
+            name="Test", module="test.module", depends_on=["step1", "step2"]
         )
         assert step.depends_on == ["step1", "step2"]
 

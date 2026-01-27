@@ -740,12 +740,18 @@ def cmd_history(args: argparse.Namespace, config: CLIConfig) -> int:
                 print("No scans found.")
                 return 0
 
-            print(f"{'ID':>5}  {'Status':<10}  {'Target':<30}  {'Findings':>8}  {'Date'}")
+            print(
+                f"{'ID':>5}  {'Status':<10}  {'Target':<30}  {'Findings':>8}  {'Date'}"
+            )
             print("-" * 75)
             for scan in scans:
                 date = scan.started_at[:10] if scan.started_at else "N/A"
-                target = (scan.target[:28] + "..") if len(scan.target) > 30 else scan.target
-                print(f"{scan.id:>5}  {scan.status:<10}  {target:<30}  {scan.findings_count:>8}  {date}")
+                target = (
+                    (scan.target[:28] + "..") if len(scan.target) > 30 else scan.target
+                )
+                print(
+                    f"{scan.id:>5}  {scan.status:<10}  {target:<30}  {scan.findings_count:>8}  {date}"
+                )
 
     elif action == "show":
         if not args.id:
@@ -856,7 +862,7 @@ def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
         if not plugins:
             print("No plugins installed.")
             print()
-            print(f"Plugin directories searched:")
+            print("Plugin directories searched:")
             for pd in plugin_dirs:
                 print(f"  - {pd}")
             return 0
@@ -909,7 +915,9 @@ def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
                 registered = registry.register_from_module(source)
 
             if registered:
-                print_success(f"Loaded {len(registered)} plugin(s): {', '.join(registered)}")
+                print_success(
+                    f"Loaded {len(registered)} plugin(s): {', '.join(registered)}"
+                )
             else:
                 print_warning("No plugins found in source")
                 return 1
@@ -926,7 +934,9 @@ def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
         if registry.enable(name):
             print_success(f"Plugin '{name}' enabled")
         else:
-            print_error(f"Could not enable plugin '{name}' (not found or already enabled)")
+            print_error(
+                f"Could not enable plugin '{name}' (not found or already enabled)"
+            )
             return 1
 
     elif action == "disable":
@@ -938,7 +948,9 @@ def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
         if registry.disable(name):
             print_success(f"Plugin '{name}' disabled")
         else:
-            print_error(f"Could not disable plugin '{name}' (not found or already disabled)")
+            print_error(
+                f"Could not disable plugin '{name}' (not found or already disabled)"
+            )
             return 1
 
     elif action == "info":
@@ -1010,6 +1022,7 @@ def get_plugin_directories() -> List[Path]:
 
     # Environment variable
     import os
+
     env_dirs = os.environ.get("REDOPS_PLUGIN_PATH", "")
     if env_dirs:
         for d in env_dirs.split(":"):
@@ -1660,15 +1673,13 @@ Examples:
         choices=["list", "show", "delete", "stats", "cleanup"],
         help="History action",
     )
+    history_parser.add_argument("--id", type=int, help="Scan ID (for show, delete)")
+    history_parser.add_argument("--target", "-t", help="Filter by target (for list)")
     history_parser.add_argument(
-        "--id", type=int, help="Scan ID (for show, delete)"
-    )
-    history_parser.add_argument(
-        "--target", "-t", help="Filter by target (for list)"
-    )
-    history_parser.add_argument(
-        "--status", "-s", choices=["pending", "running", "completed", "failed"],
-        help="Filter by status (for list)"
+        "--status",
+        "-s",
+        choices=["pending", "running", "completed", "failed"],
+        help="Filter by status (for list)",
     )
     history_parser.add_argument(
         "--limit", "-n", type=int, default=20, help="Number of results (for list)"

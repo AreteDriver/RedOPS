@@ -774,12 +774,16 @@ class TestCmdReportAdvanced:
     def test_report_to_output_file(self, tmp_path, capsys):
         """Test report generation to output file."""
         input_file = tmp_path / "scan.json"
-        input_file.write_text(json.dumps({
-            "exposure_scan": {"exposures": []},
-            "threat_intel": {"iocs": []},
-            "compliance": {"gaps": []},
-            "correlations": {"correlations": [], "insights": []},
-        }))
+        input_file.write_text(
+            json.dumps(
+                {
+                    "exposure_scan": {"exposures": []},
+                    "threat_intel": {"iocs": []},
+                    "compliance": {"gaps": []},
+                    "correlations": {"correlations": [], "insights": []},
+                }
+            )
+        )
         output_file = tmp_path / "output" / "report.txt"
 
         args = MagicMock()
@@ -882,8 +886,11 @@ class TestCmdSettings:
         args = MagicMock()
         config = CLIConfig(quiet=True)
 
-        with patch("redops.cli.settings.run_settings_menu", return_value=0) as mock_menu:
+        with patch(
+            "redops.cli.settings.run_settings_menu", return_value=0
+        ) as mock_menu:
             from redops.cli.app import cmd_settings
+
             result = cmd_settings(args, config)
 
         assert result == 0
@@ -1358,7 +1365,10 @@ class TestCmdAi:
         args.input = None
         config = CLIConfig()
 
-        with patch("redops.modules.ai_assistant.AIAssistant", side_effect=ValueError("No API key")):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant",
+            side_effect=ValueError("No API key"),
+        ):
             result = cmd_ai(args, config)
 
         assert result == 1
@@ -1378,7 +1388,9 @@ class TestCmdAi:
         config = CLIConfig()
 
         mock_assistant = MagicMock()
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 1
@@ -1402,7 +1414,9 @@ class TestCmdAi:
 
         mock_assistant = MagicMock()
         mock_assistant.analyze_findings.return_value = "Analysis result"
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 0
@@ -1423,7 +1437,9 @@ class TestCmdAi:
         config = CLIConfig()
 
         mock_assistant = MagicMock()
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 1
@@ -1445,7 +1461,9 @@ class TestCmdAi:
 
         mock_assistant = MagicMock()
         mock_assistant.explain.return_value = "XSS explanation"
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 0
@@ -1470,7 +1488,9 @@ class TestCmdAi:
 
         mock_assistant = MagicMock()
         mock_assistant.explain.return_value = "Contextual explanation"
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 0
@@ -1488,7 +1508,9 @@ class TestCmdAi:
         config = CLIConfig()
 
         mock_assistant = MagicMock()
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 1
@@ -1510,7 +1532,9 @@ class TestCmdAi:
 
         mock_assistant = MagicMock()
         mock_assistant.suggest_remediations.return_value = "Suggestions"
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 0
@@ -1532,7 +1556,9 @@ class TestCmdAi:
 
         mock_assistant = MagicMock()
         mock_assistant.summarize.return_value = "Summary"
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             result = cmd_ai(args, config)
 
         assert result == 0
@@ -1549,7 +1575,9 @@ class TestCmdAi:
         config = CLIConfig(quiet=True)
 
         mock_assistant = MagicMock()
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             with patch("builtins.input", side_effect=["exit"]):
                 result = cmd_ai(args, config)
 
@@ -1567,7 +1595,9 @@ class TestCmdAi:
         config = CLIConfig(quiet=True)
 
         mock_assistant = MagicMock()
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             with patch("builtins.input", side_effect=["quit"]):
                 result = cmd_ai(args, config)
 
@@ -1585,7 +1615,9 @@ class TestCmdAi:
         config = CLIConfig(quiet=True)
 
         mock_assistant = MagicMock()
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             with patch("builtins.input", side_effect=EOFError):
                 result = cmd_ai(args, config)
 
@@ -1604,7 +1636,9 @@ class TestCmdAi:
 
         mock_assistant = MagicMock()
         mock_assistant.chat.return_value = "AI response"
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             with patch("builtins.input", side_effect=["Hello", "", "exit"]):
                 result = cmd_ai(args, config)
 
@@ -1627,7 +1661,9 @@ class TestCmdAi:
         config = CLIConfig(quiet=True)
 
         mock_assistant = MagicMock()
-        with patch("redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant):
+        with patch(
+            "redops.modules.ai_assistant.AIAssistant", return_value=mock_assistant
+        ):
             with patch("builtins.input", side_effect=[f"load {context_file}", "exit"]):
                 result = cmd_ai(args, config)
 
@@ -1883,7 +1919,9 @@ class TestCmdPlugin:
 
         mock_registry = MagicMock()
         mock_registry.plugins = {}
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -1915,7 +1953,9 @@ class TestCmdPlugin:
 
         mock_registry = MagicMock()
         mock_registry.plugins = {"test_plugin": mock_plugin_info}
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -1934,7 +1974,9 @@ class TestCmdPlugin:
         config = CLIConfig()
 
         mock_registry = MagicMock()
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -1957,7 +1999,9 @@ class TestCmdPlugin:
 
         mock_registry = MagicMock()
         mock_registry.register_from_file.return_value = ["test_plugin"]
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -1976,7 +2020,9 @@ class TestCmdPlugin:
         config = CLIConfig()
 
         mock_registry = MagicMock()
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -1994,7 +2040,9 @@ class TestCmdPlugin:
 
         mock_registry = MagicMock()
         mock_registry.enable.return_value = True
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -2014,7 +2062,9 @@ class TestCmdPlugin:
 
         mock_registry = MagicMock()
         mock_registry.disable.return_value = True
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -2034,7 +2084,9 @@ class TestCmdPlugin:
 
         mock_registry = MagicMock()
         mock_registry.get.return_value = None
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 
@@ -2072,7 +2124,9 @@ class TestCmdPlugin:
 
         mock_registry = MagicMock()
         mock_registry.get.return_value = mock_plugin_info
-        with patch("redops.core.plugin_system.get_plugin_registry", return_value=mock_registry):
+        with patch(
+            "redops.core.plugin_system.get_plugin_registry", return_value=mock_registry
+        ):
             with patch("redops.cli.app.get_plugin_directories", return_value=[]):
                 result = cmd_plugin(args, config)
 

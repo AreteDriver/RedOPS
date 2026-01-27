@@ -1,6 +1,5 @@
 """Tests for the OSCAL report module."""
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
@@ -38,13 +37,16 @@ class TestExportOscal:
     def test_export_with_findings(self):
         """Test exporting context with findings."""
         ctx = Context(target="example.com")
-        ctx.add("finding_test_0", {
-            "module": "test.module",
-            "title": "Test Finding",
-            "description": "A test finding",
-            "severity": "high",
-            "data": {"ip": "1.2.3.4"},
-        })
+        ctx.add(
+            "finding_test_0",
+            {
+                "module": "test.module",
+                "title": "Test Finding",
+                "description": "A test finding",
+                "severity": "high",
+                "data": {"ip": "1.2.3.4"},
+            },
+        )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             result = export_oscal(ctx, {"output_dir": tmpdir})
@@ -63,10 +65,13 @@ class TestExportOscal:
         ctx = Context(target="example.com")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = export_oscal(ctx, {
-                "output_dir": tmpdir,
-                "organization_name": "Test Org",
-            })
+            result = export_oscal(
+                ctx,
+                {
+                    "output_dir": tmpdir,
+                    "organization_name": "Test Org",
+                },
+            )
 
             with open(result.data["oscal_export_path"]) as f:
                 oscal = json.load(f)
@@ -116,7 +121,9 @@ class TestCreateMetadata:
 
     def test_metadata_fields(self):
         """Test metadata has required fields."""
-        metadata = create_metadata("Test Assessment", "Test Org", "2024-01-01T00:00:00Z")
+        metadata = create_metadata(
+            "Test Assessment", "Test Org", "2024-01-01T00:00:00Z"
+        )
 
         assert metadata["title"] == "Test Assessment"
         assert "roles" in metadata
@@ -258,6 +265,7 @@ class TestNormalizeSeverity:
 
     def test_enum_severity(self):
         """Test enum-like severity."""
+
         class MockSeverity:
             name = "CRITICAL"
 

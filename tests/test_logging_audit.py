@@ -7,7 +7,6 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -21,7 +20,6 @@ from redops.core.logging_audit import (
     LogContext,
     LogEntry,
     LoggerFactory,
-    LogHandler,
     LogLevel,
     Logger,
     MemoryHandler,
@@ -331,8 +329,12 @@ class TestMemoryHandler:
     def test_filter_by_level(self):
         """Test filtering entries by level."""
         handler = MemoryHandler()
-        handler.handle(LogEntry(LogLevel.INFO, "info", datetime.now(timezone.utc), "test"))
-        handler.handle(LogEntry(LogLevel.ERROR, "error", datetime.now(timezone.utc), "test"))
+        handler.handle(
+            LogEntry(LogLevel.INFO, "info", datetime.now(timezone.utc), "test")
+        )
+        handler.handle(
+            LogEntry(LogLevel.ERROR, "error", datetime.now(timezone.utc), "test")
+        )
 
         info_entries = handler.get_entries(LogLevel.INFO)
         assert len(info_entries) == 1
@@ -341,7 +343,9 @@ class TestMemoryHandler:
     def test_clear(self):
         """Test clearing entries."""
         handler = MemoryHandler()
-        handler.handle(LogEntry(LogLevel.INFO, "test", datetime.now(timezone.utc), "test"))
+        handler.handle(
+            LogEntry(LogLevel.INFO, "test", datetime.now(timezone.utc), "test")
+        )
         handler.clear()
         assert len(handler.get_entries()) == 0
 
@@ -352,6 +356,7 @@ class TestConsoleHandler:
     def test_emits_to_stream(self):
         """Test that handler emits to stream."""
         from io import StringIO
+
         stream = StringIO()
         handler = ConsoleHandler(stream=stream, colorize=False)
         entry = LogEntry(
@@ -367,6 +372,7 @@ class TestConsoleHandler:
     def test_respects_level(self):
         """Test that handler respects level filter."""
         from io import StringIO
+
         stream = StringIO()
         handler = ConsoleHandler(stream=stream, level=LogLevel.ERROR)
         entry = LogEntry(
@@ -409,7 +415,9 @@ class TestFileHandler:
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "subdir" / "test.log"
             handler = FileHandler(path=path)
-            handler.handle(LogEntry(LogLevel.INFO, "test", datetime.now(timezone.utc), "test"))
+            handler.handle(
+                LogEntry(LogLevel.INFO, "test", datetime.now(timezone.utc), "test")
+            )
             handler.close()
             assert path.exists()
 
@@ -573,7 +581,7 @@ class TestLogger:
         assert entries[0].context.component == "api"
 
 
-class TestLogContext:
+class TestLogContextManagement:
     """Tests for log context management."""
 
     def test_context_manager(self):
@@ -754,7 +762,9 @@ class TestThreadSafety:
                 ctx = get_current_context()
                 contexts[thread_id] = ctx.correlation_id
 
-        threads = [threading.Thread(target=set_and_check_context, args=(i,)) for i in range(5)]
+        threads = [
+            threading.Thread(target=set_and_check_context, args=(i,)) for i in range(5)
+        ]
         for t in threads:
             t.start()
         for t in threads:

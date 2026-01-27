@@ -316,7 +316,12 @@ class TestTrendAnalyzer:
             scan_time = base_time + timedelta(days=i * 7)
             # Decreasing findings over time (improving)
             findings = [
-                {"id": f"f{j}", "title": f"Finding {j}", "severity": "high", "description": ""}
+                {
+                    "id": f"f{j}",
+                    "title": f"Finding {j}",
+                    "severity": "high",
+                    "description": "",
+                }
                 for j in range(10 - i)
             ]
             scans.append(

@@ -16,6 +16,7 @@ from redops.core.models import Finding, RiskLevel
 try:
     import dns.resolver
     import dns.exception
+
     HAS_DNS = True
 except ImportError:
     HAS_DNS = False
@@ -24,51 +25,244 @@ except ImportError:
 # Common subdomain prefixes for brute-forcing
 COMMON_SUBDOMAINS = [
     # Infrastructure
-    "www", "mail", "ftp", "localhost", "webmail", "smtp", "pop", "ns1", "ns2",
-    "ns3", "ns4", "dns", "dns1", "dns2", "mx", "mx1", "mx2",
+    "www",
+    "mail",
+    "ftp",
+    "localhost",
+    "webmail",
+    "smtp",
+    "pop",
+    "ns1",
+    "ns2",
+    "ns3",
+    "ns4",
+    "dns",
+    "dns1",
+    "dns2",
+    "mx",
+    "mx1",
+    "mx2",
     # Web/Apps
-    "app", "apps", "web", "www1", "www2", "portal", "api", "api1", "api2",
-    "gateway", "gw", "proxy", "cdn", "static", "assets", "images", "img",
-    "media", "files", "download", "downloads", "upload", "uploads",
+    "app",
+    "apps",
+    "web",
+    "www1",
+    "www2",
+    "portal",
+    "api",
+    "api1",
+    "api2",
+    "gateway",
+    "gw",
+    "proxy",
+    "cdn",
+    "static",
+    "assets",
+    "images",
+    "img",
+    "media",
+    "files",
+    "download",
+    "downloads",
+    "upload",
+    "uploads",
     # Development
-    "dev", "devel", "develop", "development", "stage", "staging", "stg",
-    "test", "testing", "qa", "uat", "demo", "sandbox", "beta", "alpha",
-    "preview", "preprod", "pre-prod", "prod", "production",
+    "dev",
+    "devel",
+    "develop",
+    "development",
+    "stage",
+    "staging",
+    "stg",
+    "test",
+    "testing",
+    "qa",
+    "uat",
+    "demo",
+    "sandbox",
+    "beta",
+    "alpha",
+    "preview",
+    "preprod",
+    "pre-prod",
+    "prod",
+    "production",
     # Admin/Management
-    "admin", "administrator", "adm", "manage", "manager", "management",
-    "cms", "cpanel", "panel", "dashboard", "console", "control",
+    "admin",
+    "administrator",
+    "adm",
+    "manage",
+    "manager",
+    "management",
+    "cms",
+    "cpanel",
+    "panel",
+    "dashboard",
+    "console",
+    "control",
     # Database/Backend
-    "db", "db1", "db2", "database", "mysql", "postgres", "postgresql",
-    "mongo", "mongodb", "redis", "cache", "memcached", "elastic",
-    "elasticsearch", "sql", "mssql", "oracle",
+    "db",
+    "db1",
+    "db2",
+    "database",
+    "mysql",
+    "postgres",
+    "postgresql",
+    "mongo",
+    "mongodb",
+    "redis",
+    "cache",
+    "memcached",
+    "elastic",
+    "elasticsearch",
+    "sql",
+    "mssql",
+    "oracle",
     # Cloud/Infrastructure
-    "cloud", "aws", "azure", "gcp", "s3", "storage", "backup", "backups",
-    "vpn", "remote", "gateway", "lb", "loadbalancer", "haproxy", "nginx",
+    "cloud",
+    "aws",
+    "azure",
+    "gcp",
+    "s3",
+    "storage",
+    "backup",
+    "backups",
+    "vpn",
+    "remote",
+    "gateway",
+    "lb",
+    "loadbalancer",
+    "haproxy",
+    "nginx",
     # Services
-    "git", "gitlab", "github", "bitbucket", "svn", "repo", "repository",
-    "jenkins", "ci", "cd", "build", "deploy", "docker", "k8s", "kubernetes",
-    "grafana", "prometheus", "kibana", "elk", "log", "logs", "logging",
-    "monitor", "monitoring", "metrics", "status", "health",
+    "git",
+    "gitlab",
+    "github",
+    "bitbucket",
+    "svn",
+    "repo",
+    "repository",
+    "jenkins",
+    "ci",
+    "cd",
+    "build",
+    "deploy",
+    "docker",
+    "k8s",
+    "kubernetes",
+    "grafana",
+    "prometheus",
+    "kibana",
+    "elk",
+    "log",
+    "logs",
+    "logging",
+    "monitor",
+    "monitoring",
+    "metrics",
+    "status",
+    "health",
     # Communication
-    "chat", "slack", "teams", "irc", "jabber", "xmpp", "voip", "sip",
-    "conference", "meet", "meeting", "video", "webinar",
+    "chat",
+    "slack",
+    "teams",
+    "irc",
+    "jabber",
+    "xmpp",
+    "voip",
+    "sip",
+    "conference",
+    "meet",
+    "meeting",
+    "video",
+    "webinar",
     # Security
-    "auth", "authentication", "login", "signin", "sso", "oauth", "saml",
-    "ldap", "ad", "identity", "id", "secure", "ssl", "cert", "certs",
+    "auth",
+    "authentication",
+    "login",
+    "signin",
+    "sso",
+    "oauth",
+    "saml",
+    "ldap",
+    "ad",
+    "identity",
+    "id",
+    "secure",
+    "ssl",
+    "cert",
+    "certs",
     # Support/Help
-    "support", "help", "helpdesk", "ticket", "tickets", "service", "services",
-    "kb", "knowledge", "wiki", "docs", "documentation", "faq",
+    "support",
+    "help",
+    "helpdesk",
+    "ticket",
+    "tickets",
+    "service",
+    "services",
+    "kb",
+    "knowledge",
+    "wiki",
+    "docs",
+    "documentation",
+    "faq",
     # Internal
-    "internal", "intranet", "extranet", "corp", "corporate", "office",
-    "hq", "headquarters", "local", "private", "int",
+    "internal",
+    "intranet",
+    "extranet",
+    "corp",
+    "corporate",
+    "office",
+    "hq",
+    "headquarters",
+    "local",
+    "private",
+    "int",
     # Regional
-    "us", "eu", "uk", "au", "ca", "de", "fr", "jp", "cn", "in",
-    "east", "west", "north", "south", "central",
+    "us",
+    "eu",
+    "uk",
+    "au",
+    "ca",
+    "de",
+    "fr",
+    "jp",
+    "cn",
+    "in",
+    "east",
+    "west",
+    "north",
+    "south",
+    "central",
     # Misc
-    "old", "new", "legacy", "archive", "temp", "tmp", "test1", "test2",
-    "client", "clients", "customer", "customers", "partner", "partners",
-    "vendor", "vendors", "shop", "store", "blog", "news", "press",
-    "career", "careers", "jobs", "hr", "investor", "investors", "ir",
+    "old",
+    "new",
+    "legacy",
+    "archive",
+    "temp",
+    "tmp",
+    "test1",
+    "test2",
+    "client",
+    "clients",
+    "customer",
+    "customers",
+    "partner",
+    "partners",
+    "vendor",
+    "vendors",
+    "shop",
+    "store",
+    "blog",
+    "news",
+    "press",
+    "career",
+    "careers",
+    "jobs",
+    "hr",
+    "investor",
+    "investors",
+    "ir",
 ]
 
 
@@ -119,6 +313,7 @@ def enumerate_subdomains(
     if use_ct:
         try:
             from redops.modules.recon.cert_transparency import search_ct_logs
+
             ctx.log("Searching Certificate Transparency logs...", level="INFO")
             ctx = search_ct_logs(ctx, {"domain": domain})
             ct_subdomains = ctx.get("ct_subdomains", [])
@@ -147,12 +342,15 @@ def enumerate_subdomains(
 
     # Store results
     ctx.add("subdomains", subdomains)
-    ctx.add("subdomain_enum_results", {
-        "domain": domain,
-        "total_discovered": len(subdomains),
-        "methods_used": ["bruteforce", "ct_logs" if use_ct else None, "dns_hints"],
-        "timestamp": datetime.now().isoformat(),
-    })
+    ctx.add(
+        "subdomain_enum_results",
+        {
+            "domain": domain,
+            "total_discovered": len(subdomains),
+            "methods_used": ["bruteforce", "ct_logs" if use_ct else None, "dns_hints"],
+            "timestamp": datetime.now().isoformat(),
+        },
+    )
 
     # Merge with existing subdomains
     existing = ctx.get("all_subdomains", [])
@@ -167,10 +365,7 @@ def enumerate_subdomains(
 
 
 def bruteforce_subdomains(
-    domain: str,
-    wordlist: List[str],
-    threads: int = 10,
-    timeout: int = 3
+    domain: str, wordlist: List[str], threads: int = 10, timeout: int = 3
 ) -> Set[str]:
     """
     Brute-force subdomains using a wordlist.
@@ -193,7 +388,9 @@ def bruteforce_subdomains(
         return None
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = {executor.submit(check_subdomain, prefix): prefix for prefix in wordlist}
+        futures = {
+            executor.submit(check_subdomain, prefix): prefix for prefix in wordlist
+        }
 
         for future in as_completed(futures):
             result = future.result()
@@ -233,9 +430,7 @@ def resolve_domain(domain: str, timeout: int = 3) -> bool:
 
 
 def verify_subdomains(
-    subdomains: Set[str],
-    threads: int = 10,
-    timeout: int = 3
+    subdomains: Set[str], threads: int = 10, timeout: int = 3
 ) -> Set[str]:
     """
     Verify which subdomains actually resolve.
@@ -347,8 +542,27 @@ def analyze_subdomains(subdomains: List[str], domain: str) -> List[Finding]:
     internal_subs = []
     db_subs = []
 
-    dev_keywords = ["dev", "test", "staging", "stage", "qa", "uat", "demo", "sandbox", "beta", "alpha"]
-    admin_keywords = ["admin", "manage", "panel", "cpanel", "console", "dashboard", "cms"]
+    dev_keywords = [
+        "dev",
+        "test",
+        "staging",
+        "stage",
+        "qa",
+        "uat",
+        "demo",
+        "sandbox",
+        "beta",
+        "alpha",
+    ]
+    admin_keywords = [
+        "admin",
+        "manage",
+        "panel",
+        "cpanel",
+        "console",
+        "dashboard",
+        "cms",
+    ]
     internal_keywords = ["internal", "intranet", "corp", "private", "vpn", "office"]
     db_keywords = ["db", "database", "mysql", "postgres", "mongo", "redis", "sql"]
 
@@ -377,60 +591,70 @@ def analyze_subdomains(subdomains: List[str], domain: str) -> List[Finding]:
 
     # Create findings
     if dev_subs:
-        findings.append(Finding(
-            module="recon.subdomain_enum",
-            title=f"Development/Staging Subdomains Exposed ({len(dev_subs)})",
-            description=f"Found {len(dev_subs)} development or staging subdomains: "
-                       f"{', '.join(dev_subs[:5])}{'...' if len(dev_subs) > 5 else ''}. "
-                       "These may contain unfinished features or debugging capabilities.",
-            severity=RiskLevel.MEDIUM,
-            data={"subdomains": dev_subs, "count": len(dev_subs)},
-        ))
+        findings.append(
+            Finding(
+                module="recon.subdomain_enum",
+                title=f"Development/Staging Subdomains Exposed ({len(dev_subs)})",
+                description=f"Found {len(dev_subs)} development or staging subdomains: "
+                f"{', '.join(dev_subs[:5])}{'...' if len(dev_subs) > 5 else ''}. "
+                "These may contain unfinished features or debugging capabilities.",
+                severity=RiskLevel.MEDIUM,
+                data={"subdomains": dev_subs, "count": len(dev_subs)},
+            )
+        )
 
     if admin_subs:
-        findings.append(Finding(
-            module="recon.subdomain_enum",
-            title=f"Administrative Subdomains Discovered ({len(admin_subs)})",
-            description=f"Found {len(admin_subs)} administrative subdomains: "
-                       f"{', '.join(admin_subs[:5])}{'...' if len(admin_subs) > 5 else ''}. "
-                       "Ensure these are properly secured and not publicly accessible.",
-            severity=RiskLevel.MEDIUM,
-            data={"subdomains": admin_subs, "count": len(admin_subs)},
-        ))
+        findings.append(
+            Finding(
+                module="recon.subdomain_enum",
+                title=f"Administrative Subdomains Discovered ({len(admin_subs)})",
+                description=f"Found {len(admin_subs)} administrative subdomains: "
+                f"{', '.join(admin_subs[:5])}{'...' if len(admin_subs) > 5 else ''}. "
+                "Ensure these are properly secured and not publicly accessible.",
+                severity=RiskLevel.MEDIUM,
+                data={"subdomains": admin_subs, "count": len(admin_subs)},
+            )
+        )
 
     if internal_subs:
-        findings.append(Finding(
-            module="recon.subdomain_enum",
-            title=f"Internal Subdomains Exposed ({len(internal_subs)})",
-            description=f"Found {len(internal_subs)} internal/corporate subdomains: "
-                       f"{', '.join(internal_subs[:5])}{'...' if len(internal_subs) > 5 else ''}. "
-                       "These should typically not be publicly resolvable.",
-            severity=RiskLevel.HIGH,
-            data={"subdomains": internal_subs, "count": len(internal_subs)},
-        ))
+        findings.append(
+            Finding(
+                module="recon.subdomain_enum",
+                title=f"Internal Subdomains Exposed ({len(internal_subs)})",
+                description=f"Found {len(internal_subs)} internal/corporate subdomains: "
+                f"{', '.join(internal_subs[:5])}{'...' if len(internal_subs) > 5 else ''}. "
+                "These should typically not be publicly resolvable.",
+                severity=RiskLevel.HIGH,
+                data={"subdomains": internal_subs, "count": len(internal_subs)},
+            )
+        )
 
     if db_subs:
-        findings.append(Finding(
-            module="recon.subdomain_enum",
-            title=f"Database Subdomains Discovered ({len(db_subs)})",
-            description=f"Found {len(db_subs)} database-related subdomains: "
-                       f"{', '.join(db_subs[:5])}{'...' if len(db_subs) > 5 else ''}. "
-                       "Database servers should not be directly exposed to the internet.",
-            severity=RiskLevel.HIGH,
-            data={"subdomains": db_subs, "count": len(db_subs)},
-        ))
+        findings.append(
+            Finding(
+                module="recon.subdomain_enum",
+                title=f"Database Subdomains Discovered ({len(db_subs)})",
+                description=f"Found {len(db_subs)} database-related subdomains: "
+                f"{', '.join(db_subs[:5])}{'...' if len(db_subs) > 5 else ''}. "
+                "Database servers should not be directly exposed to the internet.",
+                severity=RiskLevel.HIGH,
+                data={"subdomains": db_subs, "count": len(db_subs)},
+            )
+        )
 
     # Large attack surface
     if len(subdomains) > 50:
-        findings.append(Finding(
-            module="recon.subdomain_enum",
-            title=f"Large Attack Surface ({len(subdomains)} subdomains)",
-            description=f"Discovered {len(subdomains)} subdomains for {domain}. "
-                       "A large number of subdomains increases the attack surface and "
-                       "may make it harder to maintain consistent security.",
-            severity=RiskLevel.INFO,
-            data={"subdomain_count": len(subdomains)},
-        ))
+        findings.append(
+            Finding(
+                module="recon.subdomain_enum",
+                title=f"Large Attack Surface ({len(subdomains)} subdomains)",
+                description=f"Discovered {len(subdomains)} subdomains for {domain}. "
+                "A large number of subdomains increases the attack surface and "
+                "may make it harder to maintain consistent security.",
+                severity=RiskLevel.INFO,
+                data={"subdomain_count": len(subdomains)},
+            )
+        )
 
     return findings
 

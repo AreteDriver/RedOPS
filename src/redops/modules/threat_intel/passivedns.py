@@ -5,7 +5,7 @@ Queries passive DNS databases to discover historical DNS records,
 domain-IP relationships, and infrastructure changes over time.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 import os
 from redops.core.context import Context
@@ -14,6 +14,7 @@ from redops.core.models import Finding, RiskLevel
 # Try to import requests
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -24,9 +25,7 @@ MNEMONIC_API = "https://api.mnemonic.no/pdns/v3"
 CIRCL_API = "https://www.circl.lu/pdns/query"
 
 
-def query_passivedns(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def query_passivedns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Query passive DNS databases for historical DNS data.
 
@@ -108,7 +107,10 @@ def query_passivedns(
                 severity=RiskLevel.MEDIUM,
                 data=pattern,
             )
-            ctx.add(f"finding_pdns_{pattern['type']}_{query.replace('.', '_')}", finding.model_dump())
+            ctx.add(
+                f"finding_pdns_{pattern['type']}_{query.replace('.', '_')}",
+                finding.model_dump(),
+            )
 
     ctx.add("passivedns_result", results)
     return ctx
@@ -173,16 +175,20 @@ def get_domain_history(
                 ip_data[ip]["count"] += 1
                 # Update timestamps
                 if record.get("time_first"):
-                    if not ip_data[ip]["first_seen"] or record["time_first"] < ip_data[ip]["first_seen"]:
+                    if (
+                        not ip_data[ip]["first_seen"]
+                        or record["time_first"] < ip_data[ip]["first_seen"]
+                    ):
                         ip_data[ip]["first_seen"] = record["time_first"]
                 if record.get("time_last"):
-                    if not ip_data[ip]["last_seen"] or record["time_last"] > ip_data[ip]["last_seen"]:
+                    if (
+                        not ip_data[ip]["last_seen"]
+                        or record["time_last"] > ip_data[ip]["last_seen"]
+                    ):
                         ip_data[ip]["last_seen"] = record["time_last"]
 
         history["ip_addresses"] = sorted(
-            ip_data.values(),
-            key=lambda x: x.get("last_seen") or "",
-            reverse=True
+            ip_data.values(), key=lambda x: x.get("last_seen") or "", reverse=True
         )
 
         # Overall first/last seen
@@ -197,9 +203,7 @@ def get_domain_history(
     return ctx
 
 
-def get_ip_history(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
-) -> Context:
+def get_ip_history(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     """
     Get domain history for an IP address.
 
@@ -256,14 +260,16 @@ def get_ip_history(
                 domain_data[domain]["count"] += 1
 
         history["domains"] = sorted(
-            domain_data.values(),
-            key=lambda x: x.get("last_seen") or "",
-            reverse=True
+            domain_data.values(), key=lambda x: x.get("last_seen") or "", reverse=True
         )
 
         # Overall first/last seen
-        all_times = [r.get("time_first") for r in result["records"] if r.get("time_first")]
-        all_times.extend([r.get("time_last") for r in result["records"] if r.get("time_last")])
+        all_times = [
+            r.get("time_first") for r in result["records"] if r.get("time_first")
+        ]
+        all_times.extend(
+            [r.get("time_last") for r in result["records"] if r.get("time_last")]
+        )
         if all_times:
             history["first_seen"] = min(all_times)
             history["last_seen"] = max(all_times)
@@ -273,7 +279,9 @@ def get_ip_history(
     return ctx
 
 
-def _query_mnemonic(query: str, api_key: Optional[str], limit: int = 100) -> Dict[str, Any]:
+def _query_mnemonic(
+    query: str, api_key: Optional[str], limit: int = 100
+) -> Dict[str, Any]:
     """Query Mnemonic passive DNS API."""
     headers = {}
     if api_key:
@@ -337,6 +345,7 @@ def _query_circl(query: str, limit: int = 100) -> Dict[str, Any]:
             if line:
                 try:
                     import json
+
                     item = json.loads(line)
                     record = {
                         "rrname": item.get("rrname"),
@@ -359,6 +368,7 @@ def _query_circl(query: str, limit: int = 100) -> Dict[str, Any]:
 def _detect_query_type(query: str) -> str:
     """Detect if query is an IP or domain."""
     import re
+
     # IPv4 pattern
     if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", query):
         return "ip"
@@ -415,27 +425,28 @@ def analyze_passivedns_results(results: Dict[str, Any]) -> Dict[str, Any]:
 
     # High IP churn (domain pointing to many IPs)
     if query_type == "domain" and len(analysis["unique_ips"]) > 10:
-        analysis["suspicious_patterns"].append({
-            "type": "high_ip_churn",
-            "description": f"Domain has pointed to {len(analysis['unique_ips'])} different IPs",
-            "count": len(analysis["unique_ips"]),
-            "severity": "medium",
-        })
+        analysis["suspicious_patterns"].append(
+            {
+                "type": "high_ip_churn",
+                "description": f"Domain has pointed to {len(analysis['unique_ips'])} different IPs",
+                "count": len(analysis["unique_ips"]),
+                "severity": "medium",
+            }
+        )
 
     # High domain count on IP (shared hosting or malicious)
     if query_type == "ip" and len(analysis["unique_domains"]) > 50:
-        analysis["suspicious_patterns"].append({
-            "type": "high_domain_count",
-            "description": f"IP hosts {len(analysis['unique_domains'])} domains",
-            "count": len(analysis["unique_domains"]),
-            "severity": "low",
-        })
+        analysis["suspicious_patterns"].append(
+            {
+                "type": "high_domain_count",
+                "description": f"IP hosts {len(analysis['unique_domains'])} domains",
+                "count": len(analysis["unique_domains"]),
+                "severity": "low",
+            }
+        )
 
     # Estimate infrastructure changes
-    analysis["infrastructure_changes"] = max(
-        len(analysis["unique_ips"]) - 1,
-        0
-    )
+    analysis["infrastructure_changes"] = max(len(analysis["unique_ips"]) - 1, 0)
 
     return analysis
 

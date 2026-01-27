@@ -130,11 +130,14 @@ class TestBuildStatsOverview:
     def test_with_risks(self):
         """Test with risks data."""
         ctx = Context()
-        ctx.add("risks", [
-            {"level": "critical"},
-            {"level": "high"},
-            {"level": "medium"},
-        ])
+        ctx.add(
+            "risks",
+            [
+                {"level": "critical"},
+                {"level": "high"},
+                {"level": "medium"},
+            ],
+        )
 
         content = build_stats_overview(ctx)
 
@@ -171,9 +174,24 @@ class TestBuildRiskSection:
     def test_with_risks(self):
         """Test with multiple risks."""
         risks = [
-            {"level": "critical", "title": "Critical Risk", "score": 25, "description": "Desc 1"},
-            {"level": "high", "title": "High Risk", "score": 18, "description": "Desc 2"},
-            {"level": "medium", "title": "Medium Risk", "score": 12, "description": "Desc 3"},
+            {
+                "level": "critical",
+                "title": "Critical Risk",
+                "score": 25,
+                "description": "Desc 1",
+            },
+            {
+                "level": "high",
+                "title": "High Risk",
+                "score": 18,
+                "description": "Desc 2",
+            },
+            {
+                "level": "medium",
+                "title": "Medium Risk",
+                "score": 12,
+                "description": "Desc 3",
+            },
         ]
 
         content = build_risk_section(risks)
@@ -215,7 +233,12 @@ class TestBuildRiskSection:
     def test_html_escaping(self):
         """Test that HTML is escaped in risk fields."""
         risks = [
-            {"level": "high", "title": "<script>alert(1)</script>", "score": 10, "description": "<img src=x>"},
+            {
+                "level": "high",
+                "title": "<script>alert(1)</script>",
+                "score": 10,
+                "description": "<img src=x>",
+            },
         ]
 
         content = build_risk_section(risks)
@@ -249,10 +272,19 @@ class TestBuildMitreMatrixHtml:
     def test_with_mapping(self):
         """Test with full MITRE mapping."""
         ctx = Context()
-        ctx.add("mitre_mapping", {
-            "T1059": {"tactic": "Execution", "name": "Command and Scripting Interpreter"},
-            "T1071": {"tactic": "Command and Control", "name": "Application Layer Protocol"},
-        })
+        ctx.add(
+            "mitre_mapping",
+            {
+                "T1059": {
+                    "tactic": "Execution",
+                    "name": "Command and Scripting Interpreter",
+                },
+                "T1071": {
+                    "tactic": "Command and Control",
+                    "name": "Application Layer Protocol",
+                },
+            },
+        )
 
         content = build_mitre_matrix_html(ctx)
 
@@ -263,9 +295,12 @@ class TestBuildMitreMatrixHtml:
     def test_with_unknown_tactic(self):
         """Test with unknown tactic in mapping."""
         ctx = Context()
-        ctx.add("mitre_mapping", {
-            "T9999": {"name": "Unknown Technique"},  # No tactic
-        })
+        ctx.add(
+            "mitre_mapping",
+            {
+                "T9999": {"name": "Unknown Technique"},  # No tactic
+            },
+        )
 
         content = build_mitre_matrix_html(ctx)
 
@@ -275,7 +310,10 @@ class TestBuildMitreMatrixHtml:
     def test_more_than_8_techniques(self):
         """Test truncation for many techniques in one tactic."""
         ctx = Context()
-        techniques = {f"T{1000+i}": {"tactic": "Execution", "name": f"Tech {i}"} for i in range(12)}
+        techniques = {
+            f"T{1000 + i}": {"tactic": "Execution", "name": f"Tech {i}"}
+            for i in range(12)
+        }
         ctx.add("mitre_mapping", techniques)
 
         content = build_mitre_matrix_html(ctx)
@@ -285,9 +323,12 @@ class TestBuildMitreMatrixHtml:
     def test_non_dict_technique_info(self):
         """Test handling non-dict technique info."""
         ctx = Context()
-        ctx.add("mitre_mapping", {
-            "T1059": "Just a string, not a dict",
-        })
+        ctx.add(
+            "mitre_mapping",
+            {
+                "T1059": "Just a string, not a dict",
+            },
+        )
 
         content = build_mitre_matrix_html(ctx)
 
@@ -338,16 +379,18 @@ class TestBuildAttackPathsHtml:
 
     def test_with_steps(self):
         """Test path with steps."""
-        paths = [{
-            "name": "Multi-step",
-            "likelihood": 3,
-            "impact": 3,
-            "steps": [
-                {"name": "Entry Point"},
-                {"name": "Lateral Move"},
-                {"name": "Target System"},
-            ]
-        }]
+        paths = [
+            {
+                "name": "Multi-step",
+                "likelihood": 3,
+                "impact": 3,
+                "steps": [
+                    {"name": "Entry Point"},
+                    {"name": "Lateral Move"},
+                    {"name": "Target System"},
+                ],
+            }
+        ]
 
         content = build_attack_paths_html(paths)
 
@@ -359,12 +402,14 @@ class TestBuildAttackPathsHtml:
 
     def test_with_string_steps(self):
         """Test path with string steps (not dict)."""
-        paths = [{
-            "name": "String Steps",
-            "likelihood": 3,
-            "impact": 3,
-            "steps": ["Step 1", "Step 2", "Step 3"]
-        }]
+        paths = [
+            {
+                "name": "String Steps",
+                "likelihood": 3,
+                "impact": 3,
+                "steps": ["Step 1", "Step 2", "Step 3"],
+            }
+        ]
 
         content = build_attack_paths_html(paths)
 
@@ -373,12 +418,14 @@ class TestBuildAttackPathsHtml:
 
     def test_with_mitre_techniques(self):
         """Test path with MITRE techniques."""
-        paths = [{
-            "name": "MITRE Path",
-            "likelihood": 3,
-            "impact": 3,
-            "mitre_techniques": ["T1059", "T1071", "T1078"]
-        }]
+        paths = [
+            {
+                "name": "MITRE Path",
+                "likelihood": 3,
+                "impact": 3,
+                "mitre_techniques": ["T1059", "T1071", "T1078"],
+            }
+        ]
 
         content = build_attack_paths_html(paths)
 
@@ -387,12 +434,14 @@ class TestBuildAttackPathsHtml:
 
     def test_many_mitre_techniques(self):
         """Test truncation of many MITRE techniques."""
-        paths = [{
-            "name": "Many Techniques",
-            "likelihood": 3,
-            "impact": 3,
-            "mitre_techniques": [f"T{1000+i}" for i in range(10)]
-        }]
+        paths = [
+            {
+                "name": "Many Techniques",
+                "likelihood": 3,
+                "impact": 3,
+                "mitre_techniques": [f"T{1000 + i}" for i in range(10)],
+            }
+        ]
 
         content = build_attack_paths_html(paths)
 
@@ -417,11 +466,9 @@ class TestBuildScenariosHtml:
 
     def test_basic_scenario(self):
         """Test basic scenario."""
-        scenarios = [{
-            "name": "Scenario 1",
-            "objective": "Test objective",
-            "risk_level": "HIGH"
-        }]
+        scenarios = [
+            {"name": "Scenario 1", "objective": "Test objective", "risk_level": "HIGH"}
+        ]
 
         content = build_scenarios_html(scenarios)
 
@@ -431,12 +478,14 @@ class TestBuildScenariosHtml:
 
     def test_with_threat_actor_dict(self):
         """Test scenario with dict threat actor."""
-        scenarios = [{
-            "name": "APT Attack",
-            "objective": "Data theft",
-            "risk_level": "CRITICAL",
-            "threat_actor": {"name": "APT29"}
-        }]
+        scenarios = [
+            {
+                "name": "APT Attack",
+                "objective": "Data theft",
+                "risk_level": "CRITICAL",
+                "threat_actor": {"name": "APT29"},
+            }
+        ]
 
         content = build_scenarios_html(scenarios)
 
@@ -445,12 +494,14 @@ class TestBuildScenariosHtml:
 
     def test_with_threat_actor_string(self):
         """Test scenario with string threat actor."""
-        scenarios = [{
-            "name": "Attack",
-            "objective": "Test",
-            "risk_level": "MEDIUM",
-            "threat_actor": "Unknown Actor"
-        }]
+        scenarios = [
+            {
+                "name": "Attack",
+                "objective": "Test",
+                "risk_level": "MEDIUM",
+                "threat_actor": "Unknown Actor",
+            }
+        ]
 
         content = build_scenarios_html(scenarios)
 
@@ -458,12 +509,14 @@ class TestBuildScenariosHtml:
 
     def test_with_executive_summary(self):
         """Test scenario with executive summary."""
-        scenarios = [{
-            "name": "Detailed Scenario",
-            "objective": "Test",
-            "risk_level": "HIGH",
-            "executive_summary": "This is a detailed executive summary."
-        }]
+        scenarios = [
+            {
+                "name": "Detailed Scenario",
+                "objective": "Test",
+                "risk_level": "HIGH",
+                "executive_summary": "This is a detailed executive summary.",
+            }
+        ]
 
         content = build_scenarios_html(scenarios)
 
@@ -471,12 +524,14 @@ class TestBuildScenariosHtml:
 
     def test_long_executive_summary(self):
         """Test truncation of long executive summary."""
-        scenarios = [{
-            "name": "Long Summary",
-            "objective": "Test",
-            "risk_level": "MEDIUM",
-            "executive_summary": "x" * 500  # Longer than 400 chars
-        }]
+        scenarios = [
+            {
+                "name": "Long Summary",
+                "objective": "Test",
+                "risk_level": "MEDIUM",
+                "executive_summary": "x" * 500,  # Longer than 400 chars
+            }
+        ]
 
         content = build_scenarios_html(scenarios)
 
@@ -484,11 +539,9 @@ class TestBuildScenariosHtml:
 
     def test_invalid_risk_level(self):
         """Test invalid risk level defaults to medium."""
-        scenarios = [{
-            "name": "Invalid Risk",
-            "objective": "Test",
-            "risk_level": "INVALID"
-        }]
+        scenarios = [
+            {"name": "Invalid Risk", "objective": "Test", "risk_level": "INVALID"}
+        ]
 
         content = build_scenarios_html(scenarios)
 
@@ -497,7 +550,10 @@ class TestBuildScenariosHtml:
 
     def test_more_than_3_scenarios(self):
         """Test truncation message for many scenarios."""
-        scenarios = [{"name": f"Scenario {i}", "objective": "Test", "risk_level": "LOW"} for i in range(5)]
+        scenarios = [
+            {"name": f"Scenario {i}", "objective": "Test", "risk_level": "LOW"}
+            for i in range(5)
+        ]
 
         content = build_scenarios_html(scenarios)
 
@@ -573,33 +629,65 @@ class TestIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             ctx = Context(target="integration-test.com")
             ctx.add("pipeline_name", "Full Assessment")
-            ctx.add("risks", [
-                {"level": "critical", "title": "SQL Injection", "score": 25, "description": "Database vulnerability"},
-                {"level": "high", "title": "XSS", "score": 18, "description": "Cross-site scripting"},
-            ])
-            ctx.add("attack_paths", [
+            ctx.add(
+                "risks",
+                [
+                    {
+                        "level": "critical",
+                        "title": "SQL Injection",
+                        "score": 25,
+                        "description": "Database vulnerability",
+                    },
+                    {
+                        "level": "high",
+                        "title": "XSS",
+                        "score": 18,
+                        "description": "Cross-site scripting",
+                    },
+                ],
+            )
+            ctx.add(
+                "attack_paths",
+                [
+                    {
+                        "name": "Web App Attack",
+                        "description": "Attack via web application",
+                        "likelihood": 4,
+                        "impact": 5,
+                        "steps": [
+                            {"name": "Recon"},
+                            {"name": "Exploit"},
+                            {"name": "Exfil"},
+                        ],
+                        "mitre_techniques": ["T1190", "T1059"],
+                    }
+                ],
+            )
+            ctx.add(
+                "mitre_mapping",
                 {
-                    "name": "Web App Attack",
-                    "description": "Attack via web application",
-                    "likelihood": 4,
-                    "impact": 5,
-                    "steps": [{"name": "Recon"}, {"name": "Exploit"}, {"name": "Exfil"}],
-                    "mitre_techniques": ["T1190", "T1059"]
-                }
-            ])
-            ctx.add("mitre_mapping", {
-                "T1190": {"tactic": "Initial Access", "name": "Exploit Public-Facing Application"},
-                "T1059": {"tactic": "Execution", "name": "Command and Scripting Interpreter"},
-            })
-            ctx.add("scenarios", [
-                {
-                    "name": "External Attacker",
-                    "objective": "Data exfiltration",
-                    "risk_level": "CRITICAL",
-                    "threat_actor": {"name": "APT Group"},
-                    "executive_summary": "Sophisticated attack scenario"
-                }
-            ])
+                    "T1190": {
+                        "tactic": "Initial Access",
+                        "name": "Exploit Public-Facing Application",
+                    },
+                    "T1059": {
+                        "tactic": "Execution",
+                        "name": "Command and Scripting Interpreter",
+                    },
+                },
+            )
+            ctx.add(
+                "scenarios",
+                [
+                    {
+                        "name": "External Attacker",
+                        "objective": "Data exfiltration",
+                        "risk_level": "CRITICAL",
+                        "threat_actor": {"name": "APT Group"},
+                        "executive_summary": "Sophisticated attack scenario",
+                    }
+                ],
+            )
 
             result = generate_html(ctx, params={"output_dir": tmpdir})
 

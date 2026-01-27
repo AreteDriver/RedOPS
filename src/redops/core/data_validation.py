@@ -10,11 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
-from enum import Enum
-from typing import (
-    Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union,
-    TypeVar, Generic, Pattern
-)
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 from uuid import UUID
 import ipaddress
 
@@ -22,8 +18,13 @@ import ipaddress
 class ValidationError(Exception):
     """Raised when validation fails."""
 
-    def __init__(self, message: str, path: Optional[str] = None,
-                 value: Any = None, errors: Optional[List['ValidationError']] = None):
+    def __init__(
+        self,
+        message: str,
+        path: Optional[str] = None,
+        value: Any = None,
+        errors: Optional[List["ValidationError"]] = None,
+    ):
         self.message = message
         self.path = path
         self.value = value
@@ -48,12 +49,15 @@ class CoercionError(Exception):
         self.value = value
         self.target_type = target_type
         self.reason = reason
-        super().__init__(f"Cannot coerce {type(value).__name__} to {target_type}: {reason}")
+        super().__init__(
+            f"Cannot coerce {type(value).__name__} to {target_type}: {reason}"
+        )
 
 
 # =============================================================================
 # Validation Rules
 # =============================================================================
+
 
 class ValidationRule(ABC):
     """Base class for validation rules."""
@@ -98,8 +102,7 @@ class TypeOf(ValidationRule):
         if value is not None and not isinstance(value, self.types):
             type_names = ", ".join(t.__name__ for t in self.types)
             raise ValidationError(
-                f"Expected type {type_names}, got {type(value).__name__}",
-                path, value
+                f"Expected type {type_names}, got {type(value).__name__}", path, value
             )
 
     def describe(self) -> str:
@@ -109,8 +112,13 @@ class TypeOf(ValidationRule):
 class Range(ValidationRule):
     """Validates that a numeric value is within a range."""
 
-    def __init__(self, min_val: Optional[float] = None, max_val: Optional[float] = None,
-                 exclusive_min: bool = False, exclusive_max: bool = False):
+    def __init__(
+        self,
+        min_val: Optional[float] = None,
+        max_val: Optional[float] = None,
+        exclusive_min: bool = False,
+        exclusive_max: bool = False,
+    ):
         self.min_val = min_val
         self.max_val = max_val
         self.exclusive_min = exclusive_min
@@ -123,7 +131,7 @@ class Range(ValidationRule):
         try:
             num = float(value)
         except (TypeError, ValueError):
-            raise ValidationError(f"Value must be numeric for range check", path, value)
+            raise ValidationError("Value must be numeric for range check", path, value)
 
         if self.min_val is not None:
             if self.exclusive_min:
@@ -163,8 +171,12 @@ class Range(ValidationRule):
 class Length(ValidationRule):
     """Validates the length of a string, list, or other sequence."""
 
-    def __init__(self, min_len: Optional[int] = None, max_len: Optional[int] = None,
-                 exact: Optional[int] = None):
+    def __init__(
+        self,
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
+        exact: Optional[int] = None,
+    ):
         self.min_len = min_len
         self.max_len = max_len
         self.exact = exact
@@ -181,21 +193,18 @@ class Length(ValidationRule):
         if self.exact is not None:
             if length != self.exact:
                 raise ValidationError(
-                    f"Length must be exactly {self.exact}, got {length}",
-                    path, value
+                    f"Length must be exactly {self.exact}, got {length}", path, value
                 )
             return
 
         if self.min_len is not None and length < self.min_len:
             raise ValidationError(
-                f"Length must be >= {self.min_len}, got {length}",
-                path, value
+                f"Length must be >= {self.min_len}, got {length}", path, value
             )
 
         if self.max_len is not None and length > self.max_len:
             raise ValidationError(
-                f"Length must be <= {self.max_len}, got {length}",
-                path, value
+                f"Length must be <= {self.max_len}, got {length}", path, value
             )
 
     def describe(self) -> str:
@@ -212,7 +221,7 @@ class Length(ValidationRule):
 class Pattern(ValidationRule):
     """Validates that a string matches a regex pattern."""
 
-    def __init__(self, pattern: Union[str, 're.Pattern'], description: str = ""):
+    def __init__(self, pattern: Union[str, "re.Pattern"], description: str = ""):
         if isinstance(pattern, str):
             self.pattern = re.compile(pattern)
         else:
@@ -224,7 +233,9 @@ class Pattern(ValidationRule):
             return
 
         if not isinstance(value, str):
-            raise ValidationError("Value must be a string for pattern matching", path, value)
+            raise ValidationError(
+                "Value must be a string for pattern matching", path, value
+            )
 
         if not self.pattern.match(value):
             desc = self.description_text or self.pattern.pattern
@@ -241,7 +252,9 @@ class OneOf(ValidationRule):
         self.allowed = set(allowed)
         self.case_sensitive = case_sensitive
         if not case_sensitive:
-            self._lower_allowed = {v.lower() if isinstance(v, str) else v for v in allowed}
+            self._lower_allowed = {
+                v.lower() if isinstance(v, str) else v for v in allowed
+            }
 
     def validate(self, value: Any, path: str = "") -> None:
         if value is None:
@@ -257,7 +270,8 @@ class OneOf(ValidationRule):
         if check_value not in check_set:
             raise ValidationError(
                 f"Value must be one of: {sorted(str(v) for v in self.allowed)}",
-                path, value
+                path,
+                value,
             )
 
     def describe(self) -> str:
@@ -277,7 +291,8 @@ class NoneOf(ValidationRule):
         if value in self.forbidden:
             raise ValidationError(
                 f"Value must not be one of: {sorted(str(v) for v in self.forbidden)}",
-                path, value
+                path,
+                value,
             )
 
     def describe(self) -> str:
@@ -287,9 +302,7 @@ class NoneOf(ValidationRule):
 class Email(ValidationRule):
     """Validates email format."""
 
-    _EMAIL_PATTERN = re.compile(
-        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    )
+    _EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
     def validate(self, value: Any, path: str = "") -> None:
         if value is None:
@@ -309,12 +322,12 @@ class URL(ValidationRule):
     """Validates URL format."""
 
     _URL_PATTERN = re.compile(
-        r'^https?://[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)*'
-        r'(:\d+)?(/[-a-zA-Z0-9._~:/?#\[\]@!$&\'()*+,;=%]*)?$'
+        r"^https?://[a-zA-Z0-9][-a-zA-Z0-9]*(\.[a-zA-Z0-9][-a-zA-Z0-9]*)*"
+        r"(:\d+)?(/[-a-zA-Z0-9._~:/?#\[\]@!$&\'()*+,;=%]*)?$"
     )
 
     def __init__(self, schemes: Optional[List[str]] = None):
-        self.schemes = schemes or ['http', 'https']
+        self.schemes = schemes or ["http", "https"]
 
     def validate(self, value: Any, path: str = "") -> None:
         if value is None:
@@ -326,11 +339,10 @@ class URL(ValidationRule):
         if not self._URL_PATTERN.match(value):
             raise ValidationError("Invalid URL format", path, value)
 
-        scheme = value.split('://')[0].lower()
+        scheme = value.split("://")[0].lower()
         if scheme not in self.schemes:
             raise ValidationError(
-                f"URL scheme must be one of: {self.schemes}",
-                path, value
+                f"URL scheme must be one of: {self.schemes}", path, value
             )
 
     def describe(self) -> str:
@@ -406,7 +418,9 @@ class DateFormat(ValidationRule):
         try:
             datetime.strptime(value, self.fmt)
         except ValueError:
-            raise ValidationError(f"Invalid date format, expected {self.fmt}", path, value)
+            raise ValidationError(
+                f"Invalid date format, expected {self.fmt}", path, value
+            )
 
     def describe(self) -> str:
         return f"date format: {self.fmt}"
@@ -415,8 +429,12 @@ class DateFormat(ValidationRule):
 class Custom(ValidationRule):
     """Custom validation using a callable."""
 
-    def __init__(self, validator: Callable[[Any], bool], message: str,
-                 description: str = "custom rule"):
+    def __init__(
+        self,
+        validator: Callable[[Any], bool],
+        message: str,
+        description: str = "custom rule",
+    ):
         self.validator = validator
         self.message = message
         self.description_text = description
@@ -469,10 +487,7 @@ class Any_(ValidationRule):
             except ValidationError as e:
                 errors.append(e)
 
-        raise ValidationError(
-            f"None of the rules passed",
-            path, value, errors
-        )
+        raise ValidationError("None of the rules passed", path, value, errors)
 
     def describe(self) -> str:
         return " OR ".join(r.describe() for r in self.rules)
@@ -481,6 +496,7 @@ class Any_(ValidationRule):
 # =============================================================================
 # Type Coercion
 # =============================================================================
+
 
 class TypeCoercer:
     """Handles type coercion with configurable strictness."""
@@ -523,7 +539,7 @@ class TypeCoercer:
 
     def _to_str(self, value: Any) -> str:
         if isinstance(value, bytes):
-            return value.decode('utf-8')
+            return value.decode("utf-8")
         return str(value)
 
     def _to_int(self, value: Any) -> int:
@@ -531,7 +547,7 @@ class TypeCoercer:
             return 1 if value else 0
         if isinstance(value, str):
             # Handle float strings
-            if '.' in value:
+            if "." in value:
                 return int(float(value))
             return int(value)
         return int(value)
@@ -544,18 +560,18 @@ class TypeCoercer:
     def _to_bool(self, value: Any) -> bool:
         if isinstance(value, str):
             lower = value.lower().strip()
-            if lower in ('true', '1', 'yes', 'on', 'y'):
+            if lower in ("true", "1", "yes", "on", "y"):
                 return True
-            if lower in ('false', '0', 'no', 'off', 'n', ''):
+            if lower in ("false", "0", "no", "off", "n", ""):
                 return False
-            raise CoercionError(value, 'bool', f"unknown boolean string: {value}")
+            raise CoercionError(value, "bool", f"unknown boolean string: {value}")
         return bool(value)
 
     def _to_decimal(self, value: Any) -> Decimal:
         try:
             return Decimal(str(value))
         except InvalidOperation:
-            raise CoercionError(value, 'Decimal', "invalid decimal format")
+            raise CoercionError(value, "Decimal", "invalid decimal format")
 
     def _to_datetime(self, value: Any) -> datetime:
         if isinstance(value, datetime):
@@ -575,10 +591,10 @@ class TypeCoercer:
                     return datetime.strptime(value, fmt)
                 except ValueError:
                     continue
-            raise CoercionError(value, 'datetime', "unrecognized format")
+            raise CoercionError(value, "datetime", "unrecognized format")
         if isinstance(value, (int, float)):
             return datetime.fromtimestamp(value)
-        raise CoercionError(value, 'datetime', f"cannot convert {type(value).__name__}")
+        raise CoercionError(value, "datetime", f"cannot convert {type(value).__name__}")
 
     def _to_date(self, value: Any) -> date:
         if isinstance(value, datetime):
@@ -589,8 +605,8 @@ class TypeCoercer:
             try:
                 return datetime.strptime(value, "%Y-%m-%d").date()
             except ValueError:
-                raise CoercionError(value, 'date', "expected YYYY-MM-DD format")
-        raise CoercionError(value, 'date', f"cannot convert {type(value).__name__}")
+                raise CoercionError(value, "date", "expected YYYY-MM-DD format")
+        raise CoercionError(value, "date", f"cannot convert {type(value).__name__}")
 
     def _to_list(self, value: Any) -> list:
         if isinstance(value, str):
@@ -602,10 +618,10 @@ class TypeCoercer:
             except json.JSONDecodeError:
                 pass
             # Split by comma
-            return [v.strip() for v in value.split(',') if v.strip()]
+            return [v.strip() for v in value.split(",") if v.strip()]
         if isinstance(value, (tuple, set, frozenset)):
             return list(value)
-        raise CoercionError(value, 'list', f"cannot convert {type(value).__name__}")
+        raise CoercionError(value, "list", f"cannot convert {type(value).__name__}")
 
     def _to_dict(self, value: Any) -> dict:
         if isinstance(value, str):
@@ -614,8 +630,8 @@ class TypeCoercer:
                 if isinstance(result, dict):
                     return result
             except json.JSONDecodeError:
-                raise CoercionError(value, 'dict', "invalid JSON")
-        raise CoercionError(value, 'dict', f"cannot convert {type(value).__name__}")
+                raise CoercionError(value, "dict", "invalid JSON")
+        raise CoercionError(value, "dict", f"cannot convert {type(value).__name__}")
 
     def _to_uuid(self, value: Any) -> UUID:
         if isinstance(value, UUID):
@@ -624,13 +640,14 @@ class TypeCoercer:
             try:
                 return UUID(value)
             except ValueError:
-                raise CoercionError(value, 'UUID', "invalid UUID format")
-        raise CoercionError(value, 'UUID', f"cannot convert {type(value).__name__}")
+                raise CoercionError(value, "UUID", "invalid UUID format")
+        raise CoercionError(value, "UUID", f"cannot convert {type(value).__name__}")
 
 
 # =============================================================================
 # Schema Definition
 # =============================================================================
+
 
 @dataclass
 class FieldSpec:
@@ -645,7 +662,9 @@ class FieldSpec:
     alias: Optional[str] = None
     description: str = ""
 
-    def validate(self, value: Any, coercer: Optional[TypeCoercer] = None) -> Tuple[Any, List[ValidationError]]:
+    def validate(
+        self, value: Any, coercer: Optional[TypeCoercer] = None
+    ) -> Tuple[Any, List[ValidationError]]:
         """Validate and optionally coerce a value. Returns (value, errors)."""
         errors = []
 
@@ -667,10 +686,13 @@ class FieldSpec:
 
         # Type check
         if self.type and not isinstance(value, self.type):
-            errors.append(ValidationError(
-                f"Expected {self.type.__name__}, got {type(value).__name__}",
-                self.name, value
-            ))
+            errors.append(
+                ValidationError(
+                    f"Expected {self.type.__name__}, got {type(value).__name__}",
+                    self.name,
+                    value,
+                )
+            )
 
         # Rule validation
         for rule in self.rules:
@@ -685,8 +707,12 @@ class FieldSpec:
 class Schema:
     """Schema for validating dictionaries/objects."""
 
-    def __init__(self, fields: Optional[List[FieldSpec]] = None,
-                 strict: bool = False, coerce: bool = False):
+    def __init__(
+        self,
+        fields: Optional[List[FieldSpec]] = None,
+        strict: bool = False,
+        coerce: bool = False,
+    ):
         self.fields: Dict[str, FieldSpec] = {}
         self.aliases: Dict[str, str] = {}  # alias -> field name
         self.strict = strict
@@ -697,20 +723,22 @@ class Schema:
             for f in fields:
                 self.add_field(f)
 
-    def add_field(self, spec: FieldSpec) -> 'Schema':
+    def add_field(self, spec: FieldSpec) -> "Schema":
         """Add a field specification."""
         self.fields[spec.name] = spec
         if spec.alias:
             self.aliases[spec.alias] = spec.name
         return self
 
-    def field(self, name: str, type: Optional[Type] = None, **kwargs) -> 'Schema':
+    def field(self, name: str, type: Optional[Type] = None, **kwargs) -> "Schema":
         """Fluent API for adding fields."""
-        rules = kwargs.pop('rules', [])
+        rules = kwargs.pop("rules", [])
         spec = FieldSpec(name=name, type=type, rules=rules, **kwargs)
         return self.add_field(spec)
 
-    def validate(self, data: Dict[str, Any], raise_on_error: bool = True) -> 'ValidationResult':
+    def validate(
+        self, data: Dict[str, Any], raise_on_error: bool = True
+    ) -> "ValidationResult":
         """Validate data against the schema."""
         result = ValidationResult()
         validated = {}
@@ -751,30 +779,27 @@ class Schema:
         result.data = validated
 
         if raise_on_error and result.errors:
-            raise ValidationError(
-                "Schema validation failed",
-                errors=result.errors
-            )
+            raise ValidationError("Schema validation failed", errors=result.errors)
 
         return result
 
     def to_dict(self) -> Dict[str, Any]:
         """Export schema as dictionary."""
         return {
-            'strict': self.strict,
-            'coerce': self.coerce,
-            'fields': {
+            "strict": self.strict,
+            "coerce": self.coerce,
+            "fields": {
                 name: {
-                    'type': spec.type.__name__ if spec.type else None,
-                    'nullable': spec.nullable,
-                    'default': spec.default,
-                    'coerce': spec.coerce,
-                    'alias': spec.alias,
-                    'description': spec.description,
-                    'rules': [r.describe() for r in spec.rules]
+                    "type": spec.type.__name__ if spec.type else None,
+                    "nullable": spec.nullable,
+                    "default": spec.default,
+                    "coerce": spec.coerce,
+                    "alias": spec.alias,
+                    "description": spec.description,
+                    "rules": [r.describe() for r in spec.rules],
                 }
                 for name, spec in self.fields.items()
-            }
+            },
         }
 
 
@@ -800,8 +825,10 @@ class ValidationResult:
 # Data Contracts
 # =============================================================================
 
+
 class ContractViolation(Exception):
     """Raised when a data contract is violated."""
+
     pass
 
 
@@ -837,7 +864,7 @@ class DataContract:
         content = f"{self.name}:{self.version}:{schema_json}"
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
-    def is_compatible(self, other: 'DataContract') -> bool:
+    def is_compatible(self, other: "DataContract") -> bool:
         """Check if this contract is compatible with another (newer) version."""
         # Same fields with same or looser constraints = compatible
         for name, spec in self.schema.fields.items():
@@ -850,7 +877,9 @@ class ContractRegistry:
     """Registry for managing data contracts."""
 
     def __init__(self):
-        self._contracts: Dict[str, Dict[str, DataContract]] = {}  # name -> version -> contract
+        self._contracts: Dict[
+            str, Dict[str, DataContract]
+        ] = {}  # name -> version -> contract
 
     def register(self, contract: DataContract) -> None:
         """Register a contract."""
@@ -881,8 +910,9 @@ class ContractRegistry:
                 result.append((name, version))
         return sorted(result)
 
-    def validate(self, contract_name: str, data: Dict[str, Any],
-                 version: Optional[str] = None) -> ValidationResult:
+    def validate(
+        self, contract_name: str, data: Dict[str, Any], version: Optional[str] = None
+    ) -> ValidationResult:
         """Validate data against a registered contract."""
         contract = self.get(contract_name, version)
         if not contract:
@@ -895,6 +925,7 @@ class ContractRegistry:
 # =============================================================================
 # Validators for common security data types
 # =============================================================================
+
 
 class SecurityValidators:
     """Pre-built validators for security-related data."""
@@ -910,16 +941,16 @@ class SecurityValidators:
     @staticmethod
     def mac_address() -> ValidationRule:
         return Pattern(
-            r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$',
-            "MAC address (XX:XX:XX:XX:XX:XX)"
+            r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$",
+            "MAC address (XX:XX:XX:XX:XX:XX)",
         )
 
     @staticmethod
     def hostname() -> ValidationRule:
         return Pattern(
-            r'^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?'
-            r'(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$',
-            "valid hostname"
+            r"^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?"
+            r"(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$",
+            "valid hostname",
         )
 
     @staticmethod
@@ -928,23 +959,23 @@ class SecurityValidators:
 
     @staticmethod
     def md5_hash() -> ValidationRule:
-        return Pattern(r'^[a-fA-F0-9]{32}$', "MD5 hash")
+        return Pattern(r"^[a-fA-F0-9]{32}$", "MD5 hash")
 
     @staticmethod
     def sha1_hash() -> ValidationRule:
-        return Pattern(r'^[a-fA-F0-9]{40}$', "SHA1 hash")
+        return Pattern(r"^[a-fA-F0-9]{40}$", "SHA1 hash")
 
     @staticmethod
     def sha256_hash() -> ValidationRule:
-        return Pattern(r'^[a-fA-F0-9]{64}$', "SHA256 hash")
+        return Pattern(r"^[a-fA-F0-9]{64}$", "SHA256 hash")
 
     @staticmethod
     def cve_id() -> ValidationRule:
-        return Pattern(r'^CVE-\d{4}-\d{4,}$', "CVE ID (CVE-YYYY-NNNNN)")
+        return Pattern(r"^CVE-\d{4}-\d{4,}$", "CVE ID (CVE-YYYY-NNNNN)")
 
     @staticmethod
     def severity() -> ValidationRule:
-        return OneOf('critical', 'high', 'medium', 'low', 'info', case_sensitive=False)
+        return OneOf("critical", "high", "medium", "low", "info", case_sensitive=False)
 
     @staticmethod
     def cvss_score() -> ValidationRule:
@@ -952,26 +983,26 @@ class SecurityValidators:
 
     @staticmethod
     def mitre_technique() -> ValidationRule:
-        return Pattern(r'^T\d{4}(\.\d{3})?$', "MITRE ATT&CK technique ID")
+        return Pattern(r"^T\d{4}(\.\d{3})?$", "MITRE ATT&CK technique ID")
 
     @staticmethod
     def base64_data() -> ValidationRule:
-        return Pattern(
-            r'^[A-Za-z0-9+/]*={0,2}$',
-            "Base64 encoded data"
-        )
+        return Pattern(r"^[A-Za-z0-9+/]*={0,2}$", "Base64 encoded data")
 
 
 # =============================================================================
 # Convenience functions
 # =============================================================================
 
+
 def validate_dict(data: Dict[str, Any], schema: Schema) -> ValidationResult:
     """Validate a dictionary against a schema."""
     return schema.validate(data, raise_on_error=False)
 
 
-def validate_list(items: List[Dict[str, Any]], schema: Schema) -> List[ValidationResult]:
+def validate_list(
+    items: List[Dict[str, Any]], schema: Schema
+) -> List[ValidationResult]:
     """Validate a list of items against a schema."""
     return [schema.validate(item, raise_on_error=False) for item in items]
 

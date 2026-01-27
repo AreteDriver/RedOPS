@@ -14,7 +14,7 @@ from typing import Any, Optional, Dict, List, Type
 import logging
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import (
@@ -23,14 +23,10 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
     Image,
-    ListFlowable,
-    ListItem,
 )
 from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics.charts.barcharts import VerticalBarChart
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +225,9 @@ class BaseReport(ABC):
         # Title and subtitle
         elements.append(Paragraph(self.config.title, self.styles["ReportTitle"]))
         if self.config.subtitle:
-            elements.append(Paragraph(self.config.subtitle, self.styles["ReportSubtitle"]))
+            elements.append(
+                Paragraph(self.config.subtitle, self.styles["ReportSubtitle"])
+            )
 
         # Classification banner
         elements.append(
@@ -326,7 +324,9 @@ class BaseReport(ABC):
         for i, finding in enumerate(findings, 1):
             row = [
                 str(i),
-                finding.title[:50] + "..." if len(finding.title) > 50 else finding.title,
+                finding.title[:50] + "..."
+                if len(finding.title) > 50
+                else finding.title,
                 finding.severity.upper(),
                 finding.category or "N/A",
                 finding.status.title(),
@@ -350,7 +350,12 @@ class BaseReport(ABC):
             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+            (
+                "ROWBACKGROUNDS",
+                (0, 1),
+                (-1, -1),
+                [colors.white, colors.HexColor("#f8f9fa")],
+            ),
         ]
 
         # Color severity cells
@@ -508,7 +513,7 @@ class ReportGenerator:
             md += f"""### {i}. {finding.title}
 
 **Severity:** {finding.severity.upper()}
-**Category:** {finding.category or 'N/A'}
+**Category:** {finding.category or "N/A"}
 **Status:** {finding.status.title()}
 
 {finding.description}
@@ -529,7 +534,9 @@ class ReportGenerator:
             "target": data.target,
             "pipeline": data.pipeline,
             "started_at": data.started_at.isoformat(),
-            "completed_at": data.completed_at.isoformat() if data.completed_at else None,
+            "completed_at": data.completed_at.isoformat()
+            if data.completed_at
+            else None,
             "status": data.status,
             "severity_counts": data.severity_counts,
             "risk_score": data.risk_score,

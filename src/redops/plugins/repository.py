@@ -4,7 +4,6 @@ Plugin Repository.
 Provides plugin discovery, installation, and management.
 """
 
-import hashlib
 import importlib
 import importlib.util
 import json
@@ -16,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlparse
 
 from redops.plugins.manifest import PluginManifest, load_manifest, ManifestError
@@ -71,10 +70,15 @@ class PluginInfo:
             "source": self.source.value,
             "source_url": self.source_url,
             "installed": self.installed,
-            "installed_at": self.installed_at.isoformat() if self.installed_at else None,
+            "installed_at": self.installed_at.isoformat()
+            if self.installed_at
+            else None,
             "path": str(self.path) if self.path else None,
             "available_versions": [
-                {"version": v.version, "released_at": v.released_at.isoformat() if v.released_at else None}
+                {
+                    "version": v.version,
+                    "released_at": v.released_at.isoformat() if v.released_at else None,
+                }
                 for v in self.available_versions
             ],
             "metadata": self.metadata,
@@ -116,7 +120,9 @@ class PluginRepository:
             plugins_dir: Directory to store installed plugins
             registry_url: URL of plugin registry for remote discovery
         """
-        self._plugins_dir = Path(plugins_dir) if plugins_dir else Path.home() / ".redops" / "plugins"
+        self._plugins_dir = (
+            Path(plugins_dir) if plugins_dir else Path.home() / ".redops" / "plugins"
+        )
         self._registry_url = registry_url
         self._installed: Dict[str, PluginInfo] = {}
         self._loaded: Dict[str, Any] = {}
@@ -150,7 +156,9 @@ class PluginRepository:
                         source=PluginSource(info.get("source", "local")),
                         source_url=info.get("source_url", ""),
                         installed=True,
-                        installed_at=datetime.fromisoformat(info["installed_at"]) if info.get("installed_at") else None,
+                        installed_at=datetime.fromisoformat(info["installed_at"])
+                        if info.get("installed_at")
+                        else None,
                         path=Path(info["path"]) if info.get("path") else None,
                     )
             except (json.JSONDecodeError, KeyError):
@@ -171,7 +179,9 @@ class PluginRepository:
                     "author": info.author,
                     "source": info.source.value,
                     "source_url": info.source_url,
-                    "installed_at": info.installed_at.isoformat() if info.installed_at else None,
+                    "installed_at": info.installed_at.isoformat()
+                    if info.installed_at
+                    else None,
                     "path": str(info.path) if info.path else None,
                 }
                 for name, info in self._installed.items()
@@ -589,10 +599,7 @@ def search_plugins(query: str) -> List[PluginInfo]:
 
     query_lower = query.lower()
     for info in repo.list_installed():
-        if (
-            query_lower in info.name.lower() or
-            query_lower in info.description.lower()
-        ):
+        if query_lower in info.name.lower() or query_lower in info.description.lower():
             results.append(info)
 
     return results

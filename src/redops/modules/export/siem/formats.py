@@ -7,9 +7,8 @@ Provides CEF, LEEF, and other standard security formats.
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, List, Optional
-from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
@@ -281,10 +280,10 @@ class SyslogExporter:
     # Syslog severity levels (RFC 5424)
     SEVERITY_MAP = {
         "critical": 2,  # Critical
-        "high": 3,      # Error
-        "medium": 4,    # Warning
-        "low": 5,       # Notice
-        "info": 6,      # Informational
+        "high": 3,  # Error
+        "medium": 4,  # Warning
+        "low": 5,  # Notice
+        "info": 6,  # Informational
     }
 
     # Facility: local0 (16) for custom applications
@@ -316,7 +315,6 @@ class SyslogExporter:
         """
         priority = self._calculate_priority(event.severity)
         timestamp = event.timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-        proc_id = "-"
         msg_id = event.event_type.upper().replace(" ", "_")[:32]
 
         # Structured data (SD-ELEMENT)
@@ -335,12 +333,14 @@ class SyslogExporter:
         sd_params.append(f'severity="{event.severity}"')
 
         if sd_params:
-            sd_elements.append(f'[redops@32473 {" ".join(sd_params)}]')
+            sd_elements.append(f"[redops@32473 {' '.join(sd_params)}]")
 
         structured_data = "".join(sd_elements) if sd_elements else "-"
 
         # Message
-        message = f"{event.title}: {event.description}" if event.description else event.title
+        message = (
+            f"{event.title}: {event.description}" if event.description else event.title
+        )
 
         # Build syslog message
         return f"<{priority}>1 {timestamp} {self.hostname} {self.app_name} - {msg_id} {structured_data} {message}"

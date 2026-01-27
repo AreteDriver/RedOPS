@@ -216,6 +216,7 @@ async def _tool_check_ip(arguments: Dict[str, Any]) -> Dict[str, Any]:
     if "greynoise" in sources:
         try:
             from redops.modules.threat_intel.greynoise import query_greynoise
+
             ctx = query_greynoise(ctx)
             results["sources"]["greynoise"] = ctx.get("greynoise_result", {})
         except Exception as e:
@@ -224,6 +225,7 @@ async def _tool_check_ip(arguments: Dict[str, Any]) -> Dict[str, Any]:
     if "abuseipdb" in sources:
         try:
             from redops.modules.threat_intel.abuseipdb import check_ip_reputation
+
             ctx = check_ip_reputation(ctx)
             results["sources"]["abuseipdb"] = ctx.get("abuseipdb_result", {})
         except Exception as e:
@@ -285,10 +287,13 @@ async def _tool_asn_lookup(arguments: Dict[str, Any]) -> Dict[str, Any]:
     from redops.modules.recon.asn_lookup import lookup_asn
 
     ctx = Context(target=target)
-    ctx = lookup_asn(ctx, {
-        "include_prefixes": include_prefixes,
-        "include_peers": include_peers,
-    })
+    ctx = lookup_asn(
+        ctx,
+        {
+            "include_prefixes": include_prefixes,
+            "include_peers": include_peers,
+        },
+    )
 
     return {
         "target": target,
@@ -309,10 +314,13 @@ async def _tool_enumerate_subdomains(arguments: Dict[str, Any]) -> Dict[str, Any
     from redops.modules.recon.subdomain_enum import enumerate_subdomains
 
     ctx = Context(target=domain)
-    ctx = enumerate_subdomains(ctx, {
-        "use_ct": use_ct,
-        "threads": threads,
-    })
+    ctx = enumerate_subdomains(
+        ctx,
+        {
+            "use_ct": use_ct,
+            "threads": threads,
+        },
+    )
 
     return {
         "domain": domain,

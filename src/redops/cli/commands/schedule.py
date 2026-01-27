@@ -1,7 +1,6 @@
 """Schedule commands for RedOPS CLI."""
 
 import sys
-from typing import Optional
 
 import click
 import httpx
@@ -30,26 +29,17 @@ def schedule():
 @schedule.command("create")
 @click.argument("name")
 @click.argument("target")
+@click.option("-p", "--pipeline", default="default", help="Scan pipeline to use")
 @click.option(
-    "-p", "--pipeline",
-    default="default",
-    help="Scan pipeline to use"
-)
-@click.option(
-    "--cron",
-    help="Cron expression (e.g., '0 0 * * *' for daily at midnight)"
+    "--cron", help="Cron expression (e.g., '0 0 * * *' for daily at midnight)"
 )
 @click.option(
     "--recurrence",
     type=click.Choice(["daily", "weekly", "monthly", "custom"]),
     default="daily",
-    help="Recurrence pattern"
+    help="Recurrence pattern",
 )
-@click.option(
-    "--enabled/--disabled",
-    default=True,
-    help="Enable or disable schedule"
-)
+@click.option("--enabled/--disabled", default=True, help="Enable or disable schedule")
 @click.pass_context
 def create_cmd(ctx, name, target, pipeline, cron, recurrence, enabled):
     """Create a new scan schedule.
@@ -108,12 +98,9 @@ def create_cmd(ctx, name, target, pipeline, cron, recurrence, enabled):
 @click.option(
     "--status",
     type=click.Choice(["active", "paused", "disabled", "expired"]),
-    help="Filter by status"
+    help="Filter by status",
 )
-@click.option(
-    "--target",
-    help="Filter by target"
-)
+@click.option("--target", help="Filter by target")
 @click.pass_context
 def list_cmd(ctx, status, target):
     """List scan schedules.
@@ -281,11 +268,7 @@ def resume_cmd(ctx, schedule_id):
 
 @schedule.command("delete")
 @click.argument("schedule_id")
-@click.option(
-    "--force", "-f",
-    is_flag=True,
-    help="Force delete without confirmation"
-)
+@click.option("--force", "-f", is_flag=True, help="Force delete without confirmation")
 @click.pass_context
 def delete_cmd(ctx, schedule_id, force):
     """Delete a schedule.

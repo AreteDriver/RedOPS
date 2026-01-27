@@ -142,9 +142,13 @@ class RemediationRecord:
             self.resolved_at = datetime.now()
 
         if note:
-            self.add_note(f"Status changed: {old_status.value} -> {new_status.value}. {note}")
+            self.add_note(
+                f"Status changed: {old_status.value} -> {new_status.value}. {note}"
+            )
 
-        logger.info(f"Finding {self.finding_id} status: {old_status.value} -> {new_status.value}")
+        logger.info(
+            f"Finding {self.finding_id} status: {old_status.value} -> {new_status.value}"
+        )
 
 
 @dataclass
@@ -302,7 +306,10 @@ class RemediationTracker:
                 finding_id=diff.finding.id,
                 finding_title=diff.finding.title,
                 severity=diff.finding.severity,
-                metadata={"category": diff.finding.category, "module": diff.finding.module},
+                metadata={
+                    "category": diff.finding.category,
+                    "module": diff.finding.module,
+                },
             )
             actions["new_tracked"].append(record.finding_id)
 
@@ -321,7 +328,9 @@ class RemediationTracker:
                     finding_title=diff.finding.title,
                     severity=diff.finding.severity,
                 )
-                record.add_note("This is a regression - finding was previously resolved")
+                record.add_note(
+                    "This is a regression - finding was previously resolved"
+                )
                 actions["new_tracked"].append(record.finding_id)
 
         return actions
@@ -434,7 +443,9 @@ class RemediationTracker:
         overdue = self.get_overdue_records()
         if overdue:
             lines.extend(["", f"Overdue Items ({len(overdue)}):"])
-            for record in sorted(overdue, key=lambda r: r.due_date or datetime.max)[:10]:
+            for record in sorted(overdue, key=lambda r: r.due_date or datetime.max)[
+                :10
+            ]:
                 days = abs(record.days_until_due or 0)
                 lines.append(
                     f"  [{record.severity.upper()}] {record.finding_title[:40]} "

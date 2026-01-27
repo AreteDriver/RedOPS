@@ -1,6 +1,5 @@
 """Tests for SecurityTrails intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -76,7 +75,10 @@ class TestQuerySTDomain:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value=None,
+        ):
             result = query_st_domain(ctx)
 
         data = result.get("securitytrails_domain")
@@ -98,8 +100,14 @@ class TestQuerySTDomain:
             "subdomain_count": 42,
         }
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=mock_response,
+            ):
                 result = query_st_domain(ctx)
 
         data = result.get("securitytrails_domain")
@@ -112,8 +120,14 @@ class TestQuerySTDomain:
         """Test domain not found."""
         ctx = Context(target="nonexistent.invalid")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value={"error": "not_found"}):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value={"error": "not_found"},
+            ):
                 result = query_st_domain(ctx)
 
         data = result.get("securitytrails_domain")
@@ -138,8 +152,14 @@ class TestQuerySTSubdomains:
             "subdomains": ["www", "api", "mail", "blog", "dev"],
         }
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=mock_response,
+            ):
                 result = query_st_subdomains(ctx)
 
         data = result.get("securitytrails_subdomains")
@@ -166,14 +186,28 @@ class TestQuerySTHistory:
 
         mock_response = {
             "records": [
-                {"ip": "1.2.3.4", "first_seen": "2018-01-01", "last_seen": "2020-01-01"},
-                {"ip": "5.6.7.8", "first_seen": "2020-01-02", "last_seen": "2023-01-01"},
+                {
+                    "ip": "1.2.3.4",
+                    "first_seen": "2018-01-01",
+                    "last_seen": "2020-01-01",
+                },
+                {
+                    "ip": "5.6.7.8",
+                    "first_seen": "2020-01-02",
+                    "last_seen": "2023-01-01",
+                },
             ],
             "pages": 1,
         }
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=mock_response,
+            ):
                 result = query_st_history(ctx)
 
         data = result.get("securitytrails_history")
@@ -203,8 +237,14 @@ class TestQuerySTAssociated:
             ],
         }
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=mock_response):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=mock_response,
+            ):
                 result = query_st_associated(ctx)
 
         data = result.get("securitytrails_associated")
@@ -235,8 +275,14 @@ class TestAnalyzeSecurityTrailsIntel:
                     "current_dns": {"a": [], "mx": []},
                 }
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", side_effect=mock_request):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                side_effect=mock_request,
+            ):
                 result = analyze_securitytrails_intel(ctx)
 
         intel = result.get("securitytrails_intel")
@@ -248,7 +294,10 @@ class TestAnalyzeSecurityTrailsIntel:
         """Test analysis without API key."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value=None,
+        ):
             result = analyze_securitytrails_intel(ctx)
 
         intel = result.get("securitytrails_intel")
@@ -272,7 +321,9 @@ class TestGetSTApiKey:
         from redops.modules.intel.securitytrails_intel import get_st_api_key
 
         with patch.dict("os.environ", {}, clear=True):
-            with patch("redops.cli.settings.get_api_key_direct", return_value="settings-key"):
+            with patch(
+                "redops.cli.settings.get_api_key_direct", return_value="settings-key"
+            ):
                 result = get_st_api_key()
                 assert result == "settings-key"
 
@@ -281,7 +332,10 @@ class TestGetSTApiKey:
         from redops.modules.intel.securitytrails_intel import get_st_api_key
 
         with patch.dict("os.environ", {}, clear=True):
-            with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Settings error")):
+            with patch(
+                "redops.cli.settings.get_api_key_direct",
+                side_effect=Exception("Settings error"),
+            ):
                 result = get_st_api_key()
                 assert result is None
 
@@ -300,12 +354,14 @@ class TestMakeSTRequest:
 
     def test_import_error_returns_none(self):
         """Test that import error returns None."""
+
         def mock_import(name, *args, **kwargs):
             if name == "requests":
                 raise ImportError("No module named 'requests'")
             return original_import(name, *args, **kwargs)
 
         import builtins
+
         original_import = builtins.__import__
 
         from importlib import reload
@@ -329,9 +385,11 @@ class TestMakeSTRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
+
             reload(st_mod)
 
             result = st_mod._make_st_request("domain/test.com", "test-key")
@@ -345,9 +403,11 @@ class TestMakeSTRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
+
             reload(st_mod)
 
             result = st_mod._make_st_request("domain/nonexistent.com", "test-key")
@@ -361,9 +421,11 @@ class TestMakeSTRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
+
             reload(st_mod)
 
             result = st_mod._make_st_request("domain/test.com", "test-key")
@@ -377,9 +439,11 @@ class TestMakeSTRequest:
         mock_requests.get.return_value = mock_response
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
+
             reload(st_mod)
 
             result = st_mod._make_st_request("domain/test.com", "test-key")
@@ -391,9 +455,11 @@ class TestMakeSTRequest:
         mock_requests.get.side_effect = Exception("Connection error")
 
         import sys
+
         with patch.dict(sys.modules, {"requests": mock_requests}):
             from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
+
             reload(st_mod)
 
             result = st_mod._make_st_request("domain/test.com", "test-key")
@@ -407,8 +473,14 @@ class TestQuerySTDomainEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=None,
+            ):
                 result = query_st_domain(ctx)
 
         data = result.get("securitytrails_domain")
@@ -422,7 +494,10 @@ class TestQuerySTSubdomainsEdgeCases:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value=None,
+        ):
             result = query_st_subdomains(ctx)
 
         data = result.get("securitytrails_subdomains")
@@ -433,8 +508,14 @@ class TestQuerySTSubdomainsEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=None,
+            ):
                 result = query_st_subdomains(ctx)
 
         data = result.get("securitytrails_subdomains")
@@ -444,8 +525,14 @@ class TestQuerySTSubdomainsEdgeCases:
         """Test when error key in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value={"error": "rate_limited"}):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value={"error": "rate_limited"},
+            ):
                 result = query_st_subdomains(ctx)
 
         data = result.get("securitytrails_subdomains")
@@ -459,7 +546,10 @@ class TestQuerySTHistoryEdgeCases:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value=None,
+        ):
             result = query_st_history(ctx)
 
         data = result.get("securitytrails_history")
@@ -470,8 +560,14 @@ class TestQuerySTHistoryEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=None,
+            ):
                 result = query_st_history(ctx)
 
         data = result.get("securitytrails_history")
@@ -481,8 +577,14 @@ class TestQuerySTHistoryEdgeCases:
         """Test when error key in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value={"error": "not_found"}):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value={"error": "not_found"},
+            ):
                 result = query_st_history(ctx)
 
         data = result.get("securitytrails_history")
@@ -496,7 +598,10 @@ class TestQuerySTAssociatedEdgeCases:
         """Test when API key not configured."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value=None,
+        ):
             result = query_st_associated(ctx)
 
         data = result.get("securitytrails_associated")
@@ -507,8 +612,14 @@ class TestQuerySTAssociatedEdgeCases:
         """Test when requests library returns None."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value=None):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value=None,
+            ):
                 result = query_st_associated(ctx)
 
         data = result.get("securitytrails_associated")
@@ -518,8 +629,14 @@ class TestQuerySTAssociatedEdgeCases:
         """Test when error key in response."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.securitytrails_intel.get_st_api_key", return_value="test-key"):
-            with patch("redops.modules.intel.securitytrails_intel._make_st_request", return_value={"error": "HTTP 500"}):
+        with patch(
+            "redops.modules.intel.securitytrails_intel.get_st_api_key",
+            return_value="test-key",
+        ):
+            with patch(
+                "redops.modules.intel.securitytrails_intel._make_st_request",
+                return_value={"error": "HTTP 500"},
+            ):
                 result = query_st_associated(ctx)
 
         data = result.get("securitytrails_associated")

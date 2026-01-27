@@ -13,7 +13,6 @@ from redops.api.server import (
     HTTPMethod,
     HTTPStatus,
     Route,
-    RouteMatch,
     Router,
     create_api_server,
 )
@@ -250,7 +249,10 @@ class TestRouter:
     def test_match_route(self):
         """Test matching routes."""
         router = Router()
-        handler = lambda r: APIResponse(body={"matched": True})
+
+        def handler(r):
+            return APIResponse(body={"matched": True})
+
         router.add_route("/test", handler, ["GET"])
 
         match = router.match("/test", "GET")

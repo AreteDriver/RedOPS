@@ -16,7 +16,6 @@ from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.panel import Panel
-from rich.syntax import Syntax
 
 # Global console instance
 console = Console()
@@ -248,14 +247,16 @@ def print_scan_result(result: Dict[str, Any], verbose: bool = False) -> None:
     """
     # Header
     status = result.get("status", "unknown")
-    status_color = "green" if status == "completed" else "yellow" if status == "running" else "red"
+    status_color = (
+        "green" if status == "completed" else "yellow" if status == "running" else "red"
+    )
 
-    panel_content = f"""[bold]Scan ID:[/bold] {result.get('scan_id', 'N/A')}
-[bold]Target:[/bold] {result.get('target', 'N/A')}
-[bold]Pipeline:[/bold] {result.get('pipeline', 'N/A')}
+    panel_content = f"""[bold]Scan ID:[/bold] {result.get("scan_id", "N/A")}
+[bold]Target:[/bold] {result.get("target", "N/A")}
+[bold]Pipeline:[/bold] {result.get("pipeline", "N/A")}
 [bold]Status:[/bold] [{status_color}]{status}[/{status_color}]
-[bold]Started:[/bold] {result.get('started_at', 'N/A')}
-[bold]Completed:[/bold] {result.get('completed_at', 'N/A')}"""
+[bold]Started:[/bold] {result.get("started_at", "N/A")}
+[bold]Completed:[/bold] {result.get("completed_at", "N/A")}"""
 
     console.print(Panel(panel_content, title="Scan Result", border_style="blue"))
 

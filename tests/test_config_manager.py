@@ -268,9 +268,7 @@ class TestConfigManager:
 
     def test_load_json_config_file(self):
         """Test loading JSON config file."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"network": {"timeout": 45}}, f)
             f.flush()
 
@@ -294,9 +292,7 @@ class TestConfigManager:
         manager = ConfigManager()
         manager.load(
             cli_overrides={
-                "modules": {
-                    "test_module": {"enabled": True, "timeout": 60}
-                }
+                "modules": {"test_module": {"enabled": True, "timeout": 60}}
             },
             auto_discover=False,
         )
@@ -318,9 +314,7 @@ class TestConfigManager:
         """Test checking if module is enabled."""
         manager = ConfigManager()
         manager.load(
-            cli_overrides={
-                "modules": {"enabled_module": {"enabled": True}}
-            },
+            cli_overrides={"modules": {"enabled_module": {"enabled": True}}},
             auto_discover=False,
         )
 
@@ -330,9 +324,7 @@ class TestConfigManager:
         """Test checking if module is disabled."""
         manager = ConfigManager()
         manager.load(
-            cli_overrides={
-                "modules": {"disabled_module": {"enabled": False}}
-            },
+            cli_overrides={"modules": {"disabled_module": {"enabled": False}}},
             auto_discover=False,
         )
 
@@ -449,9 +441,7 @@ class TestConfigManager:
         """Test validation catches invalid module timeout."""
         manager = ConfigManager()
         manager.load(
-            cli_overrides={
-                "modules": {"test": {"timeout": -5}}
-            },
+            cli_overrides={"modules": {"test": {"timeout": -5}}},
             auto_discover=False,
         )
 
@@ -462,9 +452,7 @@ class TestConfigManager:
         """Test validation catches invalid module retries."""
         manager = ConfigManager()
         manager.load(
-            cli_overrides={
-                "modules": {"test": {"retries": -1}}
-            },
+            cli_overrides={"modules": {"test": {"retries": -1}}},
             auto_discover=False,
         )
 
@@ -518,9 +506,7 @@ class TestConfigManager:
         manager = ConfigManager()
         manager.load(auto_discover=False)
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             try:
                 manager.save(f.name, format=ConfigFormat.JSON)
 
@@ -535,9 +521,7 @@ class TestConfigManager:
         manager = ConfigManager()
         manager.load(auto_discover=False)
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".toml", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             try:
                 manager.save(f.name, format=ConfigFormat.TOML)
 
@@ -614,9 +598,7 @@ class TestConfigManagerEnvironmentVariables:
 
     def test_env_overrides_file(self):
         """Test that environment overrides file config."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"network": {"timeout": 45}}, f)
             f.flush()
 

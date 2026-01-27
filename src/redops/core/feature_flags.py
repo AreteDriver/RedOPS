@@ -5,23 +5,24 @@ Provides feature toggles, A/B testing, gradual rollouts, and flag management.
 
 import hashlib
 import json
-import random
 import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 
 class FlagNotFoundError(Exception):
     """Raised when a feature flag is not found."""
+
     pass
 
 
 class FlagConfigurationError(Exception):
     """Raised when flag configuration is invalid."""
+
     pass
 
 
@@ -29,17 +30,20 @@ class FlagConfigurationError(Exception):
 # Flag Types and Variants
 # =============================================================================
 
+
 class FlagType(Enum):
     """Types of feature flags."""
-    BOOLEAN = "boolean"      # Simple on/off
-    STRING = "string"        # String variant
-    NUMBER = "number"        # Numeric value
-    JSON = "json"            # JSON object
+
+    BOOLEAN = "boolean"  # Simple on/off
+    STRING = "string"  # String variant
+    NUMBER = "number"  # Numeric value
+    JSON = "json"  # JSON object
     PERCENTAGE = "percentage"  # Percentage-based rollout
 
 
 class FlagState(Enum):
     """State of a feature flag."""
+
     ENABLED = "enabled"
     DISABLED = "disabled"
     CONDITIONAL = "conditional"
@@ -73,11 +77,7 @@ class FlagContext:
 
     def hash_key(self, salt: str = "") -> str:
         """Generate a consistent hash key for this context."""
-        key_parts = [
-            self.user_id or "",
-            self.session_id or "",
-            salt
-        ]
+        key_parts = [self.user_id or "", self.session_id or "", salt]
         key_string = ":".join(key_parts)
         return hashlib.md5(key_string.encode()).hexdigest()
 
@@ -85,6 +85,7 @@ class FlagContext:
 # =============================================================================
 # Targeting Rules
 # =============================================================================
+
 
 class TargetingRule(ABC):
     """Base class for targeting rules."""
@@ -141,6 +142,7 @@ class AttributeRule(TargetingRule):
             return str(ctx_value).endswith(str(self.value))
         elif self.operator == "matches":
             import re
+
             return bool(re.match(self.value, str(ctx_value)))
         else:
             return False
@@ -150,7 +152,7 @@ class AttributeRule(TargetingRule):
             "type": "attribute",
             "attribute": self.attribute,
             "operator": self.operator,
-            "value": self.value
+            "value": self.value,
         }
 
 
@@ -171,7 +173,7 @@ class UserListRule(TargetingRule):
         return {
             "type": "user_list",
             "user_ids": list(self.user_ids),
-            "include": self.include
+            "include": self.include,
         }
 
 
@@ -191,18 +193,15 @@ class PercentageRule(TargetingRule):
         return bucket < self.percentage
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "type": "percentage",
-            "percentage": self.percentage,
-            "salt": self.salt
-        }
+        return {"type": "percentage", "percentage": self.percentage, "salt": self.salt}
 
 
 class TimeWindowRule(TargetingRule):
     """Rule based on time window."""
 
-    def __init__(self, start_time: Optional[datetime] = None,
-                 end_time: Optional[datetime] = None):
+    def __init__(
+        self, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None
+    ):
         self.start_time = start_time
         self.end_time = end_time
 
@@ -218,7 +217,7 @@ class TimeWindowRule(TargetingRule):
         return {
             "type": "time_window",
             "start_time": self.start_time.isoformat() if self.start_time else None,
-            "end_time": self.end_time.isoformat() if self.end_time else None
+            "end_time": self.end_time.isoformat() if self.end_time else None,
         }
 
 
@@ -232,10 +231,7 @@ class EnvironmentRule(TargetingRule):
         return context.environment in self.environments
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "type": "environment",
-            "environments": list(self.environments)
-        }
+        return {"type": "environment", "environments": list(self.environments)}
 
 
 class CompositeRule(TargetingRule):
@@ -262,13 +258,14 @@ class CompositeRule(TargetingRule):
         return {
             "type": "composite",
             "operator": self.operator,
-            "rules": [r.to_dict() for r in self.rules]
+            "rules": [r.to_dict() for r in self.rules],
         }
 
 
 # =============================================================================
 # Feature Flag
 # =============================================================================
+
 
 @dataclass
 class FeatureFlag:
@@ -337,26 +334,26 @@ class FeatureFlag:
         value = self.evaluate(context)
         return bool(value)
 
-    def add_rule(self, rule: TargetingRule, value: Any = None) -> 'FeatureFlag':
+    def add_rule(self, rule: TargetingRule, value: Any = None) -> "FeatureFlag":
         """Add a targeting rule with its value."""
         self.targeting_rules.append((rule, value))
         self.state = FlagState.CONDITIONAL
         self.updated_at = datetime.now()
         return self
 
-    def add_variant(self, name: str, value: Any, weight: int = 1) -> 'FeatureFlag':
+    def add_variant(self, name: str, value: Any, weight: int = 1) -> "FeatureFlag":
         """Add a variant."""
         self.variants.append(Variant(name=name, value=value, weight=weight))
         self.updated_at = datetime.now()
         return self
 
-    def enable(self) -> 'FeatureFlag':
+    def enable(self) -> "FeatureFlag":
         """Enable the flag."""
         self.state = FlagState.ENABLED
         self.updated_at = datetime.now()
         return self
 
-    def disable(self) -> 'FeatureFlag':
+    def disable(self) -> "FeatureFlag":
         """Disable the flag."""
         self.state = FlagState.DISABLED
         self.updated_at = datetime.now()
@@ -374,21 +371,21 @@ class FeatureFlag:
                 for v in self.variants
             ],
             "targeting_rules": [
-                {"rule": r.to_dict(), "value": v}
-                for r, v in self.targeting_rules
+                {"rule": r.to_dict(), "value": v} for r, v in self.targeting_rules
             ],
             "description": self.description,
             "tags": list(self.tags),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "owner": self.owner,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
 # =============================================================================
 # Flag Storage
 # =============================================================================
+
 
 class FlagStorage(ABC):
     """Abstract base for flag storage backends."""
@@ -453,7 +450,7 @@ class FileFlagStorage(FlagStorage):
     def _load(self) -> None:
         """Load flags from file."""
         try:
-            with open(self.file_path, 'r') as f:
+            with open(self.file_path, "r") as f:
                 data = json.load(f)
                 for key, flag_data in data.items():
                     self._cache[key] = self._deserialize_flag(flag_data)
@@ -463,7 +460,7 @@ class FileFlagStorage(FlagStorage):
     def _save(self) -> None:
         """Save flags to file."""
         data = {key: flag.to_dict() for key, flag in self._cache.items()}
-        with open(self.file_path, 'w') as f:
+        with open(self.file_path, "w") as f:
             json.dump(data, f, indent=2)
 
     def _deserialize_flag(self, data: Dict[str, Any]) -> FeatureFlag:
@@ -476,7 +473,7 @@ class FileFlagStorage(FlagStorage):
             description=data.get("description", ""),
             tags=set(data.get("tags", [])),
             owner=data.get("owner", ""),
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
         )
 
     def get(self, key: str) -> Optional[FeatureFlag]:
@@ -505,6 +502,7 @@ class FileFlagStorage(FlagStorage):
 # Feature Flag Manager
 # =============================================================================
 
+
 @dataclass
 class EvaluationResult:
     """Result of a flag evaluation."""
@@ -520,8 +518,11 @@ class EvaluationResult:
 class FeatureFlagManager:
     """Central manager for feature flags."""
 
-    def __init__(self, storage: Optional[FlagStorage] = None,
-                 default_context: Optional[FlagContext] = None):
+    def __init__(
+        self,
+        storage: Optional[FlagStorage] = None,
+        default_context: Optional[FlagContext] = None,
+    ):
         self._storage = storage or MemoryFlagStorage()
         self._default_context = default_context or FlagContext()
         self._listeners: List[Callable[[str, Any, FlagContext], None]] = []
@@ -530,14 +531,16 @@ class FeatureFlagManager:
         self._evaluation_history: List[EvaluationResult] = []
         self._max_history = 1000
 
-    def create_flag(self, key: str, flag_type: FlagType = FlagType.BOOLEAN,
-                    default_value: Any = False, **kwargs) -> FeatureFlag:
+    def create_flag(
+        self,
+        key: str,
+        flag_type: FlagType = FlagType.BOOLEAN,
+        default_value: Any = False,
+        **kwargs,
+    ) -> FeatureFlag:
         """Create a new feature flag."""
         flag = FeatureFlag(
-            key=key,
-            flag_type=flag_type,
-            default_value=default_value,
-            **kwargs
+            key=key, flag_type=flag_type, default_value=default_value, **kwargs
         )
         self._storage.set(flag)
         return flag
@@ -562,8 +565,9 @@ class FeatureFlagManager:
             flags = [f for f in flags if f.tags & tags]
         return flags
 
-    def evaluate(self, key: str, context: Optional[FlagContext] = None,
-                 default: Any = None) -> Any:
+    def evaluate(
+        self, key: str, context: Optional[FlagContext] = None, default: Any = None
+    ) -> Any:
         """Evaluate a flag and return its value."""
         ctx = context or self._default_context
 
@@ -585,7 +589,7 @@ class FeatureFlagManager:
             flag_key=key,
             value=value,
             reason=f"state={flag.state.value}",
-            context_hash=ctx.hash_key()
+            context_hash=ctx.hash_key(),
         )
         self._record_evaluation(result)
 
@@ -598,16 +602,18 @@ class FeatureFlagManager:
 
         return value
 
-    def is_enabled(self, key: str, context: Optional[FlagContext] = None,
-                   default: bool = False) -> bool:
+    def is_enabled(
+        self, key: str, context: Optional[FlagContext] = None, default: bool = False
+    ) -> bool:
         """Check if a boolean flag is enabled."""
         try:
             return bool(self.evaluate(key, context))
         except FlagNotFoundError:
             return default
 
-    def get_variant(self, key: str, context: Optional[FlagContext] = None,
-                    default: Any = None) -> Any:
+    def get_variant(
+        self, key: str, context: Optional[FlagContext] = None, default: Any = None
+    ) -> Any:
         """Get the variant value for a flag."""
         return self.evaluate(key, context, default)
 
@@ -630,7 +636,9 @@ class FeatureFlagManager:
         """Add an evaluation listener."""
         self._listeners.append(listener)
 
-    def remove_listener(self, listener: Callable[[str, Any, FlagContext], None]) -> None:
+    def remove_listener(
+        self, listener: Callable[[str, Any, FlagContext], None]
+    ) -> None:
         """Remove an evaluation listener."""
         if listener in self._listeners:
             self._listeners.remove(listener)
@@ -640,7 +648,9 @@ class FeatureFlagManager:
         with self._lock:
             self._evaluation_history.append(result)
             if len(self._evaluation_history) > self._max_history:
-                self._evaluation_history = self._evaluation_history[-self._max_history:]
+                self._evaluation_history = self._evaluation_history[
+                    -self._max_history :
+                ]
 
     def get_evaluation_history(self, limit: int = 100) -> List[EvaluationResult]:
         """Get recent evaluation history."""
@@ -664,13 +674,14 @@ class FeatureFlagManager:
         return {
             "total": len(evaluations),
             "value_distribution": value_counts,
-            "unique_contexts": len(set(e.context_hash for e in evaluations))
+            "unique_contexts": len(set(e.context_hash for e in evaluations)),
         }
 
 
 # =============================================================================
 # A/B Testing
 # =============================================================================
+
 
 @dataclass
 class Experiment:
@@ -734,11 +745,14 @@ class ExperimentManager:
 
     def __init__(self):
         self._experiments: Dict[str, Experiment] = {}
-        self._assignments: Dict[str, Dict[str, str]] = {}  # experiment -> user_id -> variant
+        self._assignments: Dict[
+            str, Dict[str, str]
+        ] = {}  # experiment -> user_id -> variant
         self._lock = threading.RLock()
 
-    def create_experiment(self, name: str, variants: List[Variant],
-                          **kwargs) -> Experiment:
+    def create_experiment(
+        self, name: str, variants: List[Variant], **kwargs
+    ) -> Experiment:
         """Create a new experiment."""
         exp = Experiment(name=name, variants=variants, **kwargs)
         with self._lock:
@@ -766,7 +780,9 @@ class ExperimentManager:
             return True
         return False
 
-    def get_variant(self, experiment_name: str, context: FlagContext) -> Optional[Variant]:
+    def get_variant(
+        self, experiment_name: str, context: FlagContext
+    ) -> Optional[Variant]:
         """Get the variant for a user in an experiment."""
         exp = self._experiments.get(experiment_name)
         if not exp:
@@ -774,7 +790,9 @@ class ExperimentManager:
 
         # Check for existing assignment
         with self._lock:
-            if context.user_id and context.user_id in self._assignments.get(experiment_name, {}):
+            if context.user_id and context.user_id in self._assignments.get(
+                experiment_name, {}
+            ):
                 variant_name = self._assignments[experiment_name][context.user_id]
                 for v in exp.variants:
                     if v.name == variant_name:
@@ -804,6 +822,7 @@ class ExperimentManager:
 # Gradual Rollout
 # =============================================================================
 
+
 @dataclass
 class RolloutStage:
     """A stage in a gradual rollout."""
@@ -824,7 +843,7 @@ class GradualRollout:
         self.current_stage: int = -1
         self._salt = f"rollout_{flag_key}_{time.time()}"
 
-    def add_stage(self, percentage: float, name: str = "") -> 'GradualRollout':
+    def add_stage(self, percentage: float, name: str = "") -> "GradualRollout":
         """Add a rollout stage."""
         if percentage < 0 or percentage > 100:
             raise FlagConfigurationError("Percentage must be between 0 and 100")
@@ -906,10 +925,12 @@ class GradualRollout:
                     "name": s.name,
                     "percentage": s.percentage,
                     "started_at": s.started_at.isoformat() if s.started_at else None,
-                    "completed_at": s.completed_at.isoformat() if s.completed_at else None
+                    "completed_at": s.completed_at.isoformat()
+                    if s.completed_at
+                    else None,
                 }
                 for s in self.stages
-            ]
+            ],
         }
 
 
@@ -935,24 +956,29 @@ def set_default_manager(manager: FeatureFlagManager) -> None:
     _default_manager = manager
 
 
-def is_enabled(key: str, context: Optional[FlagContext] = None,
-               default: bool = False) -> bool:
+def is_enabled(
+    key: str, context: Optional[FlagContext] = None, default: bool = False
+) -> bool:
     """Check if a feature flag is enabled using the default manager."""
     return get_default_manager().is_enabled(key, context, default)
 
 
-def get_variant(key: str, context: Optional[FlagContext] = None,
-                default: Any = None) -> Any:
+def get_variant(
+    key: str, context: Optional[FlagContext] = None, default: Any = None
+) -> Any:
     """Get a feature flag variant using the default manager."""
     return get_default_manager().get_variant(key, context, default)
 
 
 def feature_flag(key: str, default: bool = False):
     """Decorator to conditionally execute a function based on a feature flag."""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             if is_enabled(key, default=default):
                 return func(*args, **kwargs)
             return None
+
         return wrapper
+
     return decorator

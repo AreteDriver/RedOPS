@@ -79,19 +79,25 @@ class TestSecurityEvent:
 
     def test_severity_numeric(self):
         """Test numeric severity conversion."""
-        assert SecurityEvent(
-            event_id="1",
-            timestamp=datetime.now(timezone.utc),
-            severity="critical",
-            event_type="test",
-        ).get_severity_numeric() == 10
+        assert (
+            SecurityEvent(
+                event_id="1",
+                timestamp=datetime.now(timezone.utc),
+                severity="critical",
+                event_type="test",
+            ).get_severity_numeric()
+            == 10
+        )
 
-        assert SecurityEvent(
-            event_id="2",
-            timestamp=datetime.now(timezone.utc),
-            severity="info",
-            event_type="test",
-        ).get_severity_numeric() == 1
+        assert (
+            SecurityEvent(
+                event_id="2",
+                timestamp=datetime.now(timezone.utc),
+                severity="info",
+                event_type="test",
+            ).get_severity_numeric()
+            == 1
+        )
 
 
 class TestCEFExporter:
@@ -339,13 +345,16 @@ class TestSentinelExporter:
 class TestSeverityMapping:
     """Test severity mapping across formats."""
 
-    @pytest.mark.parametrize("severity,cef_val,leef_val", [
-        ("critical", "10", "10"),
-        ("high", "8", "8"),
-        ("medium", "5", "5"),
-        ("low", "3", "3"),
-        ("info", "1", "1"),
-    ])
+    @pytest.mark.parametrize(
+        "severity,cef_val,leef_val",
+        [
+            ("critical", "10", "10"),
+            ("high", "8", "8"),
+            ("medium", "5", "5"),
+            ("low", "3", "3"),
+            ("info", "1", "1"),
+        ],
+    )
     def test_severity_consistency(self, severity, cef_val, leef_val):
         """Test severity is consistent across formats."""
         event = SecurityEvent(

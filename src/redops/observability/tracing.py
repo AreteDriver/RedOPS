@@ -5,7 +5,6 @@ Provides OpenTelemetry-based tracing for pipelines, modules, and API calls.
 """
 
 from typing import Optional, Dict, Any, Callable, TypeVar
-from datetime import datetime, timezone
 from dataclasses import dataclass
 import os
 import functools
@@ -21,17 +20,23 @@ try:
     )
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.trace import Status, StatusCode
-    from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+    from opentelemetry.trace.propagation.tracecontext import (
+        TraceContextTextMapPropagator,
+    )
 
     # Optional exporters
     try:
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
+
         HAS_OTLP = True
     except ImportError:
         HAS_OTLP = False
 
     try:
         from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+
         HAS_JAEGER = True
     except ImportError:
         HAS_JAEGER = False
@@ -42,7 +47,7 @@ except ImportError:
     trace = None
 
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 @dataclass
@@ -68,7 +73,9 @@ class TracingConfig:
             service_version=os.environ.get("REDOPS_VERSION", "1.0.0"),
             environment=os.environ.get("ENVIRONMENT", "development"),
             exporter=os.environ.get("TRACING_EXPORTER", "console"),
-            otlp_endpoint=os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
+            otlp_endpoint=os.environ.get(
+                "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
+            ),
             jaeger_host=os.environ.get("JAEGER_HOST", "localhost"),
             jaeger_port=int(os.environ.get("JAEGER_PORT", "6831")),
             sample_rate=float(os.environ.get("TRACING_SAMPLE_RATE", "1.0")),
@@ -104,11 +111,13 @@ class TracingProvider:
 
     def _initialize_otel(self) -> None:
         """Initialize OpenTelemetry tracing."""
-        resource = Resource.create({
-            "service.name": self.config.service_name,
-            "service.version": self.config.service_version,
-            "deployment.environment": self.config.environment,
-        })
+        resource = Resource.create(
+            {
+                "service.name": self.config.service_name,
+                "service.version": self.config.service_version,
+                "deployment.environment": self.config.environment,
+            }
+        )
 
         provider = TracerProvider(resource=resource)
 
@@ -237,6 +246,7 @@ def trace_function(
     Returns:
         Decorated function
     """
+
     def decorator(func: F) -> F:
         span_name = name or func.__name__
 
@@ -259,6 +269,7 @@ def trace_function(
                 return func(*args, **kwargs)
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper  # type: ignore
         return sync_wrapper  # type: ignore
@@ -276,6 +287,7 @@ def trace_pipeline(pipeline_name: str):
     Returns:
         Decorated function
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -295,7 +307,9 @@ def trace_pipeline(pipeline_name: str):
                     result = func(*args, **kwargs)
                     if span and hasattr(result, "data"):
                         # Add finding count to span
-                        findings = sum(1 for k in result.data if k.startswith("finding_"))
+                        findings = sum(
+                            1 for k in result.data if k.startswith("finding_")
+                        )
                         span.set_attribute("pipeline.findings_count", findings)
                     return result
                 except Exception as e:
@@ -318,6 +332,7 @@ def trace_module(module_name: str):
     Returns:
         Decorated function
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(ctx, params=None):

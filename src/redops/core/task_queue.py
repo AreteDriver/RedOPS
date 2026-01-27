@@ -5,32 +5,24 @@ Provides async task execution, job scheduling, and worker management.
 """
 
 import heapq
-import json
 import logging
-import os
 import queue
 import threading
 import time
 import uuid
 from abc import ABC, abstractmethod
-from collections import defaultdict
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from pathlib import Path
 from typing import (
     Any,
     Callable,
     Dict,
-    Generic,
     List,
     Optional,
     Set,
     Tuple,
-    Type,
     TypeVar,
-    Union,
 )
 
 logger = logging.getLogger(__name__)
@@ -96,7 +88,9 @@ class TaskResult:
             "error": self.error,
             "error_type": self.error_type,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "attempts": self.attempts,
             "duration_seconds": self.duration_seconds,
             "worker_id": self.worker_id,
@@ -144,7 +138,7 @@ class Task:
 
     def get_retry_delay(self) -> float:
         """Calculate retry delay with backoff."""
-        return self.retry_delay * (self.retry_backoff ** self.attempts)
+        return self.retry_delay * (self.retry_backoff**self.attempts)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary (without func)."""
@@ -155,7 +149,9 @@ class Task:
             "kwargs": self.kwargs,
             "priority": self.priority.value,
             "created_at": self.created_at.isoformat(),
-            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "scheduled_at": self.scheduled_at.isoformat()
+            if self.scheduled_at
+            else None,
             "timeout": self.timeout,
             "max_retries": self.max_retries,
             "retry_delay": self.retry_delay,
@@ -182,7 +178,9 @@ class TaskStore(ABC):
         pass
 
     @abstractmethod
-    def update_status(self, task_id: str, status: TaskStatus, error: Optional[str] = None) -> None:
+    def update_status(
+        self, task_id: str, status: TaskStatus, error: Optional[str] = None
+    ) -> None:
         """Update task status."""
         pass
 
@@ -215,7 +213,9 @@ class MemoryTaskStore(TaskStore):
         with self._lock:
             return self._tasks.get(task_id)
 
-    def update_status(self, task_id: str, status: TaskStatus, error: Optional[str] = None) -> None:
+    def update_status(
+        self, task_id: str, status: TaskStatus, error: Optional[str] = None
+    ) -> None:
         """Update task status."""
         with self._lock:
             if task_id in self._tasks:
@@ -226,7 +226,9 @@ class MemoryTaskStore(TaskStore):
     def get_pending(self, limit: int = 100) -> List[Task]:
         """Get pending tasks."""
         with self._lock:
-            pending = [t for t in self._tasks.values() if t.status == TaskStatus.PENDING]
+            pending = [
+                t for t in self._tasks.values() if t.status == TaskStatus.PENDING
+            ]
             return sorted(pending)[:limit]
 
     def get_by_status(self, status: TaskStatus, limit: int = 100) -> List[Task]:
@@ -636,7 +638,9 @@ class TaskQueue:
             except Exception as e:
                 logger.error(f"Scheduler error: {e}")
 
-    def get_result(self, task_id: str, timeout: Optional[float] = None) -> Optional[TaskResult]:
+    def get_result(
+        self, task_id: str, timeout: Optional[float] = None
+    ) -> Optional[TaskResult]:
         """
         Get task result, optionally waiting for completion.
 
@@ -917,8 +921,12 @@ class JobScheduler:
                     "interval": job["interval"],
                     "cron": job["cron"],
                     "enabled": job["enabled"],
-                    "last_run": job["last_run"].isoformat() if job["last_run"] else None,
-                    "next_run": job["next_run"].isoformat() if job["next_run"] else None,
+                    "last_run": job["last_run"].isoformat()
+                    if job["last_run"]
+                    else None,
+                    "next_run": job["next_run"].isoformat()
+                    if job["next_run"]
+                    else None,
                     "running_instances": job["running_instances"],
                 }
                 for job_id, job in self._jobs.items()
@@ -964,6 +972,7 @@ def task(
         def my_function(arg1, arg2):
             return arg1 + arg2
     """
+
     def decorator(func: Callable) -> Callable:
         task_name = name or func.__name__
         _task_registry[task_name] = func
@@ -985,6 +994,7 @@ def get_registered_tasks() -> Dict[str, Callable]:
 
 
 # Convenience functions
+
 
 def create_task_queue(
     num_workers: int = 2,

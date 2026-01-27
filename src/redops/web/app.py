@@ -8,9 +8,19 @@ import os
 from datetime import datetime, UTC
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, WebSocket, WebSocketDisconnect, Depends, Response, Request
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    BackgroundTasks,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    Depends,
+    Response,
+    Request,
+)
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from redops.web.websocket import (
@@ -41,8 +51,12 @@ class ScanRequest(BaseModel):
     """Request model for starting a scan."""
 
     target: str = Field(..., description="Target domain or URL")
-    preset: str = Field(default="quick", description="Scan preset (quick, recon, full, ai_enhanced)")
-    modules: Optional[list[str]] = Field(default=None, description="Specific modules to run")
+    preset: str = Field(
+        default="quick", description="Scan preset (quick, recon, full, ai_enhanced)"
+    )
+    modules: Optional[list[str]] = Field(
+        default=None, description="Specific modules to run"
+    )
 
 
 class ScanResponse(BaseModel):
@@ -74,7 +88,9 @@ class ScanStatus(BaseModel):
 class AIRequest(BaseModel):
     """Request model for AI operations."""
 
-    action: str = Field(..., description="AI action (analyze, explain, suggest, summarize)")
+    action: str = Field(
+        ..., description="AI action (analyze, explain, suggest, summarize)"
+    )
     query: Optional[str] = Field(default=None, description="Query for explain action")
     scan_id: Optional[str] = Field(default=None, description="Scan ID for analysis")
     provider: Optional[str] = Field(default=None, description="AI provider override")
@@ -143,7 +159,9 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
         set_auth_manager(AuthManager(auth_config))
 
     # CORS middleware
-    cors_origins = os.environ.get("REDOPS_CORS_ORIGINS", "http://localhost:8000").split(",")
+    cors_origins = os.environ.get("REDOPS_CORS_ORIGINS", "http://localhost:8000").split(
+        ","
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
@@ -165,9 +183,12 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
             if has_session_cookie and not has_csrf_header and not has_api_key:
                 if not request.url.path.endswith("/login"):
                     from fastapi.responses import JSONResponse
+
                     return JSONResponse(
                         status_code=403,
-                        content={"error": "CSRF validation failed. Include X-Requested-With: RedOPS header."},
+                        content={
+                            "error": "CSRF validation failed. Include X-Requested-With: RedOPS header."
+                        },
                     )
         return await call_next(request)
 
@@ -314,7 +335,9 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
         return _scans[scan_id]
 
     @app.get("/api/scans/{scan_id}/results", tags=["Scans"])
-    async def get_scan_results(scan_id: str, user: AuthenticatedUser = Depends(require_auth)):
+    async def get_scan_results(
+        scan_id: str, user: AuthenticatedUser = Depends(require_auth)
+    ):
         """Get scan results."""
         if scan_id not in _scans:
             raise HTTPException(status_code=404, detail="Scan not found")
@@ -326,7 +349,9 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
 
     # AI endpoints (protected)
     @app.post("/api/ai", response_model=AIResponse, tags=["AI"])
-    async def ai_action(request: AIRequest, user: AuthenticatedUser = Depends(require_auth)):
+    async def ai_action(
+        request: AIRequest, user: AuthenticatedUser = Depends(require_auth)
+    ):
         """Perform AI-assisted analysis."""
         try:
             from redops.modules.ai_assistant import AIAssistant
@@ -338,28 +363,44 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
 
             if request.action == "explain":
                 if not request.query:
-                    raise HTTPException(status_code=400, detail="Query required for explain action")
+                    raise HTTPException(
+                        status_code=400, detail="Query required for explain action"
+                    )
                 result = assistant.explain(request.query)
             elif request.action == "analyze":
                 if not request.scan_id:
-                    raise HTTPException(status_code=400, detail="scan_id required for analyze action")
+                    raise HTTPException(
+                        status_code=400, detail="scan_id required for analyze action"
+                    )
                 if request.scan_id not in _scan_results:
-                    raise HTTPException(status_code=404, detail="Scan results not found")
+                    raise HTTPException(
+                        status_code=404, detail="Scan results not found"
+                    )
                 result = assistant.analyze_findings(_scan_results[request.scan_id])
             elif request.action == "suggest":
                 if not request.scan_id:
-                    raise HTTPException(status_code=400, detail="scan_id required for suggest action")
+                    raise HTTPException(
+                        status_code=400, detail="scan_id required for suggest action"
+                    )
                 if request.scan_id not in _scan_results:
-                    raise HTTPException(status_code=404, detail="Scan results not found")
+                    raise HTTPException(
+                        status_code=404, detail="Scan results not found"
+                    )
                 result = assistant.suggest_remediations(_scan_results[request.scan_id])
             elif request.action == "summarize":
                 if not request.scan_id:
-                    raise HTTPException(status_code=400, detail="scan_id required for summarize action")
+                    raise HTTPException(
+                        status_code=400, detail="scan_id required for summarize action"
+                    )
                 if request.scan_id not in _scan_results:
-                    raise HTTPException(status_code=404, detail="Scan results not found")
+                    raise HTTPException(
+                        status_code=404, detail="Scan results not found"
+                    )
                 result = assistant.summarize(_scan_results[request.scan_id])
             else:
-                raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
+                raise HTTPException(
+                    status_code=400, detail=f"Unknown action: {request.action}"
+                )
 
             return AIResponse(
                 action=request.action,
@@ -455,6 +496,7 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
                 data = await websocket.receive_text()
                 try:
                     import json
+
                     message = json.loads(data)
                     action = message.get("action")
 

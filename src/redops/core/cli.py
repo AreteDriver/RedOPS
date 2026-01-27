@@ -8,11 +8,9 @@ and output formatting for security operations.
 import argparse
 import json
 import os
-import shutil
 import sys
-import textwrap
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Sequence, TextIO, Tuple, Type
 
@@ -78,15 +76,19 @@ def colorize(text: str, *colors: Color, enabled: bool = True) -> str:
 class OutputWriter:
     """Handles formatted output to console."""
 
-    def __init__(self,
-                 stream: TextIO = None,
-                 error_stream: TextIO = None,
-                 use_color: Optional[bool] = None,
-                 format: OutputFormat = OutputFormat.TEXT):
+    def __init__(
+        self,
+        stream: TextIO = None,
+        error_stream: TextIO = None,
+        use_color: Optional[bool] = None,
+        format: OutputFormat = OutputFormat.TEXT,
+    ):
         """Initialize output writer."""
         self._stream = stream or sys.stdout
         self._error_stream = error_stream or sys.stderr
-        self._use_color = use_color if use_color is not None else supports_color(self._stream)
+        self._use_color = (
+            use_color if use_color is not None else supports_color(self._stream)
+        )
         self._format = format
 
     @property
@@ -152,10 +154,12 @@ class OutputWriter:
         else:
             self.write(json.dumps(data, default=str))
 
-    def table(self,
-              rows: List[List[str]],
-              headers: Optional[List[str]] = None,
-              align: Optional[List[str]] = None) -> None:
+    def table(
+        self,
+        rows: List[List[str]],
+        headers: Optional[List[str]] = None,
+        align: Optional[List[str]] = None,
+    ) -> None:
         """Write table output."""
         if not rows and not headers:
             return
@@ -167,8 +171,7 @@ class OutputWriter:
         # Ensure all rows have same number of columns
         all_rows = [row + [""] * (num_cols - len(row)) for row in all_rows]
         col_widths = [
-            max(len(str(row[i])) for row in all_rows)
-            for i in range(num_cols)
+            max(len(str(row[i])) for row in all_rows) for i in range(num_cols)
         ]
 
         # Default alignment
@@ -208,7 +211,9 @@ class OutputWriter:
         writer.writerows(rows)
         self.write(output.getvalue().rstrip())
 
-    def progress(self, current: int, total: int, prefix: str = "", width: int = 40) -> None:
+    def progress(
+        self, current: int, total: int, prefix: str = "", width: int = 40
+    ) -> None:
         """Write progress bar."""
         if total == 0:
             percent = 100
@@ -245,7 +250,9 @@ class CommandResult:
         return cls(success=True, message=message, data=data, exit_code=0)
 
     @classmethod
-    def fail(cls, message: str, exit_code: int = 1, data: Any = None) -> "CommandResult":
+    def fail(
+        cls, message: str, exit_code: int = 1, data: Any = None
+    ) -> "CommandResult":
         """Create failure result."""
         return cls(success=False, message=message, data=data, exit_code=exit_code)
 
@@ -320,10 +327,9 @@ class CommandGroup:
 class CLI:
     """Main CLI application."""
 
-    def __init__(self,
-                 name: str = "redops",
-                 version: str = "1.0.0",
-                 description: str = ""):
+    def __init__(
+        self, name: str = "redops", version: str = "1.0.0", description: str = ""
+    ):
         """Initialize CLI."""
         self._name = name
         self._version = version
@@ -387,14 +393,16 @@ class CLI:
 
         # Add version
         parser.add_argument(
-            "--version", "-V",
+            "--version",
+            "-V",
             action="version",
             version=f"{self._name} {self._version}",
         )
 
         # Add global options
         parser.add_argument(
-            "--format", "-f",
+            "--format",
+            "-f",
             choices=["text", "json", "table", "csv", "quiet"],
             default="text",
             help="Output format",
@@ -405,13 +413,15 @@ class CLI:
             help="Disable colored output",
         )
         parser.add_argument(
-            "--verbose", "-v",
+            "--verbose",
+            "-v",
             action="count",
             default=0,
             help="Increase verbosity",
         )
         parser.add_argument(
-            "--quiet", "-q",
+            "--quiet",
+            "-q",
             action="store_true",
             help="Suppress non-essential output",
         )
@@ -517,6 +527,7 @@ class CLI:
             self._output.error(f"Error: {e}")
             if parsed.verbose > 0:
                 import traceback
+
                 traceback.print_exc()
             return 1
 
@@ -567,10 +578,7 @@ class CLI:
 class InteractiveShell:
     """Interactive REPL shell."""
 
-    def __init__(self,
-                 cli: CLI,
-                 prompt: str = "> ",
-                 intro: str = ""):
+    def __init__(self, cli: CLI, prompt: str = "> ", intro: str = ""):
         """Initialize interactive shell."""
         self._cli = cli
         self._prompt = prompt
@@ -667,10 +675,12 @@ class PromptBuilder:
             return default
         return response in ("y", "yes")
 
-    def ask(self,
-            message: str,
-            default: Optional[str] = None,
-            validator: Optional[Callable[[str], bool]] = None) -> str:
+    def ask(
+        self,
+        message: str,
+        default: Optional[str] = None,
+        validator: Optional[Callable[[str], bool]] = None,
+    ) -> str:
         """Ask for text input."""
         prompt = message
         if default:
@@ -692,12 +702,12 @@ class PromptBuilder:
     def secret(self, message: str) -> str:
         """Ask for secret input (hidden)."""
         import getpass
+
         return getpass.getpass(f"{message}: ")
 
-    def choice(self,
-               message: str,
-               choices: List[str],
-               default: Optional[str] = None) -> str:
+    def choice(
+        self, message: str, choices: List[str], default: Optional[str] = None
+    ) -> str:
         """Ask user to choose from options."""
         self._output.write(message)
         for i, choice in enumerate(choices, 1):
@@ -723,10 +733,9 @@ class PromptBuilder:
 
             self._output.error("Invalid choice")
 
-    def multi_choice(self,
-                     message: str,
-                     choices: List[str],
-                     defaults: Optional[List[str]] = None) -> List[str]:
+    def multi_choice(
+        self, message: str, choices: List[str], defaults: Optional[List[str]] = None
+    ) -> List[str]:
         """Ask user to choose multiple options."""
         defaults = defaults or []
         self._output.write(message)
@@ -752,17 +761,19 @@ class PromptBuilder:
         return selected if selected else defaults
 
 
-def create_cli(name: str = "redops",
-               version: str = "1.0.0",
-               description: str = "") -> CLI:
+def create_cli(
+    name: str = "redops", version: str = "1.0.0", description: str = ""
+) -> CLI:
     """Create a new CLI instance."""
     return CLI(name=name, version=version, description=description)
 
 
 def command(name: str, description: str = "", aliases: Optional[List[str]] = None):
     """Decorator to create a command from a function."""
+
     def decorator(func: Callable) -> Type[Command]:
         import inspect
+
         sig = inspect.signature(func)
         params = list(sig.parameters.values())[1:]  # Skip 'args' parameter
 
@@ -777,11 +788,13 @@ def command(name: str, description: str = "", aliases: Optional[List[str]] = Non
         # Define methods that will be bound to instances
         def _configure(self, parser: argparse.ArgumentParser) -> None:
             for param in params:
-                if param.annotation == bool:
+                if param.annotation is bool:
                     parser.add_argument(
                         f"--{param.name}",
                         action="store_true",
-                        default=param.default if param.default != inspect.Parameter.empty else False,
+                        default=param.default
+                        if param.default != inspect.Parameter.empty
+                        else False,
                     )
                 elif param.default != inspect.Parameter.empty:
                     parser.add_argument(
@@ -804,7 +817,7 @@ def command(name: str, description: str = "", aliases: Optional[List[str]] = Non
         FunctionCommand.execute = _execute
 
         # Remove abstract method markers
-        if hasattr(FunctionCommand, '__abstractmethods__'):
+        if hasattr(FunctionCommand, "__abstractmethods__"):
             FunctionCommand.__abstractmethods__ = frozenset()
 
         return FunctionCommand

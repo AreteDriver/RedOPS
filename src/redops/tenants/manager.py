@@ -360,7 +360,9 @@ class TenantManager:
         tenant.upgrade_tier(new_tier)
         self._backend.save(tenant)
 
-        logger.info(f"Upgraded tenant {tenant.name}: {old_tier.value} -> {new_tier.value}")
+        logger.info(
+            f"Upgraded tenant {tenant.name}: {old_tier.value} -> {new_tier.value}"
+        )
 
         return tenant
 
@@ -462,14 +464,28 @@ class TenantManager:
             "limits": tenant.limits.to_dict(),
             "quota": tenant.quota.to_dict(),
             "usage_percentage": {
-                "scans_daily": (tenant.limits.scans_today / tenant.quota.max_scans_per_day * 100)
-                    if tenant.quota.max_scans_per_day else 0,
-                "scans_monthly": (tenant.limits.scans_this_month / tenant.quota.max_scans_per_month * 100)
-                    if tenant.quota.max_scans_per_month else 0,
-                "storage": (tenant.limits.storage_used_mb / tenant.quota.max_storage_mb * 100)
-                    if tenant.quota.max_storage_mb else 0,
-                "targets": (tenant.limits.active_targets / tenant.quota.max_targets * 100)
-                    if tenant.quota.max_targets else 0,
+                "scans_daily": (
+                    tenant.limits.scans_today / tenant.quota.max_scans_per_day * 100
+                )
+                if tenant.quota.max_scans_per_day
+                else 0,
+                "scans_monthly": (
+                    tenant.limits.scans_this_month
+                    / tenant.quota.max_scans_per_month
+                    * 100
+                )
+                if tenant.quota.max_scans_per_month
+                else 0,
+                "storage": (
+                    tenant.limits.storage_used_mb / tenant.quota.max_storage_mb * 100
+                )
+                if tenant.quota.max_storage_mb
+                else 0,
+                "targets": (
+                    tenant.limits.active_targets / tenant.quota.max_targets * 100
+                )
+                if tenant.quota.max_targets
+                else 0,
             },
         }
 
@@ -546,19 +562,23 @@ def require_quota(resource: str):
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 class TenantRequired(Exception):
     """Raised when tenant context is required but not set."""
+
     pass
 
 
 class TenantInactive(Exception):
     """Raised when tenant is not active."""
+
     pass
 
 
 class QuotaExceeded(Exception):
     """Raised when tenant quota is exceeded."""
+
     pass

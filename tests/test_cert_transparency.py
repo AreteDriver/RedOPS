@@ -1,6 +1,5 @@
 """Tests for the Certificate Transparency module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 from redops.core.context import Context
@@ -12,7 +11,6 @@ from redops.modules.recon.cert_transparency import (
     parse_cert_name,
     analyze_certificates,
     get_ct_summary,
-    HAS_REQUESTS,
 )
 
 
@@ -95,6 +93,7 @@ class TestQueryCrtsh:
     def test_timeout(self, mock_requests):
         """Test timeout handling."""
         import requests
+
         mock_requests.get.side_effect = requests.exceptions.Timeout()
         mock_requests.exceptions = requests.exceptions
 
@@ -105,6 +104,7 @@ class TestQueryCrtsh:
     def test_request_error(self, mock_requests):
         """Test request error handling."""
         import requests
+
         mock_requests.get.side_effect = requests.exceptions.RequestException()
         mock_requests.exceptions = requests.exceptions
 
@@ -115,6 +115,7 @@ class TestQueryCrtsh:
     def test_json_error(self, mock_requests):
         """Test JSON decode error handling."""
         import requests as real_requests
+
         mock_response = MagicMock()
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_requests.get.return_value = mock_response
@@ -240,7 +241,9 @@ class TestAnalyzeCertificates:
 
     def test_wildcard_certificates(self):
         """Test finding many wildcard certificates."""
-        certs = [{"common_name": f"*.example{i}.com", "issuer_name": "CA"} for i in range(10)]
+        certs = [
+            {"common_name": f"*.example{i}.com", "issuer_name": "CA"} for i in range(10)
+        ]
 
         findings = analyze_certificates(certs, "example.com")
         assert any("Wildcard" in f.title for f in findings)
@@ -259,12 +262,15 @@ class TestGetCtSummary:
     def test_with_results(self):
         """Test summary with results."""
         ctx = Context()
-        ctx.add("ct_results", {
-            "domain": "example.com",
-            "total_certificates": 50,
-            "subdomains": ["www.example.com", "api.example.com"],
-            "search_timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "ct_results",
+            {
+                "domain": "example.com",
+                "total_certificates": 50,
+                "subdomains": ["www.example.com", "api.example.com"],
+                "search_timestamp": "2024-01-01T00:00:00",
+            },
+        )
 
         summary = get_ct_summary(ctx)
 

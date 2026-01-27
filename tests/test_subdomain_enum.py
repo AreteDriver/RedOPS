@@ -1,6 +1,5 @@
 """Tests for the subdomain enumeration module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from redops.core.context import Context
 from redops.modules.recon.subdomain_enum import (
@@ -12,7 +11,6 @@ from redops.modules.recon.subdomain_enum import (
     analyze_subdomains,
     get_subdomain_summary,
     COMMON_SUBDOMAINS,
-    HAS_DNS,
 )
 
 
@@ -162,8 +160,7 @@ class TestVerifySubdomains:
         mock_resolve.side_effect = lambda d, **kw: d == "www.example.com"
 
         result = verify_subdomains(
-            {"www.example.com", "nonexistent.example.com"},
-            threads=1
+            {"www.example.com", "nonexistent.example.com"}, threads=1
         )
 
         assert "www.example.com" in result
@@ -250,11 +247,14 @@ class TestGetSubdomainSummary:
     def test_with_results(self):
         """Test summary with results."""
         ctx = Context()
-        ctx.add("subdomain_enum_results", {
-            "domain": "example.com",
-            "methods_used": ["bruteforce", "ct_logs"],
-            "timestamp": "2024-01-01T00:00:00",
-        })
+        ctx.add(
+            "subdomain_enum_results",
+            {
+                "domain": "example.com",
+                "methods_used": ["bruteforce", "ct_logs"],
+                "timestamp": "2024-01-01T00:00:00",
+            },
+        )
         ctx.add("subdomains", ["www.example.com", "api.example.com"])
 
         summary = get_subdomain_summary(ctx)

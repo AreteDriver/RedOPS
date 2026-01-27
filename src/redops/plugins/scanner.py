@@ -131,7 +131,9 @@ class Finding:
             references=data.get("references", []),
             scanner=data.get("scanner", ""),
             phase=ScanPhase(data.get("phase", "vulnerability")),
-            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.now(),
+            timestamp=datetime.fromisoformat(data["timestamp"])
+            if "timestamp" in data
+            else datetime.now(),
             tags=set(data.get("tags", [])),
             metadata=data.get("metadata", {}),
         )
@@ -172,7 +174,9 @@ class ScannerResult:
             "scanner_name": self.scanner_name,
             "target": self.target,
             "started_at": self.started_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "duration_seconds": self.duration_seconds,
             "success": self.success,
             "error": self.error,
@@ -309,7 +313,9 @@ class ScannerPlugin(ABC):
         pass
 
     @abstractmethod
-    def scan(self, target: str, config: Optional[ScannerConfig] = None) -> ScannerResult:
+    def scan(
+        self, target: str, config: Optional[ScannerConfig] = None
+    ) -> ScannerResult:
         """
         Perform a scan against the target.
 
@@ -489,6 +495,7 @@ class CompositeScanner:
 
         if parallel:
             import concurrent.futures
+
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = {
                     executor.submit(s.scan, target, config): s
@@ -500,24 +507,28 @@ class CompositeScanner:
                         results.append(future.result())
                     except Exception as e:
                         scanner = futures[future]
-                        results.append(ScannerResult(
-                            scanner_name=scanner.get_name(),
-                            target=target,
-                            success=False,
-                            error=str(e),
-                        ))
+                        results.append(
+                            ScannerResult(
+                                scanner_name=scanner.get_name(),
+                                target=target,
+                                success=False,
+                                error=str(e),
+                            )
+                        )
         else:
             for scanner in self._scanners:
                 if scanner.validate_target(target):
                     try:
                         results.append(scanner.scan(target, config))
                     except Exception as e:
-                        results.append(ScannerResult(
-                            scanner_name=scanner.get_name(),
-                            target=target,
-                            success=False,
-                            error=str(e),
-                        ))
+                        results.append(
+                            ScannerResult(
+                                scanner_name=scanner.get_name(),
+                                target=target,
+                                success=False,
+                                error=str(e),
+                            )
+                        )
 
         return results
 

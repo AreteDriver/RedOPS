@@ -7,16 +7,13 @@ Provides distributed job processing using Redis.
 import json
 import logging
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
 
 from redops.jobs.queue import (
     Job,
     JobBackend,
-    JobPriority,
     JobQueue,
-    JobResult,
     JobStatus,
     JobWorker,
 )
@@ -51,6 +48,7 @@ class RedisJobBackend(JobBackend):
         else:
             try:
                 import redis
+
                 self._redis = redis.from_url(redis_url, decode_responses=True)
             except ImportError:
                 raise ImportError("redis package required: pip install redis")
@@ -67,13 +65,16 @@ class RedisJobBackend(JobBackend):
         job_key = self._key("job", job.id)
         job.status = JobStatus.QUEUED
 
-        self._redis.hset(job_key, mapping={
-            "data": json.dumps(job.to_dict()),
-            "status": job.status.value,
-            "queue": job.queue,
-            "priority": job.priority.value,
-            "created_at": job.created_at.isoformat(),
-        })
+        self._redis.hset(
+            job_key,
+            mapping={
+                "data": json.dumps(job.to_dict()),
+                "status": job.status.value,
+                "queue": job.queue,
+                "priority": job.priority.value,
+                "created_at": job.created_at.isoformat(),
+            },
+        )
 
         # Add to queue (use sorted set for priority)
         queue_key = self._key("queue", job.queue)
@@ -86,9 +87,9 @@ class RedisJobBackend(JobBackend):
             # Move to scheduled set
             self._redis.zrem(queue_key, job.id)
             scheduled_key = self._key("scheduled")
-            self._redis.zadd(scheduled_key, {
-                f"{job.queue}:{job.id}": job.scheduled_at.timestamp()
-            })
+            self._redis.zadd(
+                scheduled_key, {f"{job.queue}:{job.id}": job.scheduled_at.timestamp()}
+            )
 
         logger.debug(f"Enqueued job {job.id} to queue {job.queue}")
         return job.id
@@ -158,14 +159,22 @@ class RedisJobBackend(JobBackend):
         """Update job state."""
         job_key = self._key("job", job.id)
 
-        self._redis.hset(job_key, mapping={
-            "data": json.dumps(job.to_dict()),
-            "status": job.status.value,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        })
+        self._redis.hset(
+            job_key,
+            mapping={
+                "data": json.dumps(job.to_dict()),
+                "status": job.status.value,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
         # If completed/failed, remove from processing
-        if job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED, JobStatus.TIMEOUT):
+        if job.status in (
+            JobStatus.COMPLETED,
+            JobStatus.FAILED,
+            JobStatus.CANCELLED,
+            JobStatus.TIMEOUT,
+        ):
             processing_key = self._key("processing", job.queue)
             self._redis.zrem(processing_key, job.id)
 
@@ -297,7 +306,7 @@ class RedisJobBackend(JobBackend):
 
         # Check all processing queues
         for key in self._redis.scan_iter(f"{self._prefix}:processing:*"):
-            queue_name = key.split(":")[-1]
+            key.split(":")[-1]
 
             # Get stale jobs
             stale = self._redis.zrangebyscore(key, 0, cutoff)

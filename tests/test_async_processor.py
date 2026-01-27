@@ -183,6 +183,7 @@ class TestWorkerPool:
 
     def test_submit_and_get_result(self, pool):
         """Test submitting and getting result."""
+
         def add(a, b):
             return a + b
 
@@ -201,6 +202,7 @@ class TestWorkerPool:
 
     def test_submit_with_kwargs(self, pool):
         """Test submitting with keyword arguments."""
+
         def greet(name, greeting="Hello"):
             return f"{greeting}, {name}!"
 
@@ -211,6 +213,7 @@ class TestWorkerPool:
 
     def test_failed_task(self, pool):
         """Test task that raises exception."""
+
         def failing_func():
             raise ValueError("Expected error")
 
@@ -222,6 +225,7 @@ class TestWorkerPool:
 
     def test_cancel_task(self, pool):
         """Test cancelling a task."""
+
         def slow_func():
             time.sleep(0.5)
             return "done"
@@ -246,7 +250,7 @@ class TestWorkerPool:
     def test_pending_count(self, pool):
         """Test getting pending count."""
         # Initially no pending tasks
-        initial = pool.get_pending_count()
+        pool.get_pending_count()
 
         # Submit a slow task
         pool.submit(lambda: time.sleep(0.5))
@@ -366,6 +370,7 @@ class TestParallelProcessor:
 
     def test_submit_sync(self, processor):
         """Test submitting synchronous task."""
+
         def compute(x):
             return x * 2
 
@@ -377,6 +382,7 @@ class TestParallelProcessor:
 
     def test_run_parallel(self, processor):
         """Test running parallel tasks."""
+
         def multiply(x, factor=1):
             return x * factor
 
@@ -395,6 +401,7 @@ class TestParallelProcessor:
 
     def test_fail_fast(self, processor):
         """Test fail-fast mode."""
+
         def maybe_fail(x):
             if x == 2:
                 raise ValueError("Expected failure")
@@ -431,6 +438,7 @@ class TestParallelProcessor:
 
     def test_submit_async(self, processor):
         """Test submitting async task."""
+
         async def async_compute():
             await asyncio.sleep(0.01)
             return 42
@@ -494,7 +502,7 @@ class TestBatchProcessor:
                 raise ValueError("Temporary failure")
             return x
 
-        results = batch_processor.process([1], flaky_func)
+        batch_processor.process([1], flaky_func)
 
         # Should have retried
         assert call_count[0] >= 2
@@ -518,6 +526,7 @@ class TestPipeline:
 
     def test_async_pipeline(self):
         """Test async pipeline."""
+
         async def async_double(x):
             await asyncio.sleep(0.01)
             return x * 2
@@ -667,6 +676,7 @@ class TestGlobalFunctions:
 
     def test_run_async_global(self):
         """Test global run_async."""
+
         async def compute():
             return 42
 

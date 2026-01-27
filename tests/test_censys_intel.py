@@ -1,6 +1,5 @@
 """Tests for Censys intelligence module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -106,7 +105,10 @@ class TestQueryCensysHost:
         """Test when Censys client not available."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(None, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(None, None),
+        ):
             result = query_censys_host(ctx)
 
         data = result.get("censys_host")
@@ -146,7 +148,10 @@ class TestQueryCensysHost:
             ],
         }
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = query_censys_host(ctx)
 
         data = result.get("censys_host")
@@ -168,7 +173,10 @@ class TestQueryCensysHost:
             "services": [],
         }
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             with patch("socket.gethostbyname", return_value="93.184.216.34"):
                 result = query_censys_host(ctx)
 
@@ -193,20 +201,25 @@ class TestQueryCensysCertificates:
 
         mock_certs = MagicMock()
         # Simulate search results as iterator
-        mock_certs.search.return_value = iter([
-            {
-                "fingerprint_sha256": "abc123",
-                "names": ["example.com", "www.example.com"],
-                "issuer_dn": "CN=Let's Encrypt",
-            },
-            {
-                "fingerprint_sha256": "def456",
-                "names": ["api.example.com"],
-                "issuer_dn": "CN=DigiCert",
-            },
-        ])
+        mock_certs.search.return_value = iter(
+            [
+                {
+                    "fingerprint_sha256": "abc123",
+                    "names": ["example.com", "www.example.com"],
+                    "issuer_dn": "CN=Let's Encrypt",
+                },
+                {
+                    "fingerprint_sha256": "def456",
+                    "names": ["api.example.com"],
+                    "issuer_dn": "CN=DigiCert",
+                },
+            ]
+        )
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(None, mock_certs)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(None, mock_certs),
+        ):
             result = query_censys_certificates(ctx)
 
         data = result.get("censys_certs")
@@ -225,7 +238,10 @@ class TestSearchCensysHosts:
         mock_hosts = MagicMock()
         mock_hosts.search.return_value = iter([])
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = search_censys_hosts(ctx)
 
         data = result.get("censys_search")
@@ -238,7 +254,10 @@ class TestSearchCensysHosts:
         mock_hosts = MagicMock()
         mock_hosts.search.return_value = iter([])
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = search_censys_hosts(ctx)
 
         data = result.get("censys_search")
@@ -249,17 +268,24 @@ class TestSearchCensysHosts:
         ctx = Context(target="example.com")
 
         mock_hosts = MagicMock()
-        mock_hosts.search.return_value = iter([
-            {
-                "ip": "93.184.216.34",
-                "services": [{"port": 80}, {"port": 443}],
-                "location": {"country": "US"},
-                "autonomous_system": {"asn": 15133},
-            },
-        ])
+        mock_hosts.search.return_value = iter(
+            [
+                {
+                    "ip": "93.184.216.34",
+                    "services": [{"port": 80}, {"port": 443}],
+                    "location": {"country": "US"},
+                    "autonomous_system": {"asn": 15133},
+                },
+            ]
+        )
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
-            result = search_censys_hosts(ctx, {"query": "services.tls.certificates.leaf_data.names: example.com"})
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
+            result = search_censys_hosts(
+                ctx, {"query": "services.tls.certificates.leaf_data.names: example.com"}
+            )
 
         data = result.get("censys_search")
         assert data["total"] == 1
@@ -286,12 +312,20 @@ class TestAnalyzeCensysIntel:
         }
 
         mock_certs = MagicMock()
-        mock_certs.search.return_value = iter([
-            {"fingerprint_sha256": "abc", "names": ["example.com", "www.example.com"]},
-            {"fingerprint_sha256": "def", "names": ["api.example.com"]},
-        ])
+        mock_certs.search.return_value = iter(
+            [
+                {
+                    "fingerprint_sha256": "abc",
+                    "names": ["example.com", "www.example.com"],
+                },
+                {"fingerprint_sha256": "def", "names": ["api.example.com"]},
+            ]
+        )
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, mock_certs)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, mock_certs),
+        ):
             with patch("socket.gethostbyname", return_value="93.184.216.34"):
                 result = analyze_censys_intel(ctx)
 
@@ -309,13 +343,14 @@ class TestGetCensysClient:
     def test_import_error_returns_none(self):
         """Test that import error returns (None, None)."""
         # Mock sys.modules to force ImportError for censys.search
-        mock_censys = MagicMock()
+        MagicMock()
         mock_search = MagicMock()
         mock_search.CensysHosts = None
         mock_search.CensysCerts = None
 
         # Remove the module from sys.modules to force fresh import
         import sys
+
         original_modules = {}
         for mod in list(sys.modules.keys()):
             if mod.startswith("censys"):
@@ -325,6 +360,7 @@ class TestGetCensysClient:
             # Reload the module
             from importlib import reload
             import redops.modules.intel.censys_intel as censys_mod
+
             reload(censys_mod)
 
             # The get_censys_client should return (None, None) when import fails
@@ -340,12 +376,16 @@ class TestGetCensysClient:
         mock_search = MagicMock()
 
         import sys
-        with patch.dict(sys.modules, {"censys": MagicMock(), "censys.search": mock_search}):
+
+        with patch.dict(
+            sys.modules, {"censys": MagicMock(), "censys.search": mock_search}
+        ):
             with patch.dict("os.environ", {}, clear=True):
                 # Also mock the settings fallback to return None
                 with patch("redops.cli.settings.get_api_key_direct", return_value=None):
                     from importlib import reload
                     import redops.modules.intel.censys_intel as censys_mod
+
                     reload(censys_mod)
                     result = censys_mod.get_censys_client()
                     assert result == (None, None)
@@ -364,16 +404,25 @@ class TestGetCensysClient:
         mock_search.CensysCerts = mock_certs_class
 
         import sys
-        with patch.dict(sys.modules, {"censys": MagicMock(), "censys.search": mock_search}):
-            with patch.dict("os.environ", {"CENSYS_API_ID": "test-id", "CENSYS_API_SECRET": "test-secret"}):
+
+        with patch.dict(
+            sys.modules, {"censys": MagicMock(), "censys.search": mock_search}
+        ):
+            with patch.dict(
+                "os.environ",
+                {"CENSYS_API_ID": "test-id", "CENSYS_API_SECRET": "test-secret"},
+            ):
                 from importlib import reload
                 import redops.modules.intel.censys_intel as censys_mod
+
                 reload(censys_mod)
                 result = censys_mod.get_censys_client()
 
                 assert result[0] is mock_hosts_instance
                 assert result[1] is mock_certs_instance
-                mock_hosts_class.assert_called_with(api_id="test-id", api_secret="test-secret")
+                mock_hosts_class.assert_called_with(
+                    api_id="test-id", api_secret="test-secret"
+                )
 
     def test_credentials_from_settings_fallback(self):
         """Test credentials loaded from settings when env not set."""
@@ -389,7 +438,10 @@ class TestGetCensysClient:
         mock_search.CensysCerts = mock_certs_class
 
         import sys
-        with patch.dict(sys.modules, {"censys": MagicMock(), "censys.search": mock_search}):
+
+        with patch.dict(
+            sys.modules, {"censys": MagicMock(), "censys.search": mock_search}
+        ):
             with patch.dict("os.environ", {}, clear=True):
                 # Mock settings to return credentials
                 def get_key_side_effect(key):
@@ -399,9 +451,13 @@ class TestGetCensysClient:
                         return "settings-secret"
                     return None
 
-                with patch("redops.cli.settings.get_api_key_direct", side_effect=get_key_side_effect):
+                with patch(
+                    "redops.cli.settings.get_api_key_direct",
+                    side_effect=get_key_side_effect,
+                ):
                     from importlib import reload
                     import redops.modules.intel.censys_intel as censys_mod
+
                     reload(censys_mod)
                     result = censys_mod.get_censys_client()
 
@@ -413,12 +469,19 @@ class TestGetCensysClient:
         mock_search = MagicMock()
 
         import sys
-        with patch.dict(sys.modules, {"censys": MagicMock(), "censys.search": mock_search}):
+
+        with patch.dict(
+            sys.modules, {"censys": MagicMock(), "censys.search": mock_search}
+        ):
             with patch.dict("os.environ", {}, clear=True):
                 # Mock settings to raise exception
-                with patch("redops.cli.settings.get_api_key_direct", side_effect=Exception("Settings error")):
+                with patch(
+                    "redops.cli.settings.get_api_key_direct",
+                    side_effect=Exception("Settings error"),
+                ):
                     from importlib import reload
                     import redops.modules.intel.censys_intel as censys_mod
+
                     reload(censys_mod)
                     result = censys_mod.get_censys_client()
                     assert result == (None, None)
@@ -433,10 +496,17 @@ class TestGetCensysClient:
         mock_search.CensysCerts = mock_certs_class
 
         import sys
-        with patch.dict(sys.modules, {"censys": MagicMock(), "censys.search": mock_search}):
-            with patch.dict("os.environ", {"CENSYS_API_ID": "test-id", "CENSYS_API_SECRET": "test-secret"}):
+
+        with patch.dict(
+            sys.modules, {"censys": MagicMock(), "censys.search": mock_search}
+        ):
+            with patch.dict(
+                "os.environ",
+                {"CENSYS_API_ID": "test-id", "CENSYS_API_SECRET": "test-secret"},
+            ):
                 from importlib import reload
                 import redops.modules.intel.censys_intel as censys_mod
+
                 reload(censys_mod)
                 result = censys_mod.get_censys_client()
                 assert result == (None, None)
@@ -451,8 +521,13 @@ class TestQueryCensysHostEdgeCases:
 
         mock_hosts = MagicMock()
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
-            with patch("socket.gethostbyname", side_effect=Exception("DNS resolution failed")):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
+            with patch(
+                "socket.gethostbyname", side_effect=Exception("DNS resolution failed")
+            ):
                 result = query_censys_host(ctx)
 
         data = result.get("censys_host")
@@ -472,14 +547,21 @@ class TestQueryCensysHostEdgeCases:
                     "transport_protocol": "TCP",
                     "service_name": "HTTP",
                     "software": [
-                        {"product": "nginx", "version": "1.19.0", "vendor": "nginx Inc"},
+                        {
+                            "product": "nginx",
+                            "version": "1.19.0",
+                            "vendor": "nginx Inc",
+                        },
                         {"product": "OpenSSL", "version": "1.1.1g"},
                     ],
                 },
             ],
         }
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = query_censys_host(ctx)
 
         data = result.get("censys_host")
@@ -496,7 +578,10 @@ class TestQueryCensysHostEdgeCases:
         mock_hosts = MagicMock()
         mock_hosts.view.side_effect = Exception("404 - Host not found")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = query_censys_host(ctx)
 
         data = result.get("censys_host")
@@ -510,7 +595,10 @@ class TestQueryCensysHostEdgeCases:
         mock_hosts = MagicMock()
         mock_hosts.view.side_effect = Exception("Resource not found")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = query_censys_host(ctx)
 
         data = result.get("censys_host")
@@ -523,7 +611,10 @@ class TestQueryCensysHostEdgeCases:
         mock_hosts = MagicMock()
         mock_hosts.view.side_effect = Exception("Rate limit exceeded")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = query_censys_host(ctx)
 
         data = result.get("censys_host")
@@ -537,7 +628,10 @@ class TestQueryCensysCertificatesEdgeCases:
         """Test when certs client not available."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(MagicMock(), None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(MagicMock(), None),
+        ):
             result = query_censys_certificates(ctx)
 
         data = result.get("censys_certs")
@@ -558,7 +652,10 @@ class TestQueryCensysCertificatesEdgeCases:
             "public_key": {"algorithm": "RSA", "key_size": 2048},
         }
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(None, mock_certs)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(None, mock_certs),
+        ):
             result = query_censys_certificates(ctx, {"fingerprint": "abc123def456"})
 
         data = result.get("censys_certs")
@@ -572,12 +669,17 @@ class TestQueryCensysCertificatesEdgeCases:
 
         mock_certs = MagicMock()
         # Return more certs than the limit
-        mock_certs.search.return_value = iter([
-            {"fingerprint_sha256": f"cert{i}", "names": ["example.com"]}
-            for i in range(100)
-        ])
+        mock_certs.search.return_value = iter(
+            [
+                {"fingerprint_sha256": f"cert{i}", "names": ["example.com"]}
+                for i in range(100)
+            ]
+        )
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(None, mock_certs)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(None, mock_certs),
+        ):
             result = query_censys_certificates(ctx, {"limit": 5})
 
         data = result.get("censys_certs")
@@ -591,7 +693,10 @@ class TestQueryCensysCertificatesEdgeCases:
         mock_certs = MagicMock()
         mock_certs.search.side_effect = Exception("API timeout")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(None, mock_certs)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(None, mock_certs),
+        ):
             result = query_censys_certificates(ctx)
 
         data = result.get("censys_certs")
@@ -613,7 +718,10 @@ class TestSearchCensysHostsEdgeCases:
         """Test when hosts client not available."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(None, MagicMock())):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(None, MagicMock()),
+        ):
             result = search_censys_hosts(ctx)
 
         data = result.get("censys_search")
@@ -626,12 +734,22 @@ class TestSearchCensysHostsEdgeCases:
 
         mock_hosts = MagicMock()
         # Return more hosts than the limit
-        mock_hosts.search.return_value = iter([
-            {"ip": f"192.168.1.{i}", "services": [], "location": {}, "autonomous_system": {}}
-            for i in range(100)
-        ])
+        mock_hosts.search.return_value = iter(
+            [
+                {
+                    "ip": f"192.168.1.{i}",
+                    "services": [],
+                    "location": {},
+                    "autonomous_system": {},
+                }
+                for i in range(100)
+            ]
+        )
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = search_censys_hosts(ctx, {"query": "services.http", "limit": 10})
 
         data = result.get("censys_search")
@@ -645,7 +763,10 @@ class TestSearchCensysHostsEdgeCases:
         mock_hosts = MagicMock()
         mock_hosts.search.side_effect = Exception("Search failed")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = search_censys_hosts(ctx, {"query": "test"})
 
         data = result.get("censys_search")
@@ -671,20 +792,29 @@ class TestAnalyzeCensysIntelEdgeCases:
             ],
         }
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = analyze_censys_intel(ctx)
 
         intel = result.get("censys_intel")
         assert intel is not None
         assert intel["summary"]["services_count"] == 2
         # No certificates since target is IP
-        assert intel.get("certificates", {}).get("certificates", []) == [] or "certificates_found" not in intel["summary"]
+        assert (
+            intel.get("certificates", {}).get("certificates", []) == []
+            or "certificates_found" not in intel["summary"]
+        )
 
     def test_analysis_with_no_hosts(self):
         """Test analysis when no hosts returned."""
         ctx = Context(target="example.com")
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(None, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(None, None),
+        ):
             result = analyze_censys_intel(ctx)
 
         intel = result.get("censys_intel")
@@ -708,7 +838,10 @@ class TestAnalyzeCensysIntelEdgeCases:
             ],
         }
 
-        with patch("redops.modules.intel.censys_intel.get_censys_client", return_value=(mock_hosts, None)):
+        with patch(
+            "redops.modules.intel.censys_intel.get_censys_client",
+            return_value=(mock_hosts, None),
+        ):
             result = analyze_censys_intel(ctx)
 
         intel = result.get("censys_intel")

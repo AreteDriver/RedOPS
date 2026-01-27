@@ -5,12 +5,11 @@ Defines all database tables and relationships.
 """
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum as PyEnum
 import uuid
 
 from sqlalchemy import (
-    Column,
     String,
     Text,
     Integer,
@@ -29,6 +28,7 @@ from sqlalchemy.sql import func
 
 class Base(DeclarativeBase):
     """Base class for all models."""
+
     pass
 
 
@@ -36,8 +36,10 @@ class Base(DeclarativeBase):
 # Enums
 # =============================================================================
 
+
 class ScanStatus(PyEnum):
     """Scan status values."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -47,6 +49,7 @@ class ScanStatus(PyEnum):
 
 class Severity(PyEnum):
     """Finding severity levels."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -56,6 +59,7 @@ class Severity(PyEnum):
 
 class FindingStatus(PyEnum):
     """Finding status values."""
+
     OPEN = "open"
     CONFIRMED = "confirmed"
     FALSE_POSITIVE = "false_positive"
@@ -65,6 +69,7 @@ class FindingStatus(PyEnum):
 
 class UserRole(PyEnum):
     """User role types."""
+
     ADMIN = "admin"
     USER = "user"
     VIEWER = "viewer"
@@ -73,6 +78,7 @@ class UserRole(PyEnum):
 
 class ScheduleStatus(PyEnum):
     """Schedule status values."""
+
     ACTIVE = "active"
     PAUSED = "paused"
     DISABLED = "disabled"
@@ -81,6 +87,7 @@ class ScheduleStatus(PyEnum):
 
 class JobStatus(PyEnum):
     """Job status values."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -93,8 +100,10 @@ class JobStatus(PyEnum):
 # Core Models
 # =============================================================================
 
+
 class User(Base):
     """User account model."""
+
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -120,7 +129,9 @@ class User(Base):
     )
 
     # Relationships
-    api_keys: Mapped[List["APIKey"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    api_keys: Mapped[List["APIKey"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
     scans: Mapped[List["Scan"]] = relationship(back_populates="created_by_user")
     schedules: Mapped[List["Schedule"]] = relationship(back_populates="created_by_user")
 
@@ -132,6 +143,7 @@ class User(Base):
 
 class APIKey(Base):
     """API key model for authentication."""
+
     __tablename__ = "api_keys"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -162,6 +174,7 @@ class APIKey(Base):
 
 class Scan(Base):
     """Security scan model."""
+
     __tablename__ = "scans"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -205,6 +218,7 @@ class Scan(Base):
 
 class Finding(Base):
     """Security finding model."""
+
     __tablename__ = "findings"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -218,7 +232,9 @@ class Finding(Base):
     severity: Mapped[Severity] = mapped_column(Enum(Severity), nullable=False)
     module: Mapped[Optional[str]] = mapped_column(String(128))
     category: Mapped[Optional[str]] = mapped_column(String(128))
-    evidence: Mapped[Dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    evidence: Mapped[Dict[str, Any]] = mapped_column(
+        JSONB, default=dict, nullable=False
+    )
     remediation: Mapped[Optional[str]] = mapped_column(Text)
     references: Mapped[List[str]] = mapped_column(JSONB, default=list, nullable=False)
     cvss_score: Mapped[Optional[float]] = mapped_column(Numeric(3, 1))
@@ -251,8 +267,10 @@ class Finding(Base):
 # Scheduling Models
 # =============================================================================
 
+
 class Schedule(Base):
     """Scan schedule model."""
+
     __tablename__ = "schedules"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -295,6 +313,7 @@ class Schedule(Base):
 
 class Job(Base):
     """Scheduled job execution model."""
+
     __tablename__ = "jobs"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -333,8 +352,10 @@ class Job(Base):
 # Audit & Logging Models
 # =============================================================================
 
+
 class AuditLog(Base):
     """Audit log for tracking user actions."""
+
     __tablename__ = "audit_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -365,8 +386,10 @@ class AuditLog(Base):
 # Cache Models
 # =============================================================================
 
+
 class IntelCache(Base):
     """Persistent cache for threat intelligence data."""
+
     __tablename__ = "intel_cache"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -392,8 +415,10 @@ class IntelCache(Base):
 # Report Models
 # =============================================================================
 
+
 class Report(Base):
     """Generated report model."""
+
     __tablename__ = "reports"
 
     id: Mapped[uuid.UUID] = mapped_column(

@@ -9,13 +9,12 @@ import hashlib
 import json
 import re
 import threading
-import time
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 class AlertSeverity(Enum):
@@ -200,7 +199,9 @@ class Alert:
             "labels": self.labels,
             "annotations": self.annotations,
             "triggered_at": self.triggered_at.isoformat(),
-            "acknowledged_at": self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+            "acknowledged_at": self.acknowledged_at.isoformat()
+            if self.acknowledged_at
+            else None,
             "acknowledged_by": self.acknowledged_by,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             "resolved_by": self.resolved_by,
@@ -359,12 +360,14 @@ class NotificationChannel(ABC):
 class WebhookChannel(NotificationChannel):
     """Webhook notification channel."""
 
-    def __init__(self,
-                 channel_id: str,
-                 name: str,
-                 url: str,
-                 headers: Optional[Dict[str, str]] = None,
-                 method: str = "POST"):
+    def __init__(
+        self,
+        channel_id: str,
+        name: str,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        method: str = "POST",
+    ):
         """Initialize webhook channel."""
         super().__init__(channel_id, name)
         self._url = url
@@ -424,16 +427,18 @@ class WebhookChannel(NotificationChannel):
 class EmailChannel(NotificationChannel):
     """Email notification channel."""
 
-    def __init__(self,
-                 channel_id: str,
-                 name: str,
-                 recipients: List[str],
-                 smtp_host: str = "localhost",
-                 smtp_port: int = 25,
-                 from_address: str = "alerts@redops.local",
-                 username: Optional[str] = None,
-                 password: Optional[str] = None,
-                 use_tls: bool = False):
+    def __init__(
+        self,
+        channel_id: str,
+        name: str,
+        recipients: List[str],
+        smtp_host: str = "localhost",
+        smtp_port: int = 25,
+        from_address: str = "alerts@redops.local",
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        use_tls: bool = False,
+    ):
         """Initialize email channel."""
         super().__init__(channel_id, name)
         self._recipients = recipients
@@ -498,11 +503,13 @@ class EmailChannel(NotificationChannel):
 class CallbackChannel(NotificationChannel):
     """Callback-based notification channel for custom handling."""
 
-    def __init__(self,
-                 channel_id: str,
-                 name: str,
-                 on_alert: Callable[[Alert], bool],
-                 on_resolved: Optional[Callable[[Alert], bool]] = None):
+    def __init__(
+        self,
+        channel_id: str,
+        name: str,
+        on_alert: Callable[[Alert], bool],
+        on_resolved: Optional[Callable[[Alert], bool]] = None,
+    ):
         """Initialize callback channel."""
         super().__init__(channel_id, name)
         self._on_alert = on_alert
@@ -534,20 +541,24 @@ class LogChannel(NotificationChannel):
 
     def send(self, alert: Alert) -> bool:
         """Log alert."""
-        self._alerts.append({
-            "type": "alert",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "alert": alert.to_dict(),
-        })
+        self._alerts.append(
+            {
+                "type": "alert",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "alert": alert.to_dict(),
+            }
+        )
         return True
 
     def send_resolved(self, alert: Alert) -> bool:
         """Log resolution."""
-        self._alerts.append({
-            "type": "resolved",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "alert": alert.to_dict(),
-        })
+        self._alerts.append(
+            {
+                "type": "resolved",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "alert": alert.to_dict(),
+            }
+        )
         return True
 
     def clear(self) -> None:
@@ -589,10 +600,9 @@ class EscalationPolicy:
         """Get escalation levels."""
         return self._levels
 
-    def add_level(self,
-                  delay: timedelta,
-                  channels: List[str],
-                  repeat_count: int = 1) -> "EscalationPolicy":
+    def add_level(
+        self, delay: timedelta, channels: List[str], repeat_count: int = 1
+    ) -> "EscalationPolicy":
         """Add an escalation level."""
         level = EscalationLevel(
             level=len(self._levels) + 1,
@@ -693,10 +703,12 @@ class AlertManager:
         """Get an alert by ID."""
         return self._alerts.get(alert_id)
 
-    def get_alerts(self,
-                   state: Optional[AlertState] = None,
-                   severity: Optional[AlertSeverity] = None,
-                   rule_id: Optional[str] = None) -> List[Alert]:
+    def get_alerts(
+        self,
+        state: Optional[AlertState] = None,
+        severity: Optional[AlertSeverity] = None,
+        rule_id: Optional[str] = None,
+    ) -> List[Alert]:
         """Get alerts with optional filters."""
         alerts = list(self._alerts.values())
 
@@ -767,7 +779,10 @@ class AlertManager:
                             continue
                         else:
                             start_time, _ = self._pending_conditions[rule.rule_id]
-                            if datetime.now(timezone.utc) - start_time < rule.for_duration:
+                            if (
+                                datetime.now(timezone.utc) - start_time
+                                < rule.for_duration
+                            ):
                                 continue
                             # Duration satisfied, clear pending
                             del self._pending_conditions[rule.rule_id]
@@ -844,9 +859,9 @@ class AlertManager:
                     pass
 
     # History
-    def get_history(self,
-                    limit: int = 100,
-                    since: Optional[datetime] = None) -> List[Alert]:
+    def get_history(
+        self, limit: int = 100, since: Optional[datetime] = None
+    ) -> List[Alert]:
         """Get alert history."""
         history = self._alert_history
         if since:
@@ -869,7 +884,9 @@ class AlertManager:
             "active_silences": len(self.get_active_silences()),
             "total_alerts": len(alerts),
             "firing": sum(1 for a in alerts if a.state == AlertState.FIRING),
-            "acknowledged": sum(1 for a in alerts if a.state == AlertState.ACKNOWLEDGED),
+            "acknowledged": sum(
+                1 for a in alerts if a.state == AlertState.ACKNOWLEDGED
+            ),
             "silenced": sum(1 for a in alerts if a.state == AlertState.SILENCED),
             "by_severity": {
                 s.value: sum(1 for a in alerts if a.severity == s)
@@ -884,7 +901,7 @@ def create_rule(
     conditions: List[Tuple[str, str, Any]],
     severity: AlertSeverity = AlertSeverity.MEDIUM,
     message: str = "",
-    **kwargs
+    **kwargs,
 ) -> AlertRule:
     """Create an alert rule with simple condition syntax."""
     operator_map = {
@@ -900,13 +917,15 @@ def create_rule(
     }
 
     parsed_conditions = []
-    for field, op, value in conditions:
+    for field_name, op, value in conditions:
         operator = operator_map.get(op, ConditionOperator.EQUALS)
-        parsed_conditions.append(AlertCondition(
-            field=field,
-            operator=operator,
-            value=value,
-        ))
+        parsed_conditions.append(
+            AlertCondition(
+                field=field_name,
+                operator=operator,
+                value=value,
+            )
+        )
 
     return AlertRule(
         rule_id=str(uuid.uuid4()),
@@ -925,7 +944,7 @@ def threshold_rule(
     operator: str = ">",
     severity: AlertSeverity = AlertSeverity.MEDIUM,
     message: str = "",
-    **kwargs
+    **kwargs,
 ) -> AlertRule:
     """Create a simple threshold-based rule."""
     return create_rule(

@@ -2,10 +2,8 @@
 
 import json
 import os
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock, call
-from io import StringIO
+from unittest.mock import patch, MagicMock
 
 from redops.cli.settings import (
     API_PROVIDERS,
