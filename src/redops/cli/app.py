@@ -1131,23 +1131,23 @@ def run_module(ctx: Context, module_name: str, config: CLIConfig) -> Context:
 
 def run_domain_profile(ctx: Context, config: CLIConfig) -> Context:
     """Run domain profile module."""
-    from redops.modules.recon.domains import analyze_domain
+    from redops.modules.recon.domains import profile_domain
 
-    return analyze_domain(ctx, {})
+    return profile_domain(ctx, {})
 
 
 def run_tech_stack(ctx: Context, config: CLIConfig) -> Context:
     """Run tech stack module."""
-    from redops.modules.recon.tech_stack import detect_technologies
+    from redops.modules.recon.tech_stack import fingerprint
 
-    return detect_technologies(ctx, {})
+    return fingerprint(ctx, {})
 
 
 def run_exposure_scan(ctx: Context, config: CLIConfig) -> Context:
     """Run exposure scan module."""
-    from redops.modules.recon.exposure_scan import scan_exposures
+    from redops.modules.corp_assessment.exposure_scan import scan_exposure
 
-    return scan_exposures(ctx, {})
+    return scan_exposure(ctx, {})
 
 
 def run_infrastructure(ctx: Context, config: CLIConfig) -> Context:
@@ -1229,14 +1229,14 @@ def run_executive_report(ctx: Context, config: CLIConfig) -> Context:
 
 def run_social_osint(ctx: Context, config: CLIConfig) -> Context:
     """Run social OSINT module."""
-    from redops.modules.recon.social_osint import gather_social_intel
+    from redops.modules.recon.social_osint import gather_osint
 
-    return gather_social_intel(ctx, {})
+    return gather_osint(ctx, {})
 
 
 def run_risk_scoring(ctx: Context, config: CLIConfig) -> Context:
     """Run risk scoring module."""
-    from redops.modules.corp_assessment.risk_scoring import score_risks
+    from redops.modules.intel.risk_scoring import score_risks
 
     return score_risks(ctx, {})
 
