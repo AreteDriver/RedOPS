@@ -14,7 +14,6 @@ from redops.core.plugin_system import (
     BasePlugin,
     PluginMetadata,
     PluginType,
-    HookPoint,
     PipelineContext,
 )
 
@@ -61,26 +60,38 @@ class SampleTimingHook(BasePlugin):
             ctx.log(f"[TimingHook] Pipeline completed in {duration:.2f}s", level="INFO")
 
             # Store timing data in context
-            ctx.add("timing_data", {
-                "total_duration_seconds": duration,
-                "module_times": self._module_times,
-            })
+            ctx.add(
+                "timing_data",
+                {
+                    "total_duration_seconds": duration,
+                    "module_times": self._module_times,
+                },
+            )
 
-    def on_before_module(self, ctx: PipelineContext, module_name: str = None, **kwargs) -> None:
+    def on_before_module(
+        self, ctx: PipelineContext, module_name: str = None, **kwargs
+    ) -> None:
         """Called before each module executes."""
         if module_name:
             self._module_times[module_name] = {"start": datetime.now().isoformat()}
             ctx.log(f"[TimingHook] Starting module: {module_name}", level="DEBUG")
 
-    def on_after_module(self, ctx: PipelineContext, module_name: str = None, **kwargs) -> None:
+    def on_after_module(
+        self, ctx: PipelineContext, module_name: str = None, **kwargs
+    ) -> None:
         """Called after each module completes."""
         if module_name and module_name in self._module_times:
             start = datetime.fromisoformat(self._module_times[module_name]["start"])
             duration = (datetime.now() - start).total_seconds()
             self._module_times[module_name]["duration_seconds"] = duration
-            ctx.log(f"[TimingHook] Module {module_name} completed in {duration:.2f}s", level="DEBUG")
+            ctx.log(
+                f"[TimingHook] Module {module_name} completed in {duration:.2f}s",
+                level="DEBUG",
+            )
 
-    def on_on_error(self, ctx: PipelineContext, error: Exception = None, **kwargs) -> None:
+    def on_on_error(
+        self, ctx: PipelineContext, error: Exception = None, **kwargs
+    ) -> None:
         """Called when an error occurs."""
         if error:
             ctx.log(f"[TimingHook] Error occurred: {error}", level="ERROR")
@@ -124,7 +135,9 @@ class SampleNotificationHook(BasePlugin):
         }
         ctx.log(f"[NotificationHook] Would send: {message}", level="DEBUG")
 
-    def on_on_error(self, ctx: PipelineContext, error: Exception = None, **kwargs) -> None:
+    def on_on_error(
+        self, ctx: PipelineContext, error: Exception = None, **kwargs
+    ) -> None:
         """Send notification on error."""
         if not self.notify_on_error or not self.webhook_url:
             return

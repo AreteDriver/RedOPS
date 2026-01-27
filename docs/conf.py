@@ -14,6 +14,7 @@ author = "RedOPS Contributors"
 # Get version from main module
 try:
     from redops.main import __version__
+
     release = __version__
     version = ".".join(__version__.split(".")[:2])
 except ImportError:

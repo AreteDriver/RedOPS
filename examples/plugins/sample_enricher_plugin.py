@@ -45,7 +45,11 @@ class SampleIPEnricher(BasePlugin):
         self.known_ips = {
             "8.8.8.8": {"owner": "Google", "service": "DNS", "reputation": "good"},
             "1.1.1.1": {"owner": "Cloudflare", "service": "DNS", "reputation": "good"},
-            "192.168.1.1": {"owner": "Private", "service": "Router", "reputation": "internal"},
+            "192.168.1.1": {
+                "owner": "Private",
+                "service": "Router",
+                "reputation": "internal",
+            },
         }
 
     def enrich(self, ctx: PipelineContext, data_key: str = None) -> dict:

@@ -32,7 +32,9 @@ def quick_scan(target: str, output_dir: str = "./output"):
     config.output.output_dir = output_dir
 
     # Load the reconnaissance pipeline
-    pipeline_path = Path(__file__).parent.parent / "config/pipelines/recon_pipeline.json"
+    pipeline_path = (
+        Path(__file__).parent.parent / "config/pipelines/recon_pipeline.json"
+    )
     pipeline = PipelineLoader.load(str(pipeline_path))
 
     print(f"[*] Pipeline: {pipeline.metadata.name}")
