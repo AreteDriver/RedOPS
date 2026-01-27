@@ -224,7 +224,7 @@ class APIServer:
         # In-memory storage for demo
         self._scans: dict[str, dict] = {}
         self._jobs: dict[str, dict] = {}
-        self._api_keys: set[str] = {"demo-api-key"}
+        self._api_keys: set[str] = set()
 
         # Register routes
         self._register_routes()
