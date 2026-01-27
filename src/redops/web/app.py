@@ -152,6 +152,25 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    # CSRF protection: require X-Requested-With header on state-changing requests
+    # using session cookies. Cross-origin requests cannot set custom headers
+    # without a CORS preflight, preventing CSRF attacks.
+    @app.middleware("http")
+    async def csrf_protection(request: Request, call_next):
+        if request.method in ("POST", "PUT", "DELETE", "PATCH"):
+            has_session_cookie = "redops_session" in request.cookies
+            has_csrf_header = request.headers.get("X-Requested-With") == "RedOPS"
+            has_api_key = "x-api-key" in request.headers
+            # Only enforce for session-based auth (not API key auth or login)
+            if has_session_cookie and not has_csrf_header and not has_api_key:
+                if not request.url.path.endswith("/login"):
+                    from fastapi.responses import JSONResponse
+                    return JSONResponse(
+                        status_code=403,
+                        content={"error": "CSRF validation failed. Include X-Requested-With: RedOPS header."},
+                    )
+        return await call_next(request)
+
     # Health check (public)
     @app.get("/api/health", response_model=HealthResponse, tags=["System"])
     async def health_check():
@@ -196,10 +215,12 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
         if auth_manager.verify_basic_auth(request.username, request.password):
             # Create session and set cookie
             token = auth_manager.create_session(request.username)
+            is_https = os.environ.get("REDOPS_HTTPS", "false").lower() == "true"
             response.set_cookie(
                 key="redops_session",
                 value=token,
                 httponly=True,
+                secure=is_https,
                 samesite="lax",
                 max_age=auth_manager.config.session_expiry_hours * 3600,
             )

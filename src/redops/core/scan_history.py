@@ -217,6 +217,12 @@ class ScanHistoryDB:
             error: Error message if failed
             duration_seconds: Scan duration
         """
+        # Allowlist of columns that can be updated dynamically
+        ALLOWED_COLUMNS = {
+            "status", "completed_at", "modules_run",
+            "findings_count", "risk_score", "error", "duration_seconds",
+        }
+
         updates = []
         params = []
 
@@ -249,6 +255,12 @@ class ScanHistoryDB:
 
         if not updates:
             return
+
+        # Validate all column names against allowlist
+        for update in updates:
+            col = update.split(" = ")[0]
+            if col not in ALLOWED_COLUMNS:
+                raise ValueError(f"Invalid column in update: {col}")
 
         params.append(scan_id)
         query = f"UPDATE scans SET {', '.join(updates)} WHERE id = ?"

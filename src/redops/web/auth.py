@@ -76,7 +76,11 @@ class AuthenticatedUser:
 
 
 class SessionStore:
-    """Simple in-memory session store."""
+    """Simple in-memory session store.
+
+    WARNING: Sessions are lost on server restart and not shared across
+    workers. Use Redis or database-backed sessions for production.
+    """
 
     def __init__(self, secret: str, expiry_hours: int = 24):
         self._sessions: dict[str, dict] = {}
@@ -154,6 +158,14 @@ class AuthManager:
             self.config.session_secret,
             self.config.session_expiry_hours,
         )
+
+        if not self.config.enabled:
+            import logging
+            logger = logging.getLogger("redops.auth")
+            logger.warning(
+                "SECURITY WARNING: Authentication is DISABLED. "
+                "Set REDOPS_AUTH_ENABLED=true and REDOPS_ADMIN_PASSWORD to secure this instance."
+            )
 
         # Security instances
         self._api_key_header = APIKeyHeader(

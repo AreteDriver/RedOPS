@@ -79,7 +79,8 @@ class APIKeyWithSecret(APIKeyResponse):
     key: str = Field(..., description="Full API key (only shown once)")
 
 
-# In-memory storage (use database in production)
+# In-memory storage — WARNING: revocations and API keys are lost on restart.
+# Use a persistent store (database/Redis) for production deployments.
 _api_keys: dict[str, dict] = {}
 _revoked_tokens: set[str] = set()
 
