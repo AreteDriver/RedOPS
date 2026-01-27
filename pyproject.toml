@@ -91,6 +91,9 @@ redops-mcp = "redops.mcp.server:main"
 Homepage = "https://github.com/AreteDriver/RedOPS"
 Repository = "https://github.com/AreteDriver/RedOPS"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
