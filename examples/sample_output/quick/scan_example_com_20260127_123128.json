@@ -1,0 +1,251 @@
+{
+  "finding_dns_a_example.com": {
+    "module": "recon.domains",
+    "title": "DNS A Records for example.com",
+    "description": "Found 2 IPv4 addresses",
+    "severity": "info",
+    "data": {
+      "records": [
+        "104.18.26.120",
+        "104.18.27.120"
+      ]
+    },
+    "tags": []
+  },
+  "finding_dns_mx_example.com": {
+    "module": "recon.domains",
+    "title": "Mail Servers for example.com",
+    "description": "Found 1 MX records",
+    "severity": "info",
+    "data": {
+      "mail_servers": [
+        "0 ."
+      ]
+    },
+    "tags": []
+  },
+  "domain_profile": {
+    "domain": "example.com",
+    "dns_records": {
+      "A": [
+        "104.18.26.120",
+        "104.18.27.120"
+      ],
+      "AAAA": [
+        "2606:4700::6812:1b78",
+        "2606:4700::6812:1a78"
+      ],
+      "MX": [
+        "0 ."
+      ],
+      "TXT": [
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9",
+        "v=spf1 -all"
+      ],
+      "NS": [
+        "hera.ns.cloudflare.com.",
+        "elliott.ns.cloudflare.com."
+      ],
+      "SOA": [
+        "elliott.ns.cloudflare.com. dns.cloudflare.com. 2393120882 10000 2400 604800 1800"
+      ]
+    },
+    "mail_servers": [
+      "0 ."
+    ],
+    "nameservers": [
+      "hera.ns.cloudflare.com.",
+      "elliott.ns.cloudflare.com."
+    ],
+    "txt_analysis": {
+      "spf": "v=spf1 -all",
+      "dkim_selectors": [],
+      "dmarc": null,
+      "verification_records": [],
+      "other": [
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9"
+      ]
+    },
+    "has_ipv6": true,
+    "has_spf": true,
+    "has_dmarc": false
+  },
+  "finding_tech_0_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Strict-Transport-Security",
+    "description": "HSTS - Enforces HTTPS connections. This header is not present.",
+    "severity": "medium",
+    "data": {
+      "header": "Strict-Transport-Security",
+      "recommendation": "Add Strict-Transport-Security header"
+    },
+    "tags": []
+  },
+  "finding_tech_1_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Content-Security-Policy",
+    "description": "CSP - Prevents XSS and injection attacks. This header is not present.",
+    "severity": "medium",
+    "data": {
+      "header": "Content-Security-Policy",
+      "recommendation": "Add Content-Security-Policy header"
+    },
+    "tags": []
+  },
+  "finding_tech_2_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: X-Frame-Options",
+    "description": "Prevents clickjacking attacks. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "X-Frame-Options",
+      "recommendation": "Add X-Frame-Options header"
+    },
+    "tags": []
+  },
+  "finding_tech_3_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: X-Content-Type-Options",
+    "description": "Prevents MIME-type sniffing. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "X-Content-Type-Options",
+      "recommendation": "Add X-Content-Type-Options header"
+    },
+    "tags": []
+  },
+  "finding_tech_4_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: X-XSS-Protection",
+    "description": "Browser XSS filter (legacy). This header is not present.",
+    "severity": "info",
+    "data": {
+      "header": "X-XSS-Protection",
+      "recommendation": "Add X-XSS-Protection header"
+    },
+    "tags": []
+  },
+  "finding_tech_5_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Referrer-Policy",
+    "description": "Controls referrer information leakage. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "Referrer-Policy",
+      "recommendation": "Add Referrer-Policy header"
+    },
+    "tags": []
+  },
+  "finding_tech_6_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Permissions-Policy",
+    "description": "Controls browser features access. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "Permissions-Policy",
+      "recommendation": "Add Permissions-Policy header"
+    },
+    "tags": []
+  },
+  "finding_tech_7_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Technology Stack Identified for example.com",
+    "description": "Detected 1 technologies",
+    "severity": "info",
+    "data": {
+      "web_server": "Cloudflare",
+      "frameworks": [],
+      "libraries": [
+        "Cloudflare"
+      ]
+    },
+    "tags": []
+  },
+  "tech_stack": {
+    "web_server": "Cloudflare",
+    "frameworks": [],
+    "languages": [],
+    "libraries": [
+      "Cloudflare"
+    ],
+    "headers": {
+      "Date": "Tue, 27 Jan 2026 20:31:28 GMT",
+      "Content-Type": "text/html",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Content-Encoding": "gzip",
+      "last-modified": "Tue, 27 Jan 2026 13:22:54 GMT",
+      "allow": "GET, HEAD",
+      "Age": "9824",
+      "cf-cache-status": "HIT",
+      "Vary": "Accept-Encoding",
+      "Server": "cloudflare",
+      "CF-RAY": "9c4b038848c81fb9-PDX"
+    },
+    "fingerprints": {
+      "status_code": 200,
+      "content_length": 513,
+      "content_type": "text/html",
+      "ssl": {
+        "issuer": "SSL Corporation",
+        "subject": "example.com",
+        "not_before": "Dec 16 19:39:32 2025 GMT",
+        "not_after": "Mar 16 18:32:44 2026 GMT",
+        "serial_number": "1EDE98307EA0594823EA81BAF6154A67",
+        "version": 3
+      }
+    }
+  },
+  "exposure_finding_0": {
+    "title": "Debug/Information Header Exposed",
+    "category": "debug",
+    "severity": "low",
+    "description": "Informational header exposed: Server",
+    "evidence": [
+      "Server: cloudflare"
+    ],
+    "remediation": "Remove or hide the Server header in production",
+    "affected_assets": [],
+    "metadata": {}
+  },
+  "exposure_scan": {
+    "target": "example.com",
+    "findings": [
+      {
+        "title": "Debug/Information Header Exposed",
+        "category": "debug",
+        "severity": "low",
+        "description": "Informational header exposed: Server",
+        "evidence": [
+          "Server: cloudflare"
+        ],
+        "remediation": "Remove or hide the Server header in production",
+        "affected_assets": [],
+        "metadata": {}
+      }
+    ],
+    "public_assets": [
+      {
+        "type": "domain",
+        "name": "example.com",
+        "source": "domain_profile"
+      }
+    ],
+    "exposed_paths": [],
+    "sensitive_files": [],
+    "cloud_references": [],
+    "credential_exposures": [],
+    "summary": {
+      "total_findings": 1,
+      "by_severity": {
+        "low": 1
+      },
+      "by_category": {
+        "debug": 1
+      },
+      "critical_count": 0,
+      "high_count": 0,
+      "risk_score": 1
+    }
+  }
+}

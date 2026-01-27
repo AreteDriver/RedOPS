@@ -1,0 +1,132 @@
+{
+  "report_type": "executive_summary",
+  "audience": "executive",
+  "executive_summary": {
+    "report_id": "RPT-20260127203130-04BEEE8D",
+    "title": "Security Assessment Report: example.com",
+    "generated_at": "2026-01-27T20:31:30.923744Z",
+    "target": "example.com",
+    "overall_risk_level": "minimal",
+    "risk_score": 0,
+    "key_findings": [],
+    "top_risks": [],
+    "compliance_summary": {
+      "overall_status": "not_assessed",
+      "compliance_score": 100.0,
+      "frameworks": {},
+      "gaps": [],
+      "controls_assessed": 0,
+      "controls_passing": 0,
+      "controls_failing": 0,
+      "priority_remediations": [],
+      "audit_readiness": 90.0
+    },
+    "recommendations": [],
+    "metrics": {
+      "total_findings": 0,
+      "critical_findings": 0,
+      "high_findings": 0,
+      "medium_findings": 0,
+      "low_findings": 0,
+      "findings_by_category": {},
+      "critical_high_ratio": 0,
+      "correlation_count": 0,
+      "cluster_count": 0,
+      "insight_count": 0,
+      "compliance_gaps": 0,
+      "controls_assessed": 0,
+      "controls_passing": 0,
+      "compliance_rate": 0
+    },
+    "trend_summary": {
+      "period": "current",
+      "risk_direction": "unknown",
+      "finding_direction": "unknown",
+      "compliance_direction": "unknown",
+      "notable_changes": [],
+      "comparison": {
+        "previous_risk_score": null,
+        "current_risk_score": null,
+        "delta": null
+      }
+    },
+    "executive_brief": "Security Assessment Summary for example.com\n\nOverall Risk Level: MINIMAL (Score: 0.0/100)\n\nThe assessment identified 0 key findings requiring attention. \n\nCompliance posture is at 100%. \n\nRecommended immediate actions are detailed in the recommendations section.",
+    "next_steps": [
+      "Review findings with security team",
+      "Prioritize remediations based on business impact"
+    ]
+  },
+  "risk_dashboard": {
+    "overall_score": 0,
+    "risk_level": "minimal",
+    "risk_by_category": {},
+    "risk_by_severity": {},
+    "risk_trend": "unknown",
+    "top_risks": [],
+    "risk_distribution": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "mitigation_progress": {
+      "total": 0,
+      "remediated": 0,
+      "in_progress": 0,
+      "open": 0,
+      "progress_percent": 0
+    },
+    "exposure_metrics": {
+      "total_exposures": 0,
+      "public_facing": 0,
+      "credential_risks": 0
+    }
+  },
+  "compliance_report": {
+    "overall_status": "not_assessed",
+    "compliance_score": 100.0,
+    "frameworks": {},
+    "gaps": [],
+    "controls_assessed": 0,
+    "controls_passing": 0,
+    "controls_failing": 0,
+    "priority_remediations": [],
+    "audit_readiness": 90.0
+  },
+  "recommendations": [],
+  "metrics": {
+    "total_findings": 0,
+    "critical_findings": 0,
+    "high_findings": 0,
+    "medium_findings": 0,
+    "low_findings": 0,
+    "findings_by_category": {},
+    "critical_high_ratio": 0,
+    "correlation_count": 0,
+    "cluster_count": 0,
+    "insight_count": 0,
+    "compliance_gaps": 0,
+    "controls_assessed": 0,
+    "controls_passing": 0,
+    "compliance_rate": 0
+  },
+  "appendix": {
+    "total_findings": 0,
+    "findings_summary": {
+      "by_severity": {},
+      "by_category": {}
+    },
+    "correlation_summary": {
+      "total_correlations": 0,
+      "total_clusters": 0,
+      "total_insights": 0
+    },
+    "methodology": "Automated security assessment using RedOPS framework",
+    "limitations": [
+      "Assessment based on publicly available information",
+      "Point-in-time assessment; conditions may change",
+      "Not a substitute for comprehensive penetration testing"
+    ]
+  }
+}

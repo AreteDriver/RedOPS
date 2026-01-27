@@ -1,0 +1,153 @@
+{
+  "finding_dns_a_example.com": {
+    "module": "recon.domains",
+    "title": "DNS A Records for example.com",
+    "description": "Found 2 IPv4 addresses",
+    "severity": "info",
+    "data": {
+      "records": [
+        "104.18.26.120",
+        "104.18.27.120"
+      ]
+    },
+    "tags": []
+  },
+  "finding_dns_mx_example.com": {
+    "module": "recon.domains",
+    "title": "Mail Servers for example.com",
+    "description": "Found 1 MX records",
+    "severity": "info",
+    "data": {
+      "mail_servers": [
+        "0 ."
+      ]
+    },
+    "tags": []
+  },
+  "domain_profile": {
+    "domain": "example.com",
+    "dns_records": {
+      "A": [
+        "104.18.26.120",
+        "104.18.27.120"
+      ],
+      "AAAA": [
+        "2606:4700::6812:1b78",
+        "2606:4700::6812:1a78"
+      ],
+      "MX": [
+        "0 ."
+      ],
+      "TXT": [
+        "v=spf1 -all",
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9"
+      ],
+      "NS": [
+        "hera.ns.cloudflare.com.",
+        "elliott.ns.cloudflare.com."
+      ],
+      "SOA": [
+        "elliott.ns.cloudflare.com. dns.cloudflare.com. 2393120882 10000 2400 604800 1800"
+      ]
+    },
+    "mail_servers": [
+      "0 ."
+    ],
+    "nameservers": [
+      "hera.ns.cloudflare.com.",
+      "elliott.ns.cloudflare.com."
+    ],
+    "txt_analysis": {
+      "spf": "v=spf1 -all",
+      "dkim_selectors": [],
+      "dmarc": null,
+      "verification_records": [],
+      "other": [
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9"
+      ]
+    },
+    "has_ipv6": true,
+    "has_spf": true,
+    "has_dmarc": false
+  },
+  "threat_intel": {
+    "target": "example.com",
+    "matches": [],
+    "threat_actors": [],
+    "domain_analysis": {
+      "total_domains": 6,
+      "suspicious_count": 0,
+      "clean_count": 6,
+      "unknown_count": 0,
+      "by_tld": {
+        "com": 5,
+        "domains": 1
+      },
+      "age_analysis": {},
+      "patterns_detected": []
+    },
+    "ip_analysis": {
+      "total_ips": 2,
+      "private_count": 0,
+      "public_count": 2,
+      "bogon_count": 0,
+      "by_class": {
+        "A": 2,
+        "B": 0,
+        "C": 0,
+        "D": 0,
+        "E": 0
+      }
+    },
+    "url_analysis": {
+      "total_urls": 0,
+      "https_count": 0,
+      "http_count": 0,
+      "suspicious_patterns": [],
+      "file_extensions": {},
+      "parameters_detected": 0
+    },
+    "reputation_score": 0.0,
+    "risk_indicators": [],
+    "summary": {
+      "total_matches": 0,
+      "critical_count": 0,
+      "high_count": 0,
+      "medium_count": 0,
+      "low_count": 0,
+      "threat_actors_identified": 0,
+      "reputation_score": 0.0,
+      "risk_level": "clean",
+      "risk_indicators_count": 0
+    }
+  },
+  "exposure_scan": {
+    "target": "example.com",
+    "findings": [],
+    "public_assets": [
+      {
+        "type": "domain",
+        "name": "example.com",
+        "source": "domain_profile"
+      }
+    ],
+    "exposed_paths": [],
+    "sensitive_files": [],
+    "cloud_references": [],
+    "credential_exposures": [],
+    "summary": {
+      "total_findings": 0,
+      "by_severity": {},
+      "by_category": {},
+      "critical_count": 0,
+      "high_count": 0,
+      "risk_score": 0
+    }
+  },
+  "correlations": {
+    "findings": [],
+    "correlations": [],
+    "clusters": [],
+    "insights": []
+  }
+}

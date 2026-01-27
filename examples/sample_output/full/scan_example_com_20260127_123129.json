@@ -1,0 +1,1707 @@
+{
+  "finding_dns_a_example.com": {
+    "module": "recon.domains",
+    "title": "DNS A Records for example.com",
+    "description": "Found 2 IPv4 addresses",
+    "severity": "info",
+    "data": {
+      "records": [
+        "104.18.27.120",
+        "104.18.26.120"
+      ]
+    },
+    "tags": []
+  },
+  "finding_dns_mx_example.com": {
+    "module": "recon.domains",
+    "title": "Mail Servers for example.com",
+    "description": "Found 1 MX records",
+    "severity": "info",
+    "data": {
+      "mail_servers": [
+        "0 ."
+      ]
+    },
+    "tags": []
+  },
+  "domain_profile": {
+    "domain": "example.com",
+    "dns_records": {
+      "A": [
+        "104.18.27.120",
+        "104.18.26.120"
+      ],
+      "AAAA": [
+        "2606:4700::6812:1b78",
+        "2606:4700::6812:1a78"
+      ],
+      "MX": [
+        "0 ."
+      ],
+      "TXT": [
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9",
+        "v=spf1 -all"
+      ],
+      "NS": [
+        "elliott.ns.cloudflare.com.",
+        "hera.ns.cloudflare.com."
+      ],
+      "SOA": [
+        "elliott.ns.cloudflare.com. dns.cloudflare.com. 2393120882 10000 2400 604800 1800"
+      ]
+    },
+    "mail_servers": [
+      "0 ."
+    ],
+    "nameservers": [
+      "elliott.ns.cloudflare.com.",
+      "hera.ns.cloudflare.com."
+    ],
+    "txt_analysis": {
+      "spf": "v=spf1 -all",
+      "dkim_selectors": [],
+      "dmarc": null,
+      "verification_records": [],
+      "other": [
+        "_k2n1y4vw3qtb4skdx9e7dxt97qrmmq9"
+      ]
+    },
+    "has_ipv6": true,
+    "has_spf": true,
+    "has_dmarc": false
+  },
+  "finding_tech_0_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Strict-Transport-Security",
+    "description": "HSTS - Enforces HTTPS connections. This header is not present.",
+    "severity": "medium",
+    "data": {
+      "header": "Strict-Transport-Security",
+      "recommendation": "Add Strict-Transport-Security header"
+    },
+    "tags": []
+  },
+  "finding_tech_1_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Content-Security-Policy",
+    "description": "CSP - Prevents XSS and injection attacks. This header is not present.",
+    "severity": "medium",
+    "data": {
+      "header": "Content-Security-Policy",
+      "recommendation": "Add Content-Security-Policy header"
+    },
+    "tags": []
+  },
+  "finding_tech_2_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: X-Frame-Options",
+    "description": "Prevents clickjacking attacks. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "X-Frame-Options",
+      "recommendation": "Add X-Frame-Options header"
+    },
+    "tags": []
+  },
+  "finding_tech_3_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: X-Content-Type-Options",
+    "description": "Prevents MIME-type sniffing. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "X-Content-Type-Options",
+      "recommendation": "Add X-Content-Type-Options header"
+    },
+    "tags": []
+  },
+  "finding_tech_4_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: X-XSS-Protection",
+    "description": "Browser XSS filter (legacy). This header is not present.",
+    "severity": "info",
+    "data": {
+      "header": "X-XSS-Protection",
+      "recommendation": "Add X-XSS-Protection header"
+    },
+    "tags": []
+  },
+  "finding_tech_5_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Referrer-Policy",
+    "description": "Controls referrer information leakage. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "Referrer-Policy",
+      "recommendation": "Add Referrer-Policy header"
+    },
+    "tags": []
+  },
+  "finding_tech_6_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Missing Security Header: Permissions-Policy",
+    "description": "Controls browser features access. This header is not present.",
+    "severity": "low",
+    "data": {
+      "header": "Permissions-Policy",
+      "recommendation": "Add Permissions-Policy header"
+    },
+    "tags": []
+  },
+  "finding_tech_7_example.com": {
+    "module": "recon.tech_stack",
+    "title": "Technology Stack Identified for example.com",
+    "description": "Detected 1 technologies",
+    "severity": "info",
+    "data": {
+      "web_server": "Cloudflare",
+      "frameworks": [],
+      "libraries": [
+        "Cloudflare"
+      ]
+    },
+    "tags": []
+  },
+  "tech_stack": {
+    "web_server": "Cloudflare",
+    "frameworks": [],
+    "languages": [],
+    "libraries": [
+      "Cloudflare"
+    ],
+    "headers": {
+      "Date": "Tue, 27 Jan 2026 20:31:29 GMT",
+      "Content-Type": "text/html",
+      "Transfer-Encoding": "chunked",
+      "Connection": "close",
+      "Content-Encoding": "gzip",
+      "last-modified": "Tue, 27 Jan 2026 13:22:54 GMT",
+      "allow": "GET, HEAD",
+      "Age": "9826",
+      "cf-cache-status": "HIT",
+      "Vary": "Accept-Encoding",
+      "Server": "cloudflare",
+      "CF-RAY": "9c4b038fbd2a147f-PDX"
+    },
+    "fingerprints": {
+      "status_code": 200,
+      "content_length": 513,
+      "content_type": "text/html",
+      "ssl": {
+        "issuer": "SSL Corporation",
+        "subject": "example.com",
+        "not_before": "Dec 16 19:39:32 2025 GMT",
+        "not_after": "Mar 16 18:32:44 2026 GMT",
+        "serial_number": "1EDE98307EA0594823EA81BAF6154A67",
+        "version": 3
+      }
+    }
+  },
+  "osint_finding_0": {
+    "title": "Email Pattern Identified",
+    "description": "Common email patterns identified for target domain",
+    "severity": "info",
+    "category": "Information Disclosure",
+    "data": {
+      "patterns": [
+        {
+          "pattern": "first.last",
+          "example": "john.doe@example.com",
+          "confidence": 0.8
+        },
+        {
+          "pattern": "firstlast",
+          "example": "johndoe@example.com",
+          "confidence": 0.75
+        },
+        {
+          "pattern": "flast",
+          "example": "jdoe@example.com",
+          "confidence": 0.7000000000000001
+        }
+      ]
+    }
+  },
+  "osint_data": {
+    "target": "example.com",
+    "usernames": [],
+    "profiles": [],
+    "correlations": [],
+    "emails": [],
+    "breach_results": [],
+    "email_patterns": [
+      {
+        "pattern": "first.last",
+        "example": "john.doe@example.com",
+        "confidence": 0.8
+      },
+      {
+        "pattern": "firstlast",
+        "example": "johndoe@example.com",
+        "confidence": 0.75
+      },
+      {
+        "pattern": "flast",
+        "example": "jdoe@example.com",
+        "confidence": 0.7000000000000001
+      },
+      {
+        "pattern": "first_last",
+        "example": "john_doe@example.com",
+        "confidence": 0.65
+      },
+      {
+        "pattern": "first",
+        "example": "john@example.com",
+        "confidence": 0.6000000000000001
+      },
+      {
+        "pattern": "lastf",
+        "example": "doej@example.com",
+        "confidence": 0.55
+      },
+      {
+        "pattern": "last.first",
+        "example": "doe.john@example.com",
+        "confidence": 0.5
+      },
+      {
+        "pattern": "firstl",
+        "example": "johnd@example.com",
+        "confidence": 0.45
+      },
+      {
+        "pattern": "f.last",
+        "example": "j.doe@example.com",
+        "confidence": 0.4
+      },
+      {
+        "pattern": "first.l",
+        "example": "john.d@example.com",
+        "confidence": 0.35000000000000003
+      }
+    ]
+  },
+  "exposure_finding_0": {
+    "title": "Debug/Information Header Exposed",
+    "category": "debug",
+    "severity": "low",
+    "description": "Informational header exposed: Server",
+    "evidence": [
+      "Server: cloudflare"
+    ],
+    "remediation": "Remove or hide the Server header in production",
+    "affected_assets": [],
+    "metadata": {}
+  },
+  "exposure_scan": {
+    "target": "example.com",
+    "findings": [
+      {
+        "title": "Debug/Information Header Exposed",
+        "category": "debug",
+        "severity": "low",
+        "description": "Informational header exposed: Server",
+        "evidence": [
+          "Server: cloudflare"
+        ],
+        "remediation": "Remove or hide the Server header in production",
+        "affected_assets": [],
+        "metadata": {}
+      }
+    ],
+    "public_assets": [
+      {
+        "type": "domain",
+        "name": "example.com",
+        "source": "domain_profile"
+      }
+    ],
+    "exposed_paths": [],
+    "sensitive_files": [],
+    "cloud_references": [],
+    "credential_exposures": [],
+    "summary": {
+      "total_findings": 1,
+      "by_severity": {
+        "low": 1
+      },
+      "by_category": {
+        "debug": 1
+      },
+      "critical_count": 0,
+      "high_count": 0,
+      "risk_score": 1
+    }
+  },
+  "infrastructure": {
+    "target": "example.com",
+    "cloud_providers": [],
+    "cdn_providers": [
+      {
+        "provider": "cloudflare",
+        "confidence": "high",
+        "indicators": [
+          "Header: cf-ray",
+          "Header: cf-cache-status",
+          "Header: server"
+        ],
+        "edge_locations": [],
+        "features": [
+          "WAF",
+          "DDoS Protection",
+          "CDN",
+          "DNS",
+          "Workers"
+        ]
+      },
+      {
+        "provider": "akamai",
+        "confidence": "high",
+        "indicators": [
+          "Header: server"
+        ],
+        "edge_locations": [],
+        "features": [
+          "CDN",
+          "WAF",
+          "DDoS Protection",
+          "Edge Computing"
+        ]
+      }
+    ],
+    "services": [],
+    "dns_infrastructure": {
+      "dns_provider": null,
+      "nameservers": [
+        "elliott.ns.cloudflare.com.",
+        "hera.ns.cloudflare.com."
+      ],
+      "mx_servers": [
+        "0 ."
+      ],
+      "has_spf": true,
+      "has_dkim": false,
+      "has_dmarc": false,
+      "record_counts": {
+        "A": 2,
+        "AAAA": 2,
+        "MX": 1,
+        "TXT": 2,
+        "NS": 2,
+        "SOA": 1
+      }
+    },
+    "network_topology": [
+      {
+        "component_type": "domain",
+        "name": "example.com",
+        "address": null,
+        "role": "primary",
+        "connections": [],
+        "attributes": {}
+      },
+      {
+        "component_type": "cdn",
+        "name": "cloudflare",
+        "address": null,
+        "role": "edge",
+        "connections": [],
+        "attributes": {
+          "features": [
+            "WAF",
+            "DDoS Protection",
+            "CDN",
+            "DNS",
+            "Workers"
+          ]
+        }
+      },
+      {
+        "component_type": "cdn",
+        "name": "akamai",
+        "address": null,
+        "role": "edge",
+        "connections": [],
+        "attributes": {
+          "features": [
+            "CDN",
+            "WAF",
+            "DDoS Protection",
+            "Edge Computing"
+          ]
+        }
+      }
+    ],
+    "hosting_info": {},
+    "security_features": [
+      {
+        "feature": "CDN WAF (cloudflare)",
+        "type": "cdn_waf",
+        "status": "detected"
+      },
+      {
+        "feature": "CDN WAF (akamai)",
+        "type": "cdn_waf",
+        "status": "detected"
+      },
+      {
+        "feature": "SPF",
+        "type": "email_security",
+        "status": "enabled"
+      }
+    ],
+    "summary": {
+      "cloud_providers_detected": 0,
+      "cdn_providers_detected": 2,
+      "services_detected": 0,
+      "security_features_count": 3,
+      "primary_cloud": null,
+      "primary_cdn": "cloudflare",
+      "infrastructure_type": "cdn_fronted"
+    }
+  },
+  "threat_intel": {
+    "target": "example.com",
+    "matches": [],
+    "threat_actors": [],
+    "domain_analysis": {
+      "total_domains": 12,
+      "suspicious_count": 0,
+      "clean_count": 12,
+      "unknown_count": 0,
+      "by_tld": {
+        "last": 2,
+        "first": 1,
+        "domains": 1,
+        "com": 5,
+        "john": 1,
+        "doe": 2
+      },
+      "age_analysis": {},
+      "patterns_detected": []
+    },
+    "ip_analysis": {
+      "total_ips": 2,
+      "private_count": 0,
+      "public_count": 2,
+      "bogon_count": 0,
+      "by_class": {
+        "A": 2,
+        "B": 0,
+        "C": 0,
+        "D": 0,
+        "E": 0
+      }
+    },
+    "url_analysis": {
+      "total_urls": 0,
+      "https_count": 0,
+      "http_count": 0,
+      "suspicious_patterns": [],
+      "file_extensions": {},
+      "parameters_detected": 0
+    },
+    "reputation_score": 0.0,
+    "risk_indicators": [],
+    "summary": {
+      "total_matches": 0,
+      "critical_count": 0,
+      "high_count": 0,
+      "medium_count": 0,
+      "low_count": 0,
+      "threat_actors_identified": 0,
+      "reputation_score": 0.0,
+      "risk_level": "clean",
+      "risk_indicators_count": 0
+    }
+  },
+  "compliance_assessment": {
+    "target": "example.com",
+    "frameworks_assessed": [
+      "pci_dss",
+      "hipaa",
+      "soc2",
+      "nist_csf"
+    ],
+    "reports": [
+      {
+        "framework": "pci_dss",
+        "target": "example.com",
+        "overall_score": 50.0,
+        "compliant_count": 0,
+        "partial_count": 3,
+        "non_compliant_count": 0,
+        "not_assessed_count": 20,
+        "critical_gaps": [],
+        "recommendations": [
+          "Address findings related to Custom Software Developed Securely",
+          "Implement control measures as defined in policy",
+          "Enable comprehensive audit logging",
+          "Implement log aggregation and SIEM",
+          "Enable comprehensive audit logging",
+          "Implement log aggregation and SIEM"
+        ],
+        "assessments": [
+          {
+            "control_id": "1.1",
+            "framework": "pci_dss",
+            "title": "Network Security Controls Defined",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "1.2",
+            "framework": "pci_dss",
+            "title": "Network Security Controls Configured",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "1.3",
+            "framework": "pci_dss",
+            "title": "Network Access Restricted",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "2.1",
+            "framework": "pci_dss",
+            "title": "Secure Configuration Processes",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "2.2",
+            "framework": "pci_dss",
+            "title": "System Components Securely Configured",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "3.1",
+            "framework": "pci_dss",
+            "title": "Account Data Storage Minimized",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "3.2",
+            "framework": "pci_dss",
+            "title": "Sensitive Authentication Data Not Stored",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "4.1",
+            "framework": "pci_dss",
+            "title": "Strong Cryptography for Transmission",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "5.1",
+            "framework": "pci_dss",
+            "title": "Anti-Malware Processes Defined",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "5.2",
+            "framework": "pci_dss",
+            "title": "Malware is Prevented or Detected",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "6.1",
+            "framework": "pci_dss",
+            "title": "Secure Development Processes",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "6.2",
+            "framework": "pci_dss",
+            "title": "Custom Software Developed Securely",
+            "status": "partial",
+            "findings": [
+              "Missing Security Header: Content-Security-Policy",
+              "Missing Security Header: X-XSS-Protection"
+            ],
+            "evidence": [
+              "Missing Security Header: Content-Security-Policy",
+              "Missing Security Header: X-XSS-Protection"
+            ],
+            "gaps": [
+              "Medium-severity issues identified"
+            ],
+            "remediation": [
+              "Address findings related to Custom Software Developed Securely",
+              "Implement control measures as defined in policy"
+            ],
+            "notes": ""
+          },
+          {
+            "control_id": "6.3",
+            "framework": "pci_dss",
+            "title": "Security Vulnerabilities Identified and Addressed",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "7.1",
+            "framework": "pci_dss",
+            "title": "Access Control Processes Defined",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "7.2",
+            "framework": "pci_dss",
+            "title": "Access Appropriately Defined and Assigned",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "8.1",
+            "framework": "pci_dss",
+            "title": "User Identification Processes Defined",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "8.2",
+            "framework": "pci_dss",
+            "title": "User Identification and Authentication for Users",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "8.3",
+            "framework": "pci_dss",
+            "title": "Strong Authentication Established",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "10.1",
+            "framework": "pci_dss",
+            "title": "Logging Processes Defined",
+            "status": "partial",
+            "findings": [
+              "Technology Stack Identified for example.com"
+            ],
+            "evidence": [
+              "Technology Stack Identified for example.com"
+            ],
+            "gaps": [
+              "Minor issues identified"
+            ],
+            "remediation": [
+              "Enable comprehensive audit logging",
+              "Implement log aggregation and SIEM",
+              "Establish log retention policies"
+            ],
+            "notes": ""
+          },
+          {
+            "control_id": "10.2",
+            "framework": "pci_dss",
+            "title": "Audit Logs Implemented",
+            "status": "partial",
+            "findings": [
+              "Technology Stack Identified for example.com"
+            ],
+            "evidence": [
+              "Technology Stack Identified for example.com"
+            ],
+            "gaps": [
+              "Minor issues identified"
+            ],
+            "remediation": [
+              "Enable comprehensive audit logging",
+              "Implement log aggregation and SIEM",
+              "Establish log retention policies"
+            ],
+            "notes": ""
+          },
+          {
+            "control_id": "11.1",
+            "framework": "pci_dss",
+            "title": "Security Testing Processes Defined",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "11.3",
+            "framework": "pci_dss",
+            "title": "Vulnerabilities Identified and Addressed",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "12.1",
+            "framework": "pci_dss",
+            "title": "Information Security Policy",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          }
+        ]
+      },
+      {
+        "framework": "hipaa",
+        "target": "example.com",
+        "overall_score": 50.0,
+        "compliant_count": 0,
+        "partial_count": 1,
+        "non_compliant_count": 0,
+        "not_assessed_count": 13,
+        "critical_gaps": [],
+        "recommendations": [
+          "Address findings related to Audit Controls",
+          "Implement control measures as defined in policy"
+        ],
+        "assessments": [
+          {
+            "control_id": "164.308(a)(1)",
+            "framework": "hipaa",
+            "title": "Security Management Process",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.308(a)(3)",
+            "framework": "hipaa",
+            "title": "Workforce Security",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.308(a)(4)",
+            "framework": "hipaa",
+            "title": "Information Access Management",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.308(a)(5)",
+            "framework": "hipaa",
+            "title": "Security Awareness Training",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.308(a)(6)",
+            "framework": "hipaa",
+            "title": "Security Incident Procedures",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.308(a)(7)",
+            "framework": "hipaa",
+            "title": "Contingency Plan",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.310(a)(1)",
+            "framework": "hipaa",
+            "title": "Facility Access Controls",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.310(b)",
+            "framework": "hipaa",
+            "title": "Workstation Use",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.310(d)",
+            "framework": "hipaa",
+            "title": "Device and Media Controls",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.312(a)(1)",
+            "framework": "hipaa",
+            "title": "Access Control",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.312(b)",
+            "framework": "hipaa",
+            "title": "Audit Controls",
+            "status": "partial",
+            "findings": [
+              "Technology Stack Identified for example.com"
+            ],
+            "evidence": [
+              "Technology Stack Identified for example.com"
+            ],
+            "gaps": [
+              "Minor issues identified"
+            ],
+            "remediation": [
+              "Address findings related to Audit Controls",
+              "Implement control measures as defined in policy"
+            ],
+            "notes": ""
+          },
+          {
+            "control_id": "164.312(c)(1)",
+            "framework": "hipaa",
+            "title": "Integrity Controls",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.312(d)",
+            "framework": "hipaa",
+            "title": "Person or Entity Authentication",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "164.312(e)(1)",
+            "framework": "hipaa",
+            "title": "Transmission Security",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          }
+        ]
+      },
+      {
+        "framework": "soc2",
+        "target": "example.com",
+        "overall_score": 50.0,
+        "compliant_count": 0,
+        "partial_count": 2,
+        "non_compliant_count": 0,
+        "not_assessed_count": 14,
+        "critical_gaps": [],
+        "recommendations": [
+          "Address findings related to Threat and Vulnerability Management",
+          "Implement control measures as defined in policy",
+          "Address findings related to System Operations - Monitoring",
+          "Implement control measures as defined in policy"
+        ],
+        "assessments": [
+          {
+            "control_id": "CC1.1",
+            "framework": "soc2",
+            "title": "Control Environment - COSO Principle 1",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC2.1",
+            "framework": "soc2",
+            "title": "Communication and Information",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC3.1",
+            "framework": "soc2",
+            "title": "Risk Assessment - Objectives",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC4.1",
+            "framework": "soc2",
+            "title": "Monitoring Activities",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC5.1",
+            "framework": "soc2",
+            "title": "Control Activities - Selection",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC6.1",
+            "framework": "soc2",
+            "title": "Logical and Physical Access",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC6.6",
+            "framework": "soc2",
+            "title": "Threat and Vulnerability Management",
+            "status": "partial",
+            "findings": [
+              "Missing Security Header: Content-Security-Policy",
+              "Missing Security Header: X-XSS-Protection"
+            ],
+            "evidence": [
+              "Missing Security Header: Content-Security-Policy",
+              "Missing Security Header: X-XSS-Protection"
+            ],
+            "gaps": [
+              "Medium-severity issues identified"
+            ],
+            "remediation": [
+              "Address findings related to Threat and Vulnerability Management",
+              "Implement control measures as defined in policy"
+            ],
+            "notes": ""
+          },
+          {
+            "control_id": "CC6.7",
+            "framework": "soc2",
+            "title": "Transmission and Movement of Data",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC7.1",
+            "framework": "soc2",
+            "title": "System Operations - Detection",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC7.2",
+            "framework": "soc2",
+            "title": "System Operations - Monitoring",
+            "status": "partial",
+            "findings": [
+              "Technology Stack Identified for example.com"
+            ],
+            "evidence": [
+              "Technology Stack Identified for example.com"
+            ],
+            "gaps": [
+              "Minor issues identified"
+            ],
+            "remediation": [
+              "Address findings related to System Operations - Monitoring",
+              "Implement control measures as defined in policy"
+            ],
+            "notes": ""
+          },
+          {
+            "control_id": "CC8.1",
+            "framework": "soc2",
+            "title": "Change Management",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "CC9.1",
+            "framework": "soc2",
+            "title": "Risk Mitigation",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "A1.1",
+            "framework": "soc2",
+            "title": "Availability Commitments",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "A1.2",
+            "framework": "soc2",
+            "title": "Environmental Protections",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "C1.1",
+            "framework": "soc2",
+            "title": "Confidentiality Identification",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "C1.2",
+            "framework": "soc2",
+            "title": "Confidentiality Disposal",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          }
+        ]
+      },
+      {
+        "framework": "nist_csf",
+        "target": "example.com",
+        "overall_score": 50.0,
+        "compliant_count": 0,
+        "partial_count": 1,
+        "non_compliant_count": 0,
+        "not_assessed_count": 15,
+        "critical_gaps": [],
+        "recommendations": [
+          "Address findings related to Continuous Monitoring - Network",
+          "Implement control measures as defined in policy"
+        ],
+        "assessments": [
+          {
+            "control_id": "ID.AM-1",
+            "framework": "nist_csf",
+            "title": "Asset Inventory - Physical Devices",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "ID.AM-2",
+            "framework": "nist_csf",
+            "title": "Asset Inventory - Software",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "ID.RA-1",
+            "framework": "nist_csf",
+            "title": "Risk Assessment - Vulnerabilities",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "ID.RA-3",
+            "framework": "nist_csf",
+            "title": "Risk Assessment - Threats",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "PR.AC-1",
+            "framework": "nist_csf",
+            "title": "Access Control - Identities",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "PR.AC-4",
+            "framework": "nist_csf",
+            "title": "Access Control - Permissions",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "PR.DS-1",
+            "framework": "nist_csf",
+            "title": "Data Security - At Rest",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "PR.DS-2",
+            "framework": "nist_csf",
+            "title": "Data Security - In Transit",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "PR.IP-1",
+            "framework": "nist_csf",
+            "title": "Baseline Configuration",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "PR.IP-12",
+            "framework": "nist_csf",
+            "title": "Vulnerability Management",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "DE.AE-1",
+            "framework": "nist_csf",
+            "title": "Anomalies and Events - Baseline",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "DE.CM-1",
+            "framework": "nist_csf",
+            "title": "Continuous Monitoring - Network",
+            "status": "partial",
+            "findings": [
+              "Technology Stack Identified for example.com"
+            ],
+            "evidence": [
+              "Technology Stack Identified for example.com"
+            ],
+            "gaps": [
+              "Minor issues identified"
+            ],
+            "remediation": [
+              "Address findings related to Continuous Monitoring - Network",
+              "Implement control measures as defined in policy"
+            ],
+            "notes": ""
+          },
+          {
+            "control_id": "DE.CM-4",
+            "framework": "nist_csf",
+            "title": "Continuous Monitoring - Malware",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "RS.RP-1",
+            "framework": "nist_csf",
+            "title": "Response Planning",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "RS.CO-1",
+            "framework": "nist_csf",
+            "title": "Response Communications",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          },
+          {
+            "control_id": "RC.RP-1",
+            "framework": "nist_csf",
+            "title": "Recovery Planning",
+            "status": "not_assessed",
+            "findings": [],
+            "evidence": [],
+            "gaps": [],
+            "remediation": [],
+            "notes": ""
+          }
+        ]
+      }
+    ],
+    "cross_framework_gaps": [
+      {
+        "related_control": "ISO.A.12.4.1",
+        "affected_frameworks": [
+          "nist_csf",
+          "soc2",
+          "pci_dss",
+          "hipaa"
+        ],
+        "affected_controls": [
+          "10.1",
+          "10.2",
+          "164.312(b)",
+          "CC7.2",
+          "DE.CM-1"
+        ],
+        "description": "Gap affecting 4 frameworks",
+        "priority": "high"
+      }
+    ],
+    "priority_remediations": [
+      {
+        "control_id": "CC6.6",
+        "framework": "soc2",
+        "title": "Threat and Vulnerability Management",
+        "priority": "critical",
+        "status": "partial",
+        "remediation_steps": [
+          "Address findings related to Threat and Vulnerability Management",
+          "Implement control measures as defined in policy"
+        ],
+        "related_controls": [
+          "PCI.6.3",
+          "ISO.A.12.6.1"
+        ]
+      },
+      {
+        "control_id": "6.2",
+        "framework": "pci_dss",
+        "title": "Custom Software Developed Securely",
+        "priority": "high",
+        "status": "partial",
+        "remediation_steps": [
+          "Address findings related to Custom Software Developed Securely",
+          "Implement control measures as defined in policy"
+        ],
+        "related_controls": [
+          "NIST.SA-11",
+          "ISO.A.14.2.5"
+        ]
+      },
+      {
+        "control_id": "10.1",
+        "framework": "pci_dss",
+        "title": "Logging Processes Defined",
+        "priority": "high",
+        "status": "partial",
+        "remediation_steps": [
+          "Enable comprehensive audit logging",
+          "Implement log aggregation and SIEM",
+          "Establish log retention policies"
+        ],
+        "related_controls": [
+          "NIST.AU-1",
+          "ISO.A.12.4.1"
+        ]
+      },
+      {
+        "control_id": "10.2",
+        "framework": "pci_dss",
+        "title": "Audit Logs Implemented",
+        "priority": "high",
+        "status": "partial",
+        "remediation_steps": [
+          "Enable comprehensive audit logging",
+          "Implement log aggregation and SIEM",
+          "Establish log retention policies"
+        ],
+        "related_controls": [
+          "NIST.AU-2",
+          "ISO.A.12.4.1"
+        ]
+      },
+      {
+        "control_id": "164.312(b)",
+        "framework": "hipaa",
+        "title": "Audit Controls",
+        "priority": "high",
+        "status": "partial",
+        "remediation_steps": [
+          "Address findings related to Audit Controls",
+          "Implement control measures as defined in policy"
+        ],
+        "related_controls": [
+          "PCI.10.1",
+          "ISO.A.12.4.1"
+        ]
+      },
+      {
+        "control_id": "CC7.2",
+        "framework": "soc2",
+        "title": "System Operations - Monitoring",
+        "priority": "high",
+        "status": "partial",
+        "remediation_steps": [
+          "Address findings related to System Operations - Monitoring",
+          "Implement control measures as defined in policy"
+        ],
+        "related_controls": [
+          "NIST.SI-4",
+          "ISO.A.12.4.1"
+        ]
+      },
+      {
+        "control_id": "DE.CM-1",
+        "framework": "nist_csf",
+        "title": "Continuous Monitoring - Network",
+        "priority": "high",
+        "status": "partial",
+        "remediation_steps": [
+          "Address findings related to Continuous Monitoring - Network",
+          "Implement control measures as defined in policy"
+        ],
+        "related_controls": [
+          "SOC2.CC7.2",
+          "ISO.A.12.4.1"
+        ]
+      }
+    ],
+    "overall_posture": {
+      "overall_score": 50.0,
+      "status": "needs_improvement",
+      "frameworks_assessed": 4,
+      "total_gaps": 0,
+      "total_partial": 7,
+      "framework_scores": {
+        "pci_dss": 50.0,
+        "hipaa": 50.0,
+        "soc2": 50.0,
+        "nist_csf": 50.0
+      }
+    }
+  },
+  "correlations": {
+    "findings": [],
+    "correlations": [],
+    "clusters": [],
+    "insights": []
+  },
+  "executive_report": {
+    "report_type": "executive_summary",
+    "audience": "executive",
+    "executive_summary": {
+      "report_id": "RPT-20260127203129-5E6310A2",
+      "title": "Security Assessment Report: example.com",
+      "generated_at": "2026-01-27T20:31:29.456633Z",
+      "target": "example.com",
+      "overall_risk_level": "minimal",
+      "risk_score": 0,
+      "key_findings": [],
+      "top_risks": [],
+      "compliance_summary": {
+        "overall_status": "not_assessed",
+        "compliance_score": 100.0,
+        "frameworks": {},
+        "gaps": [],
+        "controls_assessed": 0,
+        "controls_passing": 0,
+        "controls_failing": 0,
+        "priority_remediations": [],
+        "audit_readiness": 90.0
+      },
+      "recommendations": [],
+      "metrics": {
+        "total_findings": 0,
+        "critical_findings": 0,
+        "high_findings": 0,
+        "medium_findings": 0,
+        "low_findings": 0,
+        "findings_by_category": {},
+        "critical_high_ratio": 0,
+        "correlation_count": 0,
+        "cluster_count": 0,
+        "insight_count": 0,
+        "compliance_gaps": 0,
+        "controls_assessed": 0,
+        "controls_passing": 0,
+        "compliance_rate": 0
+      },
+      "trend_summary": {
+        "period": "current",
+        "risk_direction": "unknown",
+        "finding_direction": "unknown",
+        "compliance_direction": "unknown",
+        "notable_changes": [],
+        "comparison": {
+          "previous_risk_score": null,
+          "current_risk_score": null,
+          "delta": null
+        }
+      },
+      "executive_brief": "Security Assessment Summary for example.com\n\nOverall Risk Level: MINIMAL (Score: 0.0/100)\n\nThe assessment identified 0 key findings requiring attention. \n\nCompliance posture is at 100%. \n\nRecommended immediate actions are detailed in the recommendations section.",
+      "next_steps": [
+        "Review findings with security team",
+        "Prioritize remediations based on business impact"
+      ]
+    },
+    "risk_dashboard": {
+      "overall_score": 0,
+      "risk_level": "minimal",
+      "risk_by_category": {},
+      "risk_by_severity": {},
+      "risk_trend": "unknown",
+      "top_risks": [],
+      "risk_distribution": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      },
+      "mitigation_progress": {
+        "total": 0,
+        "remediated": 0,
+        "in_progress": 0,
+        "open": 0,
+        "progress_percent": 0
+      },
+      "exposure_metrics": {
+        "total_exposures": 0,
+        "public_facing": 0,
+        "credential_risks": 0
+      }
+    },
+    "compliance_report": {
+      "overall_status": "not_assessed",
+      "compliance_score": 100.0,
+      "frameworks": {},
+      "gaps": [],
+      "controls_assessed": 0,
+      "controls_passing": 0,
+      "controls_failing": 0,
+      "priority_remediations": [],
+      "audit_readiness": 90.0
+    },
+    "recommendations": [],
+    "metrics": {
+      "total_findings": 0,
+      "critical_findings": 0,
+      "high_findings": 0,
+      "medium_findings": 0,
+      "low_findings": 0,
+      "findings_by_category": {},
+      "critical_high_ratio": 0,
+      "correlation_count": 0,
+      "cluster_count": 0,
+      "insight_count": 0,
+      "compliance_gaps": 0,
+      "controls_assessed": 0,
+      "controls_passing": 0,
+      "compliance_rate": 0
+    },
+    "appendix": {
+      "total_findings": 0,
+      "findings_summary": {
+        "by_severity": {},
+        "by_category": {}
+      },
+      "correlation_summary": {
+        "total_correlations": 0,
+        "total_clusters": 0,
+        "total_insights": 0
+      },
+      "methodology": "Automated security assessment using RedOPS framework",
+      "limitations": [
+        "Assessment based on publicly available information",
+        "Point-in-time assessment; conditions may change",
+        "Not a substitute for comprehensive penetration testing"
+      ]
+    }
+  }
+}
