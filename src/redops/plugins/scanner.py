@@ -4,7 +4,7 @@ Scanner Plugin Base Classes.
 Provides base classes for building security scanner plugins.
 """
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
