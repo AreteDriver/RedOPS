@@ -383,6 +383,10 @@ class PluginRegistry:
         ):
             return False
 
+        # Exclude abstract base classes from external plugin modules
+        if obj.__name__ == "ScannerPlugin":
+            return False
+
         # Must have get_metadata method
         if not hasattr(obj, "get_metadata"):
             return False

@@ -11,6 +11,8 @@ from enum import Enum
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set
 from uuid import uuid4
 
+from redops.core.plugin_system import BasePlugin, PluginMetadata, PluginType
+
 
 class Severity(Enum):
     """Finding severity levels."""
@@ -234,7 +236,7 @@ class ScannerConfig:
         )
 
 
-class ScannerPlugin(ABC):
+class ScannerPlugin(BasePlugin):
     """
     Base class for scanner plugins.
 
@@ -288,6 +290,16 @@ class ScannerPlugin(ABC):
     def get_capabilities(cls) -> Set[ScannerCapability]:
         """Get scanner capabilities."""
         pass
+
+    @classmethod
+    def get_metadata(cls) -> PluginMetadata:
+        """Bridge to BasePlugin interface using scanner-specific methods."""
+        return PluginMetadata(
+            name=cls.get_name(),
+            version=cls.get_version(),
+            description=cls.get_description(),
+            plugin_type=PluginType.MODULE,
+        )
 
     @classmethod
     def get_phases(cls) -> List[ScanPhase]:
