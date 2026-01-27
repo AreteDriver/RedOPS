@@ -1,7 +1,6 @@
 """Tests for WebSocket module."""
 
 import json
-import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
 from redops.web.websocket import (
@@ -101,7 +100,6 @@ class TestConnectionManager:
         assert len(cm.active_connections) == 0
         assert len(cm.scan_subscriptions) == 0
 
-    @pytest.mark.asyncio
     async def test_connect(self):
         """Test connecting a websocket."""
         cm = ConnectionManager()
@@ -175,7 +173,6 @@ class TestConnectionManager:
         # Should not raise
         cm.unsubscribe_from_scan(ws, "nonexistent")
 
-    @pytest.mark.asyncio
     async def test_send_personal(self):
         """Test sending personal message."""
         cm = ConnectionManager()
@@ -186,7 +183,6 @@ class TestConnectionManager:
 
         ws.send_text.assert_called_once()
 
-    @pytest.mark.asyncio
     async def test_send_personal_handles_error(self):
         """Test send personal handles errors."""
         cm = ConnectionManager()
@@ -200,7 +196,6 @@ class TestConnectionManager:
         # Should disconnect on error
         assert ws not in cm.active_connections
 
-    @pytest.mark.asyncio
     async def test_broadcast(self):
         """Test broadcasting to all connections."""
         cm = ConnectionManager()
@@ -215,7 +210,6 @@ class TestConnectionManager:
         ws1.send_text.assert_called_once()
         ws2.send_text.assert_called_once()
 
-    @pytest.mark.asyncio
     async def test_broadcast_handles_disconnects(self):
         """Test broadcast handles disconnected clients."""
         cm = ConnectionManager()
@@ -232,7 +226,6 @@ class TestConnectionManager:
         assert ws2 not in cm.active_connections
         assert ws1 in cm.active_connections
 
-    @pytest.mark.asyncio
     async def test_broadcast_to_scan(self):
         """Test broadcasting to scan subscribers."""
         cm = ConnectionManager()
@@ -252,7 +245,6 @@ class TestConnectionManager:
         ws2.send_text.assert_called_once()
         ws3.send_text.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_broadcast_to_nonexistent_scan(self):
         """Test broadcasting to nonexistent scan."""
         cm = ConnectionManager()
@@ -282,7 +274,6 @@ class TestConnectionManager:
 class TestEmitFunctions:
     """Tests for emit helper functions."""
 
-    @pytest.mark.asyncio
     async def test_emit_scan_started(self):
         """Test emit scan started."""
         with patch.object(
@@ -296,7 +287,6 @@ class TestEmitFunctions:
             assert event.scan_id == "scan-123"
             assert event.data["target"] == "example.com"
 
-    @pytest.mark.asyncio
     async def test_emit_scan_progress(self):
         """Test emit scan progress."""
         with patch.object(
@@ -310,7 +300,6 @@ class TestEmitFunctions:
             assert event.data["progress"] == 50
             assert event.data["current_module"] == "domain_scan"
 
-    @pytest.mark.asyncio
     async def test_emit_module_start(self):
         """Test emit module start."""
         with patch.object(
@@ -325,7 +314,6 @@ class TestEmitFunctions:
             assert event.event == "scan_module_start"
             assert event.data["module"] == "domain_scan"
 
-    @pytest.mark.asyncio
     async def test_emit_module_end(self):
         """Test emit module end."""
         with patch.object(
@@ -339,7 +327,6 @@ class TestEmitFunctions:
             assert event.data["module"] == "domain_scan"
             assert event.data["success"] is True
 
-    @pytest.mark.asyncio
     async def test_emit_scan_completed(self):
         """Test emit scan completed."""
         with patch.object(
@@ -352,7 +339,6 @@ class TestEmitFunctions:
             assert event.event == "scan_completed"
             assert event.data["findings_count"] == 10
 
-    @pytest.mark.asyncio
     async def test_emit_scan_failed(self):
         """Test emit scan failed."""
         with patch.object(
@@ -365,7 +351,6 @@ class TestEmitFunctions:
             assert event.event == "scan_failed"
             assert event.data["error"] == "Connection timeout"
 
-    @pytest.mark.asyncio
     async def test_emit_finding(self):
         """Test emit finding."""
         with patch.object(

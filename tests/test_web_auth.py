@@ -240,7 +240,6 @@ class TestAuthManager:
         assert result is True
         assert manager.verify_session(token) is None
 
-    @pytest.mark.asyncio
     async def test_authenticate_with_api_key(self):
         """Test authentication with API key header."""
         config = AuthConfig(enabled=True, api_key="test_key")
@@ -256,7 +255,6 @@ class TestAuthManager:
         assert user.username == "api_user"
         assert user.auth_method == "api_key"
 
-    @pytest.mark.asyncio
     async def test_authenticate_with_session(self):
         """Test authentication with session cookie."""
         manager = AuthManager(AuthConfig())
@@ -272,7 +270,6 @@ class TestAuthManager:
         assert user.username == "session_user"
         assert user.auth_method == "session"
 
-    @pytest.mark.asyncio
     async def test_authenticate_with_basic_auth(self):
         """Test authentication with basic auth."""
         import base64
@@ -291,7 +288,6 @@ class TestAuthManager:
         assert user.username == "admin"
         assert user.auth_method == "basic"
 
-    @pytest.mark.asyncio
     async def test_authenticate_fails(self):
         """Test authentication failure."""
         config = AuthConfig(enabled=True, api_key="test_key")
@@ -309,7 +305,6 @@ class TestAuthManager:
 class TestRequireAuth:
     """Tests for require_auth dependency."""
 
-    @pytest.mark.asyncio
     async def test_auth_disabled_returns_anonymous(self):
         """Test that disabled auth returns anonymous user."""
         config = AuthConfig(enabled=False)
@@ -323,7 +318,6 @@ class TestRequireAuth:
         assert user.username == "anonymous"
         assert user.auth_method == "none"
 
-    @pytest.mark.asyncio
     async def test_public_path_returns_anonymous(self):
         """Test that public paths return anonymous user."""
         config = AuthConfig(enabled=True, api_key="key")
@@ -339,7 +333,6 @@ class TestRequireAuth:
         assert user.username == "anonymous"
         assert user.auth_method == "public"
 
-    @pytest.mark.asyncio
     async def test_authenticated_request_succeeds(self):
         """Test that authenticated request succeeds."""
         config = AuthConfig(enabled=True, api_key="valid_key")
@@ -355,7 +348,6 @@ class TestRequireAuth:
         assert user is not None
         assert user.auth_method == "api_key"
 
-    @pytest.mark.asyncio
     async def test_unauthenticated_raises_401(self):
         """Test that unauthenticated request raises 401."""
         from fastapi import HTTPException
@@ -377,7 +369,6 @@ class TestRequireAuth:
 class TestOptionalAuth:
     """Tests for optional_auth dependency."""
 
-    @pytest.mark.asyncio
     async def test_auth_disabled_returns_anonymous(self):
         """Test that disabled auth returns anonymous."""
         config = AuthConfig(enabled=False)
@@ -390,7 +381,6 @@ class TestOptionalAuth:
         assert user is not None
         assert user.auth_method == "none"
 
-    @pytest.mark.asyncio
     async def test_authenticated_returns_user(self):
         """Test that authenticated request returns user."""
         config = AuthConfig(enabled=True, api_key="valid_key")
@@ -405,7 +395,6 @@ class TestOptionalAuth:
         assert user is not None
         assert user.auth_method == "api_key"
 
-    @pytest.mark.asyncio
     async def test_unauthenticated_returns_none(self):
         """Test that unauthenticated request returns None."""
         config = AuthConfig(enabled=True, api_key="valid_key")

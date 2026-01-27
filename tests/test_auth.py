@@ -2,7 +2,6 @@
 
 from datetime import datetime, timedelta, timezone
 
-import pytest
 
 from redops.api.auth import (
     hash_password,
@@ -106,7 +105,6 @@ class TestJWTTokens:
         payload = decode_token("invalid-token")
         assert payload is None
 
-    @pytest.mark.asyncio
     async def test_verify_access_token(self):
         """Access token is verified."""
         token = create_access_token(
@@ -122,7 +120,6 @@ class TestJWTTokens:
         assert user["username"] == "testuser"
         assert user["role"] == "user"
 
-    @pytest.mark.asyncio
     async def test_verify_refresh_token_fails(self):
         """Refresh token cannot be used as access token."""
         token = create_refresh_token(user_id="user-123")
@@ -193,7 +190,6 @@ class TestAPIKeys:
         assert key.expires_at is not None
         assert key.expires_at > datetime.now(timezone.utc)
 
-    @pytest.mark.asyncio
     async def test_verify_api_key(self):
         """API key is verified."""
         key = create_api_key(
@@ -207,13 +203,11 @@ class TestAPIKeys:
         assert user["id"] == "user-123"
         assert user["role"] == "api"
 
-    @pytest.mark.asyncio
     async def test_verify_invalid_api_key(self):
         """Invalid API key returns None."""
         user = await verify_api_key("invalid-key")
         assert user is None
 
-    @pytest.mark.asyncio
     async def test_verify_wrong_prefix(self):
         """Key with wrong prefix returns None."""
         user = await verify_api_key("wrong_prefix_key123")

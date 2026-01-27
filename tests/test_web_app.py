@@ -565,7 +565,6 @@ class TestWebSocketEndpoint:
 class TestRunScanTask:
     """Tests for run_scan_task background function."""
 
-    @pytest.mark.asyncio
     async def test_run_scan_task_exception(self):
         """Test scan task with fatal exception."""
         from redops.web import app as app_module

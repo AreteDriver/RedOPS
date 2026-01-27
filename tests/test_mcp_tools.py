@@ -47,13 +47,11 @@ class TestExtendedTools:
 class TestExecuteExtendedTool:
     """Tests for execute_extended_tool function."""
 
-    @pytest.mark.asyncio
     async def test_unknown_tool(self):
         """Test handling of unknown tool."""
         with pytest.raises(ValueError, match="Unknown tool"):
             await execute_extended_tool("unknown_tool", {})
 
-    @pytest.mark.asyncio
     @patch("redops.mcp.tools._tool_check_ip")
     async def test_routes_to_check_ip(self, mock_tool):
         """Test routing to check_ip tool."""
@@ -63,7 +61,6 @@ class TestExecuteExtendedTool:
 
         mock_tool.assert_called_once_with({"ip": "8.8.8.8"})
 
-    @pytest.mark.asyncio
     @patch("redops.mcp.tools._tool_check_url")
     async def test_routes_to_check_url(self, mock_tool):
         """Test routing to check_url tool."""
@@ -73,7 +70,6 @@ class TestExecuteExtendedTool:
 
         mock_tool.assert_called_once()
 
-    @pytest.mark.asyncio
     @patch("redops.mcp.tools._tool_cert_transparency")
     async def test_routes_to_cert_transparency(self, mock_tool):
         """Test routing to cert_transparency tool."""
@@ -85,7 +81,6 @@ class TestExecuteExtendedTool:
 
         mock_tool.assert_called_once()
 
-    @pytest.mark.asyncio
     @patch("redops.mcp.tools._tool_asn_lookup")
     async def test_routes_to_asn_lookup(self, mock_tool):
         """Test routing to asn_lookup tool."""
@@ -95,7 +90,6 @@ class TestExecuteExtendedTool:
 
         mock_tool.assert_called_once()
 
-    @pytest.mark.asyncio
     @patch("redops.mcp.tools._tool_enumerate_subdomains")
     async def test_routes_to_enumerate_subdomains(self, mock_tool):
         """Test routing to enumerate_subdomains tool."""
@@ -107,7 +101,6 @@ class TestExecuteExtendedTool:
 
         mock_tool.assert_called_once()
 
-    @pytest.mark.asyncio
     @patch("redops.mcp.tools._tool_dashboard_summary")
     async def test_routes_to_dashboard_summary(self, mock_tool):
         """Test routing to dashboard_summary tool."""
@@ -121,7 +114,6 @@ class TestExecuteExtendedTool:
 class TestToolCheckIp:
     """Tests for _tool_check_ip function."""
 
-    @pytest.mark.asyncio
     async def test_missing_ip(self):
         """Test error when IP is missing."""
         from redops.mcp.tools import _tool_check_ip
@@ -129,7 +121,6 @@ class TestToolCheckIp:
         with pytest.raises(ValueError, match="IP address is required"):
             await _tool_check_ip({})
 
-    @pytest.mark.asyncio
     @patch("redops.modules.threat_intel.greynoise.query_greynoise")
     @patch("redops.modules.threat_intel.abuseipdb.check_ip_reputation")
     async def test_queries_sources(self, mock_abuseipdb, mock_greynoise):
@@ -157,7 +148,6 @@ class TestToolCheckIp:
 class TestToolCheckUrl:
     """Tests for _tool_check_url function."""
 
-    @pytest.mark.asyncio
     async def test_missing_url(self):
         """Test error when URL is missing."""
         from redops.mcp.tools import _tool_check_url
@@ -165,7 +155,6 @@ class TestToolCheckUrl:
         with pytest.raises(ValueError, match="URL is required"):
             await _tool_check_url({})
 
-    @pytest.mark.asyncio
     @patch("redops.modules.threat_intel.urlhaus.check_url")
     async def test_checks_url(self, mock_check):
         """Test that URL is checked."""
@@ -185,7 +174,6 @@ class TestToolCheckUrl:
 class TestToolCertTransparency:
     """Tests for _tool_cert_transparency function."""
 
-    @pytest.mark.asyncio
     async def test_missing_domain(self):
         """Test error when domain is missing."""
         from redops.mcp.tools import _tool_cert_transparency
@@ -193,7 +181,6 @@ class TestToolCertTransparency:
         with pytest.raises(ValueError, match="Domain is required"):
             await _tool_cert_transparency({})
 
-    @pytest.mark.asyncio
     @patch("redops.modules.recon.cert_transparency.search_ct_logs")
     async def test_searches_ct_logs(self, mock_search):
         """Test that CT logs are searched."""
@@ -215,7 +202,6 @@ class TestToolCertTransparency:
 class TestToolAsnLookup:
     """Tests for _tool_asn_lookup function."""
 
-    @pytest.mark.asyncio
     async def test_missing_target(self):
         """Test error when target is missing."""
         from redops.mcp.tools import _tool_asn_lookup
@@ -223,7 +209,6 @@ class TestToolAsnLookup:
         with pytest.raises(ValueError, match="Target is required"):
             await _tool_asn_lookup({})
 
-    @pytest.mark.asyncio
     @patch("redops.modules.recon.asn_lookup.lookup_asn")
     async def test_looks_up_asn(self, mock_lookup):
         """Test that ASN is looked up."""
@@ -244,7 +229,6 @@ class TestToolAsnLookup:
 class TestToolEnumerateSubdomains:
     """Tests for _tool_enumerate_subdomains function."""
 
-    @pytest.mark.asyncio
     async def test_missing_domain(self):
         """Test error when domain is missing."""
         from redops.mcp.tools import _tool_enumerate_subdomains
@@ -252,7 +236,6 @@ class TestToolEnumerateSubdomains:
         with pytest.raises(ValueError, match="Domain is required"):
             await _tool_enumerate_subdomains({})
 
-    @pytest.mark.asyncio
     @patch("redops.modules.recon.subdomain_enum.enumerate_subdomains")
     async def test_enumerates_subdomains(self, mock_enum):
         """Test that subdomains are enumerated."""
@@ -274,7 +257,6 @@ class TestToolEnumerateSubdomains:
 class TestToolDashboardSummary:
     """Tests for _tool_dashboard_summary function."""
 
-    @pytest.mark.asyncio
     @patch("redops.web.dashboard_widgets.generate_dashboard_data")
     async def test_generates_dashboard(self, mock_gen):
         """Test that dashboard data is generated."""

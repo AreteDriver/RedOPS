@@ -50,7 +50,6 @@ class TestConnectionManager:
         ws.send_text = AsyncMock()
         return ws
 
-    @pytest.mark.asyncio
     async def test_connect(self, manager, mock_websocket):
         """Test connecting a websocket."""
         await manager.connect(mock_websocket)
@@ -83,7 +82,6 @@ class TestConnectionManager:
 
         assert mock_websocket not in manager.scan_subscriptions.get("scan123", set())
 
-    @pytest.mark.asyncio
     async def test_send_personal(self, manager, mock_websocket):
         """Test sending to a specific websocket."""
         event = WSEvent(event="test", data={})
@@ -94,7 +92,6 @@ class TestConnectionManager:
         call_arg = mock_websocket.send_text.call_args[0][0]
         assert '"event": "test"' in call_arg
 
-    @pytest.mark.asyncio
     async def test_broadcast(self, manager):
         """Test broadcasting to all connections."""
         ws1 = AsyncMock()
@@ -107,7 +104,6 @@ class TestConnectionManager:
         ws1.send_text.assert_called_once()
         ws2.send_text.assert_called_once()
 
-    @pytest.mark.asyncio
     async def test_broadcast_to_scan(self, manager):
         """Test broadcasting to scan subscribers."""
         ws1 = AsyncMock()
@@ -124,7 +120,6 @@ class TestConnectionManager:
         ws2.send_text.assert_called_once()
         ws_other.send_text.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_broadcast_handles_disconnected(self, manager):
         """Test that broadcast removes disconnected clients."""
         ws_good = AsyncMock()
@@ -162,7 +157,6 @@ class TestEmitFunctions:
         monkeypatch.setattr("redops.web.websocket.manager", mock)
         return mock
 
-    @pytest.mark.asyncio
     async def test_emit_scan_started(self, mock_manager):
         """Test emit_scan_started."""
         await emit_scan_started("scan123", "example.com", "quick")
@@ -173,7 +167,6 @@ class TestEmitFunctions:
         assert event.scan_id == "scan123"
         assert event.data["target"] == "example.com"
 
-    @pytest.mark.asyncio
     async def test_emit_scan_progress(self, mock_manager):
         """Test emit_scan_progress."""
         await emit_scan_progress("scan123", 50, "domain_profile")
@@ -184,7 +177,6 @@ class TestEmitFunctions:
         assert event.data["progress"] == 50
         assert event.data["current_module"] == "domain_profile"
 
-    @pytest.mark.asyncio
     async def test_emit_scan_completed(self, mock_manager):
         """Test emit_scan_completed."""
         await emit_scan_completed("scan123", 5)
@@ -194,7 +186,6 @@ class TestEmitFunctions:
         assert event.event == EventType.SCAN_COMPLETED.value
         assert event.data["findings_count"] == 5
 
-    @pytest.mark.asyncio
     async def test_emit_scan_failed(self, mock_manager):
         """Test emit_scan_failed."""
         await emit_scan_failed("scan123", "Connection timeout")
