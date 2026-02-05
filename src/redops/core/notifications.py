@@ -129,12 +129,12 @@ class TemplateEngine:
             "lower": lambda x: str(x).lower(),
             "title": lambda x: str(x).title(),
             "json": lambda x: json.dumps(x),
-            "date": lambda x: x.strftime("%Y-%m-%d")
-            if hasattr(x, "strftime")
-            else str(x),
-            "datetime": lambda x: x.strftime("%Y-%m-%d %H:%M:%S")
-            if hasattr(x, "strftime")
-            else str(x),
+            "date": lambda x: (
+                x.strftime("%Y-%m-%d") if hasattr(x, "strftime") else str(x)
+            ),
+            "datetime": lambda x: (
+                x.strftime("%Y-%m-%d %H:%M:%S") if hasattr(x, "strftime") else str(x)
+            ),
         }
 
     def register_template(self, name: str, template: str) -> None:

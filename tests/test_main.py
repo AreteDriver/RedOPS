@@ -494,8 +494,8 @@ class TestRunPipelineManyErrorsWarnings:
 
         # Return 10 errors
         errors = [{"message": f"Error {i}"} for i in range(10)]
-        mock_ctx.get_logs.side_effect = (
-            lambda level=None: errors if level == "ERROR" else []
+        mock_ctx.get_logs.side_effect = lambda level=None: (
+            errors if level == "ERROR" else []
         )
 
         mock_runner = MagicMock()
