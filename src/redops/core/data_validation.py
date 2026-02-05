@@ -616,7 +616,7 @@ class TypeCoercer:
                 if isinstance(result, list):
                     return result
             except json.JSONDecodeError:
-                pass
+                pass  # Not JSON - fall through to comma-split
             # Split by comma
             return [v.strip() for v in value.split(",") if v.strip()]
         if isinstance(value, (tuple, set, frozenset)):

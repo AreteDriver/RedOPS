@@ -856,7 +856,7 @@ class AlertManager:
                 try:
                     channel.send_resolved(alert)
                 except Exception:
-                    pass
+                    pass  # Best-effort notification - don't fail resolve
 
     # History
     def get_history(

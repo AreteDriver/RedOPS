@@ -324,7 +324,8 @@ class TestRolePermissions:
 
     def test_admin_is_superset(self):
         """Admin has all permissions that other roles have."""
-        ROLE_PERMISSIONS["admin"]
+        admin_perms = ROLE_PERMISSIONS["admin"]
+        assert admin_perms  # Verify admin role has permissions defined
 
         for role, perms in ROLE_PERMISSIONS.items():
             if role != "admin":

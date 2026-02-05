@@ -82,7 +82,7 @@ def get_hunter_api_key() -> Optional[str]:
 
             api_key = get_api_key_direct("hunter")
         except Exception:
-            pass
+            pass  # Settings module may not be available - use env var fallback
     return api_key
 
 

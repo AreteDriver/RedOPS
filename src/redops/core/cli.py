@@ -756,7 +756,7 @@ class PromptBuilder:
                 if 0 <= idx < len(choices):
                     selected.append(choices[idx])
             except ValueError:
-                pass
+                pass  # Invalid number - skip this selection
 
         return selected if selected else defaults
 
