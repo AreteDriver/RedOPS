@@ -1,5 +1,7 @@
 """Tests for Shodan intelligence module."""
 
+import sys
+from importlib import reload
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -299,8 +301,6 @@ class TestGetShodanClient:
 
     def test_import_error_returns_none(self):
         """Test that import error returns None."""
-        import sys
-
         # Remove shodan from sys.modules if present
         original_modules = {}
         for mod in list(sys.modules.keys()):
@@ -308,7 +308,6 @@ class TestGetShodanClient:
                 original_modules[mod] = sys.modules.pop(mod)
 
         try:
-            from importlib import reload
             import redops.modules.intel.shodan_intel as shodan_mod
 
             reload(shodan_mod)
@@ -323,13 +322,10 @@ class TestGetShodanClient:
         """Test that missing API key returns None."""
         mock_shodan = MagicMock()
 
-        import sys
-
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {}, clear=True):
                 # Mock settings to return None
                 with patch("redops.cli.settings.get_api_key_direct", return_value=None):
-                    from importlib import reload
                     import redops.modules.intel.shodan_intel as shodan_mod
 
                     reload(shodan_mod)
@@ -342,11 +338,8 @@ class TestGetShodanClient:
         mock_client = MagicMock()
         mock_shodan.Shodan.return_value = mock_client
 
-        import sys
-
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {"SHODAN_API_KEY": "test-api-key"}):
-                from importlib import reload
                 import redops.modules.intel.shodan_intel as shodan_mod
 
                 reload(shodan_mod)
@@ -361,15 +354,12 @@ class TestGetShodanClient:
         mock_client = MagicMock()
         mock_shodan.Shodan.return_value = mock_client
 
-        import sys
-
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {}, clear=True):
                 with patch(
                     "redops.cli.settings.get_api_key_direct",
                     return_value="settings-api-key",
                 ):
-                    from importlib import reload
                     import redops.modules.intel.shodan_intel as shodan_mod
 
                     reload(shodan_mod)
@@ -382,15 +372,12 @@ class TestGetShodanClient:
         """Test that settings exception is handled gracefully."""
         mock_shodan = MagicMock()
 
-        import sys
-
         with patch.dict(sys.modules, {"shodan": mock_shodan}):
             with patch.dict("os.environ", {}, clear=True):
                 with patch(
                     "redops.cli.settings.get_api_key_direct",
                     side_effect=Exception("Settings error"),
                 ):
-                    from importlib import reload
                     import redops.modules.intel.shodan_intel as shodan_mod
 
                     reload(shodan_mod)

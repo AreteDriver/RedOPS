@@ -1,5 +1,7 @@
 """Tests for VirusTotal intelligence module."""
 
+import sys
+from importlib import reload
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -427,7 +429,6 @@ class TestMakeVTRequest:
 
         original_import = builtins.__import__
 
-        from importlib import reload
         import redops.modules.intel.virustotal_intel as vt_mod
 
         try:
@@ -447,10 +448,7 @@ class TestMakeVTRequest:
         mock_response.json.return_value = {"data": {"attributes": {"reputation": 0}}}
         mock_requests.get.return_value = mock_response
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
 
             reload(vt_mod)
@@ -465,10 +463,7 @@ class TestMakeVTRequest:
         mock_response.status_code = 404
         mock_requests.get.return_value = mock_response
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
 
             reload(vt_mod)
@@ -483,10 +478,7 @@ class TestMakeVTRequest:
         mock_response.status_code = 429
         mock_requests.get.return_value = mock_response
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
 
             reload(vt_mod)
@@ -499,10 +491,7 @@ class TestMakeVTRequest:
         mock_requests = MagicMock()
         mock_requests.get.side_effect = Exception("Connection error")
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.virustotal_intel as vt_mod
 
             reload(vt_mod)

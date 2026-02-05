@@ -1,5 +1,7 @@
 """Tests for SecurityTrails intelligence module."""
 
+import sys
+from importlib import reload
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -364,7 +366,6 @@ class TestMakeSTRequest:
 
         original_import = builtins.__import__
 
-        from importlib import reload
         import redops.modules.intel.securitytrails_intel as st_mod
 
         try:
@@ -384,10 +385,7 @@ class TestMakeSTRequest:
         mock_response.json.return_value = {"domain": "test.com", "subdomain_count": 10}
         mock_requests.get.return_value = mock_response
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
 
             reload(st_mod)
@@ -402,10 +400,7 @@ class TestMakeSTRequest:
         mock_response.status_code = 404
         mock_requests.get.return_value = mock_response
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
 
             reload(st_mod)
@@ -420,10 +415,7 @@ class TestMakeSTRequest:
         mock_response.status_code = 429
         mock_requests.get.return_value = mock_response
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
 
             reload(st_mod)
@@ -438,10 +430,7 @@ class TestMakeSTRequest:
         mock_response.status_code = 500
         mock_requests.get.return_value = mock_response
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
 
             reload(st_mod)
@@ -454,10 +443,7 @@ class TestMakeSTRequest:
         mock_requests = MagicMock()
         mock_requests.get.side_effect = Exception("Connection error")
 
-        import sys
-
         with patch.dict(sys.modules, {"requests": mock_requests}):
-            from importlib import reload
             import redops.modules.intel.securitytrails_intel as st_mod
 
             reload(st_mod)

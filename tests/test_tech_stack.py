@@ -4,6 +4,7 @@ import sys
 from unittest.mock import patch, MagicMock
 import pytest
 from redops.core.context import Context
+import redops.modules.recon.tech_stack as ts_module
 from redops.modules.recon.tech_stack import (
     fingerprint,
     normalize_url,
@@ -473,8 +474,6 @@ class TestFingerprint:
 
     def test_fingerprint_requests_not_available(self):
         """Test fingerprinting when requests not available."""
-        import redops.modules.recon.tech_stack as ts_module
-
         original_available = ts_module.REQUESTS_AVAILABLE
 
         ts_module.REQUESTS_AVAILABLE = False
@@ -499,8 +498,6 @@ class TestFingerprintWithMockedRequests:
 
         # Patch the module to have requests available
         with patch.dict(sys.modules, {"requests": self.mock_requests}):
-            import redops.modules.recon.tech_stack as ts_module
-
             self.original_available = ts_module.REQUESTS_AVAILABLE
             ts_module.REQUESTS_AVAILABLE = True
             ts_module.requests = self.mock_requests
@@ -721,8 +718,6 @@ class TestMakeRequest:
         self.mock_requests = MagicMock()
 
         with patch.dict(sys.modules, {"requests": self.mock_requests}):
-            import redops.modules.recon.tech_stack as ts_module
-
             self.original_available = ts_module.REQUESTS_AVAILABLE
             ts_module.REQUESTS_AVAILABLE = True
             ts_module.requests = self.mock_requests
@@ -798,8 +793,6 @@ class TestFetchFaviconHash:
         self.mock_requests = MagicMock()
 
         with patch.dict(sys.modules, {"requests": self.mock_requests}):
-            import redops.modules.recon.tech_stack as ts_module
-
             self.original_available = ts_module.REQUESTS_AVAILABLE
             ts_module.REQUESTS_AVAILABLE = True
             ts_module.requests = self.mock_requests

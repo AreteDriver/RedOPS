@@ -11,15 +11,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip to latest
+RUN pip install --no-cache-dir --upgrade pip
+
 # Copy project files
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
-# Install package with all dependencies
-RUN pip install --no-cache-dir --target=/app/deps .[all]
+# Install package with all dependencies, upgrade protobuf for CVE fix
+RUN pip install --no-cache-dir --upgrade protobuf && \
+    pip install --no-cache-dir --target=/app/deps .[all]
 
 # Runtime stage
 FROM python:3.12-slim
+
+# Upgrade pip in runtime image for security
+RUN pip install --no-cache-dir --upgrade pip
 
 LABEL org.opencontainers.image.title="RedOPS"
 LABEL org.opencontainers.image.description="Professional Cybersecurity Intelligence & Attack Surface Management Platform"
