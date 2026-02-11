@@ -25,8 +25,10 @@ RUN pip install --no-cache-dir --upgrade protobuf && \
 # Runtime stage
 FROM python:3.12-slim
 
-# Upgrade pip in runtime image for security
-RUN pip install --no-cache-dir --upgrade pip
+# Apply latest security patches for system packages and upgrade pip
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir --upgrade pip
 
 LABEL org.opencontainers.image.title="RedOPS"
 LABEL org.opencontainers.image.description="Professional Cybersecurity Intelligence & Attack Surface Management Platform"
