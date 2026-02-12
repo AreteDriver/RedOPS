@@ -853,7 +853,11 @@ def with_backoff(
                         delay = backoff.get_delay(attempt)
                         time.sleep(delay)
 
-            raise last_exception
+            if last_exception is not None:
+                raise last_exception
+            raise RuntimeError(
+                f"Retry failed: no attempts made (max_retries={max_retries})"
+            )
 
         return wrapper
 
