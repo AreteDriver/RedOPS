@@ -12,7 +12,7 @@ IMPORTANT: This module uses simulated/example threat data.
 Real implementations would integrate with actual threat feeds.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timezone
@@ -86,16 +86,16 @@ class IOC:
     type: IOCType
     value: str
     threat_level: ThreatLevel = ThreatLevel.UNKNOWN
-    categories: List[ThreatCategory] = field(default_factory=list)
+    categories: list[ThreatCategory] = field(default_factory=list)
     confidence: ConfidenceLevel = ConfidenceLevel.UNVERIFIED
-    first_seen: Optional[str] = None
-    last_seen: Optional[str] = None
+    first_seen: str | None = None
+    last_seen: str | None = None
     source: str = "unknown"
-    tags: List[str] = field(default_factory=list)
-    related_iocs: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    related_iocs: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "type": self.type.value,
@@ -117,21 +117,21 @@ class ThreatActor:
     """Threat actor profile."""
 
     name: str
-    aliases: List[str] = field(default_factory=list)
+    aliases: list[str] = field(default_factory=list)
     description: str = ""
     motivation: str = ""  # financial, espionage, hacktivism, etc.
     sophistication: str = ""  # low, medium, high, advanced
     origin: str = ""  # Country/region of origin
-    active_since: Optional[str] = None
-    last_activity: Optional[str] = None
-    target_sectors: List[str] = field(default_factory=list)
-    target_regions: List[str] = field(default_factory=list)
-    ttps: List[str] = field(default_factory=list)  # MITRE ATT&CK TTPs
-    tools: List[str] = field(default_factory=list)
-    associated_iocs: List[str] = field(default_factory=list)
-    references: List[str] = field(default_factory=list)
+    active_since: str | None = None
+    last_activity: str | None = None
+    target_sectors: list[str] = field(default_factory=list)
+    target_regions: list[str] = field(default_factory=list)
+    ttps: list[str] = field(default_factory=list)  # MITRE ATT&CK TTPs
+    tools: list[str] = field(default_factory=list)
+    associated_iocs: list[str] = field(default_factory=list)
+    references: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -161,11 +161,11 @@ class ThreatFeed:
     api_key_env: str = ""  # Environment variable name for API key
     update_frequency: str = "daily"  # hourly, daily, weekly
     enabled: bool = True
-    last_update: Optional[str] = None
+    last_update: str | None = None
     ioc_count: int = 0
     confidence_default: ConfidenceLevel = ConfidenceLevel.MEDIUM
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -189,7 +189,7 @@ class ThreatMatch:
     match_type: str  # exact, partial, related
     score: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "ioc": self.ioc.to_dict(),
@@ -389,7 +389,7 @@ THREAT_FEEDS = {
 
 
 def analyze_threat_intel(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Analyze context data against threat intelligence.
@@ -509,7 +509,7 @@ def analyze_threat_intel(
     return ctx
 
 
-def extract_indicators_from_context(ctx: Context) -> Dict[str, List[str]]:
+def extract_indicators_from_context(ctx: Context) -> dict[str, list[str]]:
     """
     Extract indicators (domains, IPs, URLs, hashes) from context.
 
@@ -583,7 +583,7 @@ def extract_indicators_from_context(ctx: Context) -> Dict[str, List[str]]:
     return indicators
 
 
-def _extract_strings(d: Dict[str, Any], max_depth: int = 3) -> List[str]:
+def _extract_strings(d: dict[str, Any], max_depth: int = 3) -> list[str]:
     """Recursively extract strings from dictionary."""
     strings = []
     if max_depth <= 0:
@@ -604,7 +604,7 @@ def _extract_strings(d: Dict[str, Any], max_depth: int = 3) -> List[str]:
     return strings
 
 
-def check_domains_against_intel(domains: List[str]) -> List[ThreatMatch]:
+def check_domains_against_intel(domains: list[str]) -> list[ThreatMatch]:
     """
     Check domains against threat intelligence.
 
@@ -646,7 +646,7 @@ def check_domains_against_intel(domains: List[str]) -> List[ThreatMatch]:
     return matches
 
 
-def check_ips_against_intel(ips: List[str]) -> List[ThreatMatch]:
+def check_ips_against_intel(ips: list[str]) -> list[ThreatMatch]:
     """
     Check IP addresses against threat intelligence.
 
@@ -704,7 +704,7 @@ def check_ips_against_intel(ips: List[str]) -> List[ThreatMatch]:
     return matches
 
 
-def check_urls_against_intel(urls: List[str]) -> List[ThreatMatch]:
+def check_urls_against_intel(urls: list[str]) -> list[ThreatMatch]:
     """
     Check URLs against threat intelligence.
 
@@ -769,7 +769,7 @@ def check_urls_against_intel(urls: List[str]) -> List[ThreatMatch]:
     return matches
 
 
-def check_hashes_against_intel(hashes: List[str]) -> List[ThreatMatch]:
+def check_hashes_against_intel(hashes: list[str]) -> list[ThreatMatch]:
     """
     Check file hashes against threat intelligence.
 
@@ -794,7 +794,7 @@ def check_hashes_against_intel(hashes: List[str]) -> List[ThreatMatch]:
     return matches
 
 
-def analyze_domain_reputation(domains: List[str]) -> Dict[str, Any]:
+def analyze_domain_reputation(domains: list[str]) -> dict[str, Any]:
     """
     Analyze domain reputation.
 
@@ -840,7 +840,7 @@ def analyze_domain_reputation(domains: List[str]) -> Dict[str, Any]:
     return analysis
 
 
-def analyze_ip_reputation(ips: List[str]) -> Dict[str, Any]:
+def analyze_ip_reputation(ips: list[str]) -> dict[str, Any]:
     """
     Analyze IP reputation.
 
@@ -885,7 +885,7 @@ def analyze_ip_reputation(ips: List[str]) -> Dict[str, Any]:
     return analysis
 
 
-def analyze_url_patterns(urls: List[str]) -> Dict[str, Any]:
+def analyze_url_patterns(urls: list[str]) -> dict[str, Any]:
     """
     Analyze URL patterns.
 
@@ -936,8 +936,8 @@ def analyze_url_patterns(urls: List[str]) -> Dict[str, Any]:
 
 
 def identify_threat_actors(
-    ctx: Context, matches: List[ThreatMatch]
-) -> List[ThreatActor]:
+    ctx: Context, matches: list[ThreatMatch]
+) -> list[ThreatActor]:
     """
     Identify potential threat actors based on context and matches.
 
@@ -987,7 +987,7 @@ def identify_threat_actors(
     return actors
 
 
-def calculate_reputation_score(matches: List[ThreatMatch]) -> float:
+def calculate_reputation_score(matches: list[ThreatMatch]) -> float:
     """
     Calculate overall reputation score based on matches.
 
@@ -1029,10 +1029,10 @@ def calculate_reputation_score(matches: List[ThreatMatch]) -> float:
 
 
 def generate_risk_indicators(
-    matches: List[ThreatMatch],
-    domain_analysis: Dict[str, Any],
-    ip_analysis: Dict[str, Any],
-) -> List[Dict[str, Any]]:
+    matches: list[ThreatMatch],
+    domain_analysis: dict[str, Any],
+    ip_analysis: dict[str, Any],
+) -> list[dict[str, Any]]:
     """
     Generate risk indicators from analysis.
 
@@ -1107,7 +1107,7 @@ def generate_risk_indicators(
     return indicators
 
 
-def generate_intel_summary(intel_data: Dict[str, Any]) -> Dict[str, Any]:
+def generate_intel_summary(intel_data: dict[str, Any]) -> dict[str, Any]:
     """
     Generate summary of threat intelligence analysis.
 
@@ -1224,7 +1224,7 @@ def is_bogon_ip(ip: str) -> bool:
         return False
 
 
-def identify_hash_type(hash_value: str) -> Optional[IOCType]:
+def identify_hash_type(hash_value: str) -> IOCType | None:
     """Identify the type of hash based on length and characters."""
     if not hash_value:
         return None
@@ -1263,9 +1263,9 @@ def create_ioc(
     ioc_type: IOCType,
     value: str,
     threat_level: ThreatLevel = ThreatLevel.UNKNOWN,
-    categories: Optional[List[ThreatCategory]] = None,
+    categories: list[ThreatCategory] | None = None,
     source: str = "manual",
-    tags: Optional[List[str]] = None,
+    tags: list[str] | None = None,
 ) -> IOC:
     """
     Create an IOC with common defaults.
@@ -1293,7 +1293,7 @@ def create_ioc(
     )
 
 
-def get_threat_actor(name: str) -> Optional[ThreatActor]:
+def get_threat_actor(name: str) -> ThreatActor | None:
     """
     Get threat actor by name or alias.
 
@@ -1314,7 +1314,7 @@ def get_threat_actor(name: str) -> Optional[ThreatActor]:
     return None
 
 
-def get_all_threat_actors() -> List[ThreatActor]:
+def get_all_threat_actors() -> list[ThreatActor]:
     """
     Get all known threat actors.
 
@@ -1324,7 +1324,7 @@ def get_all_threat_actors() -> List[ThreatActor]:
     return list(THREAT_ACTORS_DB.values())
 
 
-def get_threat_feeds() -> Dict[str, ThreatFeed]:
+def get_threat_feeds() -> dict[str, ThreatFeed]:
     """
     Get configured threat feeds.
 
@@ -1334,7 +1334,7 @@ def get_threat_feeds() -> Dict[str, ThreatFeed]:
     return THREAT_FEEDS.copy()
 
 
-def get_ioc_types() -> List[str]:
+def get_ioc_types() -> list[str]:
     """
     Get all IOC types.
 
@@ -1344,7 +1344,7 @@ def get_ioc_types() -> List[str]:
     return [t.value for t in IOCType]
 
 
-def get_threat_categories() -> List[str]:
+def get_threat_categories() -> list[str]:
     """
     Get all threat categories.
 
@@ -1354,7 +1354,7 @@ def get_threat_categories() -> List[str]:
     return [c.value for c in ThreatCategory]
 
 
-def validate_ioc(ioc_type: IOCType, value: str) -> Tuple[bool, str]:
+def validate_ioc(ioc_type: IOCType, value: str) -> tuple[bool, str]:
     """
     Validate an IOC value.
 
@@ -1386,7 +1386,7 @@ def validate_ioc(ioc_type: IOCType, value: str) -> Tuple[bool, str]:
     return True, ""  # No specific validation for this type
 
 
-def _validate_ip(value: str) -> Tuple[bool, str]:
+def _validate_ip(value: str) -> tuple[bool, str]:
     """Validate IP address."""
     pattern = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
     if re.match(pattern, value):
@@ -1394,7 +1394,7 @@ def _validate_ip(value: str) -> Tuple[bool, str]:
     return False, "Invalid IP address format"
 
 
-def _validate_domain(value: str) -> Tuple[bool, str]:
+def _validate_domain(value: str) -> tuple[bool, str]:
     """Validate domain name."""
     pattern = r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$"
     if re.match(pattern, value):
@@ -1402,7 +1402,7 @@ def _validate_domain(value: str) -> Tuple[bool, str]:
     return False, "Invalid domain format"
 
 
-def _validate_url(value: str) -> Tuple[bool, str]:
+def _validate_url(value: str) -> tuple[bool, str]:
     """Validate URL."""
     pattern = r'^https?://[^\s<>"\']+$'
     if re.match(pattern, value):
@@ -1410,7 +1410,7 @@ def _validate_url(value: str) -> Tuple[bool, str]:
     return False, "Invalid URL format"
 
 
-def _validate_email(value: str) -> Tuple[bool, str]:
+def _validate_email(value: str) -> tuple[bool, str]:
     """Validate email address."""
     pattern = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$"
     if re.match(pattern, value):
@@ -1418,7 +1418,7 @@ def _validate_email(value: str) -> Tuple[bool, str]:
     return False, "Invalid email format"
 
 
-def _validate_hash(value: str, expected_length: int) -> Tuple[bool, str]:
+def _validate_hash(value: str, expected_length: int) -> tuple[bool, str]:
     """Validate hash value."""
     if len(value) != expected_length:
         return False, f"Hash must be {expected_length} characters"
@@ -1427,7 +1427,7 @@ def _validate_hash(value: str, expected_length: int) -> Tuple[bool, str]:
     return True, ""
 
 
-def _validate_cve(value: str) -> Tuple[bool, str]:
+def _validate_cve(value: str) -> tuple[bool, str]:
     """Validate CVE ID."""
     pattern = r"^CVE-\d{4}-\d{4,}$"
     if re.match(pattern, value, re.IGNORECASE):

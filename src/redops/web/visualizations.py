@@ -4,7 +4,7 @@ Dashboard visualizations for RedOPS.
 Provides chart data generation and visualization components for the web dashboard.
 """
 
-from typing import Dict, Any, List
+from typing import Any
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
 from collections import Counter
@@ -16,12 +16,12 @@ class ChartData:
     """Generic chart data structure."""
 
     chart_type: str  # bar, line, pie, doughnut, radar
-    labels: List[str]
-    datasets: List[Dict[str, Any]]
+    labels: list[str]
+    datasets: list[dict[str, Any]]
     title: str = ""
-    options: Dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "type": self.chart_type,
@@ -53,7 +53,7 @@ class SeverityDistributionChart:
         "info": "#17a2b8",  # Cyan
     }
 
-    def __init__(self, findings: List[Dict[str, Any]]):
+    def __init__(self, findings: list[dict[str, Any]]):
         """
         Initialize with findings data.
 
@@ -123,7 +123,7 @@ class ModuleDistributionChart:
     Shows which modules produced findings.
     """
 
-    def __init__(self, findings: List[Dict[str, Any]]):
+    def __init__(self, findings: list[dict[str, Any]]):
         """
         Initialize with findings data.
 
@@ -183,7 +183,7 @@ class TimelineChart:
     Shows findings or scans over time.
     """
 
-    def __init__(self, items: List[Dict[str, Any]], timestamp_key: str = "timestamp"):
+    def __init__(self, items: list[dict[str, Any]], timestamp_key: str = "timestamp"):
         """
         Initialize with timestamped items.
 
@@ -233,7 +233,7 @@ class TimelineChart:
             label_format = "%b %d"
 
         # Count items per bucket
-        bucket_counts: Dict[str, int] = {}
+        bucket_counts: dict[str, int] = {}
         for ts, item in parsed_items:
             bucket = ts.strftime(bucket_format)
             bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
@@ -288,7 +288,7 @@ class RiskScoreGauge:
     Shows overall risk score as a gauge/speedometer.
     """
 
-    def __init__(self, findings: List[Dict[str, Any]]):
+    def __init__(self, findings: list[dict[str, Any]]):
         """
         Initialize with findings data.
 
@@ -324,7 +324,7 @@ class RiskScoreGauge:
         # Cap at 100
         return min(100, total_weight)
 
-    def generate(self) -> Dict[str, Any]:
+    def generate(self) -> dict[str, Any]:
         """
         Generate the risk score gauge data.
 
@@ -374,7 +374,7 @@ class ThreatIntelSummary:
     Aggregates and visualizes threat intel data.
     """
 
-    def __init__(self, intel_results: Dict[str, Any]):
+    def __init__(self, intel_results: dict[str, Any]):
         """
         Initialize with threat intel results.
 
@@ -383,7 +383,7 @@ class ThreatIntelSummary:
         """
         self.intel_results = intel_results
 
-    def generate(self) -> Dict[str, Any]:
+    def generate(self) -> dict[str, Any]:
         """
         Generate the threat intel summary.
 
@@ -468,7 +468,7 @@ class ScanSummaryDashboard:
     Combines multiple visualizations into a cohesive dashboard.
     """
 
-    def __init__(self, context_data: Dict[str, Any]):
+    def __init__(self, context_data: dict[str, Any]):
         """
         Initialize with context data from a scan.
 
@@ -477,7 +477,7 @@ class ScanSummaryDashboard:
         """
         self.context_data = context_data
 
-    def _extract_findings(self) -> List[Dict[str, Any]]:
+    def _extract_findings(self) -> list[dict[str, Any]]:
         """Extract findings from context data."""
         findings = []
         for key, value in self.context_data.items():
@@ -485,7 +485,7 @@ class ScanSummaryDashboard:
                 findings.append(value)
         return findings
 
-    def generate(self) -> Dict[str, Any]:
+    def generate(self) -> dict[str, Any]:
         """
         Generate the complete dashboard data.
 
@@ -534,7 +534,7 @@ class ScanSummaryDashboard:
         return dashboard
 
 
-def generate_dashboard_html(dashboard_data: Dict[str, Any]) -> str:
+def generate_dashboard_html(dashboard_data: dict[str, Any]) -> str:
     """
     Generate HTML for the dashboard.
 

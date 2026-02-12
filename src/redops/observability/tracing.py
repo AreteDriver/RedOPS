@@ -4,7 +4,7 @@ Distributed tracing for RedOPS.
 Provides OpenTelemetry-based tracing for pipelines, modules, and API calls.
 """
 
-from typing import Optional, Dict, Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar
 from dataclasses import dataclass
 import os
 import functools
@@ -92,9 +92,9 @@ class TracingProvider:
     - Jaeger
     """
 
-    _instance: Optional["TracingProvider"] = None
+    _instance: "TracingProvider | None" = None
 
-    def __init__(self, config: Optional[TracingConfig] = None):
+    def __init__(self, config: TracingConfig | None = None):
         """
         Initialize the tracing provider.
 
@@ -159,8 +159,8 @@ class TracingProvider:
     def start_span(
         self,
         name: str,
-        attributes: Optional[Dict[str, Any]] = None,
-        kind: Optional[Any] = None,
+        attributes: dict[str, Any] | None = None,
+        kind: Any | None = None,
     ):
         """
         Start a new span.
@@ -191,7 +191,7 @@ class TracingProvider:
                     span.record_exception(e)
                 raise
 
-    def inject_context(self, carrier: Dict[str, str]) -> Dict[str, str]:
+    def inject_context(self, carrier: dict[str, str]) -> dict[str, str]:
         """
         Inject trace context into a carrier (e.g., HTTP headers).
 
@@ -205,7 +205,7 @@ class TracingProvider:
             self._propagator.inject(carrier)
         return carrier
 
-    def extract_context(self, carrier: Dict[str, str]):
+    def extract_context(self, carrier: dict[str, str]):
         """
         Extract trace context from a carrier.
 
@@ -221,7 +221,7 @@ class TracingProvider:
 
 
 # Global tracing provider
-_tracing_provider: Optional[TracingProvider] = None
+_tracing_provider: TracingProvider | None = None
 
 
 def get_tracer():
@@ -233,8 +233,8 @@ def get_tracer():
 
 
 def trace_function(
-    name: Optional[str] = None,
-    attributes: Optional[Dict[str, Any]] = None,
+    name: str | None = None,
+    attributes: dict[str, Any] | None = None,
 ) -> Callable[[F], F]:
     """
     Decorator to trace a function.

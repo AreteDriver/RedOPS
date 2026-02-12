@@ -11,7 +11,7 @@ Queries SecurityTrails API for DNS and domain intelligence:
 IMPORTANT: Requires a SecurityTrails API key.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 import os
 
@@ -23,13 +23,13 @@ class STDomainInfo:
     """SecurityTrails domain information."""
 
     domain: str
-    alexa_rank: Optional[int] = None
-    apex_domain: Optional[str] = None
-    hostname: Optional[str] = None
-    current_dns: Dict[str, Any] = field(default_factory=dict)
+    alexa_rank: int | None = None
+    apex_domain: str | None = None
+    hostname: str | None = None
+    current_dns: dict[str, Any] = field(default_factory=dict)
     subdomain_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "domain": self.domain,
@@ -47,10 +47,10 @@ class STHistoricalDNS:
 
     domain: str
     record_type: str
-    records: List[Dict[str, Any]] = field(default_factory=list)
+    records: list[dict[str, Any]] = field(default_factory=list)
     pages: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "domain": self.domain,
@@ -60,7 +60,7 @@ class STHistoricalDNS:
         }
 
 
-def get_st_api_key() -> Optional[str]:
+def get_st_api_key() -> str | None:
     """Get SecurityTrails API key."""
     api_key = os.environ.get("SECURITYTRAILS_API_KEY")
     if not api_key:
@@ -73,7 +73,7 @@ def get_st_api_key() -> Optional[str]:
     return api_key
 
 
-def _make_st_request(endpoint: str, api_key: str) -> Optional[Dict[str, Any]]:
+def _make_st_request(endpoint: str, api_key: str) -> dict[str, Any] | None:
     """Make a request to SecurityTrails API."""
     try:
         import requests
@@ -97,7 +97,7 @@ def _make_st_request(endpoint: str, api_key: str) -> Optional[Dict[str, Any]]:
         return {"error": str(e)}
 
 
-def query_st_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_st_domain(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query SecurityTrails for domain information.
 
@@ -159,7 +159,7 @@ def query_st_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Co
 
 
 def query_st_subdomains(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Query SecurityTrails for subdomains.
@@ -217,7 +217,7 @@ def query_st_subdomains(
     return ctx
 
 
-def query_st_history(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_st_history(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query SecurityTrails for historical DNS data.
 
@@ -282,7 +282,7 @@ def query_st_history(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
 
 
 def query_st_associated(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Query SecurityTrails for associated domains.
@@ -341,7 +341,7 @@ def query_st_associated(
 
 
 def analyze_securitytrails_intel(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Run comprehensive SecurityTrails analysis.

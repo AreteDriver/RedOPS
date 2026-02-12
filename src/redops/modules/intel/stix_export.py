@@ -11,7 +11,7 @@ language for representing cyber threat intelligence.
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from typing import Any
 from dataclasses import dataclass, field, asdict
 
 
@@ -43,7 +43,7 @@ class STIXObject:
         if not self.id:
             self.id = generate_stix_id(self.type)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, removing None values."""
         d = asdict(self)
         return {k: v for k, v in d.items() if v is not None}
@@ -59,10 +59,10 @@ class Indicator(STIXObject):
     pattern: str = ""
     pattern_type: str = "stix"
     valid_from: str = field(default_factory=stix_timestamp)
-    indicator_types: List[str] = field(default_factory=list)
-    kill_chain_phases: List[Dict[str, str]] = field(default_factory=list)
-    labels: List[str] = field(default_factory=list)
-    confidence: Optional[int] = None
+    indicator_types: list[str] = field(default_factory=list)
+    kill_chain_phases: list[dict[str, str]] = field(default_factory=list)
+    labels: list[str] = field(default_factory=list)
+    confidence: int | None = None
 
 
 @dataclass
@@ -72,13 +72,13 @@ class ThreatActor(STIXObject):
     type: str = "threat-actor"
     name: str = ""
     description: str = ""
-    threat_actor_types: List[str] = field(default_factory=list)
-    aliases: List[str] = field(default_factory=list)
-    roles: List[str] = field(default_factory=list)
-    goals: List[str] = field(default_factory=list)
-    sophistication: Optional[str] = None
-    resource_level: Optional[str] = None
-    primary_motivation: Optional[str] = None
+    threat_actor_types: list[str] = field(default_factory=list)
+    aliases: list[str] = field(default_factory=list)
+    roles: list[str] = field(default_factory=list)
+    goals: list[str] = field(default_factory=list)
+    sophistication: str | None = None
+    resource_level: str | None = None
+    primary_motivation: str | None = None
 
 
 @dataclass
@@ -88,8 +88,8 @@ class AttackPattern(STIXObject):
     type: str = "attack-pattern"
     name: str = ""
     description: str = ""
-    external_references: List[Dict[str, str]] = field(default_factory=list)
-    kill_chain_phases: List[Dict[str, str]] = field(default_factory=list)
+    external_references: list[dict[str, str]] = field(default_factory=list)
+    kill_chain_phases: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -99,7 +99,7 @@ class Vulnerability(STIXObject):
     type: str = "vulnerability"
     name: str = ""
     description: str = ""
-    external_references: List[Dict[str, str]] = field(default_factory=list)
+    external_references: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -109,8 +109,8 @@ class Infrastructure(STIXObject):
     type: str = "infrastructure"
     name: str = ""
     description: str = ""
-    infrastructure_types: List[str] = field(default_factory=list)
-    aliases: List[str] = field(default_factory=list)
+    infrastructure_types: list[str] = field(default_factory=list)
+    aliases: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -130,13 +130,13 @@ class Bundle:
 
     type: str = "bundle"
     id: str = field(default_factory=lambda: generate_stix_id("bundle"))
-    objects: List[Dict[str, Any]] = field(default_factory=list)
+    objects: list[dict[str, Any]] = field(default_factory=list)
 
     def add(self, obj: STIXObject):
         """Add a STIX object to the bundle."""
         self.objects.append(obj.to_dict())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert bundle to dictionary."""
         return {
             "type": self.type,
@@ -157,7 +157,7 @@ class STIXExporter:
         self.identity_name = identity_name
         self.identity_id = generate_stix_id("identity")
 
-    def export(self, scan_data: Dict[str, Any]) -> Bundle:
+    def export(self, scan_data: dict[str, Any]) -> Bundle:
         """
         Export scan data to STIX bundle.
 
@@ -217,7 +217,7 @@ class STIXExporter:
             id=self.identity_id,
         )
 
-    def _ioc_to_indicator(self, ioc: Dict[str, Any]) -> Optional[Indicator]:
+    def _ioc_to_indicator(self, ioc: dict[str, Any]) -> Indicator | None:
         """Convert IOC to STIX Indicator."""
         ioc_type = ioc.get("type", "").lower()
         value = ioc.get("value", "")
@@ -260,7 +260,7 @@ class STIXExporter:
             labels=ioc.get("tags", []),
         )
 
-    def _finding_to_vulnerability(self, finding: Dict[str, Any]) -> Vulnerability:
+    def _finding_to_vulnerability(self, finding: dict[str, Any]) -> Vulnerability:
         """Convert finding to STIX Vulnerability."""
         cve = finding.get("cve", "")
         external_refs = []
@@ -280,7 +280,7 @@ class STIXExporter:
             external_references=external_refs,
         )
 
-    def _technique_to_attack_pattern(self, technique: Dict[str, Any]) -> AttackPattern:
+    def _technique_to_attack_pattern(self, technique: dict[str, Any]) -> AttackPattern:
         """Convert MITRE technique to STIX Attack Pattern."""
         technique_id = technique.get("technique_id", "")
         external_refs = []
@@ -312,7 +312,7 @@ class STIXExporter:
         )
 
     def _create_infrastructure(
-        self, target: str, infra_data: Dict[str, Any]
+        self, target: str, infra_data: dict[str, Any]
     ) -> Infrastructure:
         """Create infrastructure object from scan data."""
         infra_types = []
@@ -328,7 +328,7 @@ class STIXExporter:
             infrastructure_types=infra_types or ["unknown"],
         )
 
-    def _exposure_to_indicator(self, exposure: Dict[str, Any]) -> Optional[Indicator]:
+    def _exposure_to_indicator(self, exposure: dict[str, Any]) -> Indicator | None:
         """Convert exposure finding to STIX Indicator."""
         exp_type = exposure.get("type", "").lower()
         value = exposure.get("value", exposure.get("description", ""))
@@ -361,7 +361,7 @@ class STIXExporter:
         )
 
 
-def export_to_stix(ctx, params: Optional[Dict[str, Any]] = None):
+def export_to_stix(ctx, params: dict[str, Any] | None = None):
     """Pipeline module to export findings to STIX format."""
     params = params or {}
 

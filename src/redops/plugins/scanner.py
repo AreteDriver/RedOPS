@@ -8,7 +8,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set
+from typing import Any, Callable, Iterator
 from uuid import uuid4
 
 from redops.core.plugin_system import BasePlugin, PluginMetadata, PluginType
@@ -58,32 +58,32 @@ class Finding:
     severity: Severity = Severity.INFO
     confidence: float = 1.0  # 0.0 to 1.0
     category: str = ""
-    cwe_id: Optional[str] = None
-    cve_id: Optional[str] = None
-    cvss_score: Optional[float] = None
+    cwe_id: str | None = None
+    cve_id: str | None = None
+    cvss_score: float | None = None
 
     # Location
     target: str = ""
     location: str = ""
-    line_number: Optional[int] = None
+    line_number: int | None = None
 
     # Evidence
     evidence: str = ""
-    request: Optional[str] = None
-    response: Optional[str] = None
+    request: str | None = None
+    response: str | None = None
 
     # Remediation
     remediation: str = ""
-    references: List[str] = field(default_factory=list)
+    references: list[str] = field(default_factory=list)
 
     # Metadata
     scanner: str = ""
     phase: ScanPhase = ScanPhase.VULNERABILITY
     timestamp: datetime = field(default_factory=datetime.now)
-    tags: Set[str] = field(default_factory=set)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: set[str] = field(default_factory=set)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -111,7 +111,7 @@ class Finding:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Finding":
+    def from_dict(cls, data: dict[str, Any]) -> "Finding":
         """Create from dictionary."""
         return cls(
             id=data.get("id", str(uuid4())),
@@ -148,29 +148,29 @@ class ScannerResult:
     scanner_name: str
     target: str
     started_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
     success: bool = True
-    error: Optional[str] = None
-    findings: List[Finding] = field(default_factory=list)
-    stats: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    findings: list[Finding] = field(default_factory=list)
+    stats: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """Get scan duration."""
         if self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
     @property
-    def finding_counts(self) -> Dict[str, int]:
+    def finding_counts(self) -> dict[str, int]:
         """Get finding counts by severity."""
         counts = {s.value: 0 for s in Severity}
         for finding in self.findings:
             counts[finding.severity.value] += 1
         return counts
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "scanner_name": self.scanner_name,
@@ -198,13 +198,13 @@ class ScannerConfig:
     retry_count: int = 3
     retry_delay: float = 1.0
     user_agent: str = "RedOPS Scanner/1.0"
-    proxy: Optional[str] = None
+    proxy: str | None = None
     verify_ssl: bool = True
-    auth: Optional[Dict[str, str]] = None
-    headers: Dict[str, str] = field(default_factory=dict)
-    custom: Dict[str, Any] = field(default_factory=dict)
+    auth: dict[str, str] | None = None
+    headers: dict[str, str] = field(default_factory=dict)
+    custom: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "timeout": self.timeout,
@@ -220,7 +220,7 @@ class ScannerConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ScannerConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "ScannerConfig":
         """Create from dictionary."""
         return cls(
             timeout=data.get("timeout", 300.0),
@@ -260,7 +260,7 @@ class ScannerPlugin(BasePlugin):
 
     def __init__(self):
         """Initialize the scanner plugin."""
-        self._hooks: Dict[str, List[Callable]] = {
+        self._hooks: dict[str, list[Callable]] = {
             "before_scan": [],
             "after_scan": [],
             "on_finding": [],
@@ -287,7 +287,7 @@ class ScannerPlugin(BasePlugin):
 
     @classmethod
     @abstractmethod
-    def get_capabilities(cls) -> Set[ScannerCapability]:
+    def get_capabilities(cls) -> set[ScannerCapability]:
         """Get scanner capabilities."""
         pass
 
@@ -302,16 +302,16 @@ class ScannerPlugin(BasePlugin):
         )
 
     @classmethod
-    def get_phases(cls) -> List[ScanPhase]:
+    def get_phases(cls) -> list[ScanPhase]:
         """Get scan phases this scanner operates in."""
         return [ScanPhase.VULNERABILITY]
 
     @classmethod
-    def get_config_schema(cls) -> Dict[str, Any]:
+    def get_config_schema(cls) -> dict[str, Any]:
         """Get JSON schema for custom configuration."""
         return {}
 
-    def initialize(self, config: Optional[ScannerConfig] = None) -> None:
+    def initialize(self, config: ScannerConfig | None = None) -> None:
         """
         Initialize the scanner with configuration.
 
@@ -326,7 +326,7 @@ class ScannerPlugin(BasePlugin):
 
     @abstractmethod
     def scan(
-        self, target: str, config: Optional[ScannerConfig] = None
+        self, target: str, config: ScannerConfig | None = None
     ) -> ScannerResult:
         """
         Perform a scan against the target.
@@ -355,7 +355,7 @@ class ScannerPlugin(BasePlugin):
     def scan_async(
         self,
         target: str,
-        config: Optional[ScannerConfig] = None,
+        config: ScannerConfig | None = None,
     ) -> Iterator[Finding]:
         """
         Perform scan and yield findings as they're discovered.
@@ -437,7 +437,7 @@ class ScannerPlugin(BasePlugin):
     def _create_result(
         self,
         target: str,
-        findings: Optional[List[Finding]] = None,
+        findings: list[Finding] | None = None,
         **kwargs,
     ) -> ScannerResult:
         """
@@ -473,7 +473,7 @@ class CompositeScanner:
 
     def __init__(self):
         """Initialize composite scanner."""
-        self._scanners: List[ScannerPlugin] = []
+        self._scanners: list[ScannerPlugin] = []
 
     def add_scanner(self, scanner: ScannerPlugin) -> None:
         """Add a scanner to the composite."""
@@ -489,9 +489,9 @@ class CompositeScanner:
     def scan(
         self,
         target: str,
-        config: Optional[ScannerConfig] = None,
+        config: ScannerConfig | None = None,
         parallel: bool = False,
-    ) -> List[ScannerResult]:
+    ) -> list[ScannerResult]:
         """
         Run all scanners against target.
 
@@ -544,7 +544,7 @@ class CompositeScanner:
 
         return results
 
-    def get_all_findings(self, results: List[ScannerResult]) -> List[Finding]:
+    def get_all_findings(self, results: list[ScannerResult]) -> list[Finding]:
         """Get all findings from multiple results."""
         findings = []
         for result in results:
@@ -552,12 +552,12 @@ class CompositeScanner:
         return findings
 
     @property
-    def scanners(self) -> List[ScannerPlugin]:
+    def scanners(self) -> list[ScannerPlugin]:
         """Get list of scanners."""
         return self._scanners.copy()
 
     @property
-    def capabilities(self) -> Set[ScannerCapability]:
+    def capabilities(self) -> set[ScannerCapability]:
         """Get combined capabilities."""
         caps = set()
         for scanner in self._scanners:

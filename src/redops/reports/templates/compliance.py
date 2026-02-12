@@ -1,6 +1,6 @@
 """Compliance report template."""
 
-from typing import Any, List, Dict
+from typing import Any
 
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -88,7 +88,7 @@ class ComplianceReport(BaseReport):
     frameworks like OWASP, CWE, PCI-DSS, and NIST.
     """
 
-    def generate(self, data: ScanResult) -> List[Any]:
+    def generate(self, data: ScanResult) -> list[Any]:
         """Generate compliance report content."""
         elements = []
 
@@ -197,7 +197,7 @@ class ComplianceReport(BaseReport):
         categories = fw.get("categories", {})
 
         # Map findings to categories (simplified - would need real mapping logic)
-        category_findings: Dict[str, List] = {cat_id: [] for cat_id in categories}
+        category_findings: dict[str, list] = {cat_id: [] for cat_id in categories}
 
         # Simple heuristic mapping based on finding categories/titles
         for finding in data.findings:
@@ -294,7 +294,7 @@ class ComplianceReport(BaseReport):
         requirements = COMPLIANCE_FRAMEWORKS["PCI-DSS"]["categories"]
 
         # Map findings to PCI requirements (simplified)
-        req_findings: Dict[str, List] = {req: [] for req in requirements}
+        req_findings: dict[str, list] = {req: [] for req in requirements}
 
         for finding in data.findings:
             cat = (finding.category or "").lower()

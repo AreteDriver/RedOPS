@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Type
 
 
 class OutputFormat(Enum):
@@ -31,10 +31,10 @@ class Parameter:
 
     name: str
     type_hint: str = ""
-    default: Optional[str] = None
+    default: str | None = None
     description: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -53,19 +53,19 @@ class FunctionDoc:
     docstring: str = ""
     summary: str = ""
     description: str = ""
-    parameters: List[Parameter] = field(default_factory=list)
+    parameters: list[Parameter] = field(default_factory=list)
     returns: str = ""
     return_type: str = ""
-    raises: List[str] = field(default_factory=list)
-    examples: List[str] = field(default_factory=list)
-    decorators: List[str] = field(default_factory=list)
+    raises: list[str] = field(default_factory=list)
+    examples: list[str] = field(default_factory=list)
+    decorators: list[str] = field(default_factory=list)
     is_async: bool = False
     is_classmethod: bool = False
     is_staticmethod: bool = False
     is_property: bool = False
     line_number: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -94,16 +94,16 @@ class ClassDoc:
     docstring: str = ""
     summary: str = ""
     description: str = ""
-    bases: List[str] = field(default_factory=list)
-    methods: List[FunctionDoc] = field(default_factory=list)
-    class_methods: List[FunctionDoc] = field(default_factory=list)
-    static_methods: List[FunctionDoc] = field(default_factory=list)
-    properties: List[FunctionDoc] = field(default_factory=list)
-    attributes: List[Parameter] = field(default_factory=list)
-    decorators: List[str] = field(default_factory=list)
+    bases: list[str] = field(default_factory=list)
+    methods: list[FunctionDoc] = field(default_factory=list)
+    class_methods: list[FunctionDoc] = field(default_factory=list)
+    static_methods: list[FunctionDoc] = field(default_factory=list)
+    properties: list[FunctionDoc] = field(default_factory=list)
+    attributes: list[Parameter] = field(default_factory=list)
+    decorators: list[str] = field(default_factory=list)
     line_number: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -129,13 +129,13 @@ class ModuleDoc:
     docstring: str = ""
     summary: str = ""
     description: str = ""
-    classes: List[ClassDoc] = field(default_factory=list)
-    functions: List[FunctionDoc] = field(default_factory=list)
-    constants: List[Parameter] = field(default_factory=list)
-    imports: List[str] = field(default_factory=list)
-    submodules: List[str] = field(default_factory=list)
+    classes: list[ClassDoc] = field(default_factory=list)
+    functions: list[FunctionDoc] = field(default_factory=list)
+    constants: list[Parameter] = field(default_factory=list)
+    imports: list[str] = field(default_factory=list)
+    submodules: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -159,10 +159,10 @@ class PackageDoc:
     docstring: str = ""
     summary: str = ""
     description: str = ""
-    modules: List[ModuleDoc] = field(default_factory=list)
-    subpackages: List["PackageDoc"] = field(default_factory=list)
+    modules: list[ModuleDoc] = field(default_factory=list)
+    subpackages: list["PackageDoc"] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -178,7 +178,7 @@ class DocstringParser:
     """Parse docstrings in various formats."""
 
     @staticmethod
-    def parse(docstring: Optional[str]) -> Dict[str, Any]:
+    def parse(docstring: str | None) -> dict[str, Any]:
         """Parse a docstring and extract structured information."""
         if not docstring:
             return {
@@ -474,7 +474,7 @@ class CodeAnalyzer:
         return class_doc
 
     def _analyze_function(
-        self, node: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef
     ) -> FunctionDoc:
         """Analyze a function definition."""
         func_doc = FunctionDoc(
@@ -1213,8 +1213,8 @@ class DocumentationGenerator:
     def generate_package_docs(
         self,
         package_path: Path,
-        output_dir: Optional[Path] = None,
-    ) -> Dict[str, str]:
+        output_dir: Path | None = None,
+    ) -> dict[str, str]:
         """Generate documentation for a package."""
         docs = {}
 
@@ -1267,9 +1267,9 @@ class DocumentationGenerator:
 
 
 def generate_docs(
-    source: Union[Path, Any],
+    source: Path | Any,
     output_format: OutputFormat = OutputFormat.MARKDOWN,
-    output_path: Optional[Path] = None,
+    output_path: Path | None = None,
 ) -> str:
     """Generate documentation from source.
 

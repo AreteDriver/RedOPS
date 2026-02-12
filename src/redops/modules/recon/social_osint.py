@@ -8,7 +8,7 @@ IMPORTANT: This module operates on PUBLIC information only.
 No private data access, no authentication bypass, no terms of service violations.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import re
@@ -47,9 +47,9 @@ class UserProfile:
     url: str
     category: str
     confidence: float = 0.0  # 0.0 to 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "username": self.username,
@@ -67,11 +67,11 @@ class BreachInfo:
 
     name: str
     date: str
-    data_types: List[str]
+    data_types: list[str]
     description: str
     severity: str  # low, medium, high, critical
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -249,7 +249,7 @@ KNOWN_BREACH_PATTERNS = {
 }
 
 
-def gather_osint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def gather_osint(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Gather OSINT from public sources.
 
@@ -341,7 +341,7 @@ def gather_osint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     return ctx
 
 
-def extract_usernames_from_context(ctx: Context) -> Set[str]:
+def extract_usernames_from_context(ctx: Context) -> set[str]:
     """
     Extract potential usernames from context data.
 
@@ -415,7 +415,7 @@ def extract_usernames_from_context(ctx: Context) -> Set[str]:
     return {u for u in usernames if is_valid_username(u)}
 
 
-def generate_usernames_from_name(name: str) -> Set[str]:
+def generate_usernames_from_name(name: str) -> set[str]:
     """
     Generate potential usernames from a full name.
 
@@ -486,7 +486,7 @@ def generate_usernames_from_name(name: str) -> Set[str]:
     return {u for u in usernames if is_valid_username(u)}
 
 
-def extract_username_from_email(email: str) -> Optional[str]:
+def extract_username_from_email(email: str) -> str | None:
     """
     Extract username portion from email address.
 
@@ -548,8 +548,8 @@ def is_valid_username(username: str) -> bool:
 
 
 def correlate_usernames_to_platforms(
-    usernames: Set[str], platform_keys: Optional[List[str]] = None
-) -> Tuple[List[UserProfile], List[Dict[str, Any]]]:
+    usernames: set[str], platform_keys: list[str] | None = None
+) -> tuple[list[UserProfile], list[dict[str, Any]]]:
     """
     Correlate usernames across platforms.
 
@@ -638,7 +638,7 @@ def calculate_username_confidence(username: str, platform: Platform) -> float:
     return min(1.0, score)
 
 
-def extract_emails_from_context(ctx: Context) -> Set[str]:
+def extract_emails_from_context(ctx: Context) -> set[str]:
     """
     Extract email addresses from context data.
 
@@ -681,7 +681,7 @@ def is_domain(target: str) -> bool:
     return bool(domain_pattern.match(target))
 
 
-def analyze_email_patterns(domain: str) -> List[EmailPattern]:
+def analyze_email_patterns(domain: str) -> list[EmailPattern]:
     """
     Analyze likely email patterns for a domain.
 
@@ -716,7 +716,7 @@ def analyze_email_patterns(domain: str) -> List[EmailPattern]:
 
 def generate_email_permutations(
     first_name: str, last_name: str, domain: str
-) -> List[str]:
+) -> list[str]:
     """
     Generate email permutations for a person at a domain.
 
@@ -752,7 +752,7 @@ def generate_email_permutations(
     return permutations
 
 
-def check_breaches_batch(emails: Set[str]) -> List[Dict[str, Any]]:
+def check_breaches_batch(emails: set[str]) -> list[dict[str, Any]]:
     """
     Check multiple emails for breach exposure.
 
@@ -774,7 +774,7 @@ def check_breaches_batch(emails: Set[str]) -> List[Dict[str, Any]]:
     return results
 
 
-def check_breach_simulated(email: str) -> Dict[str, Any]:
+def check_breach_simulated(email: str) -> dict[str, Any]:
     """
     Simulate breach checking for an email.
 
@@ -820,7 +820,7 @@ def check_breach_simulated(email: str) -> Dict[str, Any]:
     return result
 
 
-def check_data_breaches(email: str) -> Dict[str, Any]:
+def check_data_breaches(email: str) -> dict[str, Any]:
     """
     Check if an email appears in known data breaches.
 
@@ -836,7 +836,7 @@ def check_data_breaches(email: str) -> Dict[str, Any]:
     return check_breach_simulated(email)
 
 
-def correlate_usernames(usernames: List[str]) -> Dict[str, List[str]]:
+def correlate_usernames(usernames: list[str]) -> dict[str, list[str]]:
     """
     Correlate usernames across platforms.
 
@@ -855,7 +855,7 @@ def correlate_usernames(usernames: List[str]) -> Dict[str, List[str]]:
     return result
 
 
-def generate_osint_findings(osint_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+def generate_osint_findings(osint_data: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Generate findings from OSINT data.
 
@@ -920,7 +920,7 @@ def generate_osint_findings(osint_data: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def discover_employees(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Discover potential employees from context data.
@@ -997,7 +997,7 @@ def discover_employees(
     return ctx
 
 
-def get_platform_categories() -> Dict[str, List[str]]:
+def get_platform_categories() -> dict[str, list[str]]:
     """
     Get platforms grouped by category.
 
@@ -1012,7 +1012,7 @@ def get_platform_categories() -> Dict[str, List[str]]:
     return categories
 
 
-def get_platform_by_name(name: str) -> Optional[Platform]:
+def get_platform_by_name(name: str) -> Platform | None:
     """
     Get platform by name or key.
 
@@ -1035,8 +1035,8 @@ def get_platform_by_name(name: str) -> Optional[Platform]:
 
 
 def generate_profile_urls(
-    username: str, platforms: Optional[List[str]] = None
-) -> List[Dict[str, str]]:
+    username: str, platforms: list[str] | None = None
+) -> list[dict[str, str]]:
     """
     Generate profile URLs for a username across platforms.
 

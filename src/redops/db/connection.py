@@ -4,7 +4,7 @@ Database connection management for RedOPS.
 Provides session management and connection pooling.
 """
 
-from typing import Optional, Generator
+from typing import Generator
 from contextlib import contextmanager
 import os
 import logging
@@ -23,7 +23,7 @@ class DatabaseConfig:
 
     def __init__(
         self,
-        url: Optional[str] = None,
+        url: str | None = None,
         pool_size: int = 5,
         max_overflow: int = 10,
         pool_timeout: int = 30,
@@ -73,7 +73,7 @@ class Database:
     Handles engine creation, session management, and connection pooling.
     """
 
-    def __init__(self, config: Optional[DatabaseConfig] = None):
+    def __init__(self, config: DatabaseConfig | None = None):
         """
         Initialize database manager.
 
@@ -177,7 +177,7 @@ class Database:
 
 
 # Global database instance
-_database: Optional[Database] = None
+_database: Database | None = None
 
 
 def get_database() -> Database:
@@ -200,7 +200,7 @@ def session_scope() -> Generator[Session, None, None]:
         yield session
 
 
-def init_database(config: Optional[DatabaseConfig] = None) -> Database:
+def init_database(config: DatabaseConfig | None = None) -> Database:
     """
     Initialize the global database instance.
 

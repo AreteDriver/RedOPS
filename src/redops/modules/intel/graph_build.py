@@ -5,7 +5,7 @@ Builds directed graphs of assets, risks, and relationships for attack path analy
 Supports export to common formats and centrality analysis.
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 from redops.core.context import Context
@@ -18,9 +18,9 @@ class GraphNode:
     id: str
     node_type: str
     label: str
-    data: Dict[str, Any] = field(default_factory=dict)
-    edges_out: Set[str] = field(default_factory=set)
-    edges_in: Set[str] = field(default_factory=set)
+    data: dict[str, Any] = field(default_factory=dict)
+    edges_out: set[str] = field(default_factory=set)
+    edges_in: set[str] = field(default_factory=set)
 
     def add_edge_to(self, target_id: str) -> None:
         """Add an outgoing edge to another node."""
@@ -45,7 +45,7 @@ class GraphNode:
         """Number of incoming edges."""
         return len(self.edges_in)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert node to dictionary."""
         return {
             "id": self.id,
@@ -66,9 +66,9 @@ class GraphEdge:
     target: str
     edge_type: str
     weight: float = 1.0
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert edge to dictionary."""
         return {
             "source": self.source,
@@ -83,16 +83,16 @@ class AssetGraph:
     """Directed graph of assets and risks."""
 
     def __init__(self):
-        self.nodes: Dict[str, GraphNode] = {}
-        self.edges: List[GraphEdge] = []
-        self._edge_index: Dict[Tuple[str, str], GraphEdge] = {}
+        self.nodes: dict[str, GraphNode] = {}
+        self.edges: list[GraphEdge] = []
+        self._edge_index: dict[tuple[str, str], GraphEdge] = {}
 
     def add_node(
         self,
         node_id: str,
         node_type: str,
-        label: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        label: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> GraphNode:
         """
         Add a node to the graph.
@@ -127,8 +127,8 @@ class AssetGraph:
         target_id: str,
         edge_type: str = "relates_to",
         weight: float = 1.0,
-        data: Optional[Dict[str, Any]] = None,
-    ) -> Optional[GraphEdge]:
+        data: dict[str, Any] | None = None,
+    ) -> GraphEdge | None:
         """
         Add an edge between two nodes.
 
@@ -166,11 +166,11 @@ class AssetGraph:
 
         return edge
 
-    def get_node(self, node_id: str) -> Optional[GraphNode]:
+    def get_node(self, node_id: str) -> GraphNode | None:
         """Get a node by ID."""
         return self.nodes.get(node_id)
 
-    def get_neighbors(self, node_id: str, direction: str = "out") -> List[str]:
+    def get_neighbors(self, node_id: str, direction: str = "out") -> list[str]:
         """
         Get neighboring node IDs.
 
@@ -192,7 +192,7 @@ class AssetGraph:
         else:
             return list(node.edges_out | node.edges_in)
 
-    def get_nodes_by_type(self, node_type: str) -> List[GraphNode]:
+    def get_nodes_by_type(self, node_type: str) -> list[GraphNode]:
         """Get all nodes of a specific type."""
         return [n for n in self.nodes.values() if n.node_type == node_type]
 
@@ -204,7 +204,7 @@ class AssetGraph:
         """Get number of edges."""
         return len(self.edges)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert graph to dictionary representation."""
         return {
             "nodes": [node.to_dict() for node in self.nodes.values()],
@@ -217,21 +217,21 @@ class AssetGraph:
             },
         }
 
-    def get_node_type_counts(self) -> Dict[str, int]:
+    def get_node_type_counts(self) -> dict[str, int]:
         """Count nodes by type."""
-        counts: Dict[str, int] = defaultdict(int)
+        counts: dict[str, int] = defaultdict(int)
         for node in self.nodes.values():
             counts[node.node_type] += 1
         return dict(counts)
 
-    def get_edge_type_counts(self) -> Dict[str, int]:
+    def get_edge_type_counts(self) -> dict[str, int]:
         """Count edges by type."""
-        counts: Dict[str, int] = defaultdict(int)
+        counts: dict[str, int] = defaultdict(int)
         for edge in self.edges:
             counts[edge.edge_type] += 1
         return dict(counts)
 
-    def calculate_degree_centrality(self) -> Dict[str, float]:
+    def calculate_degree_centrality(self) -> dict[str, float]:
         """
         Calculate degree centrality for all nodes.
 
@@ -244,7 +244,7 @@ class AssetGraph:
 
         return {node_id: node.degree / (n - 1) for node_id, node in self.nodes.items()}
 
-    def calculate_in_degree_centrality(self) -> Dict[str, float]:
+    def calculate_in_degree_centrality(self) -> dict[str, float]:
         """Calculate in-degree centrality (nodes that are pointed to)."""
         n = len(self.nodes)
         if n <= 1:
@@ -254,7 +254,7 @@ class AssetGraph:
             node_id: node.in_degree / (n - 1) for node_id, node in self.nodes.items()
         }
 
-    def calculate_out_degree_centrality(self) -> Dict[str, float]:
+    def calculate_out_degree_centrality(self) -> dict[str, float]:
         """Calculate out-degree centrality (nodes that point to others)."""
         n = len(self.nodes)
         if n <= 1:
@@ -264,7 +264,7 @@ class AssetGraph:
             node_id: node.out_degree / (n - 1) for node_id, node in self.nodes.items()
         }
 
-    def get_most_connected(self, n: int = 10) -> List[Tuple[str, int]]:
+    def get_most_connected(self, n: int = 10) -> list[tuple[str, int]]:
         """
         Get the n most connected nodes.
 
@@ -317,7 +317,7 @@ class AssetGraph:
         lines.append("}")
         return "\n".join(lines)
 
-    def to_cytoscape(self) -> Dict[str, Any]:
+    def to_cytoscape(self) -> dict[str, Any]:
         """
         Export graph to Cytoscape.js format.
 
@@ -356,7 +356,7 @@ class AssetGraph:
         return {"elements": elements}
 
 
-def build_graph(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def build_graph(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Build a graph from context data.
 
@@ -647,7 +647,7 @@ def build_finding_nodes(graph: AssetGraph, ctx: Context) -> None:
 
 def find_paths(
     graph: AssetGraph, start_id: str, end_id: str, max_depth: int = 5
-) -> List[List[str]]:
+) -> list[list[str]]:
     """
     Find all paths between two nodes using DFS.
 
@@ -663,9 +663,9 @@ def find_paths(
     if start_id not in graph.nodes or end_id not in graph.nodes:
         return []
 
-    paths: List[List[str]] = []
+    paths: list[list[str]] = []
 
-    def dfs(current: str, target: str, path: List[str], depth: int) -> None:
+    def dfs(current: str, target: str, path: list[str], depth: int) -> None:
         if depth > max_depth:
             return
 
@@ -689,7 +689,7 @@ def find_paths(
 
 def find_shortest_path(
     graph: AssetGraph, start_id: str, end_id: str
-) -> Optional[List[str]]:
+) -> list[str] | None:
     """
     Find shortest path between two nodes using BFS.
 
@@ -730,7 +730,7 @@ def find_shortest_path(
 
 
 def get_subgraph(
-    graph: AssetGraph, node_ids: Set[str], include_edges: bool = True
+    graph: AssetGraph, node_ids: set[str], include_edges: bool = True
 ) -> AssetGraph:
     """
     Extract a subgraph containing only specified nodes.

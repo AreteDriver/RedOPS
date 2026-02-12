@@ -2,7 +2,6 @@
 
 import tempfile
 from pathlib import Path
-from typing import Set
 
 import pytest
 
@@ -122,7 +121,7 @@ class MockScanner(ScannerPlugin):
         return "Mock scanner for testing"
 
     @classmethod
-    def get_capabilities(cls) -> Set[ScannerCapability]:
+    def get_capabilities(cls) -> set[ScannerCapability]:
         return {ScannerCapability.WEB_SCAN}
 
     def scan(self, target: str, config=None) -> ScannerResult:

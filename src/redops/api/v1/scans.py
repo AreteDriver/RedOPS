@@ -3,7 +3,6 @@ Scan API routes.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -20,11 +19,11 @@ class ScanCreate(BaseModel):
 
     target: str = Field(..., description="Target URL, IP, or domain")
     pipeline: str = Field(default="default", description="Scan pipeline to use")
-    modules: Optional[List[str]] = Field(
+    modules: list[str] | None = Field(
         default=None, description="Specific modules to run"
     )
-    options: Optional[dict] = Field(default_factory=dict, description="Module options")
-    tags: Optional[List[str]] = Field(
+    options: dict | None = Field(default_factory=dict, description="Module options")
+    tags: list[str] | None = Field(
         default_factory=list, description="Tags for organization"
     )
 
@@ -48,10 +47,10 @@ class ScanResponse(BaseModel):
     pipeline: str
     status: str
     progress: int = 0
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     created_at: datetime
-    created_by: Optional[str] = None
+    created_by: str | None = None
     findings_count: int = 0
     metadata: dict = Field(default_factory=dict)
 
@@ -59,7 +58,7 @@ class ScanResponse(BaseModel):
 class ScanList(BaseModel):
     """Paginated scan list response."""
 
-    scans: List[ScanResponse]
+    scans: list[ScanResponse]
     total: int
     skip: int
     limit: int

@@ -5,7 +5,7 @@ Identifies web technologies, frameworks, and libraries used by a target
 through HTTP header analysis, HTML inspection, and favicon fingerprinting.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any
 import hashlib
 import re
 import ssl
@@ -198,7 +198,7 @@ SERVER_PATTERNS = {
 }
 
 
-def fingerprint(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def fingerprint(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Fingerprint the technology stack of a target.
 
@@ -431,7 +431,7 @@ def normalize_url(target: str) -> str:
 
 def make_request(
     url: str, timeout: int = 10, follow_redirects: bool = True, verify_ssl: bool = True
-) -> Optional[Any]:
+) -> Any | None:
     """
     Make an HTTP request to a URL.
 
@@ -481,7 +481,7 @@ def make_request(
         return None
 
 
-def analyze_headers(headers: Dict[str, str]) -> Dict[str, Any]:
+def analyze_headers(headers: dict[str, str]) -> dict[str, Any]:
     """
     Analyze HTTP headers to identify technologies.
 
@@ -528,7 +528,7 @@ def analyze_headers(headers: Dict[str, str]) -> Dict[str, Any]:
     return analysis
 
 
-def check_security_headers(headers: Dict[str, str]) -> Dict[str, Dict[str, Any]]:
+def check_security_headers(headers: dict[str, str]) -> dict[str, dict[str, Any]]:
     """
     Check for missing security headers.
 
@@ -548,7 +548,7 @@ def check_security_headers(headers: Dict[str, str]) -> Dict[str, Dict[str, Any]]
     return missing
 
 
-def detect_technologies(html: str, headers: Dict[str, str]) -> List[str]:
+def detect_technologies(html: str, headers: dict[str, str]) -> list[str]:
     """
     Detect technologies from HTML content and headers.
 
@@ -573,7 +573,7 @@ def detect_technologies(html: str, headers: Dict[str, str]) -> List[str]:
 
 def fetch_favicon_hash(
     url: str, timeout: int = 10, verify_ssl: bool = True
-) -> Optional[Tuple[str, Optional[str]]]:
+) -> tuple[str, str | None] | None:
     """
     Fetch and hash the favicon for fingerprinting.
 
@@ -629,7 +629,7 @@ def favicon_hash(favicon_bytes: bytes) -> str:
     return hashlib.md5(favicon_bytes).hexdigest()
 
 
-def get_ssl_info(target: str) -> Optional[Dict[str, Any]]:
+def get_ssl_info(target: str) -> dict[str, Any] | None:
     """
     Get SSL/TLS certificate information.
 
@@ -676,8 +676,8 @@ def get_ssl_info(target: str) -> Optional[Dict[str, Any]]:
 
 
 def check_version_disclosure(
-    headers: Dict[str, str], web_server: Optional[str]
-) -> List[str]:
+    headers: dict[str, str], web_server: str | None
+) -> list[str]:
     """
     Check for version disclosure in headers and server string.
 
@@ -705,7 +705,7 @@ def check_version_disclosure(
     return disclosed
 
 
-def detect_frameworks(html_content: str, headers: Dict[str, str]) -> List[str]:
+def detect_frameworks(html_content: str, headers: dict[str, str]) -> list[str]:
     """
     Detect web frameworks from HTML content and headers.
 

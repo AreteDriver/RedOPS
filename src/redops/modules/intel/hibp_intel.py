@@ -11,7 +11,7 @@ IMPORTANT: Requires a Have I Been Pwned API key for most endpoints.
 https://haveibeenpwned.com/API/Key
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 import os
 
@@ -26,12 +26,12 @@ class HIBPBreach:
     title: str
     domain: str
     breach_date: str
-    added_date: Optional[str] = None
-    modified_date: Optional[str] = None
+    added_date: str | None = None
+    modified_date: str | None = None
     pwn_count: int = 0
-    description: Optional[str] = None
-    logo_path: Optional[str] = None
-    data_classes: List[str] = field(default_factory=list)
+    description: str | None = None
+    logo_path: str | None = None
+    data_classes: list[str] = field(default_factory=list)
     is_verified: bool = False
     is_fabricated: bool = False
     is_sensitive: bool = False
@@ -40,7 +40,7 @@ class HIBPBreach:
     is_malware: bool = False
     is_subscription_free: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -69,11 +69,11 @@ class HIBPPaste:
 
     source: str
     id: str
-    title: Optional[str] = None
-    date: Optional[str] = None
+    title: str | None = None
+    date: str | None = None
     email_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "source": self.source,
@@ -84,7 +84,7 @@ class HIBPPaste:
         }
 
 
-def get_hibp_api_key() -> Optional[str]:
+def get_hibp_api_key() -> str | None:
     """Get HIBP API key."""
     api_key = os.environ.get("HIBP_API_KEY")
     if not api_key:
@@ -99,9 +99,9 @@ def get_hibp_api_key() -> Optional[str]:
 
 def _make_hibp_request(
     endpoint: str,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     user_agent: str = "RedOPS-Security-Scanner",
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Make a request to HIBP API."""
     try:
         import requests
@@ -137,7 +137,7 @@ def _make_hibp_request(
 
 
 def query_hibp_breaches(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Query HIBP for all breaches (no API key required).
@@ -199,7 +199,7 @@ def query_hibp_breaches(
     return ctx
 
 
-def query_hibp_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_hibp_domain(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query HIBP for breaches affecting a domain (requires API key).
 
@@ -252,7 +252,7 @@ def query_hibp_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> 
     return ctx
 
 
-def query_hibp_email(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_hibp_email(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query HIBP for breaches affecting an email (requires API key).
 
@@ -316,7 +316,7 @@ def query_hibp_email(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     return ctx
 
 
-def query_hibp_pastes(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_hibp_pastes(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query HIBP for pastes containing an email (requires API key).
 
@@ -377,7 +377,7 @@ def query_hibp_pastes(ctx: Context, params: Optional[Dict[str, Any]] = None) -> 
 
 
 def analyze_hibp_intel(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Run comprehensive HIBP analysis.

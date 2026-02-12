@@ -16,7 +16,7 @@ import sys
 import argparse
 import json
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -63,7 +63,7 @@ class CLIConfig:
     verbosity: Verbosity = Verbosity.NORMAL
     output_format: OutputFormat = OutputFormat.TEXT
     output_dir: str = "./output"
-    config_file: Optional[str] = None
+    config_file: str | None = None
     no_color: bool = False
     quiet: bool = False
     dry_run: bool = False
@@ -76,14 +76,14 @@ class ScanResult:
     success: bool
     target: str
     preset: str
-    modules_run: List[str]
+    modules_run: list[str]
     findings_count: int
     duration_seconds: float
-    output_files: List[str]
-    errors: List[str]
-    context: Optional[Context] = None
+    output_files: list[str]
+    errors: list[str]
+    context: Context | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "success": self.success,
@@ -407,7 +407,7 @@ def cmd_modules(args: argparse.Namespace, config: CLIConfig) -> int:
         print()
 
     # Group by category
-    categories: Dict[str, List[str]] = {}
+    categories: dict[str, list[str]] = {}
     for mod_id, mod_info in AVAILABLE_MODULES.items():
         cat = mod_info.get("category", "other")
         if cat not in categories:
@@ -881,7 +881,7 @@ def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
             print(json.dumps(output, indent=2))
         else:
             # Group by type
-            by_type: Dict[PluginType, List] = {}
+            by_type: dict[PluginType, list] = {}
             for name, info in plugins.items():
                 ptype = info.metadata.plugin_type
                 if ptype not in by_type:
@@ -1006,7 +1006,7 @@ def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
     return 0
 
 
-def get_plugin_directories() -> List[Path]:
+def get_plugin_directories() -> list[Path]:
     """Get directories to search for plugins."""
     dirs = []
 
@@ -1038,7 +1038,7 @@ def get_plugin_directories() -> List[Path]:
 # ============================================================================
 
 
-def execute_scan(target: str, modules: List[str], config: CLIConfig) -> ScanResult:
+def execute_scan(target: str, modules: list[str], config: CLIConfig) -> ScanResult:
     """Execute a scan with specified modules."""
     errors = []
     modules_run = []
@@ -1290,7 +1290,7 @@ def count_findings(ctx: Context) -> int:
     return count
 
 
-def save_scan_output(ctx: Context, config: CLIConfig) -> List[str]:
+def save_scan_output(ctx: Context, config: CLIConfig) -> list[str]:
     """Save scan output to files."""
     output_files = []
     output_dir = Path(config.output_dir)
@@ -1319,7 +1319,7 @@ def save_scan_output(ctx: Context, config: CLIConfig) -> List[str]:
 
 
 def generate_report(
-    scan_data: Dict[str, Any], report_type: str, config: CLIConfig
+    scan_data: dict[str, Any], report_type: str, config: CLIConfig
 ) -> str:
     """Generate a report from scan data."""
     if report_type == "executive":
@@ -1334,7 +1334,7 @@ def generate_report(
         return json.dumps(scan_data, indent=2, default=str)
 
 
-def generate_executive_text_report(data: Dict[str, Any]) -> str:
+def generate_executive_text_report(data: dict[str, Any]) -> str:
     """Generate executive text report."""
     lines = ["=" * 60, "EXECUTIVE SECURITY ASSESSMENT REPORT", "=" * 60, ""]
 
@@ -1368,12 +1368,12 @@ def generate_executive_text_report(data: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def generate_technical_report(data: Dict[str, Any]) -> str:
+def generate_technical_report(data: dict[str, Any]) -> str:
     """Generate technical report."""
     return json.dumps(data, indent=2, default=str)
 
 
-def generate_summary_report(data: Dict[str, Any]) -> str:
+def generate_summary_report(data: dict[str, Any]) -> str:
     """Generate summary report."""
     lines = ["SCAN SUMMARY", "=" * 40, ""]
 
@@ -1411,7 +1411,7 @@ def get_config_path() -> Path:
     return home / ".config" / "redops" / "config.json"
 
 
-def get_default_config() -> Dict[str, Any]:
+def get_default_config() -> dict[str, Any]:
     """Get default configuration."""
     return {
         "output_dir": "./output",
@@ -1710,7 +1710,7 @@ Examples:
     return parser
 
 
-def main(args: Optional[List[str]] = None) -> int:
+def main(args: list[str] | None = None) -> int:
     """Main entry point."""
     parser = create_parser()
     parsed = parser.parse_args(args)

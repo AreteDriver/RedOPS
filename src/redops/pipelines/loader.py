@@ -4,7 +4,6 @@ Pipeline loader - Loads and validates pipeline JSON files.
 
 import json
 from pathlib import Path
-from typing import Union
 from redops.pipelines.schemas import Pipeline
 
 
@@ -14,7 +13,7 @@ class PipelineLoader:
     """
 
     @staticmethod
-    def load(path: Union[str, Path]) -> Pipeline:
+    def load(path: str | Path) -> Pipeline:
         """
         Load a pipeline from a JSON file.
 
@@ -63,7 +62,7 @@ class PipelineLoader:
         return pipeline
 
     @staticmethod
-    def save(pipeline: Pipeline, path: Union[str, Path]) -> None:
+    def save(pipeline: Pipeline, path: str | Path) -> None:
         """
         Save a pipeline to a JSON file.
 

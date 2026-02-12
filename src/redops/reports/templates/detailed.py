@@ -1,6 +1,6 @@
 """Detailed findings report template."""
 
-from typing import Any, List
+from typing import Any
 
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -55,7 +55,7 @@ class DetailedFindingsReport(BaseReport):
             )
         )
 
-    def generate(self, data: ScanResult) -> List[Any]:
+    def generate(self, data: ScanResult) -> list[Any]:
         """Generate detailed findings content."""
         elements = []
 
@@ -180,7 +180,7 @@ class DetailedFindingsReport(BaseReport):
 
         return Paragraph(text, self.styles["Normal"])
 
-    def _create_finding_detail(self, finding: Finding, index: int) -> List[Any]:
+    def _create_finding_detail(self, finding: Finding, index: int) -> list[Any]:
         """Create detailed finding section."""
         elements = []
 

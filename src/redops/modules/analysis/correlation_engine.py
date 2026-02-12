@@ -13,7 +13,7 @@ Correlation Types:
 - Pattern: Findings matching known attack patterns
 """
 
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timedelta
@@ -79,13 +79,13 @@ class Finding:
     title: str
     description: str = ""
     severity: FindingSeverity = FindingSeverity.MEDIUM
-    timestamp: Optional[str] = None
-    entities: List[str] = field(default_factory=list)
-    attributes: Dict[str, Any] = field(default_factory=dict)
-    evidence: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: str | None = None
+    entities: list[str] = field(default_factory=list)
+    attributes: dict[str, Any] = field(default_factory=dict)
+    evidence: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -107,17 +107,17 @@ class Correlation:
     """Represents a correlation between findings."""
 
     id: str
-    finding_ids: List[str]
+    finding_ids: list[str]
     correlation_type: CorrelationType
     strength: CorrelationStrength
     confidence: float  # 0.0 to 1.0
     reason: str
-    shared_entities: List[str] = field(default_factory=list)
-    shared_attributes: Dict[str, Any] = field(default_factory=dict)
-    timeline: List[Dict[str, Any]] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    shared_entities: list[str] = field(default_factory=list)
+    shared_attributes: dict[str, Any] = field(default_factory=dict)
+    timeline: list[dict[str, Any]] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -139,16 +139,16 @@ class CorrelationCluster:
 
     id: str
     name: str
-    finding_ids: List[str]
-    correlations: List[str]  # Correlation IDs
+    finding_ids: list[str]
+    correlations: list[str]  # Correlation IDs
     primary_category: FindingCategory
     aggregate_severity: FindingSeverity
     confidence: float
     summary: str = ""
-    attack_pattern: Optional[str] = None
-    recommendations: List[str] = field(default_factory=list)
+    attack_pattern: str | None = None
+    recommendations: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -173,13 +173,13 @@ class CorrelationInsight:
     description: str
     insight_type: str
     severity: FindingSeverity
-    related_findings: List[str]
-    related_correlations: List[str]
-    evidence: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    related_findings: list[str]
+    related_correlations: list[str]
+    evidence: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
     confidence: float = 0.8
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -295,7 +295,7 @@ CAUSAL_RELATIONSHIPS = {
 
 
 def correlate_findings(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Correlate findings from context data.
@@ -398,7 +398,7 @@ def correlate_findings(
     return ctx
 
 
-def extract_findings_from_context(ctx: Context) -> List[Finding]:
+def extract_findings_from_context(ctx: Context) -> list[Finding]:
     """
     Extract findings from various context sources.
 
@@ -568,8 +568,8 @@ def extract_findings_from_context(ctx: Context) -> List[Finding]:
 
 
 def correlate_temporal(
-    findings: List[Finding], window_hours: int = 24
-) -> List[Correlation]:
+    findings: list[Finding], window_hours: int = 24
+) -> list[Correlation]:
     """
     Correlate findings based on temporal proximity.
 
@@ -631,8 +631,8 @@ def correlate_temporal(
 
 
 def correlate_entities(
-    findings: List[Finding], entity_types: List[str]
-) -> List[Correlation]:
+    findings: list[Finding], entity_types: list[str]
+) -> list[Correlation]:
     """
     Correlate findings based on shared entities.
 
@@ -646,7 +646,7 @@ def correlate_entities(
     correlations = []
 
     # Build entity index
-    entity_to_findings: Dict[str, List[Finding]] = defaultdict(list)
+    entity_to_findings: dict[str, list[Finding]] = defaultdict(list)
 
     for finding in findings:
         for entity in finding.entities:
@@ -687,7 +687,7 @@ def correlate_entities(
     return correlations
 
 
-def correlate_attributes(findings: List[Finding]) -> List[Correlation]:
+def correlate_attributes(findings: list[Finding]) -> list[Correlation]:
     """
     Correlate findings based on similar attributes.
 
@@ -700,7 +700,7 @@ def correlate_attributes(findings: List[Finding]) -> List[Correlation]:
     correlations = []
 
     # Group by category
-    by_category: Dict[FindingCategory, List[Finding]] = defaultdict(list)
+    by_category: dict[FindingCategory, list[Finding]] = defaultdict(list)
     for finding in findings:
         by_category[finding.category].append(finding)
 
@@ -738,7 +738,7 @@ def correlate_attributes(findings: List[Finding]) -> List[Correlation]:
     return correlations
 
 
-def correlate_causal(findings: List[Finding]) -> List[Correlation]:
+def correlate_causal(findings: list[Finding]) -> list[Correlation]:
     """
     Correlate findings based on causal relationships.
 
@@ -751,7 +751,7 @@ def correlate_causal(findings: List[Finding]) -> List[Correlation]:
     correlations = []
 
     # Group by category
-    by_category: Dict[FindingCategory, List[Finding]] = defaultdict(list)
+    by_category: dict[FindingCategory, list[Finding]] = defaultdict(list)
     for finding in findings:
         by_category[finding.category].append(finding)
 
@@ -797,7 +797,7 @@ def correlate_causal(findings: List[Finding]) -> List[Correlation]:
     return correlations
 
 
-def detect_attack_patterns(findings: List[Finding]) -> List[Correlation]:
+def detect_attack_patterns(findings: list[Finding]) -> list[Correlation]:
     """
     Detect known attack patterns in findings.
 
@@ -852,8 +852,8 @@ def detect_attack_patterns(findings: List[Finding]) -> List[Correlation]:
 
 
 def cluster_findings(
-    findings: List[Finding], correlations: List[Correlation]
-) -> List[CorrelationCluster]:
+    findings: list[Finding], correlations: list[Correlation]
+) -> list[CorrelationCluster]:
     """
     Cluster related findings using correlation data.
 
@@ -868,7 +868,7 @@ def cluster_findings(
     finding_index = {f.id: f for f in findings}
 
     # Build adjacency graph
-    graph: Dict[str, Set[str]] = defaultdict(set)
+    graph: dict[str, set[str]] = defaultdict(set)
     for corr in correlations:
         for i, fid1 in enumerate(corr.finding_ids):
             for fid2 in corr.finding_ids[i + 1 :]:
@@ -876,7 +876,7 @@ def cluster_findings(
                 graph[fid2].add(fid1)
 
     # Find connected components using DFS
-    visited: Set[str] = set()
+    visited: set[str] = set()
     cluster_id = 0
 
     for finding in findings:
@@ -902,7 +902,7 @@ def cluster_findings(
             ]
 
             # Determine primary category
-            category_counts: Dict[FindingCategory, int] = defaultdict(int)
+            category_counts: dict[FindingCategory, int] = defaultdict(int)
             for f in component_findings:
                 category_counts[f.category] += 1
             primary_category = max(category_counts, key=category_counts.get)
@@ -967,10 +967,10 @@ def cluster_findings(
 
 
 def generate_insights(
-    findings: List[Finding],
-    correlations: List[Correlation],
-    clusters: List[CorrelationCluster],
-) -> List[CorrelationInsight]:
+    findings: list[Finding],
+    correlations: list[Correlation],
+    clusters: list[CorrelationCluster],
+) -> list[CorrelationInsight]:
     """
     Generate insights from correlation analysis.
 
@@ -1033,7 +1033,7 @@ def generate_insights(
             )
 
     # Insight: Entity hotspots
-    entity_counts: Dict[str, int] = defaultdict(int)
+    entity_counts: dict[str, int] = defaultdict(int)
     for corr in correlations:
         if corr.correlation_type == CorrelationType.ENTITY:
             for entity in corr.shared_entities:
@@ -1093,8 +1093,8 @@ def generate_insights(
 
 
 def build_correlation_graph(
-    findings: List[Finding], correlations: List[Correlation]
-) -> Dict[str, Any]:
+    findings: list[Finding], correlations: list[Correlation]
+) -> dict[str, Any]:
     """
     Build a graph representation of correlations.
 
@@ -1139,11 +1139,11 @@ def build_correlation_graph(
 
 
 def generate_correlation_summary(
-    findings: List[Finding],
-    correlations: List[Correlation],
-    clusters: List[CorrelationCluster],
-    insights: List[CorrelationInsight],
-) -> Dict[str, Any]:
+    findings: list[Finding],
+    correlations: list[Correlation],
+    clusters: list[CorrelationCluster],
+    insights: list[CorrelationInsight],
+) -> dict[str, Any]:
     """
     Generate summary of correlation analysis.
 
@@ -1200,7 +1200,7 @@ def generate_correlation_summary(
 # ============================================================================
 
 
-def generate_correlation_id(findings: List[Finding], prefix: str) -> str:
+def generate_correlation_id(findings: list[Finding], prefix: str) -> str:
     """Generate a unique correlation ID."""
     finding_ids = sorted([f.id for f in findings])
     hash_input = f"{prefix}:{':'.join(finding_ids)}"
@@ -1233,7 +1233,7 @@ def parse_severity(severity_str: str) -> FindingSeverity:
     return severity_map.get(severity_str.lower(), FindingSeverity.MEDIUM)
 
 
-def parse_timestamp(timestamp_str: Optional[str]) -> Optional[datetime]:
+def parse_timestamp(timestamp_str: str | None) -> datetime | None:
     """Parse timestamp string to datetime."""
     if not timestamp_str:
         return None
@@ -1256,7 +1256,7 @@ def parse_timestamp(timestamp_str: Optional[str]) -> Optional[datetime]:
     return None
 
 
-def normalize_entity(entity: str) -> Optional[str]:
+def normalize_entity(entity: str) -> str | None:
     """Normalize an entity for comparison."""
     if not entity:
         return None
@@ -1275,7 +1275,7 @@ def normalize_entity(entity: str) -> Optional[str]:
     return entity
 
 
-def extract_entities_from_text(text: str) -> List[str]:
+def extract_entities_from_text(text: str) -> list[str]:
     """Extract entities from text using patterns."""
     entities = []
 
@@ -1286,7 +1286,7 @@ def extract_entities_from_text(text: str) -> List[str]:
     return list(set(entities))
 
 
-def deduplicate_correlations(correlations: List[Correlation]) -> List[Correlation]:
+def deduplicate_correlations(correlations: list[Correlation]) -> list[Correlation]:
     """Remove duplicate correlations."""
     seen_ids = set()
     unique = []
@@ -1300,8 +1300,8 @@ def deduplicate_correlations(correlations: List[Correlation]) -> List[Correlatio
 
 
 def generate_cluster_recommendations(
-    findings: List[Finding], category: FindingCategory
-) -> List[str]:
+    findings: list[Finding], category: FindingCategory
+) -> list[str]:
     """Generate recommendations for a cluster."""
     recommendations = []
 
@@ -1355,22 +1355,22 @@ def generate_cluster_recommendations(
 # ============================================================================
 
 
-def get_correlation_types() -> List[str]:
+def get_correlation_types() -> list[str]:
     """Get all correlation types."""
     return [t.value for t in CorrelationType]
 
 
-def get_finding_categories() -> List[str]:
+def get_finding_categories() -> list[str]:
     """Get all finding categories."""
     return [c.value for c in FindingCategory]
 
 
-def get_severity_levels() -> List[str]:
+def get_severity_levels() -> list[str]:
     """Get all severity levels."""
     return [s.value for s in FindingSeverity]
 
 
-def get_attack_patterns() -> Dict[str, Dict[str, Any]]:
+def get_attack_patterns() -> dict[str, dict[str, Any]]:
     """Get all defined attack patterns."""
     return {
         pid: {
@@ -1384,8 +1384,8 @@ def get_attack_patterns() -> Dict[str, Dict[str, Any]]:
 
 
 def find_related_findings(
-    finding_id: str, correlations: List[Correlation]
-) -> List[str]:
+    finding_id: str, correlations: list[Correlation]
+) -> list[str]:
     """Find all findings related to a given finding."""
     related = set()
 
@@ -1398,14 +1398,14 @@ def find_related_findings(
 
 
 def get_finding_correlations(
-    finding_id: str, correlations: List[Correlation]
-) -> List[Correlation]:
+    finding_id: str, correlations: list[Correlation]
+) -> list[Correlation]:
     """Get all correlations involving a finding."""
     return [c for c in correlations if finding_id in c.finding_ids]
 
 
 def calculate_finding_centrality(
-    finding_id: str, correlations: List[Correlation]
+    finding_id: str, correlations: list[Correlation]
 ) -> float:
     """Calculate centrality score for a finding."""
     connections = 0
@@ -1423,8 +1423,8 @@ def calculate_finding_centrality(
 
 
 def get_high_centrality_findings(
-    findings: List[Finding], correlations: List[Correlation], top_n: int = 10
-) -> List[Tuple[str, float]]:
+    findings: list[Finding], correlations: list[Correlation], top_n: int = 10
+) -> list[tuple[str, float]]:
     """Get findings with highest centrality scores."""
     centralities = [
         (f.id, calculate_finding_centrality(f.id, correlations)) for f in findings
@@ -1439,9 +1439,9 @@ def create_finding(
     title: str,
     description: str = "",
     severity: str = "medium",
-    entities: Optional[List[str]] = None,
-    attributes: Optional[Dict[str, Any]] = None,
-    finding_id: Optional[str] = None,
+    entities: list[str] | None = None,
+    attributes: dict[str, Any] | None = None,
+    finding_id: str | None = None,
 ) -> Finding:
     """
     Create a Finding object.
@@ -1476,8 +1476,8 @@ def create_finding(
 
 
 def merge_findings(
-    findings: List[Finding], merge_strategy: str = "keep_highest_severity"
-) -> List[Finding]:
+    findings: list[Finding], merge_strategy: str = "keep_highest_severity"
+) -> list[Finding]:
     """
     Merge duplicate findings.
 
@@ -1489,7 +1489,7 @@ def merge_findings(
         Deduplicated findings
     """
     # Group by title and category
-    groups: Dict[str, List[Finding]] = defaultdict(list)
+    groups: dict[str, list[Finding]] = defaultdict(list)
     for f in findings:
         key = f"{f.category.value}:{f.title.lower()}"
         groups[key].append(f)

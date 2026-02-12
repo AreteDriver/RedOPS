@@ -3,7 +3,6 @@ Reports API routes.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -26,9 +25,9 @@ class ReportCreate(BaseModel):
     format: str = Field(
         default="pdf", description="Output format: pdf, html, markdown, json"
     )
-    title: Optional[str] = Field(None, description="Custom report title")
-    organization: Optional[str] = Field(None, description="Organization name")
-    options: Optional[dict] = Field(default_factory=dict, description="Report options")
+    title: str | None = Field(None, description="Custom report title")
+    organization: str | None = Field(None, description="Organization name")
+    options: dict | None = Field(default_factory=dict, description="Report options")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -51,17 +50,17 @@ class ReportResponse(BaseModel):
     report_type: str
     format: str
     status: str
-    file_path: Optional[str] = None
-    file_size: Optional[int] = None
+    file_path: str | None = None
+    file_size: int | None = None
     created_at: datetime
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
     metadata: dict = Field(default_factory=dict)
 
 
 class ReportList(BaseModel):
     """Paginated report list response."""
 
-    reports: List[ReportResponse]
+    reports: list[ReportResponse]
     total: int
     skip: int
     limit: int
@@ -74,8 +73,8 @@ _reports: dict[str, dict] = {}
 @router.get("", response_model=ReportList)
 async def list_reports(
     pagination: Pagination = Depends(),
-    scan_id: Optional[str] = None,
-    report_type: Optional[str] = None,
+    scan_id: str | None = None,
+    report_type: str | None = None,
     current_user: dict = Depends(get_current_user),
 ):
     """List generated reports."""

@@ -7,7 +7,7 @@ Detects potential secrets, API keys, and sensitive information in code.
 
 import json
 import re
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -206,7 +206,7 @@ HIGH_PRIORITY_FILES = {
 
 
 def analyze_repository(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Analyze a code repository for artifacts and metadata.
@@ -241,7 +241,7 @@ def analyze_repository(
 
     ctx.log(f"Analyzing repository: {repo_path}", level="INFO")
 
-    analysis: Dict[str, Any] = {
+    analysis: dict[str, Any] = {
         "path": str(repo_path),
         "languages": [],
         "dependencies": {},
@@ -251,7 +251,7 @@ def analyze_repository(
         "metadata": {},
     }
 
-    findings: List[Finding] = []
+    findings: list[Finding] = []
 
     # Detect languages
     languages = detect_languages(repo_path)
@@ -334,7 +334,7 @@ def analyze_repository(
     return ctx
 
 
-def detect_languages(repo_path: str) -> List[str]:
+def detect_languages(repo_path: str) -> list[str]:
     """
     Detect programming languages used in a repository.
 
@@ -389,7 +389,7 @@ def detect_languages(repo_path: str) -> List[str]:
         ".sql": "SQL",
     }
 
-    language_counts: Dict[str, int] = {}
+    language_counts: dict[str, int] = {}
 
     try:
         for file_path in path.rglob("*"):
@@ -410,7 +410,7 @@ def detect_languages(repo_path: str) -> List[str]:
     return [lang for lang, _ in sorted_langs]
 
 
-def extract_dependencies(repo_path: str) -> Dict[str, List[Dict[str, str]]]:
+def extract_dependencies(repo_path: str) -> dict[str, list[dict[str, str]]]:
     """
     Extract dependencies from various package managers.
 
@@ -421,7 +421,7 @@ def extract_dependencies(repo_path: str) -> Dict[str, List[Dict[str, str]]]:
         Dictionary of dependencies by package manager
     """
     path = Path(repo_path)
-    dependencies: Dict[str, List[Dict[str, str]]] = {}
+    dependencies: dict[str, list[dict[str, str]]] = {}
 
     # Python - requirements.txt
     req_path = path / "requirements.txt"
@@ -466,7 +466,7 @@ def extract_dependencies(repo_path: str) -> Dict[str, List[Dict[str, str]]]:
     return dependencies
 
 
-def parse_requirements_txt(file_path: Path) -> List[Dict[str, str]]:
+def parse_requirements_txt(file_path: Path) -> list[dict[str, str]]:
     """
     Parse a Python requirements.txt file.
 
@@ -500,7 +500,7 @@ def parse_requirements_txt(file_path: Path) -> List[Dict[str, str]]:
         return []
 
 
-def parse_pyproject_toml(file_path: Path) -> List[Dict[str, str]]:
+def parse_pyproject_toml(file_path: Path) -> list[dict[str, str]]:
     """
     Parse dependencies from pyproject.toml.
 
@@ -534,7 +534,7 @@ def parse_pyproject_toml(file_path: Path) -> List[Dict[str, str]]:
         return []
 
 
-def parse_package_json(file_path: Path) -> List[Dict[str, str]]:
+def parse_package_json(file_path: Path) -> list[dict[str, str]]:
     """
     Parse dependencies from package.json.
 
@@ -566,7 +566,7 @@ def parse_package_json(file_path: Path) -> List[Dict[str, str]]:
         return []
 
 
-def parse_go_mod(file_path: Path) -> List[Dict[str, str]]:
+def parse_go_mod(file_path: Path) -> list[dict[str, str]]:
     """
     Parse dependencies from go.mod.
 
@@ -604,7 +604,7 @@ def parse_go_mod(file_path: Path) -> List[Dict[str, str]]:
         return []
 
 
-def parse_gemfile(file_path: Path) -> List[Dict[str, str]]:
+def parse_gemfile(file_path: Path) -> list[dict[str, str]]:
     """
     Parse dependencies from Gemfile.
 
@@ -633,7 +633,7 @@ def parse_gemfile(file_path: Path) -> List[Dict[str, str]]:
         return []
 
 
-def parse_cargo_toml(file_path: Path) -> List[Dict[str, str]]:
+def parse_cargo_toml(file_path: Path) -> list[dict[str, str]]:
     """
     Parse dependencies from Cargo.toml.
 
@@ -665,8 +665,8 @@ def parse_cargo_toml(file_path: Path) -> List[Dict[str, str]]:
 
 
 def scan_for_secrets(
-    repo_path: str, max_files: int = 10000, patterns: Optional[Dict[str, Dict]] = None
-) -> List[Dict[str, Any]]:
+    repo_path: str, max_files: int = 10000, patterns: dict[str, dict] | None = None
+) -> list[dict[str, Any]]:
     """
     Scan repository for secrets and sensitive data.
 
@@ -684,7 +684,7 @@ def scan_for_secrets(
         return []
 
     patterns = patterns or SECRET_PATTERNS
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     files_scanned = 0
 
     # First, scan high-priority files
@@ -736,8 +736,8 @@ def scan_for_secrets(
 
 
 def scan_file_for_secrets(
-    file_path: Path, patterns: Dict[str, Dict]
-) -> List[Dict[str, Any]]:
+    file_path: Path, patterns: dict[str, dict]
+) -> list[dict[str, Any]]:
     """
     Scan a single file for secrets.
 
@@ -801,7 +801,7 @@ def get_masked_context(line: str, match: re.Match) -> str:
     return masked.strip()[:100]
 
 
-def find_code_patterns(repo_path: str) -> List[Dict[str, Any]]:
+def find_code_patterns(repo_path: str) -> list[dict[str, Any]]:
     """
     Find common code patterns and security practices.
 
@@ -862,7 +862,7 @@ def find_code_patterns(repo_path: str) -> List[Dict[str, Any]]:
     return patterns
 
 
-def extract_git_metadata(repo_path: str) -> Optional[Dict[str, Any]]:
+def extract_git_metadata(repo_path: str) -> dict[str, Any] | None:
     """
     Extract git repository metadata.
 
@@ -878,7 +878,7 @@ def extract_git_metadata(repo_path: str) -> Optional[Dict[str, Any]]:
     if not git_dir.exists():
         return None
 
-    metadata: Dict[str, Any] = {
+    metadata: dict[str, Any] = {
         "is_git_repo": True,
     }
 
@@ -915,7 +915,7 @@ def extract_git_metadata(repo_path: str) -> Optional[Dict[str, Any]]:
     return metadata
 
 
-def get_secrets_summary(results: List[Dict[str, Any]]) -> Dict[str, Any]:
+def get_secrets_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Generate a summary of found secrets.
 

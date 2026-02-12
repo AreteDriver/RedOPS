@@ -5,7 +5,7 @@ Extracts EXIF metadata from images and identifies potentially sensitive informat
 such as GPS coordinates, camera info, and timestamps.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any
 from pathlib import Path
 from redops.core.context import Context
 from redops.core.models import ExifData, Finding, RiskLevel
@@ -48,7 +48,7 @@ SENSITIVE_TAGS = {
 }
 
 
-def extract_exif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def extract_exif(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Extract EXIF metadata from image files.
 
@@ -83,8 +83,8 @@ def extract_exif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
         ctx.add("exif_data", [])
         return ctx
 
-    exif_results: List[ExifData] = []
-    findings: List[Finding] = []
+    exif_results: list[ExifData] = []
+    findings: list[Finding] = []
 
     # Process single file
     if file_path:
@@ -148,7 +148,7 @@ def extract_exif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     return ctx
 
 
-def scan_directory_for_images(directory: str, recursive: bool = True) -> List[Path]:
+def scan_directory_for_images(directory: str, recursive: bool = True) -> list[Path]:
     """
     Scan a directory for image files.
 
@@ -174,7 +174,7 @@ def scan_directory_for_images(directory: str, recursive: bool = True) -> List[Pa
     return sorted(image_files)
 
 
-def extract_exif_from_file(file_path: str) -> Optional[ExifData]:
+def extract_exif_from_file(file_path: str) -> ExifData | None:
     """
     Extract EXIF data from a single image file.
 
@@ -195,9 +195,9 @@ def extract_exif_from_file(file_path: str) -> Optional[ExifData]:
     if not PILLOW_AVAILABLE:
         return None
 
-    metadata: Dict[str, Any] = {}
-    sensitive_fields: List[str] = []
-    warnings: List[str] = []
+    metadata: dict[str, Any] = {}
+    sensitive_fields: list[str] = []
+    warnings: list[str] = []
 
     try:
         with Image.open(file_path) as img:
@@ -258,7 +258,7 @@ def extract_exif_from_file(file_path: str) -> Optional[ExifData]:
     )
 
 
-def parse_gps_info(gps_info: Dict[int, Any]) -> Optional[Dict[str, Any]]:
+def parse_gps_info(gps_info: dict[int, Any]) -> dict[str, Any] | None:
     """
     Parse GPS EXIF data into readable coordinates.
 
@@ -316,7 +316,7 @@ def parse_gps_info(gps_info: Dict[int, Any]) -> Optional[Dict[str, Any]]:
         return None
 
 
-def dms_to_decimal(dms: Tuple, ref: str) -> float:
+def dms_to_decimal(dms: tuple, ref: str) -> float:
     """
     Convert degrees/minutes/seconds to decimal degrees.
 
@@ -376,7 +376,7 @@ def convert_exif_value(value: Any) -> Any:
             return str(value)
 
 
-def identify_sensitive_exif(metadata: Dict[str, Any]) -> List[str]:
+def identify_sensitive_exif(metadata: dict[str, Any]) -> list[str]:
     """
     Identify potentially sensitive EXIF fields.
 
@@ -404,7 +404,7 @@ def identify_sensitive_exif(metadata: Dict[str, Any]) -> List[str]:
     return sensitive_found
 
 
-def analyze_exif_for_findings(exif_data: ExifData, file_path: str) -> List[Finding]:
+def analyze_exif_for_findings(exif_data: ExifData, file_path: str) -> list[Finding]:
     """
     Analyze EXIF data and create security findings.
 
@@ -474,7 +474,7 @@ def analyze_exif_for_findings(exif_data: ExifData, file_path: str) -> List[Findi
     return findings
 
 
-def strip_exif(file_path: str, output_path: Optional[str] = None) -> bool:
+def strip_exif(file_path: str, output_path: str | None = None) -> bool:
     """
     Strip EXIF data from an image file.
 
@@ -515,7 +515,7 @@ def strip_exif(file_path: str, output_path: Optional[str] = None) -> bool:
         return False
 
 
-def get_exif_summary(exif_results: List[ExifData]) -> Dict[str, Any]:
+def get_exif_summary(exif_results: list[ExifData]) -> dict[str, Any]:
     """
     Generate a summary of EXIF extraction results.
 

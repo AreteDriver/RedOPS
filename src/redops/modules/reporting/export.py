@@ -4,7 +4,7 @@ Export utilities for RedOps.
 Handles exporting data in various formats (JSON, CSV, STIX 2.1, etc.).
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 from pathlib import Path
 import json
 import csv
@@ -50,7 +50,7 @@ STIX_VULNERABILITY_TEMPLATE = {
 }
 
 
-def export_json(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_json(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export context data as JSON.
 
@@ -79,7 +79,7 @@ def export_json(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     return ctx
 
 
-def export_csv(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_csv(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export findings/risks as CSV.
 
@@ -128,7 +128,7 @@ def export_csv(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context
     return ctx
 
 
-def export_all(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_all(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export all data in multiple formats.
 
@@ -158,7 +158,7 @@ def export_all(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context
     return ctx
 
 
-def export_stix(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_stix(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export findings and techniques as STIX 2.1 bundle.
 
@@ -235,8 +235,8 @@ def export_stix(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
 
 
 def create_stix_attack_pattern(
-    technique_id: str, technique_info: Dict[str, Any], timestamp: str
-) -> Dict[str, Any]:
+    technique_id: str, technique_info: dict[str, Any], timestamp: str
+) -> dict[str, Any]:
     """
     Create a STIX attack-pattern from MITRE technique.
 
@@ -285,7 +285,7 @@ def create_stix_attack_pattern(
     }
 
 
-def create_stix_vulnerability(risk: Dict[str, Any], timestamp: str) -> Dict[str, Any]:
+def create_stix_vulnerability(risk: dict[str, Any], timestamp: str) -> dict[str, Any]:
     """
     Create a STIX vulnerability from risk.
 
@@ -322,8 +322,8 @@ def create_stix_vulnerability(risk: Dict[str, Any], timestamp: str) -> Dict[str,
 
 
 def create_stix_indicator(
-    finding: Dict[str, Any], timestamp: str
-) -> Optional[Dict[str, Any]]:
+    finding: dict[str, Any], timestamp: str
+) -> dict[str, Any] | None:
     """
     Create a STIX indicator from finding.
 
@@ -359,7 +359,7 @@ def create_stix_indicator(
 
 
 def export_from_template(
-    ctx: Context, template: str, params: Optional[Dict[str, Any]] = None
+    ctx: Context, template: str, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Export using a custom template.
@@ -506,7 +506,7 @@ TECHNICAL_SUMMARY_TEMPLATE = """
 
 
 def export_executive_brief(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Export a quick executive brief.
@@ -526,7 +526,7 @@ def export_executive_brief(
 
 
 def export_technical_summary(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Export a technical summary in markdown.

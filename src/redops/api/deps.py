@@ -4,7 +4,7 @@ FastAPI dependencies for RedOPS.
 Provides dependency injection for database sessions, authentication, etc.
 """
 
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator
 
 from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -30,8 +30,8 @@ async def get_db() -> AsyncGenerator[Session, None]:
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
 ) -> dict:
     """Get the current authenticated user.
 
@@ -69,9 +69,9 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
-) -> Optional[dict]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
+) -> dict | None:
     """Get the current user if authenticated, None otherwise.
 
     Args:
@@ -134,9 +134,9 @@ class ScanFilters:
 
     def __init__(
         self,
-        status: Optional[str] = None,
-        target: Optional[str] = None,
-        pipeline: Optional[str] = None,
+        status: str | None = None,
+        target: str | None = None,
+        pipeline: str | None = None,
     ):
         self.status = status
         self.target = target

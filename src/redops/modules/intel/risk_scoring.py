@@ -5,14 +5,14 @@ Analyzes findings from reconnaissance and assigns risk scores based on
 likelihood and impact. Maps findings to industry frameworks (OWASP, MITRE).
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from redops.core.context import Context
 from redops.core.models import Risk, RiskLevel, RiskCategory
 
 
 # Risk scoring rules for different finding types
 # Format: (likelihood, impact, category, mitre_id, owasp_id, recommendation)
-RISK_RULES: Dict[str, Dict[str, Any]] = {
+RISK_RULES: dict[str, dict[str, Any]] = {
     # Security Header Findings
     "missing_hsts": {
         "likelihood": 3,
@@ -134,7 +134,7 @@ RISK_RULES: Dict[str, Dict[str, Any]] = {
 }
 
 
-def score_risks(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def score_risks(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Calculate risk scores for findings in the context.
 
@@ -161,7 +161,7 @@ def score_risks(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     ctx.log(f"Found {len(findings)} findings to analyze", level="DEBUG")
 
     # Score each finding
-    risks: List[Risk] = []
+    risks: list[Risk] = []
 
     for finding_key, finding_data in findings.items():
         finding_risks = score_finding(finding_key, finding_data, ctx)
@@ -204,7 +204,7 @@ def score_risks(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     return ctx
 
 
-def extract_findings(ctx: Context) -> Dict[str, Dict[str, Any]]:
+def extract_findings(ctx: Context) -> dict[str, dict[str, Any]]:
     """
     Extract all findings from the context.
 
@@ -224,8 +224,8 @@ def extract_findings(ctx: Context) -> Dict[str, Dict[str, Any]]:
 
 
 def score_finding(
-    finding_key: str, finding_data: Dict[str, Any], ctx: Context
-) -> List[Risk]:
+    finding_key: str, finding_data: dict[str, Any], ctx: Context
+) -> list[Risk]:
     """
     Score a single finding and create Risk objects.
 
@@ -283,8 +283,8 @@ def score_finding(
 
 
 def identify_risk_type(
-    finding_key: str, title: str, description: str, data: Dict[str, Any]
-) -> Optional[str]:
+    finding_key: str, title: str, description: str, data: dict[str, Any]
+) -> str | None:
     """
     Identify the risk type from finding content.
 
@@ -344,7 +344,7 @@ def identify_risk_type(
     return None
 
 
-def check_implicit_risks(ctx: Context) -> List[Risk]:
+def check_implicit_risks(ctx: Context) -> list[Risk]:
     """
     Check for implicit risks based on missing security controls.
 
@@ -454,7 +454,7 @@ def categorize_risk(score: int) -> RiskLevel:
     return RiskLevel.INFO
 
 
-def aggregate_risks(risks: List[Risk]) -> Dict[str, Any]:
+def aggregate_risks(risks: list[Risk]) -> dict[str, Any]:
     """
     Aggregate risk statistics for reporting.
 
@@ -527,7 +527,7 @@ def aggregate_risks(risks: List[Risk]) -> Dict[str, Any]:
     return stats
 
 
-def prioritize_risks(risks: List[Risk], limit: int = 10) -> List[Risk]:
+def prioritize_risks(risks: list[Risk], limit: int = 10) -> list[Risk]:
     """
     Get the highest-priority risks for immediate attention.
 
@@ -541,7 +541,7 @@ def prioritize_risks(risks: List[Risk], limit: int = 10) -> List[Risk]:
     return sorted(risks, key=lambda r: r.score, reverse=True)[:limit]
 
 
-def get_remediation_plan(risks: List[Risk]) -> List[Dict[str, Any]]:
+def get_remediation_plan(risks: list[Risk]) -> list[dict[str, Any]]:
     """
     Generate a remediation plan from risks.
 

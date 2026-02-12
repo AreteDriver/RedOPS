@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ class TenantQuota:
         }
         return quotas.get(tier, cls())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "max_scans_per_day": self.max_scans_per_day,
@@ -154,9 +154,9 @@ class TenantLimits:
     active_scans: int = 0
     scheduled_scans: int = 0
 
-    last_reset_minute: Optional[datetime] = None
-    last_reset_day: Optional[datetime] = None
-    last_reset_month: Optional[datetime] = None
+    last_reset_minute: datetime | None = None
+    last_reset_day: datetime | None = None
+    last_reset_month: datetime | None = None
 
     def check_quota(self, quota: TenantQuota, resource: str) -> bool:
         """Check if a quota would be exceeded."""
@@ -218,7 +218,7 @@ class TenantLimits:
         self.scans_this_month = 0
         self.last_reset_month = datetime.now(timezone.utc)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "scans_today": self.scans_today,
@@ -238,25 +238,25 @@ class TenantConfig:
     """Tenant-specific configuration."""
 
     # Notification settings
-    notification_email: Optional[str] = None
-    slack_webhook_url: Optional[str] = None
-    teams_webhook_url: Optional[str] = None
+    notification_email: str | None = None
+    slack_webhook_url: str | None = None
+    teams_webhook_url: str | None = None
 
     # Scan defaults
     default_scan_depth: str = "standard"
-    default_modules: List[str] = field(default_factory=list)
-    excluded_targets: List[str] = field(default_factory=list)
+    default_modules: list[str] = field(default_factory=list)
+    excluded_targets: list[str] = field(default_factory=list)
 
     # Branding
-    logo_url: Optional[str] = None
+    logo_url: str | None = None
     primary_color: str = "#1a1a2e"
-    company_name: Optional[str] = None
+    company_name: str | None = None
 
     # Security settings
     require_mfa: bool = False
-    allowed_ip_ranges: List[str] = field(default_factory=list)
+    allowed_ip_ranges: list[str] = field(default_factory=list)
     session_timeout_minutes: int = 60
-    password_policy: Dict[str, Any] = field(default_factory=dict)
+    password_policy: dict[str, Any] = field(default_factory=dict)
 
     # Data retention
     finding_retention_days: int = 90
@@ -264,9 +264,9 @@ class TenantConfig:
     audit_log_retention_days: int = 365
 
     # Custom settings
-    custom_settings: Dict[str, Any] = field(default_factory=dict)
+    custom_settings: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "notification_email": self.notification_email,
@@ -288,7 +288,7 @@ class TenantConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TenantConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "TenantConfig":
         """Create from dictionary."""
         return cls(
             notification_email=data.get("notification_email"),
@@ -323,14 +323,14 @@ class Tenant:
     # Contact info
     owner_email: str = ""
     owner_name: str = ""
-    billing_email: Optional[str] = None
+    billing_email: str | None = None
 
     # Timestamps
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    activated_at: Optional[datetime] = None
-    suspended_at: Optional[datetime] = None
-    trial_ends_at: Optional[datetime] = None
+    activated_at: datetime | None = None
+    suspended_at: datetime | None = None
+    trial_ends_at: datetime | None = None
 
     # Configuration
     config: TenantConfig = field(default_factory=TenantConfig)
@@ -338,8 +338,8 @@ class Tenant:
     limits: TenantLimits = field(default_factory=TenantLimits)
 
     # Metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    tags: Set[str] = field(default_factory=set)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    tags: set[str] = field(default_factory=set)
 
     def __post_init__(self):
         """Initialize slug if not provided."""
@@ -411,7 +411,7 @@ class Tenant:
         self.quota = TenantQuota.for_tier(new_tier)
         self.updated_at = datetime.now(timezone.utc)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -438,7 +438,7 @@ class Tenant:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Tenant":
+    def from_dict(cls, data: dict[str, Any]) -> "Tenant":
         """Create from dictionary."""
         tenant = cls(
             id=data.get("id", str(uuid4())),

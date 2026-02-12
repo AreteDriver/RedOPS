@@ -7,7 +7,7 @@ Compares findings between scans to identify new, resolved, and unchanged issues.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 import hashlib
 import logging
 
@@ -34,9 +34,9 @@ class FindingData:
     description: str
     module: str = ""
     category: str = ""
-    evidence: Dict[str, Any] = field(default_factory=dict)
-    cvss_score: Optional[float] = None
-    cve_ids: List[str] = field(default_factory=list)
+    evidence: dict[str, Any] = field(default_factory=dict)
+    cvss_score: float | None = None
+    cve_ids: list[str] = field(default_factory=list)
     status: str = "open"
     fingerprint: str = ""
 
@@ -80,8 +80,8 @@ class FindingDiff:
 
     diff_type: DiffType
     finding: FindingData
-    previous_finding: Optional[FindingData] = None
-    changes: Dict[str, Tuple[Any, Any]] = field(default_factory=dict)
+    previous_finding: FindingData | None = None
+    changes: dict[str, tuple[Any, Any]] = field(default_factory=dict)
 
     @property
     def is_improvement(self) -> bool:
@@ -130,11 +130,11 @@ class ComparisonResult:
     baseline_date: datetime
     current_date: datetime
     target: str
-    new_findings: List[FindingDiff] = field(default_factory=list)
-    resolved_findings: List[FindingDiff] = field(default_factory=list)
-    unchanged_findings: List[FindingDiff] = field(default_factory=list)
-    modified_findings: List[FindingDiff] = field(default_factory=list)
-    regression_findings: List[FindingDiff] = field(default_factory=list)
+    new_findings: list[FindingDiff] = field(default_factory=list)
+    resolved_findings: list[FindingDiff] = field(default_factory=list)
+    unchanged_findings: list[FindingDiff] = field(default_factory=list)
+    modified_findings: list[FindingDiff] = field(default_factory=list)
+    regression_findings: list[FindingDiff] = field(default_factory=list)
 
     @property
     def total_baseline(self) -> int:
@@ -171,7 +171,7 @@ class ComparisonResult:
         new = len(self.new_findings) + len(self.regression_findings)
         return (new / self.total_current) * 100
 
-    def severity_summary(self, diff_type: Optional[DiffType] = None) -> Dict[str, int]:
+    def severity_summary(self, diff_type: DiffType | None = None) -> dict[str, int]:
         """Get severity counts for a diff type or all."""
         counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
 
@@ -203,7 +203,7 @@ class ComparisonResult:
 
         return counts
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "baseline_scan_id": self.baseline_scan_id,
@@ -239,7 +239,7 @@ class ScanComparator:
         match_threshold: float = 0.8,
         use_fingerprint: bool = True,
         track_regressions: bool = True,
-        historical_scans: Optional[List[Dict[str, Any]]] = None,
+        historical_scans: list[dict[str, Any]] | None = None,
     ):
         """
         Initialize comparator.
@@ -253,12 +253,12 @@ class ScanComparator:
         self.match_threshold = match_threshold
         self.use_fingerprint = use_fingerprint
         self.track_regressions = track_regressions
-        self.historical_fingerprints: Set[str] = set()
+        self.historical_fingerprints: set[str] = set()
 
         if historical_scans and track_regressions:
             self._load_historical_fingerprints(historical_scans)
 
-    def _load_historical_fingerprints(self, scans: List[Dict[str, Any]]) -> None:
+    def _load_historical_fingerprints(self, scans: list[dict[str, Any]]) -> None:
         """Load fingerprints from historical scans."""
         for scan in scans:
             for finding in scan.get("findings", []):
@@ -266,7 +266,7 @@ class ScanComparator:
                 if fp:
                     self.historical_fingerprints.add(fp)
 
-    def _extract_fingerprint(self, finding: Dict[str, Any]) -> Optional[str]:
+    def _extract_fingerprint(self, finding: dict[str, Any]) -> str | None:
         """Extract or generate fingerprint from finding dict."""
         if "fingerprint" in finding:
             return finding["fingerprint"]
@@ -286,8 +286,8 @@ class ScanComparator:
 
     def compare(
         self,
-        baseline: Dict[str, Any],
-        current: Dict[str, Any],
+        baseline: dict[str, Any],
+        current: dict[str, Any],
     ) -> ComparisonResult:
         """
         Compare two scan results.
@@ -316,8 +316,8 @@ class ScanComparator:
         )
 
         # Track processed fingerprints
-        processed_baseline: Set[str] = set()
-        processed_current: Set[str] = set()
+        processed_baseline: set[str] = set()
+        processed_current: set[str] = set()
 
         # Match findings by fingerprint
         if self.use_fingerprint:
@@ -381,7 +381,7 @@ class ScanComparator:
 
         return result
 
-    def _normalize_findings(self, findings: List[Dict[str, Any]]) -> List[FindingData]:
+    def _normalize_findings(self, findings: list[dict[str, Any]]) -> list[FindingData]:
         """Normalize findings to FindingData objects."""
         normalized = []
         for f in findings:
@@ -414,7 +414,7 @@ class ScanComparator:
 
     def _detect_changes(
         self, baseline: FindingData, current: FindingData
-    ) -> Dict[str, Tuple[Any, Any]]:
+    ) -> dict[str, tuple[Any, Any]]:
         """Detect changes between two findings."""
         changes = {}
 

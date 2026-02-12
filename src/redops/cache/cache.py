@@ -4,7 +4,7 @@ Main cache interface for RedOPS.
 Provides a unified caching API for threat intel lookups and rate limiting.
 """
 
-from typing import Optional, Any, Dict, List, Callable, TypeVar
+from typing import Any, Callable, TypeVar
 from dataclasses import dataclass
 import os
 import logging
@@ -31,10 +31,10 @@ class CacheConfig:
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_db: int = 0
-    redis_password: Optional[str] = None
+    redis_password: str | None = None
     redis_prefix: str = "redops:"
     max_memory_entries: int = 10000
-    default_ttl_seconds: Optional[int] = 3600  # 1 hour
+    default_ttl_seconds: int | None = 3600  # 1 hour
     intel_ttl_seconds: int = 86400  # 24 hours for threat intel
     rate_limit_window_seconds: int = 60
 
@@ -62,7 +62,7 @@ class Cache:
     Provides caching for threat intel lookups, API responses, and rate limiting.
     """
 
-    def __init__(self, config: Optional[CacheConfig] = None):
+    def __init__(self, config: CacheConfig | None = None):
         """
         Initialize cache.
 
@@ -107,7 +107,7 @@ class Cache:
             default_ttl=self.config.default_ttl_seconds,
         )
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Get a cached value.
 
@@ -124,8 +124,8 @@ class Cache:
         self,
         key: str,
         value: Any,
-        ttl: Optional[int] = None,
-        tags: Optional[List[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> None:
         """
         Set a cached value.
@@ -158,8 +158,8 @@ class Cache:
         self,
         key: str,
         factory: Callable[[], T],
-        ttl: Optional[int] = None,
-        tags: Optional[List[str]] = None,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> T:
         """
         Get cached value or compute and cache it.
@@ -181,7 +181,7 @@ class Cache:
         self.set(key, value, ttl, tags)
         return value
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         return self._backend.get_stats()
 
@@ -191,8 +191,8 @@ class Cache:
         self,
         source: str,
         indicator: str,
-        result: Dict[str, Any],
-        ttl: Optional[int] = None,
+        result: dict[str, Any],
+        ttl: int | None = None,
     ) -> None:
         """
         Cache threat intel result.
@@ -207,7 +207,7 @@ class Cache:
         cache_ttl = ttl or self.config.intel_ttl_seconds
         self.set(key, result, cache_ttl, tags=["intel", f"intel:{source}"])
 
-    def get_intel(self, source: str, indicator: str) -> Optional[Dict[str, Any]]:
+    def get_intel(self, source: str, indicator: str) -> dict[str, Any] | None:
         """
         Get cached threat intel result.
 
@@ -221,7 +221,7 @@ class Cache:
         key = f"intel:{source}:{indicator}"
         return self.get(key)
 
-    def invalidate_intel(self, source: Optional[str] = None) -> int:
+    def invalidate_intel(self, source: str | None = None) -> int:
         """
         Invalidate intel cache.
 
@@ -241,7 +241,7 @@ class Cache:
         self,
         identifier: str,
         limit: int,
-        window: Optional[int] = None,
+        window: int | None = None,
     ) -> tuple[bool, int]:
         """
         Check and update rate limit.
@@ -279,7 +279,7 @@ class Cache:
 
         return True, limit - count - 1
 
-    def get_rate_limit_status(self, identifier: str, limit: int) -> Dict[str, Any]:
+    def get_rate_limit_status(self, identifier: str, limit: int) -> dict[str, Any]:
         """
         Get rate limit status without incrementing.
 
@@ -319,7 +319,7 @@ class Cache:
 
 
 # Global cache instance
-_cache: Optional[Cache] = None
+_cache: Cache | None = None
 
 
 def get_cache() -> Cache:
@@ -331,10 +331,10 @@ def get_cache() -> Cache:
 
 
 def cached(
-    ttl: Optional[int] = None,
+    ttl: int | None = None,
     key_prefix: str = "",
-    tags: Optional[List[str]] = None,
-    key_builder: Optional[Callable[..., str]] = None,
+    tags: list[str] | None = None,
+    key_builder: Callable[..., str] | None = None,
 ):
     """
     Decorator to cache function results.
@@ -384,8 +384,8 @@ def cached(
 def rate_limited(
     identifier: str,
     limit: int,
-    window: Optional[int] = None,
-    on_exceeded: Optional[Callable[[], Any]] = None,
+    window: int | None = None,
+    on_exceeded: Callable[[], Any] | None = None,
 ):
     """
     Decorator to apply rate limiting to a function.
@@ -435,11 +435,11 @@ class IntelCache:
     Provides source-specific caching with automatic key generation.
     """
 
-    def __init__(self, cache: Optional[Cache] = None):
+    def __init__(self, cache: Cache | None = None):
         """Initialize with optional custom cache."""
         self._cache = cache or get_cache()
 
-    def get(self, source: str, indicator: str) -> Optional[Dict[str, Any]]:
+    def get(self, source: str, indicator: str) -> dict[str, Any] | None:
         """Get cached intel for an indicator."""
         return self._cache.get_intel(source, indicator)
 
@@ -447,8 +447,8 @@ class IntelCache:
         self,
         source: str,
         indicator: str,
-        result: Dict[str, Any],
-        ttl: Optional[int] = None,
+        result: dict[str, Any],
+        ttl: int | None = None,
     ) -> None:
         """Cache intel result."""
         self._cache.cache_intel(source, indicator, result, ttl)
@@ -457,9 +457,9 @@ class IntelCache:
         self,
         source: str,
         indicator: str,
-        fetcher: Callable[[], Dict[str, Any]],
-        ttl: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        fetcher: Callable[[], dict[str, Any]],
+        ttl: int | None = None,
+    ) -> dict[str, Any]:
         """
         Get cached intel or fetch and cache it.
 
@@ -480,7 +480,7 @@ class IntelCache:
         self.set(source, indicator, result, ttl)
         return result
 
-    def invalidate(self, source: Optional[str] = None) -> int:
+    def invalidate(self, source: str | None = None) -> int:
         """Invalidate cached intel."""
         return self._cache.invalidate_intel(source)
 

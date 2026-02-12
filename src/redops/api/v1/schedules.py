@@ -3,7 +3,6 @@ Schedules API routes.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -23,7 +22,7 @@ class ScheduleCreate(BaseModel):
     recurrence: str = Field(
         default="daily", description="Recurrence: daily, weekly, monthly, custom"
     )
-    cron_expression: Optional[str] = Field(
+    cron_expression: str | None = Field(
         None, description="Cron expression for custom schedules"
     )
     enabled: bool = Field(default=True, description="Enable or disable schedule")
@@ -43,11 +42,11 @@ class ScheduleCreate(BaseModel):
 class ScheduleUpdate(BaseModel):
     """Update schedule request."""
 
-    name: Optional[str] = None
-    pipeline: Optional[str] = None
-    recurrence: Optional[str] = None
-    cron_expression: Optional[str] = None
-    status: Optional[str] = Field(None, description="Status: active, paused, disabled")
+    name: str | None = None
+    pipeline: str | None = None
+    recurrence: str | None = None
+    cron_expression: str | None = None
+    status: str | None = Field(None, description="Status: active, paused, disabled")
 
 
 class ScheduleResponse(BaseModel):
@@ -58,20 +57,20 @@ class ScheduleResponse(BaseModel):
     target: str
     pipeline: str
     recurrence: str
-    cron_expression: Optional[str] = None
+    cron_expression: str | None = None
     status: str
-    next_run: Optional[datetime] = None
-    last_run: Optional[datetime] = None
+    next_run: datetime | None = None
+    last_run: datetime | None = None
     run_count: int = 0
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[str] = None
+    created_by: str | None = None
 
 
 class ScheduleList(BaseModel):
     """Paginated schedule list response."""
 
-    schedules: List[ScheduleResponse]
+    schedules: list[ScheduleResponse]
     total: int
     skip: int
     limit: int
@@ -84,8 +83,8 @@ _schedules: dict[str, dict] = {}
 @router.get("", response_model=ScheduleList)
 async def list_schedules(
     pagination: Pagination = Depends(),
-    status: Optional[str] = None,
-    target: Optional[str] = None,
+    status: str | None = None,
+    target: str | None = None,
     current_user: dict = Depends(get_current_user),
 ):
     """List all schedules."""

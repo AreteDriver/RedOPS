@@ -4,7 +4,7 @@ Cache backend implementations.
 Supports in-memory and Redis backends.
 """
 
-from typing import Optional, Any, Dict, List
+from typing import Any
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
@@ -23,12 +23,12 @@ class CacheEntry:
     key: str
     value: Any
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    expires_at: Optional[datetime] = None
-    ttl_seconds: Optional[int] = None
+    expires_at: datetime | None = None
+    ttl_seconds: int | None = None
     hits: int = 0
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
-    def is_expired(self, now: Optional[datetime] = None) -> bool:
+    def is_expired(self, now: datetime | None = None) -> bool:
         """Check if entry has expired."""
         if self.expires_at is None:
             return False
@@ -39,7 +39,7 @@ class CacheEntry:
         """Increment hit count."""
         self.hits += 1
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "key": self.key,
@@ -52,7 +52,7 @@ class CacheEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CacheEntry":
+    def from_dict(cls, data: dict[str, Any]) -> "CacheEntry":
         """Deserialize from dictionary."""
 
         def parse_dt(val):
@@ -75,7 +75,7 @@ class CacheBackend(ABC):
     """Abstract base class for cache backends."""
 
     @abstractmethod
-    def get(self, key: str) -> Optional[CacheEntry]:
+    def get(self, key: str) -> CacheEntry | None:
         """Get a cache entry."""
         pass
 
@@ -84,8 +84,8 @@ class CacheBackend(ABC):
         self,
         key: str,
         value: Any,
-        ttl_seconds: Optional[int] = None,
-        tags: Optional[List[str]] = None,
+        ttl_seconds: int | None = None,
+        tags: list[str] | None = None,
     ) -> None:
         """Set a cache entry."""
         pass
@@ -106,7 +106,7 @@ class CacheBackend(ABC):
         pass
 
     @abstractmethod
-    def keys(self, pattern: str = "*") -> List[str]:
+    def keys(self, pattern: str = "*") -> list[str]:
         """List keys matching pattern."""
         pass
 
@@ -120,7 +120,7 @@ class CacheBackend(ABC):
                     count += 1
         return count
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get backend statistics."""
         return {
             "backend": self.__class__.__name__,
@@ -138,7 +138,7 @@ class MemoryBackend(CacheBackend):
     def __init__(
         self,
         max_size: int = 10000,
-        default_ttl: Optional[int] = None,
+        default_ttl: int | None = None,
     ):
         """
         Initialize memory backend.
@@ -147,14 +147,14 @@ class MemoryBackend(CacheBackend):
             max_size: Maximum number of entries
             default_ttl: Default TTL in seconds (None = no expiry)
         """
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._max_size = max_size
         self._default_ttl = default_ttl
         self._lock = threading.RLock()
         self._hits = 0
         self._misses = 0
 
-    def get(self, key: str) -> Optional[CacheEntry]:
+    def get(self, key: str) -> CacheEntry | None:
         """Get a cache entry."""
         with self._lock:
             entry = self._cache.get(key)
@@ -175,8 +175,8 @@ class MemoryBackend(CacheBackend):
         self,
         key: str,
         value: Any,
-        ttl_seconds: Optional[int] = None,
-        tags: Optional[List[str]] = None,
+        ttl_seconds: int | None = None,
+        tags: list[str] | None = None,
     ) -> None:
         """Set a cache entry."""
         with self._lock:
@@ -224,7 +224,7 @@ class MemoryBackend(CacheBackend):
             self._cache.clear()
             return count
 
-    def keys(self, pattern: str = "*") -> List[str]:
+    def keys(self, pattern: str = "*") -> list[str]:
         """List keys matching pattern."""
         with self._lock:
             # Clean expired entries
@@ -255,7 +255,7 @@ class MemoryBackend(CacheBackend):
             del self._cache[key]
         return len(expired)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get backend statistics."""
         with self._lock:
             total = self._hits + self._misses
@@ -282,10 +282,10 @@ class RedisBackend(CacheBackend):
         host: str = "localhost",
         port: int = 6379,
         db: int = 0,
-        password: Optional[str] = None,
+        password: str | None = None,
         prefix: str = "redops:",
-        default_ttl: Optional[int] = None,
-        connection_pool: Optional[Any] = None,
+        default_ttl: int | None = None,
+        connection_pool: Any | None = None,
     ):
         """
         Initialize Redis backend.
@@ -342,7 +342,7 @@ class RedisBackend(CacheBackend):
             return key[len(self._prefix) :]
         return key
 
-    def get(self, key: str) -> Optional[CacheEntry]:
+    def get(self, key: str) -> CacheEntry | None:
         """Get a cache entry."""
         if not self._available or not self._client:
             return None
@@ -373,8 +373,8 @@ class RedisBackend(CacheBackend):
         self,
         key: str,
         value: Any,
-        ttl_seconds: Optional[int] = None,
-        tags: Optional[List[str]] = None,
+        ttl_seconds: int | None = None,
+        tags: list[str] | None = None,
     ) -> None:
         """Set a cache entry."""
         if not self._available or not self._client:
@@ -451,7 +451,7 @@ class RedisBackend(CacheBackend):
             logger.error(f"Redis clear error: {e}")
             return 0
 
-    def keys(self, pattern: str = "*") -> List[str]:
+    def keys(self, pattern: str = "*") -> list[str]:
         """List keys matching pattern."""
         if not self._available or not self._client:
             return []
@@ -482,7 +482,7 @@ class RedisBackend(CacheBackend):
             logger.error(f"Redis delete_by_tag error: {e}")
             return 0
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get backend statistics."""
         if not self._available or not self._client:
             return {"backend": "redis", "available": False}
@@ -528,7 +528,7 @@ class TieredBackend(CacheBackend):
         self._l2 = l2_backend
         self._l1_ttl_fraction = l1_ttl_fraction
 
-    def get(self, key: str) -> Optional[CacheEntry]:
+    def get(self, key: str) -> CacheEntry | None:
         """Get from L1, fall back to L2."""
         # Try L1 first
         entry = self._l1.get(key)
@@ -551,8 +551,8 @@ class TieredBackend(CacheBackend):
         self,
         key: str,
         value: Any,
-        ttl_seconds: Optional[int] = None,
-        tags: Optional[List[str]] = None,
+        ttl_seconds: int | None = None,
+        tags: list[str] | None = None,
     ) -> None:
         """Set in both L1 and L2."""
         # Set in L2
@@ -580,11 +580,11 @@ class TieredBackend(CacheBackend):
         l2_count = self._l2.clear()
         return l1_count + l2_count
 
-    def keys(self, pattern: str = "*") -> List[str]:
+    def keys(self, pattern: str = "*") -> list[str]:
         """Get keys from L2 (authoritative)."""
         return self._l2.keys(pattern)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get combined statistics."""
         return {
             "backend": "tiered",

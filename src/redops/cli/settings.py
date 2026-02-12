@@ -10,7 +10,7 @@ import os
 import json
 import getpass
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any
 
 
 # Available API key providers
@@ -147,7 +147,7 @@ def print_header(title: str):
     print()
 
 
-def print_menu(options: List[str], title: str = "Select an option:"):
+def print_menu(options: list[str], title: str = "Select an option:"):
     """Print a numbered menu."""
     print(title)
     print("-" * 40)
@@ -178,7 +178,7 @@ def confirm(prompt: str, default: bool = False) -> bool:
     return response in ("y", "yes")
 
 
-def mask_key(key: Optional[str]) -> str:
+def mask_key(key: str | None) -> str:
     """Return masked version of API key for display."""
     if not key:
         return "(not set)"
@@ -195,7 +195,7 @@ def get_config_path() -> Path:
     return Path.home() / ".config" / "redops" / "config.json"
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """Load configuration from file."""
     config_path = get_config_path()
     if config_path.exists():
@@ -204,7 +204,7 @@ def load_config() -> Dict[str, Any]:
     return get_default_config()
 
 
-def save_config(config: Dict[str, Any]) -> None:
+def save_config(config: dict[str, Any]) -> None:
     """Save configuration to file."""
     config_path = get_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,7 +212,7 @@ def save_config(config: Dict[str, Any]) -> None:
         json.dump(config, f, indent=2)
 
 
-def get_default_config() -> Dict[str, Any]:
+def get_default_config() -> dict[str, Any]:
     """Get default configuration."""
     return {
         "output_dir": "./output",
@@ -333,7 +333,7 @@ class SettingsMenu:
                 print("Invalid choice.")
                 input("Press Enter to continue...")
 
-    def _get_api_key(self, provider: str) -> Optional[str]:
+    def _get_api_key(self, provider: str) -> str | None:
         """Get API key for provider, checking env vars first."""
         # Check environment variable first
         env_var = API_PROVIDERS.get(provider, {}).get("env_var", "")
@@ -736,7 +736,7 @@ def set_api_key_direct(provider: str, key: str) -> bool:
     return True
 
 
-def get_api_key_direct(provider: str) -> Optional[str]:
+def get_api_key_direct(provider: str) -> str | None:
     """Get an API key directly."""
     # Check environment variable first
     env_var = API_PROVIDERS.get(provider, {}).get("env_var", "")

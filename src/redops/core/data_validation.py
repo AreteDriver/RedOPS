@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Type
 from uuid import UUID
 import ipaddress
 
@@ -21,9 +21,9 @@ class ValidationError(Exception):
     def __init__(
         self,
         message: str,
-        path: Optional[str] = None,
+        path: str | None = None,
         value: Any = None,
-        errors: Optional[List["ValidationError"]] = None,
+        errors: list["ValidationError"] | None = None,
     ):
         self.message = message
         self.path = path
@@ -114,8 +114,8 @@ class Range(ValidationRule):
 
     def __init__(
         self,
-        min_val: Optional[float] = None,
-        max_val: Optional[float] = None,
+        min_val: float | None = None,
+        max_val: float | None = None,
         exclusive_min: bool = False,
         exclusive_max: bool = False,
     ):
@@ -173,9 +173,9 @@ class Length(ValidationRule):
 
     def __init__(
         self,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
-        exact: Optional[int] = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
+        exact: int | None = None,
     ):
         self.min_len = min_len
         self.max_len = max_len
@@ -221,7 +221,7 @@ class Length(ValidationRule):
 class Pattern(ValidationRule):
     """Validates that a string matches a regex pattern."""
 
-    def __init__(self, pattern: Union[str, "re.Pattern"], description: str = ""):
+    def __init__(self, pattern: str | re.Pattern, description: str = ""):
         if isinstance(pattern, str):
             self.pattern = re.compile(pattern)
         else:
@@ -326,7 +326,7 @@ class URL(ValidationRule):
         r"(:\d+)?(/[-a-zA-Z0-9._~:/?#\[\]@!$&\'()*+,;=%]*)?$"
     )
 
-    def __init__(self, schemes: Optional[List[str]] = None):
+    def __init__(self, schemes: list[str] | None = None):
         self.schemes = schemes or ["http", "https"]
 
     def validate(self, value: Any, path: str = "") -> None:
@@ -352,7 +352,7 @@ class URL(ValidationRule):
 class IPAddress(ValidationRule):
     """Validates IP address format."""
 
-    def __init__(self, version: Optional[int] = None):
+    def __init__(self, version: int | None = None):
         self.version = version  # 4, 6, or None for any
 
     def validate(self, value: Any, path: str = "") -> None:
@@ -503,7 +503,7 @@ class TypeCoercer:
 
     def __init__(self, strict: bool = False):
         self.strict = strict
-        self._coercers: Dict[type, Callable[[Any], Any]] = {
+        self._coercers: dict[type, Callable[[Any], Any]] = {
             str: self._to_str,
             int: self._to_int,
             float: self._to_float,
@@ -654,17 +654,17 @@ class FieldSpec:
     """Specification for a single field in a schema."""
 
     name: str
-    type: Optional[Type] = None
-    rules: List[ValidationRule] = field(default_factory=list)
+    type: Type | None = None
+    rules: list[ValidationRule] = field(default_factory=list)
     default: Any = None
     nullable: bool = True
     coerce: bool = False
-    alias: Optional[str] = None
+    alias: str | None = None
     description: str = ""
 
     def validate(
-        self, value: Any, coercer: Optional[TypeCoercer] = None
-    ) -> Tuple[Any, List[ValidationError]]:
+        self, value: Any, coercer: TypeCoercer | None = None
+    ) -> tuple[Any, list[ValidationError]]:
         """Validate and optionally coerce a value. Returns (value, errors)."""
         errors = []
 
@@ -709,12 +709,12 @@ class Schema:
 
     def __init__(
         self,
-        fields: Optional[List[FieldSpec]] = None,
+        fields: list[FieldSpec] | None = None,
         strict: bool = False,
         coerce: bool = False,
     ):
-        self.fields: Dict[str, FieldSpec] = {}
-        self.aliases: Dict[str, str] = {}  # alias -> field name
+        self.fields: dict[str, FieldSpec] = {}
+        self.aliases: dict[str, str] = {}  # alias -> field name
         self.strict = strict
         self.coerce = coerce
         self.coercer = TypeCoercer(strict=False)
@@ -730,14 +730,14 @@ class Schema:
             self.aliases[spec.alias] = spec.name
         return self
 
-    def field(self, name: str, type: Optional[Type] = None, **kwargs) -> "Schema":
+    def field(self, name: str, type: Type | None = None, **kwargs) -> "Schema":
         """Fluent API for adding fields."""
         rules = kwargs.pop("rules", [])
         spec = FieldSpec(name=name, type=type, rules=rules, **kwargs)
         return self.add_field(spec)
 
     def validate(
-        self, data: Dict[str, Any], raise_on_error: bool = True
+        self, data: dict[str, Any], raise_on_error: bool = True
     ) -> "ValidationResult":
         """Validate data against the schema."""
         result = ValidationResult()
@@ -783,7 +783,7 @@ class Schema:
 
         return result
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Export schema as dictionary."""
         return {
             "strict": self.strict,
@@ -807,8 +807,8 @@ class Schema:
 class ValidationResult:
     """Result of a validation operation."""
 
-    data: Dict[str, Any] = field(default_factory=dict)
-    errors: List[ValidationError] = field(default_factory=list)
+    data: dict[str, Any] = field(default_factory=dict)
+    errors: list[ValidationError] = field(default_factory=list)
 
     @property
     def is_valid(self) -> bool:
@@ -817,7 +817,7 @@ class ValidationResult:
     def add_error(self, error: ValidationError) -> None:
         self.errors.append(error)
 
-    def error_messages(self) -> List[str]:
+    def error_messages(self) -> list[str]:
         return [str(e) for e in self.errors]
 
 
@@ -844,11 +844,11 @@ class DataContract:
     description: str = ""
     created_at: datetime = field(default_factory=datetime.now)
 
-    def validate(self, data: Dict[str, Any]) -> ValidationResult:
+    def validate(self, data: dict[str, Any]) -> ValidationResult:
         """Validate data against contract schema."""
         return self.schema.validate(data, raise_on_error=False)
 
-    def enforce(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def enforce(self, data: dict[str, Any]) -> dict[str, Any]:
         """Enforce contract, raising ContractViolation on failure."""
         result = self.validate(data)
         if not result.is_valid:
@@ -877,8 +877,8 @@ class ContractRegistry:
     """Registry for managing data contracts."""
 
     def __init__(self):
-        self._contracts: Dict[
-            str, Dict[str, DataContract]
+        self._contracts: dict[
+            str, dict[str, DataContract]
         ] = {}  # name -> version -> contract
 
     def register(self, contract: DataContract) -> None:
@@ -887,7 +887,7 @@ class ContractRegistry:
             self._contracts[contract.name] = {}
         self._contracts[contract.name][contract.version] = contract
 
-    def get(self, name: str, version: Optional[str] = None) -> Optional[DataContract]:
+    def get(self, name: str, version: str | None = None) -> DataContract | None:
         """Get a contract by name and optional version. Returns latest if no version."""
         if name not in self._contracts:
             return None
@@ -902,7 +902,7 @@ class ContractRegistry:
         latest = sorted(versions.keys())[-1]
         return versions[latest]
 
-    def list_contracts(self) -> List[Tuple[str, str]]:
+    def list_contracts(self) -> list[tuple[str, str]]:
         """List all registered contracts as (name, version) tuples."""
         result = []
         for name, versions in self._contracts.items():
@@ -911,7 +911,7 @@ class ContractRegistry:
         return sorted(result)
 
     def validate(
-        self, contract_name: str, data: Dict[str, Any], version: Optional[str] = None
+        self, contract_name: str, data: dict[str, Any], version: str | None = None
     ) -> ValidationResult:
         """Validate data against a registered contract."""
         contract = self.get(contract_name, version)
@@ -995,14 +995,14 @@ class SecurityValidators:
 # =============================================================================
 
 
-def validate_dict(data: Dict[str, Any], schema: Schema) -> ValidationResult:
+def validate_dict(data: dict[str, Any], schema: Schema) -> ValidationResult:
     """Validate a dictionary against a schema."""
     return schema.validate(data, raise_on_error=False)
 
 
 def validate_list(
-    items: List[Dict[str, Any]], schema: Schema
-) -> List[ValidationResult]:
+    items: list[dict[str, Any]], schema: Schema
+) -> list[ValidationResult]:
     """Validate a list of items against a schema."""
     return [schema.validate(item, raise_on_error=False) for item in items]
 

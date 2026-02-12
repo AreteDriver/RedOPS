@@ -4,7 +4,7 @@ Data models for scheduled scanning.
 Defines scan schedules, policies, and job tracking.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
@@ -64,18 +64,18 @@ class ScanPolicy:
 
     name: str
     pipeline: str
-    modules: List[str] = field(default_factory=list)
-    params: Dict[str, Any] = field(default_factory=dict)
+    modules: list[str] = field(default_factory=list)
+    params: dict[str, Any] = field(default_factory=dict)
     timeout_minutes: int = 60
     retry_count: int = 2
     retry_delay_seconds: int = 300
     notify_on_complete: bool = True
     notify_on_failure: bool = True
-    notify_channels: List[str] = field(default_factory=list)
+    notify_channels: list[str] = field(default_factory=list)
     min_severity: str = "low"
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -93,7 +93,7 @@ class ScanPolicy:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ScanPolicy":
+    def from_dict(cls, data: dict[str, Any]) -> "ScanPolicy":
         """Create from dictionary."""
         return cls(
             name=data.get("name", "default"),
@@ -141,15 +141,15 @@ class ScanSchedule:
     recurrence: RecurrenceType = RecurrenceType.DAILY
     cron_expression: str = ""
     interval_hours: int = 24
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
     status: ScheduleStatus = ScheduleStatus.ACTIVE
-    last_run: Optional[datetime] = None
-    next_run: Optional[datetime] = None
+    last_run: datetime | None = None
+    next_run: datetime | None = None
     run_count: int = 0
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     def __post_init__(self):
@@ -158,8 +158,8 @@ class ScanSchedule:
             self.next_run = self.calculate_next_run()
 
     def calculate_next_run(
-        self, from_time: Optional[datetime] = None
-    ) -> Optional[datetime]:
+        self, from_time: datetime | None = None
+    ) -> datetime | None:
         """
         Calculate the next run time.
 
@@ -219,7 +219,7 @@ class ScanSchedule:
         except Exception:
             return base + timedelta(days=1)
 
-    def is_due(self, current_time: Optional[datetime] = None) -> bool:
+    def is_due(self, current_time: datetime | None = None) -> bool:
         """
         Check if schedule is due for execution.
 
@@ -248,7 +248,7 @@ class ScanSchedule:
 
         return False
 
-    def mark_run(self, run_time: Optional[datetime] = None) -> None:
+    def mark_run(self, run_time: datetime | None = None) -> None:
         """
         Mark schedule as having run.
 
@@ -287,7 +287,7 @@ class ScanSchedule:
         self.next_run = None
         self.updated_at = datetime.now(timezone.utc)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -309,7 +309,7 @@ class ScanSchedule:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ScanSchedule":
+    def from_dict(cls, data: dict[str, Any]) -> "ScanSchedule":
         """Create from dictionary."""
 
         def parse_dt(val):
@@ -363,12 +363,12 @@ class ScanJob:
     target: str
     policy: ScanPolicy
     status: JobStatus = JobStatus.PENDING
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
     retry_count: int = 0
-    context_id: Optional[str] = None
+    context_id: str | None = None
     findings_count: int = 0
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -377,7 +377,7 @@ class ScanJob:
         self.status = JobStatus.RUNNING
         self.started_at = datetime.now(timezone.utc)
 
-    def complete(self, result: Dict[str, Any], findings_count: int = 0) -> None:
+    def complete(self, result: dict[str, Any], findings_count: int = 0) -> None:
         """Mark job as completed."""
         self.status = JobStatus.COMPLETED
         self.completed_at = datetime.now(timezone.utc)
@@ -417,13 +417,13 @@ class ScanJob:
         self.error = None
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """Get job duration in seconds."""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -444,7 +444,7 @@ class ScanJob:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ScanJob":
+    def from_dict(cls, data: dict[str, Any]) -> "ScanJob":
         """Create from dictionary."""
 
         def parse_dt(val):

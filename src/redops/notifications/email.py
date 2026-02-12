@@ -14,7 +14,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from string import Template
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .webhooks import NotificationLevel, NotificationMessage, WebhookProvider
 
@@ -38,9 +38,9 @@ class EmailConfig:
     reply_to: str = ""
 
     # Defaults
-    default_recipients: List[str] = field(default_factory=list)
-    cc: List[str] = field(default_factory=list)
-    bcc: List[str] = field(default_factory=list)
+    default_recipients: list[str] = field(default_factory=list)
+    cc: list[str] = field(default_factory=list)
+    bcc: list[str] = field(default_factory=list)
 
     @classmethod
     def from_env(cls) -> "EmailConfig":
@@ -70,9 +70,9 @@ class EmailTemplate:
     subject: str
     html_body: str
     text_body: str
-    variables: List[str] = field(default_factory=list)
+    variables: list[str] = field(default_factory=list)
 
-    def render(self, data: Dict[str, Any]) -> tuple:
+    def render(self, data: dict[str, Any]) -> tuple:
         """
         Render template with data.
 
@@ -375,7 +375,7 @@ RedOPS Security Assessment Framework - Daily Digest
 
 
 # Template registry
-TEMPLATES: Dict[str, EmailTemplate] = {
+TEMPLATES: dict[str, EmailTemplate] = {
     "scan_complete": SCAN_COMPLETE_TEMPLATE,
     "critical_finding": CRITICAL_FINDING_TEMPLATE,
     "daily_digest": DAILY_DIGEST_TEMPLATE,
@@ -384,7 +384,7 @@ TEMPLATES: Dict[str, EmailTemplate] = {
 
 def render_email_template(
     template_name: str,
-    data: Dict[str, Any],
+    data: dict[str, Any],
 ) -> tuple:
     """
     Render an email template.
@@ -421,7 +421,7 @@ class EmailBackend(WebhookProvider):
         NotificationLevel.SUCCESS: "✅",
     }
 
-    def __init__(self, config: Optional[EmailConfig] = None):
+    def __init__(self, config: EmailConfig | None = None):
         """
         Initialize email backend.
 
@@ -430,7 +430,7 @@ class EmailBackend(WebhookProvider):
         """
         self.config = config or EmailConfig.from_env()
 
-    def format_payload(self, message: NotificationMessage) -> Dict[str, Any]:
+    def format_payload(self, message: NotificationMessage) -> dict[str, Any]:
         """Format message as email payload (not used directly)."""
         return message.to_dict()
 
@@ -450,14 +450,14 @@ class EmailBackend(WebhookProvider):
 
     def send_email(
         self,
-        to: List[str],
+        to: list[str],
         subject: str,
         body: str,
-        html_body: Optional[str] = None,
-        cc: Optional[List[str]] = None,
-        bcc: Optional[List[str]] = None,
-        attachments: Optional[List[Dict[str, Any]]] = None,
-        reply_to: Optional[str] = None,
+        html_body: str | None = None,
+        cc: list[str] | None = None,
+        bcc: list[str] | None = None,
+        attachments: list[dict[str, Any]] | None = None,
+        reply_to: str | None = None,
     ) -> bool:
         """
         Send an email.
@@ -531,7 +531,7 @@ class EmailBackend(WebhookProvider):
             logger.error(f"Failed to send email: {e}")
             return False
 
-    def _send_smtp(self, msg: MIMEText, recipients: List[str]) -> None:
+    def _send_smtp(self, msg: MIMEText, recipients: list[str]) -> None:
         """Send message via SMTP."""
         if self.config.use_ssl:
             context = ssl.create_default_context()
@@ -631,8 +631,8 @@ class EmailBackend(WebhookProvider):
     def send_template(
         self,
         template_name: str,
-        to: List[str],
-        data: Dict[str, Any],
+        to: list[str],
+        data: dict[str, Any],
         **kwargs,
     ) -> bool:
         """

@@ -9,7 +9,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 from rich.console import Console
@@ -55,7 +55,7 @@ def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
-def load_config(path: str) -> Dict[str, Any]:
+def load_config(path: str) -> dict[str, Any]:
     """Load configuration from file.
 
     Args:
@@ -84,7 +84,7 @@ def load_config(path: str) -> Dict[str, Any]:
 def output_result(
     data: Any,
     format: str = "text",
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> None:
     """Output result in specified format.
 
@@ -113,8 +113,8 @@ def output_json(data: Any) -> None:
 
 def output_table(
     data: Any,
-    title: Optional[str] = None,
-    columns: Optional[List[str]] = None,
+    title: str | None = None,
+    columns: list[str] | None = None,
 ) -> None:
     """Output data as a table.
 
@@ -158,7 +158,7 @@ def output_table(
     console.print(table)
 
 
-def output_text(data: Any, title: Optional[str] = None) -> None:
+def output_text(data: Any, title: str | None = None) -> None:
     """Output data as formatted text.
 
     Args:
@@ -185,7 +185,7 @@ def output_text(data: Any, title: Optional[str] = None) -> None:
         console.print(str(data))
 
 
-def print_findings(findings: List[Dict[str, Any]], verbose: bool = False) -> None:
+def print_findings(findings: list[dict[str, Any]], verbose: bool = False) -> None:
     """Print findings in a formatted way.
 
     Args:
@@ -238,7 +238,7 @@ def print_findings(findings: List[Dict[str, Any]], verbose: bool = False) -> Non
                 console.print(f"    [green]Fix: {finding['remediation'][:100]}[/green]")
 
 
-def print_scan_result(result: Dict[str, Any], verbose: bool = False) -> None:
+def print_scan_result(result: dict[str, Any], verbose: bool = False) -> None:
     """Print scan result summary.
 
     Args:
@@ -317,7 +317,7 @@ def format_datetime(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def print_error(message: str, details: Optional[str] = None) -> None:
+def print_error(message: str, details: str | None = None) -> None:
     """Print error message.
 
     Args:

@@ -3,7 +3,6 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 import yaml
@@ -140,7 +139,7 @@ def set_cmd(key, value, path):
 
     # Write config
     config_path.write_text(yaml.dump(config_data, default_flow_style=False))
-    print_success(f"Set {key} = {final_value}")
+    print_success(f"set {key} = {final_value}")
 
 
 @config.command("unset")
@@ -277,7 +276,7 @@ def validate_cmd(path):
         sys.exit(1)
 
 
-def _find_config_file(explicit_path: Optional[str] = None) -> Optional[Path]:
+def _find_config_file(explicit_path: str | None = None) -> Path | None:
     """Find the config file to use."""
     if explicit_path:
         return Path(explicit_path)

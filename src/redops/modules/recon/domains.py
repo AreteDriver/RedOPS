@@ -5,7 +5,7 @@ Performs OSINT on domains including DNS enumeration, zone analysis, and subdomai
 Uses dnspython for comprehensive DNS lookups when available.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 import socket
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -20,7 +20,7 @@ except ImportError:
     DNS_AVAILABLE = False
 
 
-def get_dns_records(domain: str, record_type: str = "A") -> List[str]:
+def get_dns_records(domain: str, record_type: str = "A") -> list[str]:
     """
     Get DNS records for a domain.
 
@@ -43,7 +43,7 @@ def get_dns_records(domain: str, record_type: str = "A") -> List[str]:
         return []
 
 
-def _get_dns_records_socket(domain: str) -> List[str]:
+def _get_dns_records_socket(domain: str) -> list[str]:
     """Fallback DNS lookup using socket (A records only)."""
     try:
         result = socket.gethostbyname_ex(domain)
@@ -52,7 +52,7 @@ def _get_dns_records_socket(domain: str) -> List[str]:
         return []
 
 
-def _get_dns_records_dnspython(domain: str, record_type: str) -> List[str]:
+def _get_dns_records_dnspython(domain: str, record_type: str) -> list[str]:
     """DNS lookup using dnspython library."""
     records = []
     try:
@@ -100,7 +100,7 @@ def _get_dns_records_dnspython(domain: str, record_type: str) -> List[str]:
     return records
 
 
-def get_all_dns_records(domain: str) -> Dict[str, List[str]]:
+def get_all_dns_records(domain: str) -> dict[str, list[str]]:
     """
     Get all common DNS record types for a domain.
 
@@ -121,7 +121,7 @@ def get_all_dns_records(domain: str) -> Dict[str, List[str]]:
     return results
 
 
-def analyze_txt_records(txt_records: List[str]) -> Dict[str, Any]:
+def analyze_txt_records(txt_records: list[str]) -> dict[str, Any]:
     """
     Analyze TXT records for security-relevant information.
 
@@ -164,7 +164,7 @@ def analyze_txt_records(txt_records: List[str]) -> Dict[str, Any]:
     return analysis
 
 
-def profile_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def profile_domain(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Profile a domain with comprehensive reconnaissance.
 
@@ -283,7 +283,7 @@ def profile_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
     return ctx
 
 
-def enumerate_dns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def enumerate_dns(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Enumerate all DNS records for a domain.
 
@@ -330,7 +330,7 @@ def enumerate_dns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
 
 
 def discover_subdomains(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Discover subdomains using passive techniques.
@@ -440,7 +440,7 @@ def discover_subdomains(
 
 
 def check_zone_transfer(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Check if DNS zone transfer (AXFR) is allowed.

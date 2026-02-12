@@ -10,7 +10,7 @@ Queries Hunter.io API for email discovery:
 IMPORTANT: Requires a Hunter.io API key.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 import os
 
@@ -22,15 +22,15 @@ class HunterDomainResult:
     """Hunter.io domain search result."""
 
     domain: str
-    organization: Optional[str] = None
+    organization: str | None = None
     disposable: bool = False
     webmail: bool = False
     accept_all: bool = False
-    pattern: Optional[str] = None
-    emails: List[Dict[str, Any]] = field(default_factory=list)
-    linked_domains: List[str] = field(default_factory=list)
+    pattern: str | None = None
+    emails: list[dict[str, Any]] = field(default_factory=list)
+    linked_domains: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "domain": self.domain,
@@ -49,16 +49,16 @@ class HunterEmail:
     """Hunter.io email result."""
 
     email: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    position: Optional[str] = None
-    department: Optional[str] = None
-    linkedin: Optional[str] = None
-    twitter: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    position: str | None = None
+    department: str | None = None
+    linkedin: str | None = None
+    twitter: str | None = None
     confidence: int = 0
-    sources: List[Dict[str, Any]] = field(default_factory=list)
+    sources: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "email": self.email,
@@ -73,7 +73,7 @@ class HunterEmail:
         }
 
 
-def get_hunter_api_key() -> Optional[str]:
+def get_hunter_api_key() -> str | None:
     """Get Hunter.io API key."""
     api_key = os.environ.get("HUNTER_API_KEY")
     if not api_key:
@@ -87,8 +87,8 @@ def get_hunter_api_key() -> Optional[str]:
 
 
 def _make_hunter_request(
-    endpoint: str, api_key: str, params: Dict[str, Any] = None
-) -> Optional[Dict[str, Any]]:
+    endpoint: str, api_key: str, params: dict[str, Any] = None
+) -> dict[str, Any] | None:
     """Make a request to Hunter.io API."""
     try:
         import requests
@@ -117,7 +117,7 @@ def _make_hunter_request(
 
 
 def query_hunter_domain(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Query Hunter.io for domain email information.
@@ -209,7 +209,7 @@ def query_hunter_domain(
 
 
 def query_hunter_email_count(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Query Hunter.io for email count on a domain.
@@ -268,7 +268,7 @@ def query_hunter_email_count(
 
 
 def verify_hunter_email(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Verify an email address using Hunter.io.
@@ -337,7 +337,7 @@ def verify_hunter_email(
 
 
 def analyze_hunter_intel(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Run comprehensive Hunter.io analysis.

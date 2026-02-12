@@ -5,7 +5,7 @@ Queries ThreatFox (abuse.ch) API for malware IOCs including
 domains, IPs, URLs, and hashes associated with malware campaigns.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -21,7 +21,7 @@ except ImportError:
 THREATFOX_API = "https://threatfox-api.abuse.ch/api/v1/"
 
 
-def query_ioc(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_ioc(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query ThreatFox for IOC information.
 
@@ -68,7 +68,7 @@ def query_ioc(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     return ctx
 
 
-def search_malware(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def search_malware(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Search ThreatFox for malware family information.
 
@@ -109,7 +109,7 @@ def search_malware(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
     return ctx
 
 
-def get_recent_iocs(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def get_recent_iocs(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Get recent IOCs from ThreatFox.
 
@@ -143,7 +143,7 @@ def get_recent_iocs(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Co
     return ctx
 
 
-def get_ioc_by_id(ioc_id: str) -> Dict[str, Any]:
+def get_ioc_by_id(ioc_id: str) -> dict[str, Any]:
     """
     Get specific IOC by ThreatFox ID.
 
@@ -159,7 +159,7 @@ def get_ioc_by_id(ioc_id: str) -> Dict[str, Any]:
     return _query_api({"query": "ioc", "id": ioc_id})
 
 
-def get_tag_iocs(tag: str, limit: int = 100) -> Dict[str, Any]:
+def get_tag_iocs(tag: str, limit: int = 100) -> dict[str, Any]:
     """
     Get IOCs by tag.
 
@@ -176,7 +176,7 @@ def get_tag_iocs(tag: str, limit: int = 100) -> Dict[str, Any]:
     return _query_api({"query": "taginfo", "tag": tag, "limit": limit})
 
 
-def _query_api(payload: Dict[str, Any]) -> Dict[str, Any]:
+def _query_api(payload: dict[str, Any]) -> dict[str, Any]:
     """Make ThreatFox API request."""
     try:
         response = requests.post(
@@ -199,7 +199,7 @@ def _query_api(payload: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": f"Query failed: {str(e)}"}
 
 
-def analyze_threatfox_results(result: Dict[str, Any], ioc: str) -> List[Finding]:
+def analyze_threatfox_results(result: dict[str, Any], ioc: str) -> list[Finding]:
     """
     Analyze ThreatFox results for security findings.
 
@@ -292,7 +292,7 @@ def analyze_threatfox_results(result: Dict[str, Any], ioc: str) -> List[Finding]
     return findings
 
 
-def get_threatfox_summary(ctx: Context) -> Dict[str, Any]:
+def get_threatfox_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of ThreatFox query results.
 

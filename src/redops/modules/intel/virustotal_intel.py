@@ -11,7 +11,7 @@ IMPORTANT: Requires a VirusTotal API key.
 Free tier has rate limits (4 requests/minute).
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 import os
 
@@ -24,15 +24,15 @@ class VTDomainReport:
 
     domain: str
     reputation: int = 0
-    categories: Dict[str, str] = field(default_factory=dict)
-    last_analysis_stats: Dict[str, int] = field(default_factory=dict)
-    last_analysis_date: Optional[str] = None
-    registrar: Optional[str] = None
-    creation_date: Optional[str] = None
-    whois: Optional[str] = None
-    dns_records: List[Dict[str, Any]] = field(default_factory=list)
+    categories: dict[str, str] = field(default_factory=dict)
+    last_analysis_stats: dict[str, int] = field(default_factory=dict)
+    last_analysis_date: str | None = None
+    registrar: str | None = None
+    creation_date: str | None = None
+    whois: str | None = None
+    dns_records: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "domain": self.domain,
@@ -53,13 +53,13 @@ class VTIPReport:
 
     ip: str
     reputation: int = 0
-    country: Optional[str] = None
-    asn: Optional[int] = None
-    as_owner: Optional[str] = None
-    last_analysis_stats: Dict[str, int] = field(default_factory=dict)
-    last_analysis_date: Optional[str] = None
+    country: str | None = None
+    asn: int | None = None
+    as_owner: str | None = None
+    last_analysis_stats: dict[str, int] = field(default_factory=dict)
+    last_analysis_date: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "ip": self.ip,
@@ -78,12 +78,12 @@ class VTURLReport:
 
     url: str
     reputation: int = 0
-    last_analysis_stats: Dict[str, int] = field(default_factory=dict)
-    last_analysis_date: Optional[str] = None
-    categories: Dict[str, str] = field(default_factory=dict)
-    threat_names: List[str] = field(default_factory=list)
+    last_analysis_stats: dict[str, int] = field(default_factory=dict)
+    last_analysis_date: str | None = None
+    categories: dict[str, str] = field(default_factory=dict)
+    threat_names: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "url": self.url,
@@ -95,7 +95,7 @@ class VTURLReport:
         }
 
 
-def get_vt_api_key() -> Optional[str]:
+def get_vt_api_key() -> str | None:
     """Get VirusTotal API key."""
     api_key = os.environ.get("VIRUSTOTAL_API_KEY")
     if not api_key:
@@ -108,7 +108,7 @@ def get_vt_api_key() -> Optional[str]:
     return api_key
 
 
-def _make_vt_request(endpoint: str, api_key: str) -> Optional[Dict[str, Any]]:
+def _make_vt_request(endpoint: str, api_key: str) -> dict[str, Any] | None:
     """Make a request to VirusTotal API."""
     try:
         import requests
@@ -130,7 +130,7 @@ def _make_vt_request(endpoint: str, api_key: str) -> Optional[Dict[str, Any]]:
         return {"error": str(e)}
 
 
-def query_vt_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_vt_domain(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query VirusTotal for domain information.
 
@@ -202,7 +202,7 @@ def query_vt_domain(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Co
     return ctx
 
 
-def query_vt_ip(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_vt_ip(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query VirusTotal for IP information.
 
@@ -275,7 +275,7 @@ def query_vt_ip(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Contex
     return ctx
 
 
-def query_vt_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_vt_url(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query VirusTotal for URL analysis.
 
@@ -350,7 +350,7 @@ def query_vt_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
 
 
 def analyze_virustotal_intel(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Run comprehensive VirusTotal analysis.

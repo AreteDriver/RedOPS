@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable
 
 
 class NotificationError(Exception):
@@ -76,13 +76,13 @@ class Notification:
     message: str
     level: NotificationLevel = NotificationLevel.INFO
     channel: str = ""
-    data: Dict[str, Any] = field(default_factory=dict)
-    tags: Set[str] = field(default_factory=set)
+    data: dict[str, Any] = field(default_factory=dict)
+    tags: set[str] = field(default_factory=set)
     timestamp: datetime = field(default_factory=datetime.now)
     id: str = ""
     status: NotificationStatus = NotificationStatus.PENDING
-    error: Optional[str] = None
-    sent_at: Optional[datetime] = None
+    error: str | None = None
+    sent_at: datetime | None = None
     retries: int = 0
 
     def __post_init__(self):
@@ -94,7 +94,7 @@ class Notification:
         content = f"{self.title}:{self.message}:{self.timestamp.isoformat()}"
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -123,8 +123,8 @@ class TemplateEngine:
     VARIABLE_PATTERN = re.compile(r"\{\{\s*(\w+(?:\.\w+)*)\s*\}\}")
 
     def __init__(self):
-        self._templates: Dict[str, str] = {}
-        self._filters: Dict[str, Callable[[Any], str]] = {
+        self._templates: dict[str, str] = {}
+        self._filters: dict[str, Callable[[Any], str]] = {
             "upper": lambda x: str(x).upper(),
             "lower": lambda x: str(x).lower(),
             "title": lambda x: str(x).title(),
@@ -141,7 +141,7 @@ class TemplateEngine:
         """Register a named template."""
         self._templates[name] = template
 
-    def get_template(self, name: str) -> Optional[str]:
+    def get_template(self, name: str) -> str | None:
         """Get a registered template."""
         return self._templates.get(name)
 
@@ -149,7 +149,7 @@ class TemplateEngine:
         """Register a custom filter."""
         self._filters[name] = func
 
-    def render(self, template: str, context: Dict[str, Any]) -> str:
+    def render(self, template: str, context: dict[str, Any]) -> str:
         """Render a template with the given context."""
 
         def replace_var(match):
@@ -169,7 +169,7 @@ class TemplateEngine:
 
         return self.VARIABLE_PATTERN.sub(replace_var, template)
 
-    def render_named(self, name: str, context: Dict[str, Any]) -> str:
+    def render_named(self, name: str, context: dict[str, Any]) -> str:
         """Render a named template."""
         template = self._templates.get(name)
         if not template:
@@ -196,9 +196,9 @@ class ThrottleManager:
     """Manages notification throttling."""
 
     def __init__(self):
-        self._counts: Dict[str, List[datetime]] = {}
-        self._cooldowns: Dict[str, datetime] = {}
-        self._rules: Dict[str, ThrottleRule] = {}
+        self._counts: dict[str, list[datetime]] = {}
+        self._cooldowns: dict[str, datetime] = {}
+        self._rules: dict[str, ThrottleRule] = {}
         self._lock = threading.RLock()
 
     def add_rule(self, rule: ThrottleRule) -> None:
@@ -212,7 +212,7 @@ class ThrottleManager:
             return True
         return False
 
-    def check(self, key: str) -> Tuple[bool, Optional[str]]:
+    def check(self, key: str) -> tuple[bool, str | None]:
         """Check if a notification should be throttled.
 
         Returns (allowed, reason).
@@ -266,7 +266,7 @@ class ThrottleManager:
             self._counts.pop(key, None)
             self._cooldowns.pop(key, None)
 
-    def get_stats(self, key: str) -> Dict[str, Any]:
+    def get_stats(self, key: str) -> dict[str, Any]:
         """Get throttle statistics for a key."""
         with self._lock:
             rule = self._rules.get(key)
@@ -297,7 +297,7 @@ class NotificationChannel(ABC):
 
     name: str = "base"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.enabled = True
 
@@ -306,7 +306,7 @@ class NotificationChannel(ABC):
         """Send a notification. Returns True on success."""
         pass
 
-    def validate_config(self) -> Optional[str]:
+    def validate_config(self) -> str | None:
         """Validate channel configuration. Returns error message or None."""
         return None
 
@@ -316,7 +316,7 @@ class EmailChannel(NotificationChannel):
 
     name = "email"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
         self.smtp_host = self.config.get("smtp_host", "localhost")
         self.smtp_port = self.config.get("smtp_port", 587)
@@ -326,7 +326,7 @@ class EmailChannel(NotificationChannel):
         self.from_address = self.config.get("from_address", "")
         self.to_addresses = self.config.get("to_addresses", [])
 
-    def validate_config(self) -> Optional[str]:
+    def validate_config(self) -> str | None:
         if not self.from_address:
             return "from_address is required"
         if not self.to_addresses:
@@ -381,14 +381,14 @@ class WebhookChannel(NotificationChannel):
 
     name = "webhook"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
         self.url = self.config.get("url", "")
         self.method = self.config.get("method", "POST")
         self.headers = self.config.get("headers", {})
         self.timeout = self.config.get("timeout", 30)
 
-    def validate_config(self) -> Optional[str]:
+    def validate_config(self) -> str | None:
         if not self.url:
             return "url is required"
         return None
@@ -440,7 +440,7 @@ class SlackChannel(NotificationChannel):
         NotificationLevel.CRITICAL: ":rotating_light:",
     }
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
         self.webhook_url = self.config.get("webhook_url", "")
         self.channel = self.config.get("channel", "")
@@ -448,7 +448,7 @@ class SlackChannel(NotificationChannel):
         self.icon_emoji = self.config.get("icon_emoji", ":shield:")
         self.timeout = self.config.get("timeout", 30)
 
-    def validate_config(self) -> Optional[str]:
+    def validate_config(self) -> str | None:
         if not self.webhook_url:
             return "webhook_url is required"
         return None
@@ -512,7 +512,7 @@ class ConsoleChannel(NotificationChannel):
         NotificationLevel.CRITICAL: "[CRITICAL]",
     }
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
         self.output_func = self.config.get("output_func", print)
         self.include_data = self.config.get("include_data", True)
@@ -538,11 +538,11 @@ class CallbackChannel(NotificationChannel):
 
     name = "callback"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)
         self.callback = self.config.get("callback")
 
-    def validate_config(self) -> Optional[str]:
+    def validate_config(self) -> str | None:
         if not self.callback or not callable(self.callback):
             return "callback must be a callable"
         return None
@@ -568,22 +568,22 @@ class NotificationResult:
     notification_id: str
     success: bool
     channel: str
-    error: Optional[str] = None
-    sent_at: Optional[datetime] = None
+    error: str | None = None
+    sent_at: datetime | None = None
 
 
 class NotificationManager:
     """Central manager for notifications."""
 
     def __init__(self):
-        self._channels: Dict[str, NotificationChannel] = {}
+        self._channels: dict[str, NotificationChannel] = {}
         self._templates = TemplateEngine()
         self._throttle = ThrottleManager()
-        self._history: List[Notification] = []
+        self._history: list[Notification] = []
         self._max_history = 1000
         self._lock = threading.RLock()
-        self._listeners: List[Callable[[Notification, NotificationResult], None]] = []
-        self._default_channel: Optional[str] = None
+        self._listeners: list[Callable[[Notification, NotificationResult], None]] = []
+        self._default_channel: str | None = None
 
     @property
     def templates(self) -> TemplateEngine:
@@ -614,11 +614,11 @@ class NotificationManager:
             return True
         return False
 
-    def get_channel(self, name: str) -> Optional[NotificationChannel]:
+    def get_channel(self, name: str) -> NotificationChannel | None:
         """Get a channel by name."""
         return self._channels.get(name)
 
-    def list_channels(self) -> List[str]:
+    def list_channels(self) -> list[str]:
         """List registered channel names."""
         return list(self._channels.keys())
 
@@ -639,10 +639,10 @@ class NotificationManager:
         title: str,
         message: str,
         level: NotificationLevel = NotificationLevel.INFO,
-        channel: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
-        tags: Optional[Set[str]] = None,
-        throttle_key: Optional[str] = None,
+        channel: str | None = None,
+        data: dict[str, Any] | None = None,
+        tags: set[str] | None = None,
+        throttle_key: str | None = None,
     ) -> NotificationResult:
         """Send a notification."""
         notification = Notification(
@@ -656,7 +656,7 @@ class NotificationManager:
         return self.send(notification, throttle_key=throttle_key)
 
     def send(
-        self, notification: Notification, throttle_key: Optional[str] = None
+        self, notification: Notification, throttle_key: str | None = None
     ) -> NotificationResult:
         """Send a notification object."""
         # Determine channel
@@ -730,7 +730,7 @@ class NotificationManager:
 
         return result
 
-    def send_to_all(self, notification: Notification) -> Dict[str, NotificationResult]:
+    def send_to_all(self, notification: Notification) -> dict[str, NotificationResult]:
         """Send notification to all enabled channels."""
         results = {}
         for name, channel in self._channels.items():
@@ -756,10 +756,10 @@ class NotificationManager:
     def get_history(
         self,
         limit: int = 100,
-        level: Optional[NotificationLevel] = None,
-        channel: Optional[str] = None,
-        status: Optional[NotificationStatus] = None,
-    ) -> List[Notification]:
+        level: NotificationLevel | None = None,
+        channel: str | None = None,
+        status: NotificationStatus | None = None,
+    ) -> list[Notification]:
         """Get notification history with optional filters."""
         with self._lock:
             filtered = self._history
@@ -773,7 +773,7 @@ class NotificationManager:
 
             return filtered[-limit:]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get notification statistics."""
         with self._lock:
             total = len(self._history)
@@ -800,7 +800,7 @@ class NotificationManager:
 # Convenience Functions
 # =============================================================================
 
-_default_manager: Optional[NotificationManager] = None
+_default_manager: NotificationManager | None = None
 
 
 def get_notification_manager() -> NotificationManager:

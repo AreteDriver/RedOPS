@@ -16,10 +16,6 @@ from enum import Enum
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
     Type,
 )
 from urllib.parse import urlencode
@@ -56,8 +52,8 @@ class RetryConfig:
     max_delay: float = 60.0
     exponential_base: float = 2.0
     jitter: bool = True
-    retry_on_status: Tuple[int, ...] = (429, 500, 502, 503, 504)
-    retry_on_exceptions: Tuple[Type[Exception], ...] = (
+    retry_on_status: tuple[int, ...] = (429, 500, 502, 503, 504)
+    retry_on_exceptions: tuple[Type[Exception], ...] = (
         ConnectionError,
         TimeoutError,
     )
@@ -101,13 +97,13 @@ class CircuitBreaker:
     - HALF_OPEN: Testing if service recovered
     """
 
-    def __init__(self, config: Optional[CircuitBreakerConfig] = None):
+    def __init__(self, config: CircuitBreakerConfig | None = None):
         """Initialize circuit breaker."""
         self.config = config or CircuitBreakerConfig()
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._success_count = 0
-        self._last_failure_time: Optional[float] = None
+        self._last_failure_time: float | None = None
         self._half_open_calls = 0
         self._lock = threading.RLock()
 
@@ -185,12 +181,12 @@ class HttpRequest:
 
     method: HttpMethod
     url: str
-    headers: Dict[str, str] = field(default_factory=dict)
-    params: Dict[str, Any] = field(default_factory=dict)
-    body: Optional[Any] = None
-    json_body: Optional[Any] = None
+    headers: dict[str, str] = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
+    body: Any | None = None
+    json_body: Any | None = None
     timeout: float = 30.0
-    auth: Optional[Tuple[str, str]] = None
+    auth: tuple[str, str] | None = None
 
     def full_url(self) -> str:
         """Get full URL with query parameters."""
@@ -205,11 +201,11 @@ class HttpResponse:
     """HTTP response representation."""
 
     status_code: int
-    headers: Dict[str, str]
+    headers: dict[str, str]
     body: bytes
     request: HttpRequest
     elapsed_seconds: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
     @property
     def ok(self) -> bool:
@@ -237,7 +233,7 @@ class HttpResponse:
 class HttpError(Exception):
     """HTTP error with response details."""
 
-    def __init__(self, message: str, response: Optional[HttpResponse] = None):
+    def __init__(self, message: str, response: HttpResponse | None = None):
         """Initialize HTTP error."""
         super().__init__(message)
         self.response = response
@@ -267,7 +263,7 @@ class RateLimiter:
         self._last_update = time.time()
         self._lock = threading.RLock()
 
-    def acquire(self, timeout: Optional[float] = None) -> bool:
+    def acquire(self, timeout: float | None = None) -> bool:
         """
         Acquire a token, blocking if necessary.
 
@@ -327,7 +323,7 @@ class ResponseCache:
         """
         self.max_size = max_size
         self.default_ttl = default_ttl
-        self._cache: Dict[str, Tuple[HttpResponse, float]] = {}
+        self._cache: dict[str, tuple[HttpResponse, float]] = {}
         self._lock = threading.RLock()
 
     def _make_key(self, request: HttpRequest) -> str:
@@ -339,7 +335,7 @@ class ResponseCache:
         ]
         return hashlib.md5("".join(key_parts).encode()).hexdigest()
 
-    def get(self, request: HttpRequest) -> Optional[HttpResponse]:
+    def get(self, request: HttpRequest) -> HttpResponse | None:
         """Get cached response."""
         key = self._make_key(request)
         with self._lock:
@@ -354,7 +350,7 @@ class ResponseCache:
         self,
         request: HttpRequest,
         response: HttpResponse,
-        ttl: Optional[float] = None,
+        ttl: float | None = None,
     ) -> None:
         """Cache a response."""
         if not response.ok:
@@ -471,15 +467,15 @@ class MockTransport(HttpTransport):
 
     def __init__(self):
         """Initialize mock transport."""
-        self._responses: List[HttpResponse] = []
-        self._requests: List[HttpRequest] = []
-        self._default_response: Optional[HttpResponse] = None
+        self._responses: list[HttpResponse] = []
+        self._requests: list[HttpRequest] = []
+        self._default_response: HttpResponse | None = None
 
     def add_response(
         self,
         status_code: int = 200,
         body: bytes = b"",
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         """Add a mock response."""
         self._responses.append(
@@ -495,7 +491,7 @@ class MockTransport(HttpTransport):
         self,
         status_code: int = 200,
         body: bytes = b"",
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         """Set default response when queue is empty."""
         self._default_response = HttpResponse(
@@ -526,7 +522,7 @@ class MockTransport(HttpTransport):
         raise RuntimeError("No mock response available")
 
     @property
-    def requests(self) -> List[HttpRequest]:
+    def requests(self) -> list[HttpRequest]:
         """Get recorded requests."""
         return self._requests.copy()
 
@@ -553,14 +549,14 @@ class ApiClient:
     def __init__(
         self,
         base_url: str = "",
-        transport: Optional[HttpTransport] = None,
-        retry_config: Optional[RetryConfig] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
-        rate_limiter: Optional[RateLimiter] = None,
-        cache: Optional[ResponseCache] = None,
-        default_headers: Optional[Dict[str, str]] = None,
+        transport: HttpTransport | None = None,
+        retry_config: RetryConfig | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
+        rate_limiter: RateLimiter | None = None,
+        cache: ResponseCache | None = None,
+        default_headers: dict[str, str] | None = None,
         timeout: float = 30.0,
-        auth: Optional[Tuple[str, str]] = None,
+        auth: tuple[str, str] | None = None,
     ):
         """
         Initialize API client.
@@ -587,8 +583,8 @@ class ApiClient:
         self._default_auth = auth
 
         # Hooks
-        self._request_hooks: List[Callable[[HttpRequest], HttpRequest]] = []
-        self._response_hooks: List[Callable[[HttpResponse], HttpResponse]] = []
+        self._request_hooks: list[Callable[[HttpRequest], HttpRequest]] = []
+        self._response_hooks: list[Callable[[HttpResponse], HttpResponse]] = []
 
         # Statistics
         self._stats = {
@@ -619,12 +615,12 @@ class ApiClient:
         self,
         method: HttpMethod,
         path: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        body: Optional[Any] = None,
-        json_body: Optional[Any] = None,
-        timeout: Optional[float] = None,
-        auth: Optional[Tuple[str, str]] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        body: Any | None = None,
+        json_body: Any | None = None,
+        timeout: float | None = None,
+        auth: tuple[str, str] | None = None,
     ) -> HttpRequest:
         """Build an HTTP request."""
         merged_headers = {**self._default_headers}
@@ -646,15 +642,15 @@ class ApiClient:
         self,
         method: HttpMethod,
         path: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        body: Optional[Any] = None,
-        json_body: Optional[Any] = None,
-        timeout: Optional[float] = None,
-        auth: Optional[Tuple[str, str]] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        body: Any | None = None,
+        json_body: Any | None = None,
+        timeout: float | None = None,
+        auth: tuple[str, str] | None = None,
         retry: bool = True,
         cache: bool = False,
-        cache_ttl: Optional[float] = None,
+        cache_ttl: float | None = None,
     ) -> HttpResponse:
         """
         Make an HTTP request.
@@ -716,8 +712,8 @@ class ApiClient:
 
     def _execute_with_retry(self, request: HttpRequest, retry: bool) -> HttpResponse:
         """Execute request with retry logic."""
-        last_exception: Optional[Exception] = None
-        last_response: Optional[HttpResponse] = None
+        last_exception: Exception | None = None
+        last_response: HttpResponse | None = None
 
         max_attempts = self._retry_config.max_retries + 1 if retry else 1
 
@@ -809,7 +805,7 @@ class ApiClient:
         return self.request(HttpMethod.HEAD, path, **kwargs)
 
     @property
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """Get client statistics."""
         with self._lock:
             return self._stats.copy()
@@ -834,7 +830,7 @@ def create_api_client(
     base_url: str = "",
     timeout: float = 30.0,
     max_retries: int = 3,
-    rate_limit: Optional[float] = None,
+    rate_limit: float | None = None,
     cache_responses: bool = False,
     circuit_breaker: bool = False,
 ) -> ApiClient:
@@ -872,7 +868,7 @@ def simple_get(url: str, timeout: float = 30.0) -> HttpResponse:
 
 def simple_post(
     url: str,
-    json_body: Optional[Any] = None,
+    json_body: Any | None = None,
     timeout: float = 30.0,
 ) -> HttpResponse:
     """Make a simple POST request."""

@@ -7,7 +7,7 @@ Analyzes historical scan data to identify patterns and trends.
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 import logging
 import statistics
 
@@ -46,7 +46,7 @@ class DataPoint:
 
     timestamp: datetime
     value: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -54,16 +54,16 @@ class TrendData:
     """Trend analysis result for a metric."""
 
     metric: MetricType
-    data_points: List[DataPoint] = field(default_factory=list)
-    current_value: Optional[float] = None
-    previous_value: Optional[float] = None
-    average: Optional[float] = None
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
-    std_dev: Optional[float] = None
+    data_points: list[DataPoint] = field(default_factory=list)
+    current_value: float | None = None
+    previous_value: float | None = None
+    average: float | None = None
+    min_value: float | None = None
+    max_value: float | None = None
+    std_dev: float | None = None
     trend_direction: TrendDirection = TrendDirection.INSUFFICIENT_DATA
-    percent_change: Optional[float] = None
-    forecast_next: Optional[float] = None
+    percent_change: float | None = None
+    forecast_next: float | None = None
 
     def add_point(self, timestamp: datetime, value: float, **metadata) -> None:
         """Add a data point."""
@@ -155,7 +155,7 @@ class TrendData:
         recent = [p.value for p in self.data_points[-3:]]
         self.forecast_next = sum(recent) / len(recent)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "metric": self.metric.value,
@@ -185,14 +185,14 @@ class TrendReport:
     period_start: datetime
     period_end: datetime
     scan_count: int
-    metrics: Dict[MetricType, TrendData] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
+    metrics: dict[MetricType, TrendData] = field(default_factory=dict)
+    alerts: list[str] = field(default_factory=list)
 
-    def get_metric(self, metric: MetricType) -> Optional[TrendData]:
+    def get_metric(self, metric: MetricType) -> TrendData | None:
         """Get trend data for a specific metric."""
         return self.metrics.get(metric)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "target": self.target,
@@ -222,7 +222,7 @@ class TrendAnalyzer:
 
     def __init__(
         self,
-        alert_thresholds: Optional[Dict[str, float]] = None,
+        alert_thresholds: dict[str, float] | None = None,
         comparison_window_days: int = 30,
     ):
         """
@@ -241,10 +241,10 @@ class TrendAnalyzer:
 
     def analyze(
         self,
-        scans: List[Dict[str, Any]],
-        target: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        scans: list[dict[str, Any]],
+        target: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> TrendReport:
         """
         Analyze trends from scan history.
@@ -345,7 +345,7 @@ class TrendAnalyzer:
 
     def analyze_comparison_series(
         self,
-        comparisons: List[Dict[str, Any]],
+        comparisons: list[dict[str, Any]],
     ) -> TrendReport:
         """
         Analyze trends from scan comparisons.
@@ -389,11 +389,11 @@ class TrendAnalyzer:
 
     def _filter_scans(
         self,
-        scans: List[Dict[str, Any]],
-        target: Optional[str],
-        start_date: Optional[datetime],
-        end_date: Optional[datetime],
-    ) -> List[Dict[str, Any]]:
+        scans: list[dict[str, Any]],
+        target: str | None,
+        start_date: datetime | None,
+        end_date: datetime | None,
+    ) -> list[dict[str, Any]]:
         """Filter scans by criteria."""
         filtered = []
 
@@ -422,7 +422,7 @@ class TrendAnalyzer:
 
         return filtered
 
-    def _count_by_severity(self, findings: List[Dict[str, Any]]) -> Dict[str, int]:
+    def _count_by_severity(self, findings: list[dict[str, Any]]) -> dict[str, int]:
         """Count findings by severity."""
         counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
         for finding in findings:
@@ -431,7 +431,7 @@ class TrendAnalyzer:
                 counts[severity] += 1
         return counts
 
-    def _calculate_risk_score(self, severity_counts: Dict[str, int]) -> float:
+    def _calculate_risk_score(self, severity_counts: dict[str, int]) -> float:
         """Calculate risk score from severity counts."""
         score = sum(
             severity_counts.get(sev, 0) * weight
@@ -439,7 +439,7 @@ class TrendAnalyzer:
         )
         return min(100, score)  # Cap at 100
 
-    def _generate_alerts(self, metrics: Dict[MetricType, TrendData]) -> List[str]:
+    def _generate_alerts(self, metrics: dict[MetricType, TrendData]) -> list[str]:
         """Generate alerts based on thresholds."""
         alerts = []
 
@@ -546,7 +546,7 @@ class TrendAnalyzer:
         self,
         report: TrendReport,
         metric: MetricType,
-    ) -> Dict[str, List[Any]]:
+    ) -> dict[str, list[Any]]:
         """
         Export metric data in chart-friendly format.
 

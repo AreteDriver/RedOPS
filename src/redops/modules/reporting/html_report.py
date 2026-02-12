@@ -4,7 +4,7 @@ HTML report generation module.
 Generates HTML reports with interactive MITRE matrix, risk charts, and attack path diagrams.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 from datetime import datetime
 import html
@@ -270,7 +270,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 """
 
 
-def generate_html(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def generate_html(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Generate an HTML report.
 
@@ -392,7 +392,7 @@ def build_stats_overview(ctx: Context) -> str:
     return content
 
 
-def build_risk_section(risks: List[Dict[str, Any]]) -> str:
+def build_risk_section(risks: list[dict[str, Any]]) -> str:
     """Build risk analysis section with chart."""
     content = '<div class="section">\n'
     content += "<h2>Risk Analysis</h2>\n"
@@ -527,7 +527,7 @@ def build_mitre_matrix_html(ctx: Context) -> str:
     return content
 
 
-def build_attack_paths_html(attack_paths: List[Dict[str, Any]]) -> str:
+def build_attack_paths_html(attack_paths: list[dict[str, Any]]) -> str:
     """Build attack paths visualization."""
     if not attack_paths:
         return ""
@@ -608,7 +608,7 @@ def build_attack_paths_html(attack_paths: List[Dict[str, Any]]) -> str:
     return content
 
 
-def build_scenarios_html(scenarios: List[Dict[str, Any]]) -> str:
+def build_scenarios_html(scenarios: list[dict[str, Any]]) -> str:
     """Build attack scenarios section."""
     if not scenarios:
         return ""

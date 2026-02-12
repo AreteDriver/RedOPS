@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class ManifestError(Exception):
@@ -26,7 +26,7 @@ class PluginDependency:
     version: str = "*"  # Semver constraint
     optional: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -35,7 +35,7 @@ class PluginDependency:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PluginDependency":
+    def from_dict(cls, data: dict[str, Any]) -> "PluginDependency":
         """Create from dictionary."""
         return cls(
             name=data["name"],
@@ -79,10 +79,10 @@ class PluginRequirement:
 
     name: str
     type: str  # "python", "system", "env"
-    version: Optional[str] = None
+    version: str | None = None
     description: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -92,7 +92,7 @@ class PluginRequirement:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PluginRequirement":
+    def from_dict(cls, data: dict[str, Any]) -> "PluginRequirement":
         """Create from dictionary."""
         return cls(
             name=data["name"],
@@ -139,34 +139,34 @@ class PluginManifest:
     homepage: str = ""
     repository: str = ""
     documentation: str = ""
-    keywords: List[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
 
     # Plugin info
     plugin_type: str = "scanner"  # scanner, enricher, reporter, etc.
-    capabilities: List[str] = field(default_factory=list)
-    phases: List[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
+    phases: list[str] = field(default_factory=list)
 
     # Dependencies
-    dependencies: List[PluginDependency] = field(default_factory=list)
-    requirements: List[PluginRequirement] = field(default_factory=list)
+    dependencies: list[PluginDependency] = field(default_factory=list)
+    requirements: list[PluginRequirement] = field(default_factory=list)
     python_requires: str = ">=3.10"
 
     # Configuration
-    config_schema: Dict[str, Any] = field(default_factory=dict)
-    default_config: Dict[str, Any] = field(default_factory=dict)
+    config_schema: dict[str, Any] = field(default_factory=dict)
+    default_config: dict[str, Any] = field(default_factory=dict)
 
     # Hooks
-    hooks: Dict[str, str] = field(default_factory=dict)  # event -> function
+    hooks: dict[str, str] = field(default_factory=dict)  # event -> function
 
     # Files
-    include: List[str] = field(default_factory=list)
-    exclude: List[str] = field(default_factory=list)
+    include: list[str] = field(default_factory=list)
+    exclude: list[str] = field(default_factory=list)
 
     # Metadata
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -194,7 +194,7 @@ class PluginManifest:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PluginManifest":
+    def from_dict(cls, data: dict[str, Any]) -> "PluginManifest":
         """Create from dictionary."""
         return cls(
             name=data["name"],
@@ -236,7 +236,7 @@ class PluginManifest:
         parts = self.entry_point.split(":")
         return parts[1] if len(parts) > 1 else ""
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """
         Validate the manifest.
 
@@ -280,7 +280,7 @@ class PluginManifest:
         return errors
 
 
-def load_manifest(path: Union[str, Path]) -> PluginManifest:
+def load_manifest(path: str | Path) -> PluginManifest:
     """
     Load a plugin manifest from file.
 
@@ -313,7 +313,7 @@ def load_manifest(path: Union[str, Path]) -> PluginManifest:
     return manifest
 
 
-def save_manifest(manifest: PluginManifest, path: Union[str, Path]) -> None:
+def save_manifest(manifest: PluginManifest, path: str | Path) -> None:
     """
     Save a plugin manifest to file.
 
@@ -335,7 +335,7 @@ def save_manifest(manifest: PluginManifest, path: Union[str, Path]) -> None:
         json.dump(manifest.to_dict(), f, indent=2)
 
 
-def validate_manifest(data: Dict[str, Any]) -> List[str]:
+def validate_manifest(data: dict[str, Any]) -> list[str]:
     """
     Validate manifest data without creating object.
 

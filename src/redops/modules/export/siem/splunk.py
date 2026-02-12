@@ -4,7 +4,7 @@ Splunk HTTP Event Collector (HEC) integration.
 Exports RedOPS findings and scan results to Splunk for SIEM integration.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime, timezone
 import os
 import json
@@ -56,7 +56,7 @@ class SplunkHECExporter:
     Supports batching events for efficiency and handles retries.
     """
 
-    def __init__(self, config: Optional[SplunkConfig] = None):
+    def __init__(self, config: SplunkConfig | None = None):
         """
         Initialize the exporter.
 
@@ -64,14 +64,14 @@ class SplunkHECExporter:
             config: Splunk configuration (uses env vars if not provided)
         """
         self.config = config or SplunkConfig.from_env()
-        self._pending_events: List[Dict] = []
+        self._pending_events: list[dict] = []
 
     def _build_event(
         self,
-        data: Dict[str, Any],
-        timestamp: Optional[datetime] = None,
+        data: dict[str, Any],
+        timestamp: datetime | None = None,
         event_type: str = "scan",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Build a Splunk HEC event.
 
@@ -97,8 +97,8 @@ class SplunkHECExporter:
 
     def add_event(
         self,
-        data: Dict[str, Any],
-        timestamp: Optional[datetime] = None,
+        data: dict[str, Any],
+        timestamp: datetime | None = None,
         event_type: str = "scan",
     ) -> None:
         """
@@ -112,7 +112,7 @@ class SplunkHECExporter:
         event = self._build_event(data, timestamp, event_type)
         self._pending_events.append(event)
 
-    def add_finding(self, finding: Finding, scan_id: Optional[str] = None) -> None:
+    def add_finding(self, finding: Finding, scan_id: str | None = None) -> None:
         """
         Add a finding to the pending batch.
 
@@ -132,7 +132,7 @@ class SplunkHECExporter:
         }
         self.add_event(data, event_type="finding")
 
-    def flush(self) -> Dict[str, Any]:
+    def flush(self) -> dict[str, Any]:
         """
         Send all pending events to Splunk.
 
@@ -195,8 +195,8 @@ class SplunkHECExporter:
             }
 
     def export_context(
-        self, ctx: Context, scan_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, ctx: Context, scan_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Export all context data to Splunk.
 
@@ -259,7 +259,7 @@ class SplunkHECExporter:
         return self.flush()
 
 
-def export_to_splunk(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_to_splunk(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export scan results to Splunk HEC.
 

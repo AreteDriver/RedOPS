@@ -4,7 +4,7 @@ Metrics collection and export for RedOPS.
 Provides Prometheus-compatible metrics using OpenTelemetry SDK.
 """
 
-from typing import Optional, Dict, Any, Callable
+from typing import Any, Callable
 from dataclasses import dataclass
 import os
 import time
@@ -65,10 +65,10 @@ class MetricsCollector:
     - Pipeline execution metrics
     """
 
-    _instance: Optional["MetricsCollector"] = None
+    _instance: "MetricsCollector | None" = None
     _lock = threading.Lock()
 
-    def __init__(self, config: Optional[MetricsConfig] = None):
+    def __init__(self, config: MetricsConfig | None = None):
         """
         Initialize the metrics collector.
 
@@ -78,10 +78,10 @@ class MetricsCollector:
         self.config = config or MetricsConfig.from_env()
         self._initialized = False
         self._meter = None
-        self._counters: Dict[str, Any] = {}
-        self._histograms: Dict[str, Any] = {}
-        self._gauges: Dict[str, Callable] = {}
-        self._gauge_values: Dict[str, float] = {}
+        self._counters: dict[str, Any] = {}
+        self._histograms: dict[str, Any] = {}
+        self._gauges: dict[str, Callable] = {}
+        self._gauge_values: dict[str, float] = {}
 
         if self.config.enabled and HAS_OTEL:
             self._initialize_otel()
@@ -352,7 +352,7 @@ class MetricsCollector:
 
 
 # Global metrics collector
-_metrics_collector: Optional[MetricsCollector] = None
+_metrics_collector: MetricsCollector | None = None
 
 
 def get_metrics_collector() -> MetricsCollector:

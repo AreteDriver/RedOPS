@@ -6,7 +6,7 @@ Produces executive summaries and technical details for different audiences.
 Non-exploitative, textual analysis only.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass
 from collections import defaultdict
 from redops.core.context import Context
@@ -23,10 +23,10 @@ class AttackScenario:
     objective: str
     likelihood: int
     impact: int
-    steps: List[Dict[str, Any]]
-    mitre_techniques: List[str]
-    assets_affected: List[str]
-    recommendations: List[str]
+    steps: list[dict[str, Any]]
+    mitre_techniques: list[str]
+    assets_affected: list[str]
+    recommendations: list[str]
     executive_summary: str
     technical_details: str
 
@@ -49,7 +49,7 @@ class AttackScenario:
             return "LOW"
         return "INFO"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -159,7 +159,7 @@ RECOMMENDATION_TEMPLATES = {
 
 
 def generate_scenarios(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Generate narrative attack scenarios from context data.
@@ -221,7 +221,7 @@ def generate_scenarios(
 
 def create_attack_scenario(
     scenario_id: int,
-    attack_path: Dict[str, Any],
+    attack_path: dict[str, Any],
     ctx: Context,
     include_executive: bool = True,
     include_technical: bool = True,
@@ -293,7 +293,7 @@ def create_attack_scenario(
     )
 
 
-def determine_threat_actor(techniques: List[str]) -> Dict[str, Any]:
+def determine_threat_actor(techniques: list[str]) -> dict[str, Any]:
     """
     Determine the most likely threat actor based on techniques.
 
@@ -329,7 +329,7 @@ def determine_threat_actor(techniques: List[str]) -> Dict[str, Any]:
     return THREAT_ACTORS["opportunistic_attacker"]
 
 
-def determine_objective(steps: List[str], techniques: List[str], ctx: Context) -> str:
+def determine_objective(steps: list[str], techniques: list[str], ctx: Context) -> str:
     """
     Determine the attack objective based on steps and techniques.
 
@@ -370,7 +370,7 @@ def determine_objective(steps: List[str], techniques: List[str], ctx: Context) -
     return ATTACK_OBJECTIVES["data_theft"]
 
 
-def extract_affected_assets(attack_path: Dict[str, Any], ctx: Context) -> List[str]:
+def extract_affected_assets(attack_path: dict[str, Any], ctx: Context) -> list[str]:
     """
     Extract affected assets from attack path.
 
@@ -405,8 +405,8 @@ def extract_affected_assets(attack_path: Dict[str, Any], ctx: Context) -> List[s
 
 
 def generate_detailed_steps(
-    steps: List[str], techniques: List[str]
-) -> List[Dict[str, Any]]:
+    steps: list[str], techniques: list[str]
+) -> list[dict[str, Any]]:
     """
     Generate detailed step information.
 
@@ -473,7 +473,7 @@ def get_attack_phase(step_index: int, total_steps: int) -> str:
         return "Objective"
 
 
-def generate_recommendations(techniques: List[str], ctx: Context) -> List[str]:
+def generate_recommendations(techniques: list[str], ctx: Context) -> list[str]:
     """
     Generate recommendations based on techniques used.
 
@@ -506,11 +506,11 @@ def generate_recommendations(techniques: List[str], ctx: Context) -> List[str]:
 
 def generate_executive_summary(
     title: str,
-    threat_actor: Dict[str, Any],
+    threat_actor: dict[str, Any],
     objective: str,
     likelihood: int,
     impact: int,
-    assets: List[str],
+    assets: list[str],
 ) -> str:
     """
     Generate an executive summary for C-level stakeholders.
@@ -552,7 +552,7 @@ def generate_executive_summary(
 
 
 def generate_technical_details(
-    steps: List[Dict[str, Any]], techniques: List[str], ctx: Context
+    steps: list[dict[str, Any]], techniques: list[str], ctx: Context
 ) -> str:
     """
     Generate technical details for security teams.
@@ -607,8 +607,8 @@ def generate_technical_details(
 
 
 def generate_overall_summary(
-    scenarios: List[AttackScenario], ctx: Context
-) -> Dict[str, Any]:
+    scenarios: list[AttackScenario], ctx: Context
+) -> dict[str, Any]:
     """
     Generate an overall summary of all scenarios.
 
@@ -660,7 +660,7 @@ def generate_overall_summary(
     }
 
 
-def prioritize_scenarios(scenarios: List[AttackScenario]) -> List[AttackScenario]:
+def prioritize_scenarios(scenarios: list[AttackScenario]) -> list[AttackScenario]:
     """
     Prioritize scenarios by risk score.
 
@@ -674,8 +674,8 @@ def prioritize_scenarios(scenarios: List[AttackScenario]) -> List[AttackScenario
 
 
 def create_scenario_narrative(
-    attack_path: Dict[str, Any], ctx: Context
-) -> Dict[str, Any]:
+    attack_path: dict[str, Any], ctx: Context
+) -> dict[str, Any]:
     """
     Create a narrative scenario from an attack path (legacy compatibility).
 
@@ -696,7 +696,7 @@ def create_scenario_narrative(
     return scenario.to_dict()
 
 
-def generate_narrative(attack_path: Dict[str, Any]) -> str:
+def generate_narrative(attack_path: dict[str, Any]) -> str:
     """
     Generate a narrative description of an attack path (legacy compatibility).
 
@@ -723,7 +723,7 @@ def generate_narrative(attack_path: Dict[str, Any]) -> str:
     return narrative
 
 
-def get_scenario_by_id(ctx: Context, scenario_id: int) -> Optional[Dict[str, Any]]:
+def get_scenario_by_id(ctx: Context, scenario_id: int) -> dict[str, Any] | None:
     """
     Get a specific scenario by ID.
 
@@ -741,7 +741,7 @@ def get_scenario_by_id(ctx: Context, scenario_id: int) -> Optional[Dict[str, Any
     return None
 
 
-def export_scenarios_markdown(scenarios: List[Dict[str, Any]]) -> str:
+def export_scenarios_markdown(scenarios: list[dict[str, Any]]) -> str:
     """
     Export scenarios to markdown format.
 

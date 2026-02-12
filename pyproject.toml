@@ -104,6 +104,22 @@ Repository = "https://github.com/AreteDriver/RedOPS"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+addopts = "--cov=src/redops --cov-report=term-missing:skip-covered --no-header -q"
+
+[tool.coverage.run]
+branch = true
+source = ["src/redops"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
+show_missing = true
+skip_covered = true
 
 [tool.setuptools]
 package-dir = {"" = "src"}

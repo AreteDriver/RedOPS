@@ -8,7 +8,7 @@ import json
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from redops.jobs.queue import (
     Job,
@@ -32,7 +32,7 @@ class RedisJobBackend(JobBackend):
     def __init__(
         self,
         redis_url: str = "redis://localhost:6379/0",
-        redis_client: Optional[Any] = None,
+        redis_client: Any | None = None,
         key_prefix: str = "redops:jobs",
     ):
         """
@@ -94,7 +94,7 @@ class RedisJobBackend(JobBackend):
         logger.debug(f"Enqueued job {job.id} to queue {job.queue}")
         return job.id
 
-    def dequeue(self, queue: str, timeout: float = 0) -> Optional[Job]:
+    def dequeue(self, queue: str, timeout: float = 0) -> Job | None:
         """Get next job from queue."""
         queue_key = self._key("queue", queue)
         processing_key = self._key("processing", queue)
@@ -140,7 +140,7 @@ class RedisJobBackend(JobBackend):
 
             return job
 
-    def get(self, job_id: str) -> Optional[Job]:
+    def get(self, job_id: str) -> Job | None:
         """Get job by ID."""
         job_key = self._key("job", job_id)
         data = self._redis.hget(job_key, "data")
@@ -209,10 +209,10 @@ class RedisJobBackend(JobBackend):
 
     def list_jobs(
         self,
-        queue: Optional[str] = None,
-        status: Optional[JobStatus] = None,
+        queue: str | None = None,
+        status: JobStatus | None = None,
         limit: int = 100,
-    ) -> List[Job]:
+    ) -> list[Job]:
         """List jobs."""
         jobs = []
 
@@ -334,7 +334,7 @@ class RedisJobBackend(JobBackend):
 
         return count
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get queue statistics."""
         stats = {
             "queues": {},
@@ -379,7 +379,7 @@ class RedisJobQueue(JobQueue):
     def __init__(
         self,
         redis_url: str = "redis://localhost:6379/0",
-        redis_client: Optional[Any] = None,
+        redis_client: Any | None = None,
         key_prefix: str = "redops:jobs",
         default_queue: str = "default",
     ):
@@ -411,7 +411,7 @@ class RedisJobQueue(JobQueue):
             return self._backend.cleanup_stale(timeout)
         return 0
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get queue statistics."""
         if isinstance(self._backend, RedisJobBackend):
             return self._backend.get_stats()
@@ -428,8 +428,8 @@ class RedisJobWorker(JobWorker):
     def __init__(
         self,
         queue: RedisJobQueue,
-        queues: Optional[List[str]] = None,
-        worker_id: Optional[str] = None,
+        queues: list[str] | None = None,
+        worker_id: str | None = None,
         concurrency: int = 1,
         scheduler_interval: float = 1.0,
         cleanup_interval: float = 60.0,
@@ -448,8 +448,8 @@ class RedisJobWorker(JobWorker):
         super().__init__(queue, queues, worker_id, concurrency)
         self._scheduler_interval = scheduler_interval
         self._cleanup_interval = cleanup_interval
-        self._scheduler_thread: Optional[Any] = None
-        self._cleanup_thread: Optional[Any] = None
+        self._scheduler_thread: Any | None = None
+        self._cleanup_thread: Any | None = None
 
     def start(self) -> None:
         """Start worker with scheduler and cleanup threads."""

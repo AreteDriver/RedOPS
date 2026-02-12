@@ -7,7 +7,7 @@ Provides automatic tenant resolution and context injection.
 import logging
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from .manager import get_tenant_manager, set_current_tenant
 from .models import Tenant
@@ -19,7 +19,7 @@ class TenantResolver(ABC):
     """Abstract base for tenant resolvers."""
 
     @abstractmethod
-    def resolve(self, request: Any) -> Optional[str]:
+    def resolve(self, request: Any) -> str | None:
         """
         Resolve tenant identifier from request.
 
@@ -44,7 +44,7 @@ class HeaderTenantResolver(TenantResolver):
         """
         self.header_name = header_name
 
-    def resolve(self, request: Any) -> Optional[str]:
+    def resolve(self, request: Any) -> str | None:
         """Resolve tenant from header."""
         # Support different request objects
         if hasattr(request, "headers"):
@@ -68,7 +68,7 @@ class SubdomainTenantResolver(TenantResolver):
         """
         self.base_domain = base_domain
 
-    def resolve(self, request: Any) -> Optional[str]:
+    def resolve(self, request: Any) -> str | None:
         """Resolve tenant from subdomain."""
         host = None
 
@@ -105,7 +105,7 @@ class PathTenantResolver(TenantResolver):
         self.prefix = prefix
         self.pattern = re.compile(rf"^{re.escape(prefix)}([^/]+)")
 
-    def resolve(self, request: Any) -> Optional[str]:
+    def resolve(self, request: Any) -> str | None:
         """Resolve tenant from path."""
         path = None
 
@@ -130,7 +130,7 @@ class APIKeyTenantResolver(TenantResolver):
     def __init__(
         self,
         header_name: str = "X-API-Key",
-        api_key_to_tenant: Optional[Dict[str, str]] = None,
+        api_key_to_tenant: dict[str, str] | None = None,
     ):
         """
         Initialize API key resolver.
@@ -150,7 +150,7 @@ class APIKeyTenantResolver(TenantResolver):
         """Remove API key mapping."""
         self._api_key_map.pop(api_key, None)
 
-    def resolve(self, request: Any) -> Optional[str]:
+    def resolve(self, request: Any) -> str | None:
         """Resolve tenant from API key."""
         api_key = None
 
@@ -170,7 +170,7 @@ class APIKeyTenantResolver(TenantResolver):
 class ChainedTenantResolver(TenantResolver):
     """Chains multiple resolvers, using first successful result."""
 
-    def __init__(self, resolvers: Optional[List[TenantResolver]] = None):
+    def __init__(self, resolvers: list[TenantResolver] | None = None):
         """Initialize with list of resolvers."""
         self.resolvers = resolvers or []
 
@@ -178,7 +178,7 @@ class ChainedTenantResolver(TenantResolver):
         """Add a resolver to the chain."""
         self.resolvers.append(resolver)
 
-    def resolve(self, request: Any) -> Optional[str]:
+    def resolve(self, request: Any) -> str | None:
         """Try each resolver in order."""
         for resolver in self.resolvers:
             result = resolver.resolve(request)
@@ -189,8 +189,8 @@ class ChainedTenantResolver(TenantResolver):
 
 def extract_tenant_from_request(
     request: Any,
-    resolver: Optional[TenantResolver] = None,
-) -> Optional[Tenant]:
+    resolver: TenantResolver | None = None,
+) -> Tenant | None:
     """
     Extract tenant from an HTTP request.
 
@@ -240,9 +240,9 @@ try:
         def __init__(
             self,
             app,
-            resolver: Optional[TenantResolver] = None,
+            resolver: TenantResolver | None = None,
             require_tenant: bool = False,
-            exclude_paths: Optional[List[str]] = None,
+            exclude_paths: list[str] | None = None,
         ):
             """
             Initialize middleware.
@@ -329,7 +329,7 @@ except ImportError:
 
 # FastAPI Dependency
 def get_tenant_dependency(
-    resolver: Optional[TenantResolver] = None,
+    resolver: TenantResolver | None = None,
     required: bool = True,
 ) -> Callable:
     """
@@ -354,7 +354,7 @@ def get_tenant_dependency(
     try:
         from fastapi import HTTPException, Request
 
-        async def get_tenant(request: Request) -> Optional[Tenant]:
+        async def get_tenant(request: Request) -> Tenant | None:
             tenant = extract_tenant_from_request(request, resolver)
 
             if tenant is None and required:

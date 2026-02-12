@@ -5,7 +5,7 @@ Queries passive DNS databases to discover historical DNS records,
 domain-IP relationships, and infrastructure changes over time.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 from datetime import datetime, timezone
 import os
 from redops.core.context import Context
@@ -25,7 +25,7 @@ MNEMONIC_API = "https://api.mnemonic.no/pdns/v3"
 CIRCL_API = "https://www.circl.lu/pdns/query"
 
 
-def query_passivedns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_passivedns(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query passive DNS databases for historical DNS data.
 
@@ -117,7 +117,7 @@ def query_passivedns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
 
 
 def get_domain_history(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Get IP address history for a domain.
@@ -203,7 +203,7 @@ def get_domain_history(
     return ctx
 
 
-def get_ip_history(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def get_ip_history(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Get domain history for an IP address.
 
@@ -280,8 +280,8 @@ def get_ip_history(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
 
 
 def _query_mnemonic(
-    query: str, api_key: Optional[str], limit: int = 100
-) -> Dict[str, Any]:
+    query: str, api_key: str | None, limit: int = 100
+) -> dict[str, Any]:
     """Query Mnemonic passive DNS API."""
     headers = {}
     if api_key:
@@ -325,7 +325,7 @@ def _query_mnemonic(
         return {"error": str(e), "records": []}
 
 
-def _query_circl(query: str, limit: int = 100) -> Dict[str, Any]:
+def _query_circl(query: str, limit: int = 100) -> dict[str, Any]:
     """Query CIRCL passive DNS (public, no auth required)."""
     try:
         response = requests.get(
@@ -378,7 +378,7 @@ def _detect_query_type(query: str) -> str:
     return "domain"
 
 
-def analyze_passivedns_results(results: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_passivedns_results(results: dict[str, Any]) -> dict[str, Any]:
     """
     Analyze passive DNS results for suspicious patterns.
 
@@ -451,7 +451,7 @@ def analyze_passivedns_results(results: Dict[str, Any]) -> Dict[str, Any]:
     return analysis
 
 
-def get_passivedns_summary(result: Dict[str, Any]) -> str:
+def get_passivedns_summary(result: dict[str, Any]) -> str:
     """
     Generate a human-readable summary of passive DNS results.
 

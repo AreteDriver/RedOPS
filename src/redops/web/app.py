@@ -6,7 +6,6 @@ Provides a REST API and web dashboard for RedOPS functionality.
 
 import os
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import (
     FastAPI,
@@ -54,7 +53,7 @@ class ScanRequest(BaseModel):
     preset: str = Field(
         default="quick", description="Scan preset (quick, recon, full, ai_enhanced)"
     )
-    modules: Optional[list[str]] = Field(
+    modules: list[str] | None = Field(
         default=None, description="Specific modules to run"
     )
 
@@ -78,11 +77,11 @@ class ScanStatus(BaseModel):
     target: str
     preset: str
     started_at: str
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
     progress: int = 0
-    current_module: Optional[str] = None
-    results_path: Optional[str] = None
-    error: Optional[str] = None
+    current_module: str | None = None
+    results_path: str | None = None
+    error: str | None = None
 
 
 class AIRequest(BaseModel):
@@ -91,10 +90,10 @@ class AIRequest(BaseModel):
     action: str = Field(
         ..., description="AI action (analyze, explain, suggest, summarize)"
     )
-    query: Optional[str] = Field(default=None, description="Query for explain action")
-    scan_id: Optional[str] = Field(default=None, description="Scan ID for analysis")
-    provider: Optional[str] = Field(default=None, description="AI provider override")
-    model: Optional[str] = Field(default=None, description="Model override")
+    query: str | None = Field(default=None, description="Query for explain action")
+    scan_id: str | None = Field(default=None, description="Scan ID for analysis")
+    provider: str | None = Field(default=None, description="AI provider override")
+    model: str | None = Field(default=None, description="Model override")
 
 
 class AIResponse(BaseModel):
@@ -127,15 +126,15 @@ class LoginResponse(BaseModel):
 
     success: bool
     message: str
-    username: Optional[str] = None
+    username: str | None = None
 
 
 class AuthStatusResponse(BaseModel):
     """Response model for auth status check."""
 
     authenticated: bool
-    username: Optional[str] = None
-    auth_method: Optional[str] = None
+    username: str | None = None
+    auth_method: str | None = None
     auth_enabled: bool
 
 
@@ -144,7 +143,7 @@ _scans: dict[str, ScanStatus] = {}
 _scan_results: dict[str, dict] = {}
 
 
-def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
+def create_app(auth_config: AuthConfig | None = None) -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
         title="RedOPS API",
@@ -206,7 +205,7 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
 
     # Authentication endpoints
     @app.get("/api/auth/status", response_model=AuthStatusResponse, tags=["Auth"])
-    async def auth_status(user: Optional[AuthenticatedUser] = Depends(optional_auth)):
+    async def auth_status(user: AuthenticatedUser | None = Depends(optional_auth)):
         """Check current authentication status."""
         auth_manager = get_auth_manager()
         if user and user.auth_method != "none":
@@ -317,7 +316,7 @@ def create_app(auth_config: Optional[AuthConfig] = None) -> FastAPI:
 
     @app.get("/api/scans", response_model=list[ScanStatus], tags=["Scans"])
     async def list_scans(
-        status: Optional[str] = Query(None, description="Filter by status"),
+        status: str | None = Query(None, description="Filter by status"),
         limit: int = Query(20, ge=1, le=100, description="Max results"),
         user: AuthenticatedUser = Depends(require_auth),
     ):

@@ -5,7 +5,7 @@ Queries GreyNoise Community and Enterprise APIs to identify
 internet scanners, known benign services, and malicious actors.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime
 import os
 from redops.core.context import Context
@@ -25,7 +25,7 @@ GREYNOISE_COMMUNITY_API = "https://api.greynoise.io/v3/community"
 GREYNOISE_ENTERPRISE_API = "https://api.greynoise.io/v2"
 
 
-def query_greynoise(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_greynoise(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query GreyNoise for IP reputation information.
 
@@ -94,7 +94,7 @@ def query_greynoise(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Co
     return ctx
 
 
-def _query_community_api(ip: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+def _query_community_api(ip: str, api_key: str | None = None) -> dict[str, Any]:
     """Query GreyNoise Community API."""
     try:
         url = f"{GREYNOISE_COMMUNITY_API}/{ip}"
@@ -121,7 +121,7 @@ def _query_community_api(ip: str, api_key: Optional[str] = None) -> Dict[str, An
         return {"ip": ip, "error": f"Query failed: {str(e)}"}
 
 
-def get_greynoise_context(ip: str, api_key: str) -> Dict[str, Any]:
+def get_greynoise_context(ip: str, api_key: str) -> dict[str, Any]:
     """
     Get detailed context from GreyNoise Enterprise API.
 
@@ -160,7 +160,7 @@ def get_greynoise_context(ip: str, api_key: str) -> Dict[str, Any]:
         return {"ip": ip, "error": f"Context lookup failed: {str(e)}"}
 
 
-def get_greynoise_riot(ip: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+def get_greynoise_riot(ip: str, api_key: str | None = None) -> dict[str, Any]:
     """
     Check if IP is in GreyNoise RIOT (Rule It OuT) database.
 
@@ -201,7 +201,7 @@ def get_greynoise_riot(ip: str, api_key: Optional[str] = None) -> Dict[str, Any]
         return {"ip": ip, "error": f"RIOT query failed: {str(e)}"}
 
 
-def analyze_greynoise_results(result: Dict[str, Any], ip: str) -> List[Finding]:
+def analyze_greynoise_results(result: dict[str, Any], ip: str) -> list[Finding]:
     """
     Analyze GreyNoise results for security findings.
 
@@ -336,7 +336,7 @@ def analyze_greynoise_results(result: Dict[str, Any], ip: str) -> List[Finding]:
     return findings
 
 
-def get_greynoise_summary(ctx: Context) -> Dict[str, Any]:
+def get_greynoise_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of GreyNoise query results.
 

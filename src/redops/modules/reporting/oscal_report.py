@@ -5,7 +5,7 @@ Exports assessment results in OSCAL format, the NIST standard for
 security controls, assessments, and compliance documentation.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 from datetime import datetime, timezone
 import json
@@ -17,7 +17,7 @@ from redops.core.context import Context
 OSCAL_VERSION = "1.0.4"
 
 
-def export_oscal(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_oscal(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export findings as an OSCAL Assessment Results document.
 
@@ -87,7 +87,7 @@ def create_oscal_assessment_results(
     organization_name: str = "Security Assessment Team",
     system_name: str = "Target System",
     assessment_title: str = "Security Assessment Results",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create an OSCAL Assessment Results document.
 
@@ -139,7 +139,7 @@ def create_metadata(
     title: str,
     organization: str,
     timestamp: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create OSCAL metadata section."""
     return {
         "title": title,
@@ -171,9 +171,9 @@ def create_metadata(
     }
 
 
-def create_local_definitions(ctx: Context, system_name: str) -> Dict[str, Any]:
+def create_local_definitions(ctx: Context, system_name: str) -> dict[str, Any]:
     """Create local definitions section."""
-    definitions: Dict[str, Any] = {
+    definitions: dict[str, Any] = {
         "components": [
             {
                 "uuid": str(uuid.uuid4()),
@@ -206,10 +206,10 @@ def create_local_definitions(ctx: Context, system_name: str) -> Dict[str, Any]:
 
 def create_result(
     result_uuid: str,
-    findings: List[Dict[str, Any]],
+    findings: list[dict[str, Any]],
     ctx: Context,
     timestamp: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create an assessment result."""
     result = {
         "uuid": result_uuid,
@@ -240,7 +240,7 @@ def create_result(
     return result
 
 
-def create_assessment_assets() -> Dict[str, Any]:
+def create_assessment_assets() -> dict[str, Any]:
     """Create assessment assets section."""
     return {
         "components": [
@@ -263,9 +263,9 @@ def create_assessment_assets() -> Dict[str, Any]:
 
 
 def create_observation(
-    finding: Dict[str, Any],
+    finding: dict[str, Any],
     timestamp: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create an OSCAL observation from a finding.
 
@@ -343,10 +343,10 @@ def create_observation(
 
 
 def create_finding(
-    finding_data: Dict[str, Any],
+    finding_data: dict[str, Any],
     observation_uuid: str,
     timestamp: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create an OSCAL finding from a finding.
 
@@ -385,7 +385,7 @@ def create_finding(
     return finding
 
 
-def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
+def collect_findings(ctx: Context) -> list[dict[str, Any]]:
     """Collect all findings from context."""
     findings = []
 
@@ -435,7 +435,7 @@ def severity_to_state(severity: str) -> str:
     return state_map.get(severity, "partially-satisfied")
 
 
-def get_oscal_summary(ctx: Context) -> Dict[str, Any]:
+def get_oscal_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of OSCAL export results.
 
@@ -453,7 +453,7 @@ def get_oscal_summary(ctx: Context) -> Dict[str, Any]:
 
 
 def export_oscal_catalog(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Export a basic OSCAL Catalog of security controls.

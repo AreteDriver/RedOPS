@@ -5,7 +5,7 @@ Provides access to the OTX threat intelligence platform for
 IOC lookups, pulse subscriptions, and threat indicator analysis.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 from datetime import datetime, timezone
 import os
 from redops.core.context import Context
@@ -24,7 +24,7 @@ except ImportError:
 OTX_API = "https://otx.alienvault.com/api/v1"
 
 
-def get_indicator(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def get_indicator(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Get threat intelligence for an indicator (IP, domain, URL, hash).
 
@@ -105,7 +105,7 @@ def get_indicator(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     return ctx
 
 
-def get_pulses(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def get_pulses(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Get user's subscribed pulses from OTX.
 
@@ -192,7 +192,7 @@ def get_pulses(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context
     return ctx
 
 
-def search_pulses(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def search_pulses(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Search OTX pulses by query.
 
@@ -272,7 +272,7 @@ def search_pulses(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     return ctx
 
 
-def get_pulse_details(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def get_pulse_details(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Get detailed information about a specific pulse.
 
@@ -402,8 +402,8 @@ def _detect_indicator_type(indicator: str) -> str:
 
 
 def _query_indicator_section(
-    indicator: str, indicator_type: str, section: str, headers: Dict
-) -> Optional[Dict]:
+    indicator: str, indicator_type: str, section: str, headers: dict
+) -> dict | None:
     """Query a specific section for an indicator."""
     try:
         # Map indicator types to API paths
@@ -432,7 +432,7 @@ def _query_indicator_section(
         return None
 
 
-def analyze_otx_indicator(result: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_otx_indicator(result: dict[str, Any]) -> dict[str, Any]:
     """
     Analyze OTX indicator results.
 
@@ -502,7 +502,7 @@ def analyze_otx_indicator(result: Dict[str, Any]) -> Dict[str, Any]:
     return analysis
 
 
-def get_otx_summary(result: Dict[str, Any]) -> str:
+def get_otx_summary(result: dict[str, Any]) -> str:
     """
     Generate a human-readable summary of OTX results.
 

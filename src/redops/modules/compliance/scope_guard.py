@@ -5,7 +5,7 @@ RedOps only runs on explicitly allowed domains or offline local directories.
 If target is out of scope → raise exception and stop the pipeline.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 from pathlib import Path
 from redops.core.context import Context
 from redops.core.config import RedOpsConfig, default_config
@@ -54,7 +54,7 @@ def is_in_scope(target: str, config: RedOpsConfig = default_config) -> bool:
     return False
 
 
-def validate_scope(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def validate_scope(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Pipeline module that validates target scope.
 

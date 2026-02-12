@@ -4,7 +4,7 @@ Scheduler engine for RedOPS.
 Manages scheduled scans with cron-based timing and job execution.
 """
 
-from typing import Optional, Dict, Any, List, Callable
+from typing import Any, Callable
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass
 import threading
@@ -63,8 +63,8 @@ class ScheduleStore:
         Args:
             storage_path: Path to storage file (empty for in-memory only)
         """
-        self._schedules: Dict[str, ScanSchedule] = {}
-        self._jobs: Dict[str, ScanJob] = {}
+        self._schedules: dict[str, ScanSchedule] = {}
+        self._jobs: dict[str, ScanJob] = {}
         self._storage_path = storage_path
         self._lock = threading.RLock()
 
@@ -109,7 +109,7 @@ class ScheduleStore:
             self._schedules[schedule.id] = schedule
             self._save_to_file()
 
-    def get_schedule(self, schedule_id: str) -> Optional[ScanSchedule]:
+    def get_schedule(self, schedule_id: str) -> ScanSchedule | None:
         """Get a schedule by ID."""
         with self._lock:
             return self._schedules.get(schedule_id)
@@ -132,9 +132,9 @@ class ScheduleStore:
 
     def list_schedules(
         self,
-        status: Optional[ScheduleStatus] = None,
-        target: Optional[str] = None,
-    ) -> List[ScanSchedule]:
+        status: ScheduleStatus | None = None,
+        target: str | None = None,
+    ) -> list[ScanSchedule]:
         """List schedules with optional filtering."""
         with self._lock:
             schedules = list(self._schedules.values())
@@ -151,8 +151,8 @@ class ScheduleStore:
             )
 
     def get_due_schedules(
-        self, current_time: Optional[datetime] = None
-    ) -> List[ScanSchedule]:
+        self, current_time: datetime | None = None
+    ) -> list[ScanSchedule]:
         """Get schedules that are due for execution."""
         with self._lock:
             return [s for s in self._schedules.values() if s.is_due(current_time)]
@@ -163,7 +163,7 @@ class ScheduleStore:
             self._jobs[job.id] = job
             self._save_to_file()
 
-    def get_job(self, job_id: str) -> Optional[ScanJob]:
+    def get_job(self, job_id: str) -> ScanJob | None:
         """Get a job by ID."""
         with self._lock:
             return self._jobs.get(job_id)
@@ -177,10 +177,10 @@ class ScheduleStore:
 
     def list_jobs(
         self,
-        schedule_id: Optional[str] = None,
-        status: Optional[JobStatus] = None,
+        schedule_id: str | None = None,
+        status: JobStatus | None = None,
         limit: int = 100,
-    ) -> List[ScanJob]:
+    ) -> list[ScanJob]:
         """List jobs with optional filtering."""
         with self._lock:
             jobs = list(self._jobs.values())
@@ -199,7 +199,7 @@ class ScheduleStore:
 
             return jobs[:limit]
 
-    def get_running_jobs(self) -> List[ScanJob]:
+    def get_running_jobs(self) -> list[ScanJob]:
         """Get currently running jobs."""
         return self.list_jobs(status=JobStatus.RUNNING)
 
@@ -229,8 +229,8 @@ class Scheduler:
 
     def __init__(
         self,
-        config: Optional[SchedulerConfig] = None,
-        executor: Optional[Callable[[ScanJob], None]] = None,
+        config: SchedulerConfig | None = None,
+        executor: Callable[[ScanJob], None] | None = None,
     ):
         """
         Initialize the scheduler.
@@ -243,7 +243,7 @@ class Scheduler:
         self.store = ScheduleStore(self.config.storage_path)
         self._executor = executor
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
         self._job_semaphore = threading.Semaphore(self.config.max_concurrent_jobs)
 
@@ -397,9 +397,9 @@ class Scheduler:
         policy: ScanPolicy,
         recurrence: RecurrenceType = RecurrenceType.DAILY,
         cron_expression: str = "",
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ScanSchedule:
         """
         Create a new schedule.
@@ -432,15 +432,15 @@ class Scheduler:
         logger.info(f"Created schedule {schedule.id}: {name}")
         return schedule
 
-    def get_schedule(self, schedule_id: str) -> Optional[ScanSchedule]:
+    def get_schedule(self, schedule_id: str) -> ScanSchedule | None:
         """Get a schedule by ID."""
         return self.store.get_schedule(schedule_id)
 
     def list_schedules(
         self,
-        status: Optional[ScheduleStatus] = None,
-        target: Optional[str] = None,
-    ) -> List[ScanSchedule]:
+        status: ScheduleStatus | None = None,
+        target: str | None = None,
+    ) -> list[ScanSchedule]:
         """List schedules."""
         return self.store.list_schedules(status, target)
 
@@ -468,7 +468,7 @@ class Scheduler:
         """Delete a schedule."""
         return self.store.delete_schedule(schedule_id)
 
-    def run_now(self, schedule_id: str) -> Optional[ScanJob]:
+    def run_now(self, schedule_id: str) -> ScanJob | None:
         """
         Immediately run a schedule (bypasses timing).
 
@@ -504,16 +504,16 @@ class Scheduler:
         logger.info(f"Triggered immediate run for schedule {schedule_id}")
         return job
 
-    def get_job(self, job_id: str) -> Optional[ScanJob]:
+    def get_job(self, job_id: str) -> ScanJob | None:
         """Get a job by ID."""
         return self.store.get_job(job_id)
 
     def list_jobs(
         self,
-        schedule_id: Optional[str] = None,
-        status: Optional[JobStatus] = None,
+        schedule_id: str | None = None,
+        status: JobStatus | None = None,
         limit: int = 100,
-    ) -> List[ScanJob]:
+    ) -> list[ScanJob]:
         """List jobs."""
         return self.store.list_jobs(schedule_id, status, limit)
 
@@ -532,7 +532,7 @@ class Scheduler:
         """Check if scheduler is running."""
         return self._running
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get scheduler statistics."""
         schedules = self.store.list_schedules()
         jobs = self.store.list_jobs(limit=1000)
@@ -554,7 +554,7 @@ class Scheduler:
 
 
 # Global scheduler instance
-_scheduler: Optional[Scheduler] = None
+_scheduler: Scheduler | None = None
 
 
 def get_scheduler() -> Scheduler:

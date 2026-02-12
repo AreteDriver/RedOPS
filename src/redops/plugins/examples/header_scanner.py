@@ -5,7 +5,6 @@ Demonstrates building a web scanner plugin.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Set
 from urllib.parse import urlparse
 
 from redops.plugins.scanner import (
@@ -104,11 +103,11 @@ class HeaderScannerPlugin(ScannerPlugin):
         return "HTTP security header scanner"
 
     @classmethod
-    def get_capabilities(cls) -> Set[ScannerCapability]:
+    def get_capabilities(cls) -> set[ScannerCapability]:
         return {ScannerCapability.WEB_SCAN}
 
     @classmethod
-    def get_phases(cls) -> List[ScanPhase]:
+    def get_phases(cls) -> list[ScanPhase]:
         return [ScanPhase.VULNERABILITY]
 
     def validate_target(self, target: str) -> bool:
@@ -122,7 +121,7 @@ class HeaderScannerPlugin(ScannerPlugin):
     def scan(
         self,
         target: str,
-        config: Optional[ScannerConfig] = None,
+        config: ScannerConfig | None = None,
     ) -> ScannerResult:
         """
         Scan target for security header issues.
@@ -209,7 +208,7 @@ class HeaderScannerPlugin(ScannerPlugin):
         self,
         url: str,
         config: ScannerConfig,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Fetch HTTP headers from URL."""
         import urllib.request
 
@@ -228,14 +227,14 @@ class HeaderScannerPlugin(ScannerPlugin):
             # Still return headers from error response
             return dict(e.headers) if hasattr(e, "headers") else {}
 
-    def _get_header(self, headers: Dict[str, str], name: str) -> Optional[str]:
+    def _get_header(self, headers: dict[str, str], name: str) -> str | None:
         """Get header value case-insensitively."""
         for key, value in headers.items():
             if key.lower() == name.lower():
                 return value
         return None
 
-    def _analyze_csp(self, target: str, csp: str) -> List[Finding]:
+    def _analyze_csp(self, target: str, csp: str) -> list[Finding]:
         """Analyze Content-Security-Policy for issues."""
         findings = []
 
@@ -285,7 +284,7 @@ class HeaderScannerPlugin(ScannerPlugin):
 
         return findings
 
-    def _analyze_hsts(self, target: str, hsts: str) -> List[Finding]:
+    def _analyze_hsts(self, target: str, hsts: str) -> list[Finding]:
         """Analyze Strict-Transport-Security for issues."""
         findings = []
 

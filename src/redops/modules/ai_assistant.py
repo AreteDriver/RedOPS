@@ -7,11 +7,11 @@ for security assessment findings using OpenAI or Anthropic APIs.
 
 import os
 import json
-from typing import Dict, Any, Optional
+from typing import Any
 from pathlib import Path
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """Load configuration from file."""
     config_path = Path.home() / ".config" / "redops" / "config.json"
     env_path = os.environ.get("REDOPS_CONFIG")
@@ -24,7 +24,7 @@ def load_config() -> Dict[str, Any]:
     return {}
 
 
-def get_api_key(provider: str) -> Optional[str]:
+def get_api_key(provider: str) -> str | None:
     """Get API key for a provider."""
     # Check environment variable first
     env_var = f"{provider.upper()}_API_KEY"
@@ -61,7 +61,7 @@ class AIAssistant:
         if not self.api_key and self.provider != "ollama":
             raise ValueError(
                 f"No API key found for {self.provider}. "
-                f"Set {self.provider.upper()}_API_KEY environment variable or "
+                f"set {self.provider.upper()}_API_KEY environment variable or "
                 f"use 'redops settings' to configure."
             )
 
@@ -220,7 +220,7 @@ class AIAssistant:
 
         return response.choices[0].message.content
 
-    def analyze_findings(self, scan_data: Dict[str, Any]) -> str:
+    def analyze_findings(self, scan_data: dict[str, Any]) -> str:
         """
         Analyze security scan findings and provide insights.
 
@@ -250,7 +250,7 @@ Provide a comprehensive security analysis."""
 
         return self._call_api(prompt, system_prompt)
 
-    def explain(self, query: str, context: Dict[str, Any] = None) -> str:
+    def explain(self, query: str, context: dict[str, Any] = None) -> str:
         """
         Explain a security concept or finding.
 
@@ -273,7 +273,7 @@ Question: {query}"""
 
         return self._call_api(prompt, system_prompt)
 
-    def suggest_remediations(self, scan_data: Dict[str, Any]) -> str:
+    def suggest_remediations(self, scan_data: dict[str, Any]) -> str:
         """
         Suggest remediations for identified security issues.
 
@@ -302,7 +302,7 @@ For each finding, suggest specific fixes and preventive measures."""
 
         return self._call_api(prompt, system_prompt)
 
-    def summarize(self, scan_data: Dict[str, Any]) -> str:
+    def summarize(self, scan_data: dict[str, Any]) -> str:
         """
         Generate an executive summary of scan results.
 
@@ -331,7 +331,7 @@ Focus on business impact and prioritized recommendations."""
 
         return self._call_api(prompt, system_prompt)
 
-    def chat(self, message: str, context: Dict[str, Any] = None) -> str:
+    def chat(self, message: str, context: dict[str, Any] = None) -> str:
         """
         Interactive chat for security questions.
 
@@ -361,7 +361,7 @@ User question: {message}"""
 
         return self._call_api(prompt, system_prompt)
 
-    def correlate_threats(self, scan_data: Dict[str, Any]) -> str:
+    def correlate_threats(self, scan_data: dict[str, Any]) -> str:
         """
         Correlate findings with known threat patterns.
 
@@ -391,7 +391,7 @@ Identify attack techniques, potential threat actors, and MITRE ATT&CK mappings."
         return self._call_api(prompt, system_prompt)
 
     def generate_report_section(
-        self, scan_data: Dict[str, Any], section_type: str = "executive"
+        self, scan_data: dict[str, Any], section_type: str = "executive"
     ) -> str:
         """
         Generate a specific section of a security report.
@@ -425,7 +425,7 @@ is suitable for formal documentation."""
 
         return self._call_api(prompt, system_prompt)
 
-    def _extract_findings_summary(self, scan_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_findings_summary(self, scan_data: dict[str, Any]) -> dict[str, Any]:
         """Extract key findings from scan data for AI processing."""
         summary = {
             "target": scan_data.get("target", "Unknown"),
@@ -476,7 +476,7 @@ is suitable for formal documentation."""
 
 
 # Convenience functions for module integration
-def ai_analyze(ctx, params: Optional[Dict[str, Any]] = None):
+def ai_analyze(ctx, params: dict[str, Any] | None = None):
     """Module wrapper for AI analysis."""
 
     try:
@@ -496,7 +496,7 @@ def ai_analyze(ctx, params: Optional[Dict[str, Any]] = None):
     return ctx
 
 
-def ai_summarize(ctx, params: Optional[Dict[str, Any]] = None):
+def ai_summarize(ctx, params: dict[str, Any] | None = None):
     """Module wrapper for AI summarization."""
 
     try:
@@ -516,7 +516,7 @@ def ai_summarize(ctx, params: Optional[Dict[str, Any]] = None):
     return ctx
 
 
-def ai_recommend(ctx, params: Optional[Dict[str, Any]] = None):
+def ai_recommend(ctx, params: dict[str, Any] | None = None):
     """Module wrapper for AI recommendations."""
 
     try:

@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Optional, Dict, List, Type
+from typing import Any, Type
 import logging
 
 from reportlab.lib import colors
@@ -58,14 +58,14 @@ class ReportConfig:
     subtitle: str = ""
     author: str = "RedOPS Security Scanner"
     organization: str = ""
-    logo_path: Optional[str] = None
+    logo_path: str | None = None
     page_size: tuple = letter
     include_toc: bool = True
     include_summary: bool = True
     include_remediation: bool = True
     include_appendix: bool = False
     classification: str = "CONFIDENTIAL"
-    custom_styles: Dict[str, Any] = field(default_factory=dict)
+    custom_styles: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -78,11 +78,11 @@ class Finding:
     description: str
     module: str = ""
     category: str = ""
-    evidence: Dict[str, Any] = field(default_factory=dict)
+    evidence: dict[str, Any] = field(default_factory=dict)
     remediation: str = ""
-    references: List[str] = field(default_factory=list)
-    cvss_score: Optional[float] = None
-    cve_ids: List[str] = field(default_factory=list)
+    references: list[str] = field(default_factory=list)
+    cvss_score: float | None = None
+    cve_ids: list[str] = field(default_factory=list)
     status: str = "open"
 
 
@@ -94,20 +94,20 @@ class ScanResult:
     target: str
     pipeline: str
     started_at: datetime
-    completed_at: Optional[datetime]
+    completed_at: datetime | None
     status: str
-    findings: List[Finding] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    findings: list[Finding] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
-    def duration(self) -> Optional[float]:
+    def duration(self) -> float | None:
         """Get scan duration in seconds."""
         if self.completed_at and self.started_at:
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
     @property
-    def severity_counts(self) -> Dict[str, int]:
+    def severity_counts(self) -> dict[str, int]:
         """Count findings by severity."""
         counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
         for finding in self.findings:
@@ -201,7 +201,7 @@ class BaseReport(ABC):
             )
 
     @abstractmethod
-    def generate(self, data: ScanResult) -> List[Any]:
+    def generate(self, data: ScanResult) -> list[Any]:
         """Generate report content.
 
         Args:
@@ -212,7 +212,7 @@ class BaseReport(ABC):
         """
         pass
 
-    def _create_header(self, data: ScanResult) -> List[Any]:
+    def _create_header(self, data: ScanResult) -> list[Any]:
         """Create report header."""
         elements = []
 
@@ -312,7 +312,7 @@ class BaseReport(ABC):
         return drawing
 
     def _create_findings_table(
-        self, findings: List[Finding], include_details: bool = False
+        self, findings: list[Finding], include_details: bool = False
     ) -> Table:
         """Create findings summary table."""
         headers = ["#", "Title", "Severity", "Category", "Status"]
@@ -379,9 +379,9 @@ class BaseReport(ABC):
 class ReportGenerator:
     """Main report generator class."""
 
-    _report_types: Dict[ReportType, Type[BaseReport]] = {}
+    _report_types: dict[ReportType, Type[BaseReport]] = {}
 
-    def __init__(self, config: Optional[ReportConfig] = None):
+    def __init__(self, config: ReportConfig | None = None):
         self.config = config or ReportConfig()
 
     @classmethod
@@ -395,7 +395,7 @@ class ReportGenerator:
         self,
         data: ScanResult,
         report_type: ReportType = ReportType.EXECUTIVE_SUMMARY,
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         report_format: ReportFormat = ReportFormat.PDF,
     ) -> bytes:
         """Generate a report.

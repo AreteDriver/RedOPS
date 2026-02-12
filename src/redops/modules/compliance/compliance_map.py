@@ -13,7 +13,7 @@ Maps security findings to compliance frameworks including:
 Provides gap analysis, compliance scoring, and remediation prioritization.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
 from redops.core.context import Context
@@ -60,13 +60,13 @@ class ComplianceControl:
     description: str
     category: str
     priority: ControlPriority = ControlPriority.MEDIUM
-    related_controls: List[str] = field(
+    related_controls: list[str] = field(
         default_factory=list
     )  # Cross-framework mappings
-    evidence_types: List[str] = field(default_factory=list)
+    evidence_types: list[str] = field(default_factory=list)
     automation_possible: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -87,13 +87,13 @@ class ControlAssessment:
 
     control: ComplianceControl
     status: ControlStatus
-    findings: List[str] = field(default_factory=list)
-    evidence: List[str] = field(default_factory=list)
-    gaps: List[str] = field(default_factory=list)
-    remediation: List[str] = field(default_factory=list)
+    findings: list[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
+    gaps: list[str] = field(default_factory=list)
+    remediation: list[str] = field(default_factory=list)
     notes: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "control_id": self.control.id,
@@ -114,16 +114,16 @@ class ComplianceReport:
 
     framework: ComplianceFramework
     target: str
-    assessments: List[ControlAssessment] = field(default_factory=list)
+    assessments: list[ControlAssessment] = field(default_factory=list)
     overall_score: float = 0.0
     compliant_count: int = 0
     partial_count: int = 0
     non_compliant_count: int = 0
     not_assessed_count: int = 0
-    critical_gaps: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    critical_gaps: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "framework": self.framework.value,
@@ -947,7 +947,7 @@ FINDING_KEYWORD_MAP = {
 # All Controls Combined
 # ============================================================================
 
-ALL_CONTROLS: Dict[str, ComplianceControl] = {}
+ALL_CONTROLS: dict[str, ComplianceControl] = {}
 ALL_CONTROLS.update({f"PCI.{k}": v for k, v in PCI_DSS_CONTROLS.items()})
 ALL_CONTROLS.update({f"HIPAA.{k}": v for k, v in HIPAA_CONTROLS.items()})
 ALL_CONTROLS.update({f"SOC2.{k}": v for k, v in SOC2_CONTROLS.items()})
@@ -959,7 +959,7 @@ ALL_CONTROLS.update({f"NIST.{k}": v for k, v in NIST_CSF_CONTROLS.items()})
 # ============================================================================
 
 
-def assess_compliance(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def assess_compliance(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Assess compliance against specified frameworks.
 
@@ -1044,7 +1044,7 @@ def assess_compliance(ctx: Context, params: Optional[Dict[str, Any]] = None) -> 
     return ctx
 
 
-def collect_findings_from_context(ctx: Context) -> List[Dict[str, Any]]:
+def collect_findings_from_context(ctx: Context) -> list[dict[str, Any]]:
     """
     Collect security findings from context.
 
@@ -1094,7 +1094,7 @@ def collect_findings_from_context(ctx: Context) -> List[Dict[str, Any]]:
 
 
 def assess_framework(
-    framework: ComplianceFramework, findings: List[Dict[str, Any]], target: str
+    framework: ComplianceFramework, findings: list[dict[str, Any]], target: str
 ) -> ComplianceReport:
     """
     Assess compliance against a specific framework.
@@ -1166,7 +1166,7 @@ def assess_framework(
 
 def get_controls_for_framework(
     framework: ComplianceFramework,
-) -> Dict[str, ComplianceControl]:
+) -> dict[str, ComplianceControl]:
     """
     Get controls for a specific framework.
 
@@ -1189,8 +1189,8 @@ def get_controls_for_framework(
 
 
 def map_findings_to_controls(
-    findings: List[Dict[str, Any]], framework: ComplianceFramework
-) -> Dict[str, List[Dict[str, Any]]]:
+    findings: list[dict[str, Any]], framework: ComplianceFramework
+) -> dict[str, list[dict[str, Any]]]:
     """
     Map findings to compliance controls.
 
@@ -1201,7 +1201,7 @@ def map_findings_to_controls(
     Returns:
         Dictionary mapping control IDs to findings
     """
-    control_findings: Dict[str, List[Dict[str, Any]]] = {}
+    control_findings: dict[str, list[dict[str, Any]]] = {}
     framework_prefix = {
         ComplianceFramework.PCI_DSS: "PCI.",
         ComplianceFramework.HIPAA: "HIPAA.",
@@ -1238,8 +1238,8 @@ def map_findings_to_controls(
 
 def assess_control(
     control: ComplianceControl,
-    mapped_findings: List[Dict[str, Any]],
-    all_findings: List[Dict[str, Any]],
+    mapped_findings: list[dict[str, Any]],
+    all_findings: list[dict[str, Any]],
 ) -> ControlAssessment:
     """
     Assess a single control.
@@ -1293,8 +1293,8 @@ def assess_control(
 
 
 def generate_control_remediation(
-    control: ComplianceControl, findings: List[Dict[str, Any]]
-) -> List[str]:
+    control: ComplianceControl, findings: list[dict[str, Any]]
+) -> list[str]:
     """
     Generate remediation recommendations for a control.
 
@@ -1357,8 +1357,8 @@ def generate_control_remediation(
 
 
 def identify_cross_framework_gaps(
-    assessments: List[ControlAssessment],
-) -> List[Dict[str, Any]]:
+    assessments: list[ControlAssessment],
+) -> list[dict[str, Any]]:
     """
     Identify gaps that affect multiple frameworks.
 
@@ -1371,7 +1371,7 @@ def identify_cross_framework_gaps(
     gaps = []
 
     # Group by related controls
-    control_groups: Dict[str, List[ControlAssessment]] = {}
+    control_groups: dict[str, list[ControlAssessment]] = {}
 
     for assessment in assessments:
         if assessment.status in [ControlStatus.NON_COMPLIANT, ControlStatus.PARTIAL]:
@@ -1398,8 +1398,8 @@ def identify_cross_framework_gaps(
 
 
 def generate_priority_remediations(
-    assessments: List[ControlAssessment],
-) -> List[Dict[str, Any]]:
+    assessments: list[ControlAssessment],
+) -> list[dict[str, Any]]:
     """
     Generate prioritized remediation recommendations.
 
@@ -1446,7 +1446,7 @@ def generate_priority_remediations(
     return remediations
 
 
-def calculate_overall_posture(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
+def calculate_overall_posture(reports: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate overall compliance posture across frameworks.
 
@@ -1489,7 +1489,7 @@ def calculate_overall_posture(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
 # ============================================================================
 
 
-def get_framework(name: str) -> Optional[ComplianceFramework]:
+def get_framework(name: str) -> ComplianceFramework | None:
     """
     Get framework by name.
 
@@ -1506,7 +1506,7 @@ def get_framework(name: str) -> Optional[ComplianceFramework]:
         return None
 
 
-def get_all_frameworks() -> List[ComplianceFramework]:
+def get_all_frameworks() -> list[ComplianceFramework]:
     """
     Get all supported frameworks.
 
@@ -1516,7 +1516,7 @@ def get_all_frameworks() -> List[ComplianceFramework]:
     return list(ComplianceFramework)
 
 
-def get_control(control_id: str) -> Optional[ComplianceControl]:
+def get_control(control_id: str) -> ComplianceControl | None:
     """
     Get a specific control by ID.
 
@@ -1529,7 +1529,7 @@ def get_control(control_id: str) -> Optional[ComplianceControl]:
     return ALL_CONTROLS.get(control_id)
 
 
-def get_related_controls(control_id: str) -> List[ComplianceControl]:
+def get_related_controls(control_id: str) -> list[ComplianceControl]:
     """
     Get controls related to a given control.
 
@@ -1554,7 +1554,7 @@ def get_related_controls(control_id: str) -> List[ComplianceControl]:
 
 def get_controls_by_category(
     framework: ComplianceFramework, category: str
-) -> List[ComplianceControl]:
+) -> list[ComplianceControl]:
     """
     Get controls by category within a framework.
 
@@ -1571,7 +1571,7 @@ def get_controls_by_category(
 
 def get_controls_by_priority(
     framework: ComplianceFramework, priority: ControlPriority
-) -> List[ComplianceControl]:
+) -> list[ComplianceControl]:
     """
     Get controls by priority within a framework.
 
@@ -1586,7 +1586,7 @@ def get_controls_by_priority(
     return [c for c in controls.values() if c.priority == priority]
 
 
-def map_control_across_frameworks(control_id: str) -> Dict[str, List[str]]:
+def map_control_across_frameworks(control_id: str) -> dict[str, list[str]]:
     """
     Map a control to equivalent controls in other frameworks.
 
@@ -1612,7 +1612,7 @@ def map_control_across_frameworks(control_id: str) -> Dict[str, List[str]]:
     return mapping
 
 
-def get_framework_categories(framework: ComplianceFramework) -> List[str]:
+def get_framework_categories(framework: ComplianceFramework) -> list[str]:
     """
     Get all categories within a framework.
 
@@ -1628,7 +1628,7 @@ def get_framework_categories(framework: ComplianceFramework) -> List[str]:
 
 
 def calculate_category_score(
-    assessments: List[ControlAssessment], category: str
+    assessments: list[ControlAssessment], category: str
 ) -> float:
     """
     Calculate compliance score for a specific category.
@@ -1656,7 +1656,7 @@ def calculate_category_score(
     return ((compliant * 100) + (partial * 50)) / total
 
 
-def export_gap_analysis(report: ComplianceReport) -> Dict[str, Any]:
+def export_gap_analysis(report: ComplianceReport) -> dict[str, Any]:
     """
     Export gap analysis from a compliance report.
 

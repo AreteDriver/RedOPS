@@ -5,7 +5,7 @@ Groups similar findings, artifacts, and data points using lightweight
 algorithms that don't require heavy ML dependencies.
 """
 
-from typing import Optional, Dict, Any, List, Set
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 from redops.core.context import Context
@@ -17,9 +17,9 @@ class Cluster:
 
     id: int
     label: str
-    items: List[int] = field(default_factory=list)
-    centroid: Optional[Dict[str, Any]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    items: list[int] = field(default_factory=list)
+    centroid: dict[str, Any] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_item(self, item_idx: int) -> None:
         """Add an item index to the cluster."""
@@ -31,7 +31,7 @@ class Cluster:
         """Number of items in cluster."""
         return len(self.items)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -43,7 +43,7 @@ class Cluster:
         }
 
 
-def cluster_findings(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def cluster_findings(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Cluster findings and patterns in the context data.
 
@@ -125,7 +125,7 @@ def cluster_findings(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     return ctx
 
 
-def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
+def collect_findings(ctx: Context) -> list[dict[str, Any]]:
     """
     Collect all findings from context.
 
@@ -147,7 +147,7 @@ def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
     return findings
 
 
-def cluster_by_attribute(items: List[Dict[str, Any]], attribute: str) -> List[Cluster]:
+def cluster_by_attribute(items: list[dict[str, Any]], attribute: str) -> list[Cluster]:
     """
     Cluster items by a specific attribute value.
 
@@ -159,7 +159,7 @@ def cluster_by_attribute(items: List[Dict[str, Any]], attribute: str) -> List[Cl
         List of clusters
     """
     # Group by attribute value
-    groups: Dict[str, List[int]] = defaultdict(list)
+    groups: dict[str, list[int]] = defaultdict(list)
 
     for idx, item in enumerate(items):
         value = item.get(attribute, "unknown")
@@ -182,8 +182,8 @@ def cluster_by_attribute(items: List[Dict[str, Any]], attribute: str) -> List[Cl
 
 
 def cluster_by_text_similarity(
-    items: List[Dict[str, Any]], threshold: float = 0.3, min_cluster_size: int = 2
-) -> List[Cluster]:
+    items: list[dict[str, Any]], threshold: float = 0.3, min_cluster_size: int = 2
+) -> list[Cluster]:
     """
     Cluster items by text similarity using Jaccard similarity.
 
@@ -260,7 +260,7 @@ def cluster_by_text_similarity(
     return clusters
 
 
-def cluster_technologies(technologies: List[Any]) -> List[Cluster]:
+def cluster_technologies(technologies: list[Any]) -> list[Cluster]:
     """
     Cluster technologies by category.
 
@@ -306,7 +306,7 @@ def cluster_technologies(technologies: List[Any]) -> List[Cluster]:
     }
 
     # Classify each technology
-    classified: Dict[str, List[int]] = defaultdict(list)
+    classified: dict[str, list[int]] = defaultdict(list)
 
     for idx, tech in enumerate(technologies):
         if isinstance(tech, dict):
@@ -339,7 +339,7 @@ def cluster_technologies(technologies: List[Any]) -> List[Cluster]:
     return clusters
 
 
-def cluster_risks_by_score(risks: List[Dict[str, Any]]) -> List[Cluster]:
+def cluster_risks_by_score(risks: list[dict[str, Any]]) -> list[Cluster]:
     """
     Cluster risks by score ranges.
 
@@ -381,7 +381,7 @@ def cluster_risks_by_score(risks: List[Dict[str, Any]]) -> List[Cluster]:
     return clusters
 
 
-def jaccard_similarity(set1: Set[str], set2: Set[str]) -> float:
+def jaccard_similarity(set1: set[str], set2: set[str]) -> float:
     """
     Calculate Jaccard similarity between two sets.
 
@@ -489,11 +489,11 @@ def levenshtein_similarity(s1: str, s2: str) -> float:
 
 
 def cluster_by_similarity(
-    items: List[Dict[str, Any]],
+    items: list[dict[str, Any]],
     similarity_func: str = "jaccard",
     threshold: float = 0.5,
     text_key: str = "title",
-) -> List[List[int]]:
+) -> list[list[int]]:
     """
     Cluster items by similarity using specified function.
 
@@ -549,7 +549,7 @@ def cluster_by_similarity(
                 union(i, j)
 
     # Group by cluster
-    clusters_dict: Dict[int, List[int]] = defaultdict(list)
+    clusters_dict: dict[int, list[int]] = defaultdict(list)
     for i in range(n):
         clusters_dict[find(i)].append(i)
 
@@ -557,7 +557,7 @@ def cluster_by_similarity(
 
 
 def calculate_silhouette_score(
-    items: List[Dict[str, Any]], clusters: List[List[int]], similarity_func=None
+    items: list[dict[str, Any]], clusters: list[list[int]], similarity_func=None
 ) -> float:
     """
     Calculate silhouette score for clustering quality.
@@ -582,7 +582,7 @@ def calculate_silhouette_score(
     # Default similarity function
     if similarity_func is None:
 
-        def similarity_func(i1: Dict, i2: Dict) -> float:
+        def similarity_func(i1: dict, i2: dict) -> float:
             t1 = str(i1.get("title", ""))
             t2 = str(i2.get("title", ""))
             return jaccard_similarity(set(t1.lower().split()), set(t2.lower().split()))
@@ -635,7 +635,7 @@ def calculate_silhouette_score(
     return sum(silhouette_scores) / len(silhouette_scores) if silhouette_scores else 0.0
 
 
-def get_cluster_summary(clusters: List[Cluster]) -> Dict[str, Any]:
+def get_cluster_summary(clusters: list[Cluster]) -> dict[str, Any]:
     """
     Generate summary statistics for clusters.
 

@@ -5,13 +5,13 @@ Provides reusable components for dashboard visualizations,
 metrics calculations, and summary statistics.
 """
 
-from typing import Dict, Any, List
+from typing import Any
 from datetime import datetime, timedelta, timezone
 from collections import Counter
 from redops.core.context import Context
 
 
-def get_risk_summary(ctx: Context) -> Dict[str, Any]:
+def get_risk_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of risks by severity.
 
@@ -82,7 +82,7 @@ def calculate_risk_score(severity_counts: Counter) -> int:
     return min(100, weighted_sum)
 
 
-def get_findings_timeline(ctx: Context, days: int = 30) -> List[Dict[str, Any]]:
+def get_findings_timeline(ctx: Context, days: int = 30) -> list[dict[str, Any]]:
     """
     Get findings grouped by time for timeline visualization.
 
@@ -138,7 +138,7 @@ def get_findings_timeline(ctx: Context, days: int = 30) -> List[Dict[str, Any]]:
     return timeline
 
 
-def get_module_stats(ctx: Context) -> List[Dict[str, Any]]:
+def get_module_stats(ctx: Context) -> list[dict[str, Any]]:
     """
     Get statistics by module.
 
@@ -148,7 +148,7 @@ def get_module_stats(ctx: Context) -> List[Dict[str, Any]]:
     Returns:
         List of module statistics
     """
-    module_findings: Dict[str, List[Dict]] = {}
+    module_findings: dict[str, list[dict]] = {}
 
     # Collect findings by module
     for key, value in ctx.data.items():
@@ -181,7 +181,7 @@ def get_module_stats(ctx: Context) -> List[Dict[str, Any]]:
     return sorted(stats, key=lambda x: x["total_findings"], reverse=True)
 
 
-def get_attack_surface_summary(ctx: Context) -> Dict[str, Any]:
+def get_attack_surface_summary(ctx: Context) -> dict[str, Any]:
     """
     Get attack surface summary metrics.
 
@@ -235,7 +235,7 @@ def calculate_exposure_score(
     return min(100, int(subdomain_weight + port_weight + service_weight))
 
 
-def get_compliance_status(ctx: Context) -> Dict[str, Any]:
+def get_compliance_status(ctx: Context) -> dict[str, Any]:
     """
     Get compliance/control status summary.
 
@@ -279,7 +279,7 @@ def get_compliance_status(ctx: Context) -> Dict[str, Any]:
     return compliance_data
 
 
-def get_threat_intel_summary(ctx: Context) -> Dict[str, Any]:
+def get_threat_intel_summary(ctx: Context) -> dict[str, Any]:
     """
     Get threat intelligence summary.
 
@@ -343,7 +343,7 @@ def get_threat_intel_summary(ctx: Context) -> Dict[str, Any]:
     }
 
 
-def calculate_threat_level(indicators: List[Dict]) -> str:
+def calculate_threat_level(indicators: list[dict]) -> str:
     """Calculate overall threat level from indicators."""
     if not indicators:
         return "low"
@@ -359,7 +359,7 @@ def calculate_threat_level(indicators: List[Dict]) -> str:
     return "low"
 
 
-def generate_dashboard_data(ctx: Context) -> Dict[str, Any]:
+def generate_dashboard_data(ctx: Context) -> dict[str, Any]:
     """
     Generate complete dashboard data from context.
 
@@ -381,7 +381,7 @@ def generate_dashboard_data(ctx: Context) -> Dict[str, Any]:
     }
 
 
-def get_recent_findings(ctx: Context, limit: int = 10) -> List[Dict[str, Any]]:
+def get_recent_findings(ctx: Context, limit: int = 10) -> list[dict[str, Any]]:
     """
     Get most recent findings.
 
@@ -421,7 +421,7 @@ def normalize_severity(severity: Any) -> str:
     return str(severity).lower()
 
 
-def format_dashboard_html(data: Dict[str, Any]) -> str:
+def format_dashboard_html(data: dict[str, Any]) -> str:
     """
     Format dashboard data as HTML widget.
 

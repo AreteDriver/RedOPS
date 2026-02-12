@@ -4,7 +4,7 @@ AbuseIPDB threat intelligence integration.
 Queries AbuseIPDB API to check IP reputation and abuse reports.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime
 import os
 from redops.core.context import Context
@@ -24,7 +24,7 @@ ABUSEIPDB_API = "https://api.abuseipdb.com/api/v2"
 
 
 def check_ip_reputation(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Check IP reputation on AbuseIPDB.
@@ -88,7 +88,7 @@ def check_ip_reputation(
 
 def _check_ip(
     ip: str, api_key: str, max_age_days: int = 90, verbose: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Query AbuseIPDB check endpoint."""
     try:
         url = f"{ABUSEIPDB_API}/check"
@@ -123,9 +123,9 @@ def _check_ip(
 def report_ip(
     ip: str,
     api_key: str,
-    categories: List[int],
+    categories: list[int],
     comment: str = "",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Report an IP address to AbuseIPDB.
 
@@ -199,7 +199,7 @@ def get_blacklist(
     api_key: str,
     confidence_minimum: int = 90,
     limit: int = 10000,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Get AbuseIPDB blacklist.
 
@@ -235,7 +235,7 @@ def get_blacklist(
         return []
 
 
-def analyze_abuseipdb_results(result: Dict[str, Any], ip: str) -> List[Finding]:
+def analyze_abuseipdb_results(result: dict[str, Any], ip: str) -> list[Finding]:
     """
     Analyze AbuseIPDB results for security findings.
 
@@ -376,7 +376,7 @@ def analyze_abuseipdb_results(result: Dict[str, Any], ip: str) -> List[Finding]:
     return findings
 
 
-def get_abuseipdb_summary(ctx: Context) -> Dict[str, Any]:
+def get_abuseipdb_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of AbuseIPDB query results.
 

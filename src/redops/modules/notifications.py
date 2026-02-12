@@ -12,7 +12,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Dict, Any, Optional, List
+from typing import Any
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -28,15 +28,15 @@ except ImportError:
 class NotificationConfig:
     """Configuration for notifications."""
 
-    slack_webhook_url: Optional[str] = None
-    discord_webhook_url: Optional[str] = None
-    smtp_host: Optional[str] = None
+    slack_webhook_url: str | None = None
+    discord_webhook_url: str | None = None
+    smtp_host: str | None = None
     smtp_port: int = 587
-    smtp_user: Optional[str] = None
-    smtp_password: Optional[str] = None
-    smtp_from: Optional[str] = None
-    notify_emails: Optional[List[str]] = None
-    webhook_urls: Optional[List[str]] = None
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
+    notify_emails: list[str] | None = None
+    webhook_urls: list[str] | None = None
 
     @classmethod
     def from_env(cls) -> "NotificationConfig":
@@ -60,7 +60,7 @@ class NotificationConfig:
 class NotificationService:
     """Service for sending notifications."""
 
-    def __init__(self, config: Optional[NotificationConfig] = None):
+    def __init__(self, config: NotificationConfig | None = None):
         """Initialize the notification service."""
         self.config = config or NotificationConfig.from_env()
         self._validate_dependencies()
@@ -86,9 +86,9 @@ class NotificationService:
         findings_count: int = 0,
         critical_count: int = 0,
         high_count: int = 0,
-        report_path: Optional[str] = None,
-        extra_data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, bool]:
+        report_path: str | None = None,
+        extra_data: dict[str, Any] | None = None,
+    ) -> dict[str, bool]:
         """
         Send notification that a scan has completed.
 
@@ -144,8 +144,8 @@ class NotificationService:
         title: str,
         message: str,
         severity: str = "info",
-        extra_data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, bool]:
+        extra_data: dict[str, Any] | None = None,
+    ) -> dict[str, bool]:
         """
         Send an alert notification.
 
@@ -186,8 +186,8 @@ class NotificationService:
         findings_count: int,
         critical_count: int,
         high_count: int,
-        report_path: Optional[str],
-    ) -> Dict[str, Any]:
+        report_path: str | None,
+    ) -> dict[str, Any]:
         """Format scan completion message."""
         status = "completed"
         if critical_count > 0:
@@ -216,7 +216,7 @@ High: {high_count}
             "high_count": high_count,
         }
 
-    def _send_slack(self, message: Dict[str, Any], critical: int, high: int) -> bool:
+    def _send_slack(self, message: dict[str, Any], critical: int, high: int) -> bool:
         """Send notification to Slack."""
         if not HAS_REQUESTS:
             return False
@@ -292,7 +292,7 @@ High: {high_count}
         except Exception:
             return False
 
-    def _send_discord(self, message: Dict[str, Any], critical: int, high: int) -> bool:
+    def _send_discord(self, message: dict[str, Any], critical: int, high: int) -> bool:
         """Send notification to Discord."""
         if not HAS_REQUESTS:
             return False
@@ -389,7 +389,7 @@ High: {high_count}
         except Exception:
             return False
 
-    def _send_webhook(self, url: str, data: Dict[str, Any]) -> bool:
+    def _send_webhook(self, url: str, data: dict[str, Any]) -> bool:
         """Send to generic webhook."""
         if not HAS_REQUESTS:
             return False
@@ -402,7 +402,7 @@ High: {high_count}
 
 
 # Module integration function
-def notify_on_complete(ctx, params: Optional[Dict[str, Any]] = None):
+def notify_on_complete(ctx, params: dict[str, Any] | None = None):
     """Pipeline module to send notifications after scan."""
     params = params or {}
 

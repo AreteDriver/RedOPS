@@ -5,7 +5,7 @@ The Context object is passed through each step of the pipeline,
 preserving all intermediate outputs for reporting and simulation steps.
 """
 
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 from datetime import datetime, timezone
 import json
 
@@ -22,7 +22,7 @@ class Context:
     """
 
     def __init__(
-        self, target: Optional[str] = None, config: Optional["RedOpsConfig"] = None
+        self, target: str | None = None, config: "RedOpsConfig | None" = None
     ):
         """
         Initialize a new Context.
@@ -33,9 +33,9 @@ class Context:
         """
         self.target = target
         self.config = config
-        self.data: Dict[str, Any] = {}
-        self.logs: List[Dict[str, Any]] = []
-        self.metadata: Dict[str, Any] = {
+        self.data: dict[str, Any] = {}
+        self.logs: list[dict[str, Any]] = []
+        self.metadata: dict[str, Any] = {
             "created_at": datetime.now(timezone.utc).isoformat(),
             "target": target,
         }
@@ -81,7 +81,7 @@ class Context:
         }
         self.logs.append(log_entry)
 
-    def get_logs(self, level: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_logs(self, level: str | None = None) -> list[dict[str, Any]]:
         """
         Retrieve logs, optionally filtered by level.
 
@@ -95,7 +95,7 @@ class Context:
             return self.logs
         return [log for log in self.logs if log.get("level") == level]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert context to dictionary for serialization.
 

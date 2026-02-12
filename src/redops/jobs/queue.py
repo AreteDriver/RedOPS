@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
+from typing import Any, Callable, TypeVar
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -49,18 +49,18 @@ class Job:
     name: str = ""
     func_name: str = ""
     args: tuple = field(default_factory=tuple)
-    kwargs: Dict[str, Any] = field(default_factory=dict)
+    kwargs: dict[str, Any] = field(default_factory=dict)
 
     # Scheduling
     priority: JobPriority = JobPriority.NORMAL
     queue: str = "default"
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    scheduled_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    scheduled_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
     # Execution
-    timeout: Optional[float] = None  # seconds
+    timeout: float | None = None  # seconds
     max_retries: int = 0
     retry_delay: float = 60.0  # seconds
     retry_backoff: float = 2.0
@@ -69,15 +69,15 @@ class Job:
     # State
     status: JobStatus = JobStatus.PENDING
     result: Any = None
-    error: Optional[str] = None
-    error_traceback: Optional[str] = None
-    worker_id: Optional[str] = None
+    error: str | None = None
+    error_traceback: str | None = None
+    worker_id: str | None = None
 
     # Metadata
-    tags: Set[str] = field(default_factory=set)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: set[str] = field(default_factory=set)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "id": self.id,
@@ -108,7 +108,7 @@ class Job:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Job":
+    def from_dict(cls, data: dict[str, Any]) -> "Job":
         """Create from dictionary."""
         return cls(
             id=data["id"],
@@ -141,7 +141,7 @@ class Job:
         )
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """Get job duration."""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
@@ -163,12 +163,12 @@ class JobResult:
     job_id: str
     status: JobStatus
     result: Any = None
-    error: Optional[str] = None
-    error_traceback: Optional[str] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    error: str | None = None
+    error_traceback: str | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     attempts: int = 0
-    worker_id: Optional[str] = None
+    worker_id: str | None = None
 
     @property
     def success(self) -> bool:
@@ -176,13 +176,13 @@ class JobResult:
         return self.status == JobStatus.COMPLETED
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """Get execution duration."""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "job_id": self.job_id,
@@ -207,12 +207,12 @@ class JobBackend(ABC):
         pass
 
     @abstractmethod
-    def dequeue(self, queue: str, timeout: float = 0) -> Optional[Job]:
+    def dequeue(self, queue: str, timeout: float = 0) -> Job | None:
         """Get next job from queue."""
         pass
 
     @abstractmethod
-    def get(self, job_id: str) -> Optional[Job]:
+    def get(self, job_id: str) -> Job | None:
         """Get job by ID."""
         pass
 
@@ -229,10 +229,10 @@ class JobBackend(ABC):
     @abstractmethod
     def list_jobs(
         self,
-        queue: Optional[str] = None,
-        status: Optional[JobStatus] = None,
+        queue: str | None = None,
+        status: JobStatus | None = None,
         limit: int = 100,
-    ) -> List[Job]:
+    ) -> list[Job]:
         """List jobs."""
         pass
 
@@ -245,8 +245,8 @@ class MemoryJobBackend(JobBackend):
     """
 
     def __init__(self):
-        self._jobs: Dict[str, Job] = {}
-        self._queues: Dict[str, List[str]] = {}
+        self._jobs: dict[str, Job] = {}
+        self._queues: dict[str, list[str]] = {}
         self._lock = threading.RLock()
 
     def enqueue(self, job: Job) -> str:
@@ -272,7 +272,7 @@ class MemoryJobBackend(JobBackend):
 
             return job.id
 
-    def dequeue(self, queue: str, timeout: float = 0) -> Optional[Job]:
+    def dequeue(self, queue: str, timeout: float = 0) -> Job | None:
         """Get next job from queue."""
         start = time.time()
         while True:
@@ -290,7 +290,7 @@ class MemoryJobBackend(JobBackend):
                 return None
             time.sleep(0.1)
 
-    def get(self, job_id: str) -> Optional[Job]:
+    def get(self, job_id: str) -> Job | None:
         """Get job by ID."""
         with self._lock:
             return self._jobs.get(job_id)
@@ -313,10 +313,10 @@ class MemoryJobBackend(JobBackend):
 
     def list_jobs(
         self,
-        queue: Optional[str] = None,
-        status: Optional[JobStatus] = None,
+        queue: str | None = None,
+        status: JobStatus | None = None,
         limit: int = 100,
-    ) -> List[Job]:
+    ) -> list[Job]:
         """List jobs."""
         with self._lock:
             jobs = list(self._jobs.values())
@@ -330,14 +330,14 @@ class MemoryJobBackend(JobBackend):
 
 
 # Registry of registered job functions
-_job_registry: Dict[str, Callable] = {}
+_job_registry: dict[str, Callable] = {}
 
 
 def job(
-    name: Optional[str] = None,
+    name: str | None = None,
     queue: str = "default",
     priority: JobPriority = JobPriority.NORMAL,
-    timeout: Optional[float] = None,
+    timeout: float | None = None,
     max_retries: int = 0,
     retry_delay: float = 60.0,
 ):
@@ -382,7 +382,7 @@ def job(
     return decorator
 
 
-def get_job_func(name: str) -> Optional[Callable]:
+def get_job_func(name: str) -> Callable | None:
     """Get registered job function by name."""
     return _job_registry.get(name)
 
@@ -396,7 +396,7 @@ class JobQueue:
 
     def __init__(
         self,
-        backend: Optional[JobBackend] = None,
+        backend: JobBackend | None = None,
         default_queue: str = "default",
     ):
         """
@@ -413,15 +413,15 @@ class JobQueue:
         self,
         func: Callable,
         *args,
-        queue: Optional[str] = None,
-        priority: Optional[JobPriority] = None,
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
-        retry_delay: Optional[float] = None,
-        delay: Optional[float] = None,
-        scheduled_at: Optional[datetime] = None,
-        tags: Optional[Set[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        queue: str | None = None,
+        priority: JobPriority | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        retry_delay: float | None = None,
+        delay: float | None = None,
+        scheduled_at: datetime | None = None,
+        tags: set[str] | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs,
     ) -> str:
         """
@@ -490,13 +490,13 @@ class JobQueue:
 
     def dequeue(
         self,
-        queue: Optional[str] = None,
+        queue: str | None = None,
         timeout: float = 0,
-    ) -> Optional[Job]:
+    ) -> Job | None:
         """Get next job from queue."""
         return self._backend.dequeue(queue or self._default_queue, timeout)
 
-    def get_job(self, job_id: str) -> Optional[Job]:
+    def get_job(self, job_id: str) -> Job | None:
         """Get job by ID."""
         return self._backend.get(job_id)
 
@@ -522,10 +522,10 @@ class JobQueue:
 
     def list_jobs(
         self,
-        queue: Optional[str] = None,
-        status: Optional[JobStatus] = None,
+        queue: str | None = None,
+        status: JobStatus | None = None,
         limit: int = 100,
-    ) -> List[Job]:
+    ) -> list[Job]:
         """List jobs."""
         return self._backend.list_jobs(queue, status, limit)
 
@@ -543,8 +543,8 @@ class JobWorker:
     def __init__(
         self,
         queue: JobQueue,
-        queues: Optional[List[str]] = None,
-        worker_id: Optional[str] = None,
+        queues: list[str] | None = None,
+        worker_id: str | None = None,
         concurrency: int = 1,
     ):
         """
@@ -561,8 +561,8 @@ class JobWorker:
         self._worker_id = worker_id or f"worker-{uuid4().hex[:8]}"
         self._concurrency = concurrency
         self._running = False
-        self._threads: List[threading.Thread] = []
-        self._current_jobs: Dict[str, Job] = {}
+        self._threads: list[threading.Thread] = []
+        self._current_jobs: dict[str, Job] = {}
         self._shutdown_event = threading.Event()
 
     def start(self) -> None:
@@ -728,13 +728,13 @@ class JobWorker:
         return self._running
 
     @property
-    def current_jobs(self) -> Dict[str, Job]:
+    def current_jobs(self) -> dict[str, Job]:
         """Get currently executing jobs."""
         return self._current_jobs.copy()
 
 
 # Global job queue
-_default_queue: Optional[JobQueue] = None
+_default_queue: JobQueue | None = None
 
 
 def get_job_queue() -> JobQueue:

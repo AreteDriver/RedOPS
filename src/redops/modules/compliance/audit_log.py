@@ -4,7 +4,7 @@ Audit logging module for RedOps.
 Maintains detailed audit logs of all operations performed.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 from datetime import datetime, timezone
 from pathlib import Path
 import json
@@ -15,8 +15,8 @@ def create_audit_entry(
     action: str,
     target: str,
     user: str = "system",
-    metadata: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Create an audit log entry.
 
@@ -38,7 +38,7 @@ def create_audit_entry(
     }
 
 
-def log_to_file(entry: Dict[str, Any], log_file: Path) -> None:
+def log_to_file(entry: dict[str, Any], log_file: Path) -> None:
     """
     Append an audit entry to a log file.
 
@@ -53,7 +53,7 @@ def log_to_file(entry: Dict[str, Any], log_file: Path) -> None:
 
 
 def audit_pipeline_start(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Log the start of a pipeline execution.
@@ -87,7 +87,7 @@ def audit_pipeline_start(
 
 
 def audit_pipeline_end(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Log the end of a pipeline execution.

@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Sequence
 
 
 class MetricType(Enum):
@@ -31,13 +31,13 @@ class MetricType(Enum):
 class Labels:
     """Immutable labels for metrics."""
 
-    _labels: Tuple[Tuple[str, str], ...]
+    _labels: tuple[tuple[str, str], ...]
 
     def __init__(self, **kwargs):
         """Initialize labels from keyword arguments."""
         object.__setattr__(self, "_labels", tuple(sorted(kwargs.items())))
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         """Convert to dictionary."""
         return dict(self._labels)
 
@@ -82,7 +82,7 @@ class Metric(ABC):
         self,
         name: str,
         description: str = "",
-        labels: Optional[Labels] = None,
+        labels: Labels | None = None,
         unit: str = "",
     ):
         """Initialize metric."""
@@ -128,7 +128,7 @@ class Metric(ABC):
         """Reset the metric."""
         pass
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metric to dictionary."""
         return {
             "name": self._name,
@@ -147,14 +147,14 @@ class Counter(Metric):
         """Initialize counter."""
         super().__init__(name, description, **kwargs)
         self._value = 0.0
-        self._labeled: Dict[Labels, float] = {}
+        self._labeled: dict[Labels, float] = {}
 
     @property
     def metric_type(self) -> MetricType:
         """Get metric type."""
         return MetricType.COUNTER
 
-    def inc(self, amount: float = 1.0, labels: Optional[Labels] = None) -> None:
+    def inc(self, amount: float = 1.0, labels: Labels | None = None) -> None:
         """Increment the counter."""
         if amount < 0:
             raise ValueError("Counter can only be incremented by non-negative values")
@@ -164,14 +164,14 @@ class Counter(Metric):
             else:
                 self._value += amount
 
-    def get_value(self, labels: Optional[Labels] = None) -> float:
+    def get_value(self, labels: Labels | None = None) -> float:
         """Get current counter value."""
         with self._lock:
             if labels:
                 return self._labeled.get(labels, 0.0)
             return self._value
 
-    def get_all_values(self) -> Dict[Labels, float]:
+    def get_all_values(self) -> dict[Labels, float]:
         """Get all labeled values."""
         with self._lock:
             result = {EMPTY_LABELS: self._value} if self._value > 0 else {}
@@ -192,14 +192,14 @@ class Gauge(Metric):
         """Initialize gauge."""
         super().__init__(name, description, **kwargs)
         self._value = 0.0
-        self._labeled: Dict[Labels, float] = {}
+        self._labeled: dict[Labels, float] = {}
 
     @property
     def metric_type(self) -> MetricType:
         """Get metric type."""
         return MetricType.GAUGE
 
-    def set(self, value: float, labels: Optional[Labels] = None) -> None:
+    def set(self, value: float, labels: Labels | None = None) -> None:
         """Set gauge value."""
         with self._lock:
             if labels:
@@ -207,7 +207,7 @@ class Gauge(Metric):
             else:
                 self._value = value
 
-    def inc(self, amount: float = 1.0, labels: Optional[Labels] = None) -> None:
+    def inc(self, amount: float = 1.0, labels: Labels | None = None) -> None:
         """Increment gauge."""
         with self._lock:
             if labels:
@@ -215,7 +215,7 @@ class Gauge(Metric):
             else:
                 self._value += amount
 
-    def dec(self, amount: float = 1.0, labels: Optional[Labels] = None) -> None:
+    def dec(self, amount: float = 1.0, labels: Labels | None = None) -> None:
         """Decrement gauge."""
         with self._lock:
             if labels:
@@ -223,14 +223,14 @@ class Gauge(Metric):
             else:
                 self._value -= amount
 
-    def get_value(self, labels: Optional[Labels] = None) -> float:
+    def get_value(self, labels: Labels | None = None) -> float:
         """Get current gauge value."""
         with self._lock:
             if labels:
                 return self._labeled.get(labels, 0.0)
             return self._value
 
-    def get_all_values(self) -> Dict[Labels, float]:
+    def get_all_values(self) -> dict[Labels, float]:
         """Get all labeled values."""
         with self._lock:
             result = {EMPTY_LABELS: self._value}
@@ -244,7 +244,7 @@ class Gauge(Metric):
             self._labeled.clear()
 
     @contextmanager
-    def track_inprogress(self, labels: Optional[Labels] = None):
+    def track_inprogress(self, labels: Labels | None = None):
         """Context manager to track in-progress operations."""
         self.inc(labels=labels)
         try:
@@ -275,7 +275,7 @@ class Histogram(Metric):
         self,
         name: str,
         description: str = "",
-        buckets: Optional[Sequence[float]] = None,
+        buckets: Sequence[float] | None = None,
         **kwargs,
     ):
         """Initialize histogram."""
@@ -283,9 +283,9 @@ class Histogram(Metric):
         self._buckets = tuple(sorted(buckets or self.DEFAULT_BUCKETS))
         if self._buckets[-1] != float("inf"):
             self._buckets = self._buckets + (float("inf"),)
-        self._bucket_counts: Dict[Labels, Dict[float, int]] = {}
-        self._sums: Dict[Labels, float] = {}
-        self._counts: Dict[Labels, int] = {}
+        self._bucket_counts: dict[Labels, dict[float, int]] = {}
+        self._sums: dict[Labels, float] = {}
+        self._counts: dict[Labels, int] = {}
         self._init_buckets(EMPTY_LABELS)
 
     def _init_buckets(self, labels: Labels) -> None:
@@ -300,11 +300,11 @@ class Histogram(Metric):
         return MetricType.HISTOGRAM
 
     @property
-    def buckets(self) -> Tuple[float, ...]:
+    def buckets(self) -> tuple[float, ...]:
         """Get bucket boundaries."""
         return self._buckets
 
-    def observe(self, value: float, labels: Optional[Labels] = None) -> None:
+    def observe(self, value: float, labels: Labels | None = None) -> None:
         """Observe a value."""
         key = labels or EMPTY_LABELS
         with self._lock:
@@ -318,25 +318,25 @@ class Histogram(Metric):
                 if value <= bucket:
                     self._bucket_counts[key][bucket] += 1
 
-    def get_value(self, labels: Optional[Labels] = None) -> float:
+    def get_value(self, labels: Labels | None = None) -> float:
         """Get sum of observed values."""
         key = labels or EMPTY_LABELS
         with self._lock:
             return self._sums.get(key, 0.0)
 
-    def get_count(self, labels: Optional[Labels] = None) -> int:
+    def get_count(self, labels: Labels | None = None) -> int:
         """Get count of observations."""
         key = labels or EMPTY_LABELS
         with self._lock:
             return self._counts.get(key, 0)
 
-    def get_bucket_counts(self, labels: Optional[Labels] = None) -> Dict[float, int]:
+    def get_bucket_counts(self, labels: Labels | None = None) -> dict[float, int]:
         """Get bucket counts."""
         key = labels or EMPTY_LABELS
         with self._lock:
             return dict(self._bucket_counts.get(key, {}))
 
-    def get_mean(self, labels: Optional[Labels] = None) -> float:
+    def get_mean(self, labels: Labels | None = None) -> float:
         """Get mean of observed values."""
         key = labels or EMPTY_LABELS
         with self._lock:
@@ -353,7 +353,7 @@ class Histogram(Metric):
             self._counts.clear()
             self._init_buckets(EMPTY_LABELS)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         base = super().to_dict()
         with self._lock:
@@ -375,7 +375,7 @@ class Summary(Metric):
         self,
         name: str,
         description: str = "",
-        quantiles: Optional[Sequence[float]] = None,
+        quantiles: Sequence[float] | None = None,
         max_age_seconds: float = 600.0,
         **kwargs,
     ):
@@ -383,11 +383,11 @@ class Summary(Metric):
         super().__init__(name, description, **kwargs)
         self._quantiles = tuple(quantiles or self.DEFAULT_QUANTILES)
         self._max_age = max_age_seconds
-        self._observations: Dict[
-            Labels, List[Tuple[float, float]]
+        self._observations: dict[
+            Labels, list[tuple[float, float]]
         ] = {}  # (value, timestamp)
-        self._sums: Dict[Labels, float] = {}
-        self._counts: Dict[Labels, int] = {}
+        self._sums: dict[Labels, float] = {}
+        self._counts: dict[Labels, int] = {}
 
     @property
     def metric_type(self) -> MetricType:
@@ -395,7 +395,7 @@ class Summary(Metric):
         return MetricType.SUMMARY
 
     @property
-    def quantiles(self) -> Tuple[float, ...]:
+    def quantiles(self) -> tuple[float, ...]:
         """Get quantile targets."""
         return self._quantiles
 
@@ -409,7 +409,7 @@ class Summary(Metric):
             (v, t) for v, t in self._observations[labels] if t >= cutoff
         ]
 
-    def observe(self, value: float, labels: Optional[Labels] = None) -> None:
+    def observe(self, value: float, labels: Labels | None = None) -> None:
         """Observe a value."""
         key = labels or EMPTY_LABELS
         now = time.time()
@@ -424,19 +424,19 @@ class Summary(Metric):
             self._counts[key] += 1
             self._cleanup_old(key)
 
-    def get_value(self, labels: Optional[Labels] = None) -> float:
+    def get_value(self, labels: Labels | None = None) -> float:
         """Get sum of observed values."""
         key = labels or EMPTY_LABELS
         with self._lock:
             return self._sums.get(key, 0.0)
 
-    def get_count(self, labels: Optional[Labels] = None) -> int:
+    def get_count(self, labels: Labels | None = None) -> int:
         """Get count of observations."""
         key = labels or EMPTY_LABELS
         with self._lock:
             return self._counts.get(key, 0)
 
-    def get_quantile(self, quantile: float, labels: Optional[Labels] = None) -> float:
+    def get_quantile(self, quantile: float, labels: Labels | None = None) -> float:
         """Get a specific quantile value."""
         key = labels or EMPTY_LABELS
         with self._lock:
@@ -448,7 +448,7 @@ class Summary(Metric):
             idx = int(quantile * (len(values) - 1))
             return values[idx]
 
-    def get_quantiles(self, labels: Optional[Labels] = None) -> Dict[float, float]:
+    def get_quantiles(self, labels: Labels | None = None) -> dict[float, float]:
         """Get all configured quantile values."""
         return {q: self.get_quantile(q, labels) for q in self._quantiles}
 
@@ -459,7 +459,7 @@ class Summary(Metric):
             self._sums.clear()
             self._counts.clear()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         base = super().to_dict()
         with self._lock:
@@ -476,7 +476,7 @@ class Timer(Metric):
         self,
         name: str,
         description: str = "",
-        buckets: Optional[Sequence[float]] = None,
+        buckets: Sequence[float] | None = None,
         **kwargs,
     ):
         """Initialize timer."""
@@ -493,19 +493,19 @@ class Timer(Metric):
         """Get metric type."""
         return MetricType.TIMER
 
-    def observe(self, duration: float, labels: Optional[Labels] = None) -> None:
+    def observe(self, duration: float, labels: Labels | None = None) -> None:
         """Record a duration."""
         self._histogram.observe(duration, labels)
 
-    def get_value(self, labels: Optional[Labels] = None) -> float:
+    def get_value(self, labels: Labels | None = None) -> float:
         """Get sum of recorded durations."""
         return self._histogram.get_value(labels)
 
-    def get_count(self, labels: Optional[Labels] = None) -> int:
+    def get_count(self, labels: Labels | None = None) -> int:
         """Get count of recordings."""
         return self._histogram.get_count(labels)
 
-    def get_mean(self, labels: Optional[Labels] = None) -> float:
+    def get_mean(self, labels: Labels | None = None) -> float:
         """Get mean duration."""
         return self._histogram.get_mean(labels)
 
@@ -514,7 +514,7 @@ class Timer(Metric):
         self._histogram.reset()
 
     @contextmanager
-    def time(self, labels: Optional[Labels] = None):
+    def time(self, labels: Labels | None = None):
         """Context manager to time a block of code."""
         start = time.perf_counter()
         try:
@@ -523,7 +523,7 @@ class Timer(Metric):
             duration = time.perf_counter() - start
             self.observe(duration, labels)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return self._histogram.to_dict()
 
@@ -532,7 +532,7 @@ class MetricExporter(ABC):
     """Base class for metric exporters."""
 
     @abstractmethod
-    def export(self, metrics: List[Metric]) -> str:
+    def export(self, metrics: list[Metric]) -> str:
         """Export metrics to string format."""
         pass
 
@@ -540,7 +540,7 @@ class MetricExporter(ABC):
 class PrometheusExporter(MetricExporter):
     """Export metrics in Prometheus text format."""
 
-    def export(self, metrics: List[Metric]) -> str:
+    def export(self, metrics: list[Metric]) -> str:
         """Export metrics in Prometheus format."""
         lines = []
 
@@ -640,7 +640,7 @@ class StatsDExporter(MetricExporter):
         """Initialize StatsD exporter."""
         self._prefix = prefix
 
-    def export(self, metrics: List[Metric]) -> str:
+    def export(self, metrics: list[Metric]) -> str:
         """Export metrics in StatsD format."""
         lines = []
 
@@ -690,7 +690,7 @@ class JSONExporter(MetricExporter):
         """Initialize JSON exporter."""
         self._pretty = pretty
 
-    def export(self, metrics: List[Metric]) -> str:
+    def export(self, metrics: list[Metric]) -> str:
         """Export metrics as JSON."""
         data = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -704,12 +704,12 @@ class JSONExporter(MetricExporter):
 class MetricsRegistry:
     """Registry for managing metrics."""
 
-    _instance: Optional["MetricsRegistry"] = None
+    _instance: "MetricsRegistry | None" = None
     _lock = threading.Lock()
 
     def __init__(self):
         """Initialize registry."""
-        self._metrics: Dict[str, Metric] = {}
+        self._metrics: dict[str, Metric] = {}
         self._registry_lock = threading.Lock()
         self._default_labels = EMPTY_LABELS
 
@@ -746,12 +746,12 @@ class MetricsRegistry:
             if name in self._metrics:
                 del self._metrics[name]
 
-    def get(self, name: str) -> Optional[Metric]:
+    def get(self, name: str) -> Metric | None:
         """Get a metric by name."""
         with self._registry_lock:
             return self._metrics.get(name)
 
-    def get_all(self) -> List[Metric]:
+    def get_all(self) -> list[Metric]:
         """Get all registered metrics."""
         with self._registry_lock:
             return list(self._metrics.values())
@@ -806,8 +806,8 @@ class StatsDClient:
         self._port = port
         self._prefix = prefix
         self._max_buffer_size = max_buffer_size
-        self._buffer: List[str] = []
-        self._socket: Optional[socket.socket] = None
+        self._buffer: list[str] = []
+        self._socket: socket.socket | None = None
         self._lock = threading.Lock()
 
     def _get_socket(self) -> socket.socket:
@@ -923,7 +923,7 @@ def timer(name: str, description: str = "", **kwargs) -> Timer:
     return get_registry().timer(name, description, **kwargs)
 
 
-def timed(name: Optional[str] = None, labels: Optional[Labels] = None):
+def timed(name: str | None = None, labels: Labels | None = None):
     """Decorator to time function execution."""
 
     def decorator(func: Callable) -> Callable:
@@ -943,7 +943,7 @@ def timed(name: Optional[str] = None, labels: Optional[Labels] = None):
     return decorator
 
 
-def counted(name: Optional[str] = None, labels: Optional[Labels] = None):
+def counted(name: str | None = None, labels: Labels | None = None):
     """Decorator to count function calls."""
 
     def decorator(func: Callable) -> Callable:

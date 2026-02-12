@@ -862,7 +862,6 @@ class TestEdgeCases:
     def test_complex_type_hints(self, tmp_path):
         """Test handling complex type hints."""
         module_code = '''
-from typing import List, Dict, Optional, Union
 
 def complex_func(
     items: List[Dict[str, int]],

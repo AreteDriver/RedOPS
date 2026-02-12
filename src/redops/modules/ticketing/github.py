@@ -4,7 +4,7 @@ GitHub Issues integration for RedOPS.
 Automatically creates GitHub issues from security findings.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime, timezone
 import os
 import json
@@ -31,9 +31,9 @@ class GitHubConfig:
     token: str
     owner: str
     repo: str
-    labels: List[str] = field(default_factory=list)
-    assignees: List[str] = field(default_factory=list)
-    milestone: Optional[int] = None
+    labels: list[str] = field(default_factory=list)
+    assignees: list[str] = field(default_factory=list)
+    milestone: int | None = None
 
     def __post_init__(self):
         if not self.labels:
@@ -68,7 +68,7 @@ class GitHubClient:
     Creates and manages security issues in GitHub.
     """
 
-    def __init__(self, config: Optional[GitHubConfig] = None):
+    def __init__(self, config: GitHubConfig | None = None):
         """
         Initialize the client.
 
@@ -77,7 +77,7 @@ class GitHubClient:
         """
         self.config = config or GitHubConfig.from_env()
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get request headers."""
         return {
             "Authorization": f"Bearer {self.config.token}",
@@ -93,10 +93,10 @@ class GitHubClient:
         self,
         title: str,
         body: str,
-        labels: Optional[List[str]] = None,
-        assignees: Optional[List[str]] = None,
-        milestone: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        labels: list[str] | None = None,
+        assignees: list[str] | None = None,
+        milestone: int | None = None,
+    ) -> dict[str, Any]:
         """
         Create a GitHub issue.
 
@@ -176,10 +176,10 @@ class GitHubClient:
 
     def create_issue_from_finding(
         self,
-        finding: Dict[str, Any],
-        scan_id: Optional[str] = None,
-        target: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        finding: dict[str, Any],
+        scan_id: str | None = None,
+        target: str | None = None,
+    ) -> dict[str, Any]:
         """
         Create an issue from a security finding.
 
@@ -269,7 +269,7 @@ class GitHubClient:
         }
         return badges.get(severity, f":white_circle: **{severity.upper()}**")
 
-    def get_issue(self, issue_number: int) -> Dict[str, Any]:
+    def get_issue(self, issue_number: int) -> dict[str, Any]:
         """
         Get issue details.
 
@@ -300,7 +300,7 @@ class GitHubClient:
         except requests.exceptions.RequestException as e:
             return {"success": False, "error": str(e)}
 
-    def add_comment(self, issue_number: int, body: str) -> Dict[str, Any]:
+    def add_comment(self, issue_number: int, body: str) -> dict[str, Any]:
         """
         Add a comment to an issue.
 
@@ -339,8 +339,8 @@ class GitHubClient:
             return {"success": False, "error": str(e)}
 
     def close_issue(
-        self, issue_number: int, comment: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, issue_number: int, comment: str | None = None
+    ) -> dict[str, Any]:
         """
         Close an issue.
 
@@ -382,7 +382,7 @@ class GitHubClient:
 
 
 def create_github_issue(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Create a single GitHub issue.
@@ -426,7 +426,7 @@ def create_github_issue(
 
 
 def create_github_issues_from_findings(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Create GitHub issues from all findings in context.

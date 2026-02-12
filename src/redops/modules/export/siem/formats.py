@@ -8,7 +8,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,21 +24,21 @@ class SecurityEvent:
     source: str = "RedOPS"
 
     # Target info
-    target_host: Optional[str] = None
-    target_ip: Optional[str] = None
-    target_port: Optional[int] = None
-    target_url: Optional[str] = None
+    target_host: str | None = None
+    target_ip: str | None = None
+    target_port: int | None = None
+    target_url: str | None = None
 
     # Finding details
     title: str = ""
     description: str = ""
     category: str = ""
-    technique_id: Optional[str] = None  # MITRE ATT&CK
-    cve_id: Optional[str] = None
+    technique_id: str | None = None  # MITRE ATT&CK
+    cve_id: str | None = None
 
     # Additional context
-    raw_data: Dict[str, Any] = field(default_factory=dict)
-    tags: List[str] = field(default_factory=list)
+    raw_data: dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
 
     def get_severity_numeric(self) -> int:
         """Get numeric severity (0-10)."""
@@ -160,7 +160,7 @@ class CEFExporter:
 
         return "|".join(cef_parts)
 
-    def export_events(self, events: List[SecurityEvent]) -> str:
+    def export_events(self, events: list[SecurityEvent]) -> str:
         """
         Export multiple events to CEF format.
 
@@ -257,7 +257,7 @@ class LEEFExporter:
 
         return header + attributes
 
-    def export_events(self, events: List[SecurityEvent]) -> str:
+    def export_events(self, events: list[SecurityEvent]) -> str:
         """
         Export multiple events to LEEF format.
 
@@ -345,7 +345,7 @@ class SyslogExporter:
         # Build syslog message
         return f"<{priority}>1 {timestamp} {self.hostname} {self.app_name} - {msg_id} {structured_data} {message}"
 
-    def export_events(self, events: List[SecurityEvent]) -> str:
+    def export_events(self, events: list[SecurityEvent]) -> str:
         """
         Export multiple events to syslog format.
 
@@ -428,7 +428,7 @@ class JSONLExporter:
 
         return json.dumps(data, default=str)
 
-    def export_events(self, events: List[SecurityEvent]) -> str:
+    def export_events(self, events: list[SecurityEvent]) -> str:
         """
         Export multiple events to JSONL format.
 
@@ -457,7 +457,7 @@ class SentinelExporter:
         """
         self.log_type = log_type
 
-    def export_event(self, event: SecurityEvent) -> Dict[str, Any]:
+    def export_event(self, event: SecurityEvent) -> dict[str, Any]:
         """
         Export a single event for Sentinel.
 
@@ -487,7 +487,7 @@ class SentinelExporter:
             "RawData": json.dumps(event.raw_data) if event.raw_data else "",
         }
 
-    def export_events(self, events: List[SecurityEvent]) -> str:
+    def export_events(self, events: list[SecurityEvent]) -> str:
         """
         Export multiple events for Sentinel.
 
@@ -502,31 +502,31 @@ class SentinelExporter:
 
 
 # Convenience functions
-def export_to_cef(events: List[SecurityEvent], **kwargs) -> str:
+def export_to_cef(events: list[SecurityEvent], **kwargs) -> str:
     """Export events to CEF format."""
     exporter = CEFExporter(**kwargs)
     return exporter.export_events(events)
 
 
-def export_to_leef(events: List[SecurityEvent], **kwargs) -> str:
+def export_to_leef(events: list[SecurityEvent], **kwargs) -> str:
     """Export events to LEEF format."""
     exporter = LEEFExporter(**kwargs)
     return exporter.export_events(events)
 
 
-def export_to_syslog(events: List[SecurityEvent], **kwargs) -> str:
+def export_to_syslog(events: list[SecurityEvent], **kwargs) -> str:
     """Export events to syslog format."""
     exporter = SyslogExporter(**kwargs)
     return exporter.export_events(events)
 
 
-def export_to_jsonl(events: List[SecurityEvent], **kwargs) -> str:
+def export_to_jsonl(events: list[SecurityEvent], **kwargs) -> str:
     """Export events to JSONL format."""
     exporter = JSONLExporter(**kwargs)
     return exporter.export_events(events)
 
 
-def export_to_sentinel(events: List[SecurityEvent], **kwargs) -> str:
+def export_to_sentinel(events: list[SecurityEvent], **kwargs) -> str:
     """Export events for Microsoft Sentinel."""
     exporter = SentinelExporter(**kwargs)
     return exporter.export_events(events)

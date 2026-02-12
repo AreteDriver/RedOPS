@@ -13,7 +13,7 @@ Report Types:
 - Board Briefing: Condensed board-ready summary
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timezone
@@ -83,16 +83,16 @@ class ExecutiveSummary:
     target: str
     overall_risk_level: RiskLevel
     risk_score: float  # 0-100
-    key_findings: List[Dict[str, Any]]
-    top_risks: List[Dict[str, Any]]
-    compliance_summary: Dict[str, Any]
-    recommendations: List[Dict[str, Any]]
-    metrics: Dict[str, Any]
-    trend_summary: Dict[str, Any]
+    key_findings: list[dict[str, Any]]
+    top_risks: list[dict[str, Any]]
+    compliance_summary: dict[str, Any]
+    recommendations: list[dict[str, Any]]
+    metrics: dict[str, Any]
+    trend_summary: dict[str, Any]
     executive_brief: str = ""
-    next_steps: List[str] = field(default_factory=list)
+    next_steps: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "report_id": self.report_id,
@@ -118,15 +118,15 @@ class RiskDashboard:
 
     overall_score: float
     risk_level: RiskLevel
-    risk_by_category: Dict[str, float]
-    risk_by_severity: Dict[str, int]
+    risk_by_category: dict[str, float]
+    risk_by_severity: dict[str, int]
     risk_trend: TrendDirection
-    top_risks: List[Dict[str, Any]]
-    risk_distribution: Dict[str, int]
-    mitigation_progress: Dict[str, Any]
-    exposure_metrics: Dict[str, Any]
+    top_risks: list[dict[str, Any]]
+    risk_distribution: dict[str, int]
+    mitigation_progress: dict[str, Any]
+    exposure_metrics: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "overall_score": self.overall_score,
@@ -147,15 +147,15 @@ class ComplianceReport:
 
     overall_status: ComplianceStatus
     compliance_score: float  # 0-100
-    frameworks: Dict[str, Dict[str, Any]]
-    gaps: List[Dict[str, Any]]
+    frameworks: dict[str, dict[str, Any]]
+    gaps: list[dict[str, Any]]
     controls_assessed: int
     controls_passing: int
     controls_failing: int
-    priority_remediations: List[Dict[str, Any]]
+    priority_remediations: list[dict[str, Any]]
     audit_readiness: float  # 0-100
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "overall_status": self.overall_status.value,
@@ -175,15 +175,15 @@ class TrendReport:
     """Trend report structure."""
 
     period: str
-    risk_trend: List[Dict[str, Any]]
-    finding_trend: List[Dict[str, Any]]
-    compliance_trend: List[Dict[str, Any]]
-    remediation_trend: List[Dict[str, Any]]
+    risk_trend: list[dict[str, Any]]
+    finding_trend: list[dict[str, Any]]
+    compliance_trend: list[dict[str, Any]]
+    remediation_trend: list[dict[str, Any]]
     overall_direction: TrendDirection
-    notable_changes: List[str]
-    projections: Dict[str, Any]
+    notable_changes: list[str]
+    projections: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "period": self.period,
@@ -211,9 +211,9 @@ class Recommendation:
     timeline: str
     owner: str = ""
     status: str = "open"
-    related_findings: List[str] = field(default_factory=list)
+    related_findings: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -280,7 +280,7 @@ EFFORT_ESTIMATES = {
 
 
 def generate_executive_report(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Generate executive report from context data.
@@ -396,7 +396,7 @@ def generate_executive_report(
     return ctx
 
 
-def extract_findings_for_report(ctx: Context) -> List[Dict[str, Any]]:
+def extract_findings_for_report(ctx: Context) -> list[dict[str, Any]]:
     """Extract findings from context for reporting."""
     findings = []
 
@@ -456,7 +456,7 @@ def extract_findings_for_report(ctx: Context) -> List[Dict[str, Any]]:
 
 
 def calculate_risk_dashboard(
-    findings: List[Dict[str, Any]], risk_data: Dict[str, Any]
+    findings: list[dict[str, Any]], risk_data: dict[str, Any]
 ) -> RiskDashboard:
     """Calculate risk dashboard metrics."""
     # Count by severity
@@ -545,7 +545,7 @@ def calculate_risk_level(score: float) -> RiskLevel:
         return RiskLevel.MINIMAL
 
 
-def generate_compliance_summary(compliance_data: Dict[str, Any]) -> ComplianceReport:
+def generate_compliance_summary(compliance_data: dict[str, Any]) -> ComplianceReport:
     """Generate compliance summary from compliance data."""
     gaps = compliance_data.get("gaps", [])
     frameworks = compliance_data.get("frameworks", {})
@@ -623,10 +623,10 @@ def generate_compliance_summary(compliance_data: Dict[str, Any]) -> ComplianceRe
 
 
 def generate_recommendations(
-    findings: List[Dict[str, Any]],
-    correlations: Dict[str, Any],
-    compliance: Dict[str, Any],
-) -> List[Recommendation]:
+    findings: list[dict[str, Any]],
+    correlations: dict[str, Any],
+    compliance: dict[str, Any],
+) -> list[Recommendation]:
     """Generate prioritized recommendations."""
     recommendations = []
     rec_id = 0
@@ -720,7 +720,7 @@ def generate_recommendations(
     return recommendations
 
 
-def generate_recommendation_description(finding: Dict[str, Any]) -> str:
+def generate_recommendation_description(finding: dict[str, Any]) -> str:
     """Generate recommendation description from finding."""
     category = finding.get("category", "security")
     title = finding.get("title", "")
@@ -738,10 +738,10 @@ def generate_recommendation_description(finding: Dict[str, Any]) -> str:
 
 
 def calculate_executive_metrics(
-    findings: List[Dict[str, Any]],
-    correlations: Dict[str, Any],
-    compliance: Dict[str, Any],
-) -> Dict[str, Any]:
+    findings: list[dict[str, Any]],
+    correlations: dict[str, Any],
+    compliance: dict[str, Any],
+) -> dict[str, Any]:
     """Calculate executive-level metrics."""
     # Count findings by severity
     severity_counts = defaultdict(int)
@@ -787,7 +787,7 @@ def calculate_executive_metrics(
     }
 
 
-def generate_trend_summary(ctx: Context, period: str) -> Dict[str, Any]:
+def generate_trend_summary(ctx: Context, period: str) -> dict[str, Any]:
     """Generate trend summary."""
     # In a real implementation, this would compare against historical data
     # For now, we provide structure for future trend analysis
@@ -807,8 +807,8 @@ def generate_trend_summary(ctx: Context, period: str) -> Dict[str, Any]:
 
 
 def get_key_findings(
-    findings: List[Dict[str, Any]], limit: int = 5
-) -> List[Dict[str, Any]]:
+    findings: list[dict[str, Any]], limit: int = 5
+) -> list[dict[str, Any]]:
     """Get key findings for executive summary."""
     # Sort by severity
     severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
@@ -835,8 +835,8 @@ def get_key_findings(
 
 
 def get_top_risks(
-    findings: List[Dict[str, Any]], dashboard: RiskDashboard, limit: int = 5
-) -> List[Dict[str, Any]]:
+    findings: list[dict[str, Any]], dashboard: RiskDashboard, limit: int = 5
+) -> list[dict[str, Any]]:
     """Get top risks for executive summary."""
     # Use dashboard top_risks or calculate from findings
     if dashboard.top_risks:
@@ -846,8 +846,8 @@ def get_top_risks(
 
 
 def get_top_risks_from_findings(
-    findings: List[Dict[str, Any]], limit: int = 5
-) -> List[Dict[str, Any]]:
+    findings: list[dict[str, Any]], limit: int = 5
+) -> list[dict[str, Any]]:
     """Calculate top risks from findings."""
     # Score and rank findings
     scored_findings = []
@@ -884,7 +884,7 @@ def get_top_risks_from_findings(
 def generate_executive_brief(
     target: str,
     dashboard: RiskDashboard,
-    key_findings: List[Dict[str, Any]],
+    key_findings: list[dict[str, Any]],
     compliance_summary: Any,
 ) -> str:
     """Generate executive brief text."""
@@ -928,8 +928,8 @@ The assessment identified {finding_count} key findings requiring attention. """
 
 
 def generate_next_steps(
-    recommendations: List[Recommendation], dashboard: RiskDashboard
-) -> List[str]:
+    recommendations: list[Recommendation], dashboard: RiskDashboard
+) -> list[str]:
     """Generate next steps list."""
     next_steps = []
 
@@ -963,8 +963,8 @@ def generate_next_steps(
 
 
 def generate_appendix(
-    findings: List[Dict[str, Any]], correlations: Dict[str, Any]
-) -> Dict[str, Any]:
+    findings: list[dict[str, Any]], correlations: dict[str, Any]
+) -> dict[str, Any]:
     """Generate report appendix with detailed data."""
     return {
         "total_findings": len(findings),
@@ -1006,7 +1006,7 @@ def severity_priority(severity: str) -> int:
     )
 
 
-def count_by_field(items: List[Dict[str, Any]], field: str) -> Dict[str, int]:
+def count_by_field(items: list[dict[str, Any]], field: str) -> dict[str, int]:
     """Count items by field value."""
     counts = defaultdict(int)
     for item in items:
@@ -1015,27 +1015,27 @@ def count_by_field(items: List[Dict[str, Any]], field: str) -> Dict[str, int]:
     return dict(counts)
 
 
-def get_report_types() -> List[str]:
+def get_report_types() -> list[str]:
     """Get all report types."""
     return [t.value for t in ReportType]
 
 
-def get_audiences() -> List[str]:
+def get_audiences() -> list[str]:
     """Get all audience types."""
     return [a.value for a in Audience]
 
 
-def get_risk_levels() -> List[str]:
+def get_risk_levels() -> list[str]:
     """Get all risk levels."""
     return [r.value for r in RiskLevel]
 
 
-def get_trend_directions() -> List[str]:
+def get_trend_directions() -> list[str]:
     """Get all trend directions."""
     return [t.value for t in TrendDirection]
 
 
-def get_compliance_statuses() -> List[str]:
+def get_compliance_statuses() -> list[str]:
     """Get all compliance statuses."""
     return [s.value for s in ComplianceStatus]
 
@@ -1045,7 +1045,7 @@ def get_compliance_statuses() -> List[str]:
 # ============================================================================
 
 
-def format_for_audience(report: Dict[str, Any], audience: Audience) -> Dict[str, Any]:
+def format_for_audience(report: dict[str, Any], audience: Audience) -> dict[str, Any]:
     """Format report for specific audience."""
     if audience == Audience.BOARD:
         # Board gets condensed view
@@ -1083,7 +1083,7 @@ def format_for_audience(report: Dict[str, Any], audience: Audience) -> Dict[str,
         }
 
 
-def generate_html_summary(report: Dict[str, Any]) -> str:
+def generate_html_summary(report: dict[str, Any]) -> str:
     """Generate HTML summary of report."""
     summary = report.get("executive_summary", {})
     dashboard = report.get("risk_dashboard", {})
@@ -1145,7 +1145,7 @@ def generate_html_summary(report: Dict[str, Any]) -> str:
     return html
 
 
-def generate_markdown_summary(report: Dict[str, Any]) -> str:
+def generate_markdown_summary(report: dict[str, Any]) -> str:
     """Generate Markdown summary of report."""
     summary = report.get("executive_summary", {})
     dashboard = report.get("risk_dashboard", {})
@@ -1197,7 +1197,7 @@ def create_recommendation(
     priority: str = "medium",
     category: str = "security",
     effort: str = "medium",
-    rec_id: Optional[str] = None,
+    rec_id: str | None = None,
 ) -> Recommendation:
     """Create a recommendation object."""
     if rec_id is None:
@@ -1216,7 +1216,7 @@ def create_recommendation(
     )
 
 
-def calculate_overall_risk_score(findings: List[Dict[str, Any]]) -> float:
+def calculate_overall_risk_score(findings: list[dict[str, Any]]) -> float:
     """Calculate overall risk score from findings."""
     if not findings:
         return 0.0

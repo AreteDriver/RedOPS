@@ -8,7 +8,7 @@ IMPORTANT: This module operates on PUBLIC information only.
 Pattern-based analysis without active scanning.
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
 import re
@@ -52,7 +52,7 @@ class ExposurePattern:
     severity: ExposureSeverity
     description: str
     remediation: str
-    indicators: List[str] = field(default_factory=list)
+    indicators: list[str] = field(default_factory=list)
 
     def matches(self, text: str) -> bool:
         """Check if pattern matches text."""
@@ -67,12 +67,12 @@ class ExposureFinding:
     category: ExposureCategory
     severity: ExposureSeverity
     description: str
-    evidence: List[str]
+    evidence: list[str]
     remediation: str
-    affected_assets: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    affected_assets: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "title": self.title,
@@ -550,7 +550,7 @@ COMMON_EXPOSED_PATHS = [
 # ============================================================================
 
 
-def scan_exposure(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def scan_exposure(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Scan for corporate exposure.
 
@@ -684,7 +684,7 @@ def scan_exposure(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     return ctx
 
 
-def analyze_domain_exposure(domain_profile: Dict[str, Any]) -> List[ExposureFinding]:
+def analyze_domain_exposure(domain_profile: dict[str, Any]) -> list[ExposureFinding]:
     """
     Analyze domain profile for exposure indicators.
 
@@ -740,7 +740,7 @@ def analyze_domain_exposure(domain_profile: Dict[str, Any]) -> List[ExposureFind
     return findings
 
 
-def analyze_tech_stack_exposure(tech_stack: Dict[str, Any]) -> List[ExposureFinding]:
+def analyze_tech_stack_exposure(tech_stack: dict[str, Any]) -> list[ExposureFinding]:
     """
     Analyze technology stack for exposure indicators.
 
@@ -795,8 +795,8 @@ def analyze_tech_stack_exposure(tech_stack: Dict[str, Any]) -> List[ExposureFind
 
 
 def analyze_code_artifacts_exposure(
-    code_artifacts: Dict[str, Any],
-) -> List[ExposureFinding]:
+    code_artifacts: dict[str, Any],
+) -> list[ExposureFinding]:
     """
     Analyze code artifacts for exposure indicators.
 
@@ -870,7 +870,7 @@ def analyze_code_artifacts_exposure(
     return findings
 
 
-def analyze_document_exposure(doc_metadata: Dict[str, Any]) -> List[ExposureFinding]:
+def analyze_document_exposure(doc_metadata: dict[str, Any]) -> list[ExposureFinding]:
     """
     Analyze document metadata for exposure indicators.
 
@@ -916,7 +916,7 @@ def analyze_document_exposure(doc_metadata: Dict[str, Any]) -> List[ExposureFind
     return findings
 
 
-def analyze_paths_in_context(ctx: Context) -> List[ExposureFinding]:
+def analyze_paths_in_context(ctx: Context) -> list[ExposureFinding]:
     """
     Analyze context for exposed path patterns.
 
@@ -965,7 +965,7 @@ def analyze_paths_in_context(ctx: Context) -> List[ExposureFinding]:
     return findings
 
 
-def extract_strings_from_dict(d: Dict[str, Any], max_depth: int = 3) -> List[str]:
+def extract_strings_from_dict(d: dict[str, Any], max_depth: int = 3) -> list[str]:
     """
     Recursively extract strings from a dictionary.
 
@@ -996,7 +996,7 @@ def extract_strings_from_dict(d: Dict[str, Any], max_depth: int = 3) -> List[str
     return strings
 
 
-def find_cloud_references(ctx: Context) -> List[Dict[str, Any]]:
+def find_cloud_references(ctx: Context) -> list[dict[str, Any]]:
     """
     Find cloud storage references in context.
 
@@ -1051,7 +1051,7 @@ def find_cloud_references(ctx: Context) -> List[Dict[str, Any]]:
     return references
 
 
-def generate_cloud_findings(cloud_refs: List[Dict[str, Any]]) -> List[ExposureFinding]:
+def generate_cloud_findings(cloud_refs: list[dict[str, Any]]) -> list[ExposureFinding]:
     """
     Generate findings from cloud references.
 
@@ -1091,7 +1091,7 @@ def generate_cloud_findings(cloud_refs: List[Dict[str, Any]]) -> List[ExposureFi
     return findings
 
 
-def find_credential_exposures(ctx: Context) -> List[Dict[str, Any]]:
+def find_credential_exposures(ctx: Context) -> list[dict[str, Any]]:
     """
     Find credential exposure patterns in context.
 
@@ -1145,8 +1145,8 @@ def find_credential_exposures(ctx: Context) -> List[Dict[str, Any]]:
 
 
 def generate_credential_findings(
-    cred_exposures: List[Dict[str, Any]],
-) -> List[ExposureFinding]:
+    cred_exposures: list[dict[str, Any]],
+) -> list[ExposureFinding]:
     """
     Generate findings from credential exposures.
 
@@ -1186,7 +1186,7 @@ def generate_credential_findings(
     return findings
 
 
-def identify_public_assets_from_context(ctx: Context) -> List[Dict[str, Any]]:
+def identify_public_assets_from_context(ctx: Context) -> list[dict[str, Any]]:
     """
     Identify public-facing assets from context.
 
@@ -1246,7 +1246,7 @@ def identify_public_assets_from_context(ctx: Context) -> List[Dict[str, Any]]:
     return assets
 
 
-def find_sensitive_files_in_context(ctx: Context) -> List[Dict[str, Any]]:
+def find_sensitive_files_in_context(ctx: Context) -> list[dict[str, Any]]:
     """
     Find sensitive files referenced in context.
 
@@ -1281,7 +1281,7 @@ def find_sensitive_files_in_context(ctx: Context) -> List[Dict[str, Any]]:
     return sensitive
 
 
-def deduplicate_findings(findings: List[ExposureFinding]) -> List[ExposureFinding]:
+def deduplicate_findings(findings: list[ExposureFinding]) -> list[ExposureFinding]:
     """
     Remove duplicate findings.
 
@@ -1303,7 +1303,7 @@ def deduplicate_findings(findings: List[ExposureFinding]) -> List[ExposureFindin
     return unique
 
 
-def generate_exposure_summary(findings: List[ExposureFinding]) -> Dict[str, Any]:
+def generate_exposure_summary(findings: list[ExposureFinding]) -> dict[str, Any]:
     """
     Generate summary of exposure findings.
 
@@ -1356,7 +1356,7 @@ def generate_exposure_summary(findings: List[ExposureFinding]) -> Dict[str, Any]
 # ============================================================================
 
 
-def identify_public_assets(target: str) -> List[Dict[str, Any]]:
+def identify_public_assets(target: str) -> list[dict[str, Any]]:
     """
     Identify public-facing assets for a target.
 
@@ -1405,7 +1405,7 @@ def identify_public_assets(target: str) -> List[Dict[str, Any]]:
     return assets
 
 
-def check_information_leakage(target: str) -> List[Finding]:
+def check_information_leakage(target: str) -> list[Finding]:
     """
     Check for information leakage patterns.
 
@@ -1436,7 +1436,7 @@ def check_information_leakage(target: str) -> List[Finding]:
     return findings[:10]  # Limit results
 
 
-def analyze_employee_profiles(company: str, limit: int = 10) -> List[Dict[str, Any]]:
+def analyze_employee_profiles(company: str, limit: int = 10) -> list[dict[str, Any]]:
     """
     Analyze public employee profile patterns.
 
@@ -1466,7 +1466,7 @@ def analyze_employee_profiles(company: str, limit: int = 10) -> List[Dict[str, A
     return profiles[:limit]
 
 
-def get_common_exposed_paths() -> List[str]:
+def get_common_exposed_paths() -> list[str]:
     """
     Get list of common exposed paths.
 
@@ -1476,7 +1476,7 @@ def get_common_exposed_paths() -> List[str]:
     return COMMON_EXPOSED_PATHS.copy()
 
 
-def get_sensitive_files() -> Dict[str, Tuple[str, ExposureSeverity]]:
+def get_sensitive_files() -> dict[str, tuple[str, ExposureSeverity]]:
     """
     Get dictionary of sensitive files.
 
@@ -1486,7 +1486,7 @@ def get_sensitive_files() -> Dict[str, Tuple[str, ExposureSeverity]]:
     return SENSITIVE_FILES.copy()
 
 
-def get_exposure_patterns() -> List[ExposurePattern]:
+def get_exposure_patterns() -> list[ExposurePattern]:
     """
     Get all exposure patterns.
 
@@ -1496,7 +1496,7 @@ def get_exposure_patterns() -> List[ExposurePattern]:
     return ALL_PATTERNS.copy()
 
 
-def check_path_exposure(path: str) -> Optional[ExposurePattern]:
+def check_path_exposure(path: str) -> ExposurePattern | None:
     """
     Check if a path matches any exposure pattern.
 

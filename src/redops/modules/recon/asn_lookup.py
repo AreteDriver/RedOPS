@@ -5,7 +5,7 @@ Performs ASN lookups to discover network ownership, IP ranges,
 and organizational information for targets.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime
 import socket
 import re
@@ -29,7 +29,7 @@ CYMRU_DNS = "origin.asn.cymru.com"
 CYMRU_ASN_DNS = "asn.cymru.com"
 
 
-def lookup_asn(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def lookup_asn(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Perform ASN lookup for a target.
 
@@ -141,7 +141,7 @@ def is_asn(value: str) -> bool:
     return value.isdigit() and 1 <= int(value) <= 4294967295
 
 
-def resolve_domain_to_ip(domain: str) -> Optional[str]:
+def resolve_domain_to_ip(domain: str) -> str | None:
     """Resolve a domain to its IP address."""
     try:
         return socket.gethostbyname(domain)
@@ -149,7 +149,7 @@ def resolve_domain_to_ip(domain: str) -> Optional[str]:
         return None
 
 
-def lookup_asn_by_ip(ip: str) -> Dict[str, Any]:
+def lookup_asn_by_ip(ip: str) -> dict[str, Any]:
     """
     Look up ASN information for an IP address.
 
@@ -169,7 +169,7 @@ def lookup_asn_by_ip(ip: str) -> Dict[str, Any]:
     return lookup_asn_cymru(ip)
 
 
-def lookup_asn_bgpview(ip: str) -> Dict[str, Any]:
+def lookup_asn_bgpview(ip: str) -> dict[str, Any]:
     """Look up ASN via BGPView API."""
     if not HAS_REQUESTS:
         return {"error": "requests library not available"}
@@ -210,7 +210,7 @@ def lookup_asn_bgpview(ip: str) -> Dict[str, Any]:
         return {"error": f"Lookup failed: {str(e)}"}
 
 
-def lookup_asn_cymru(ip: str) -> Dict[str, Any]:
+def lookup_asn_cymru(ip: str) -> dict[str, Any]:
     """
     Look up ASN via Team Cymru DNS service.
 
@@ -247,7 +247,7 @@ def lookup_asn_cymru(ip: str) -> Dict[str, Any]:
         return {"error": "DNS lookup failed"}
 
 
-def lookup_asn_details(asn: str) -> Dict[str, Any]:
+def lookup_asn_details(asn: str) -> dict[str, Any]:
     """
     Get details for a specific ASN.
 
@@ -294,7 +294,7 @@ def lookup_asn_details(asn: str) -> Dict[str, Any]:
         return {"asn": asn_num, "error": "Lookup failed"}
 
 
-def get_asn_prefixes(asn: str) -> List[Dict[str, Any]]:
+def get_asn_prefixes(asn: str) -> list[dict[str, Any]]:
     """
     Get IP prefixes announced by an ASN.
 
@@ -352,7 +352,7 @@ def get_asn_prefixes(asn: str) -> List[Dict[str, Any]]:
         return []
 
 
-def get_asn_peers(asn: str) -> Dict[str, List[Dict[str, Any]]]:
+def get_asn_peers(asn: str) -> dict[str, list[dict[str, Any]]]:
     """
     Get peer information for an ASN.
 
@@ -398,7 +398,7 @@ def get_asn_peers(asn: str) -> Dict[str, List[Dict[str, Any]]]:
         return {"upstreams": [], "downstreams": [], "peers": []}
 
 
-def analyze_asn_info(asn_info: Dict[str, Any], target: str) -> List[Finding]:
+def analyze_asn_info(asn_info: dict[str, Any], target: str) -> list[Finding]:
     """
     Analyze ASN information for security insights.
 
@@ -477,7 +477,7 @@ def analyze_asn_info(asn_info: Dict[str, Any], target: str) -> List[Finding]:
     return findings
 
 
-def get_asn_summary(ctx: Context) -> Dict[str, Any]:
+def get_asn_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of ASN lookup results.
 

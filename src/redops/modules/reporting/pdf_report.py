@@ -6,7 +6,7 @@ Generates professional PDF security reports from scan results.
 
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from typing import Any
 
 try:
     from fpdf import FPDF
@@ -127,9 +127,9 @@ class RedOPSPDFReport(FPDF):
 
     def add_table(
         self,
-        headers: List[str],
-        rows: List[List[str]],
-        col_widths: Optional[List[int]] = None,
+        headers: list[str],
+        rows: list[list[str]],
+        col_widths: list[int] | None = None,
     ):
         """Add a table to the report."""
         if not col_widths:
@@ -165,7 +165,7 @@ class PDFReportGenerator:
 
     def generate(
         self,
-        scan_data: Dict[str, Any],
+        scan_data: dict[str, Any],
         output_path: str,
         include_executive_summary: bool = True,
         include_technical_details: bool = True,
@@ -225,7 +225,7 @@ class PDFReportGenerator:
 
         return str(output_path)
 
-    def _add_title_page(self, pdf: RedOPSPDFReport, data: Dict[str, Any]):
+    def _add_title_page(self, pdf: RedOPSPDFReport, data: dict[str, Any]):
         """Add title page."""
         pdf.set_font("Helvetica", "B", 24)
         pdf.set_text_color(40, 40, 40)
@@ -293,7 +293,7 @@ class PDFReportGenerator:
             pdf.cell(150, 8, section)
             pdf.cell(0, 8, str(page), align="R", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
-    def _add_executive_summary(self, pdf: RedOPSPDFReport, data: Dict[str, Any]):
+    def _add_executive_summary(self, pdf: RedOPSPDFReport, data: dict[str, Any]):
         """Add executive summary section."""
         pdf.chapter_title("1. Executive Summary")
 
@@ -331,7 +331,7 @@ class PDFReportGenerator:
             [95, 95],
         )
 
-    def _add_findings(self, pdf: RedOPSPDFReport, data: Dict[str, Any]):
+    def _add_findings(self, pdf: RedOPSPDFReport, data: dict[str, Any]):
         """Add findings section."""
         pdf.chapter_title("2. Findings Overview")
 
@@ -356,7 +356,7 @@ class PDFReportGenerator:
                 recommendation=finding.get("recommendation", ""),
             )
 
-    def _add_technical_details(self, pdf: RedOPSPDFReport, data: Dict[str, Any]):
+    def _add_technical_details(self, pdf: RedOPSPDFReport, data: dict[str, Any]):
         """Add technical details section."""
         pdf.chapter_title("3. Technical Details")
 
@@ -384,7 +384,7 @@ class PDFReportGenerator:
             pdf.body_text(f"Cloud Provider: {infra.get('cloud_provider', 'Unknown')}")
             pdf.body_text(f"CDN: {infra.get('cdn', 'Not detected')}")
 
-    def _add_recommendations(self, pdf: RedOPSPDFReport, data: Dict[str, Any]):
+    def _add_recommendations(self, pdf: RedOPSPDFReport, data: dict[str, Any]):
         """Add recommendations section."""
         pdf.chapter_title("4. Recommendations")
 
@@ -407,7 +407,7 @@ class PDFReportGenerator:
             pdf.cell(0, 5, f"Priority: {priority}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.ln(3)
 
-    def _add_appendix(self, pdf: RedOPSPDFReport, data: Dict[str, Any]):
+    def _add_appendix(self, pdf: RedOPSPDFReport, data: dict[str, Any]):
         """Add appendix section."""
         pdf.chapter_title("5. Appendix")
 
@@ -432,7 +432,7 @@ class PDFReportGenerator:
             "This assessment was conducted within authorized scope boundaries."
         )
 
-    def _extract_findings(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_findings(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract findings from various data sources."""
         findings = []
 
@@ -461,7 +461,7 @@ class PDFReportGenerator:
         return findings
 
 
-def generate_pdf_report(ctx, params: Optional[Dict[str, Any]] = None):
+def generate_pdf_report(ctx, params: dict[str, Any] | None = None):
     """Pipeline module to generate PDF report."""
     params = params or {}
 

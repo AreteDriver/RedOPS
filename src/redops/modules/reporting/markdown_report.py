@@ -5,7 +5,7 @@ Generates executive summaries and technical reports in Markdown format.
 Includes MITRE ATT&CK matrix visualization, risk heatmaps, and attack path diagrams.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 from datetime import datetime
 from redops.core.context import Context
@@ -40,7 +40,7 @@ MITRE_TACTICS_ORDER = [
 
 
 def generate_exec_summary(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Generate an executive summary report.
@@ -188,7 +188,7 @@ def build_executive_summary(ctx: Context) -> str:
     return report
 
 
-def calculate_overall_risk_level(risks: List[Dict[str, Any]]) -> str:
+def calculate_overall_risk_level(risks: list[dict[str, Any]]) -> str:
     """
     Calculate overall risk level from list of risks.
 
@@ -216,7 +216,7 @@ def calculate_overall_risk_level(risks: List[Dict[str, Any]]) -> str:
 
 
 def generate_technical_report(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Generate a detailed technical report.
@@ -403,7 +403,7 @@ def build_mitre_matrix_markdown(ctx: Context) -> str:
     return output
 
 
-def build_risk_heatmap_markdown(risks: List[Dict[str, Any]]) -> str:
+def build_risk_heatmap_markdown(risks: list[dict[str, Any]]) -> str:
     """
     Build a risk heatmap visualization in markdown.
 
@@ -446,7 +446,7 @@ def build_risk_heatmap_markdown(risks: List[Dict[str, Any]]) -> str:
     return output
 
 
-def build_likelihood_impact_matrix(risks: List[Dict[str, Any]]) -> str:
+def build_likelihood_impact_matrix(risks: list[dict[str, Any]]) -> str:
     """
     Build a likelihood vs impact matrix.
 
@@ -495,7 +495,7 @@ def build_likelihood_impact_matrix(risks: List[Dict[str, Any]]) -> str:
     return output
 
 
-def build_attack_paths_markdown(attack_paths: List[Dict[str, Any]]) -> str:
+def build_attack_paths_markdown(attack_paths: list[dict[str, Any]]) -> str:
     """
     Build attack path visualizations in markdown.
 
@@ -580,7 +580,7 @@ def build_attack_paths_markdown(attack_paths: List[Dict[str, Any]]) -> str:
     return output
 
 
-def build_scenarios_markdown(scenarios: List[Dict[str, Any]]) -> str:
+def build_scenarios_markdown(scenarios: list[dict[str, Any]]) -> str:
     """
     Build attack scenario summaries in markdown.
 
@@ -639,7 +639,7 @@ def build_scenarios_markdown(scenarios: List[Dict[str, Any]]) -> str:
     return output
 
 
-def group_findings_by_category(ctx: Context) -> Dict[str, List[Dict[str, Any]]]:
+def group_findings_by_category(ctx: Context) -> dict[str, list[dict[str, Any]]]:
     """
     Group findings by category from context.
 
@@ -677,7 +677,7 @@ def group_findings_by_category(ctx: Context) -> Dict[str, List[Dict[str, Any]]]:
 
 
 def generate_full_report(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Generate a comprehensive full report with all sections.

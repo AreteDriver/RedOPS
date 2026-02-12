@@ -8,7 +8,7 @@ import sqlite3
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 
@@ -17,20 +17,20 @@ from contextlib import contextmanager
 class ScanRecord:
     """A stored scan record."""
 
-    id: Optional[int] = None
+    id: int | None = None
     target: str = ""
     preset: str = "quick"
     status: str = "pending"  # pending, running, completed, failed
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
     duration_seconds: float = 0.0
-    modules_run: List[str] = field(default_factory=list)
+    modules_run: list[str] = field(default_factory=list)
     findings_count: int = 0
-    risk_score: Optional[float] = None
-    error: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    risk_score: float | None = None
+    error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -52,18 +52,18 @@ class ScanRecord:
 class FindingRecord:
     """A stored finding record."""
 
-    id: Optional[int] = None
+    id: int | None = None
     scan_id: int = 0
     module: str = ""
     severity: str = "info"  # critical, high, medium, low, info
     title: str = ""
     description: str = ""
-    evidence: Optional[str] = None
-    remediation: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: Optional[str] = None
+    evidence: str | None = None
+    remediation: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -132,7 +132,7 @@ class ScanHistoryDB:
     CREATE INDEX IF NOT EXISTS idx_scan_data_key ON scan_data(key);
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         """
         Initialize scan history database.
 
@@ -171,7 +171,7 @@ class ScanHistoryDB:
     # Scan operations
 
     def create_scan(
-        self, target: str, preset: str = "quick", metadata: Dict[str, Any] = None
+        self, target: str, preset: str = "quick", metadata: dict[str, Any] = None
     ) -> int:
         """
         Create a new scan record.
@@ -201,7 +201,7 @@ class ScanHistoryDB:
         self,
         scan_id: int,
         status: str = None,
-        modules_run: List[str] = None,
+        modules_run: list[str] = None,
         findings_count: int = None,
         risk_score: float = None,
         error: str = None,
@@ -275,7 +275,7 @@ class ScanHistoryDB:
         with self._get_connection() as conn:
             conn.execute(query, params)
 
-    def get_scan(self, scan_id: int) -> Optional[ScanRecord]:
+    def get_scan(self, scan_id: int) -> ScanRecord | None:
         """
         Get a scan by ID.
 
@@ -301,7 +301,7 @@ class ScanHistoryDB:
         status: str = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[ScanRecord]:
+    ) -> list[ScanRecord]:
         """
         List scans with optional filtering.
 
@@ -381,7 +381,7 @@ class ScanHistoryDB:
         description: str = "",
         evidence: str = None,
         remediation: str = None,
-        metadata: Dict[str, Any] = None,
+        metadata: dict[str, Any] = None,
     ) -> int:
         """
         Add a finding to a scan.
@@ -426,7 +426,7 @@ class ScanHistoryDB:
         scan_id: int,
         severity: str = None,
         module: str = None,
-    ) -> List[FindingRecord]:
+    ) -> list[FindingRecord]:
         """
         Get findings for a scan.
 
@@ -507,7 +507,7 @@ class ScanHistoryDB:
                 (scan_id, key, value_json),
             )
 
-    def get_scan_data(self, scan_id: int, key: str = None) -> Dict[str, Any]:
+    def get_scan_data(self, scan_id: int, key: str = None) -> dict[str, Any]:
         """
         Get scan data.
 
@@ -536,7 +536,7 @@ class ScanHistoryDB:
 
     # Statistics
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get history statistics.
 
@@ -596,7 +596,7 @@ class ScanHistoryDB:
 
 
 # Convenience function for getting global instance
-_default_db: Optional[ScanHistoryDB] = None
+_default_db: ScanHistoryDB | None = None
 
 
 def get_history_db(db_path: str = None) -> ScanHistoryDB:

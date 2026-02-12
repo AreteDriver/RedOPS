@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, TypeVar
 
 from fastapi import HTTPException, Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -37,7 +37,7 @@ class RateLimitConfig:
     algorithm: RateLimitAlgorithm = RateLimitAlgorithm.SLIDING_WINDOW
     key_prefix: str = "ratelimit"
     include_headers: bool = True
-    block_duration: Optional[int] = None  # Additional block time when exceeded
+    block_duration: int | None = None  # Additional block time when exceeded
 
 
 @dataclass
@@ -48,10 +48,10 @@ class RateLimitResult:
     limit: int
     remaining: int
     reset_at: int  # Unix timestamp
-    retry_after: Optional[int] = None
+    retry_after: int | None = None
 
     @property
-    def headers(self) -> Dict[str, str]:
+    def headers(self) -> dict[str, str]:
         """Get rate limit response headers."""
         headers = {
             "X-RateLimit-Limit": str(self.limit),
@@ -89,7 +89,7 @@ class MemoryRateLimitBackend(RateLimitBackend):
     """
 
     def __init__(self):
-        self._windows: Dict[str, Dict[str, Any]] = {}
+        self._windows: dict[str, dict[str, Any]] = {}
 
     def check_rate_limit(
         self,
@@ -154,7 +154,7 @@ class RedisRateLimitBackend(RateLimitBackend):
     def __init__(
         self,
         redis_url: str = "redis://localhost:6379/0",
-        redis_client: Optional[Any] = None,
+        redis_client: Any | None = None,
     ):
         """
         Initialize Redis backend.
@@ -319,8 +319,8 @@ class RateLimiter:
 
     def __init__(
         self,
-        backend: Optional[RateLimitBackend] = None,
-        default_config: Optional[RateLimitConfig] = None,
+        backend: RateLimitBackend | None = None,
+        default_config: RateLimitConfig | None = None,
     ):
         """
         Initialize rate limiter.
@@ -334,7 +334,7 @@ class RateLimiter:
             requests=100,
             window=60,
         )
-        self._rules: Dict[str, RateLimitConfig] = {}
+        self._rules: dict[str, RateLimitConfig] = {}
 
     def add_rule(self, name: str, config: RateLimitConfig) -> None:
         """Add a named rate limit rule."""
@@ -343,8 +343,8 @@ class RateLimiter:
     def check(
         self,
         key: str,
-        rule: Optional[str] = None,
-        config: Optional[RateLimitConfig] = None,
+        rule: str | None = None,
+        config: RateLimitConfig | None = None,
     ) -> RateLimitResult:
         """
         Check if request is allowed.
@@ -394,7 +394,7 @@ def get_client_ip(request: Request) -> str:
 
 def get_rate_limit_key(
     request: Request,
-    key_func: Optional[Callable[[Request], str]] = None,
+    key_func: Callable[[Request], str] | None = None,
 ) -> str:
     """
     Generate rate limit key from request.
@@ -425,10 +425,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        limiter: Optional[RateLimiter] = None,
-        config: Optional[RateLimitConfig] = None,
-        key_func: Optional[Callable[[Request], str]] = None,
-        exclude_paths: Optional[list] = None,
+        limiter: RateLimiter | None = None,
+        config: RateLimitConfig | None = None,
+        key_func: Callable[[Request], str] | None = None,
+        exclude_paths: list | None = None,
     ):
         """
         Initialize middleware.
@@ -481,8 +481,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 def rate_limit(
     requests: int = 100,
     window: int = 60,
-    key_func: Optional[Callable[[Request], str]] = None,
-    limiter: Optional[RateLimiter] = None,
+    key_func: Callable[[Request], str] | None = None,
+    limiter: RateLimiter | None = None,
 ):
     """
     Decorator for rate limiting endpoints.
@@ -538,11 +538,11 @@ class UserRateLimiter:
 
     def __init__(
         self,
-        backend: Optional[RateLimitBackend] = None,
+        backend: RateLimitBackend | None = None,
     ):
         """Initialize user rate limiter."""
         self._backend = backend or MemoryRateLimitBackend()
-        self._tier_configs: Dict[str, RateLimitConfig] = {
+        self._tier_configs: dict[str, RateLimitConfig] = {
             "free": RateLimitConfig(requests=100, window=3600),  # 100/hour
             "basic": RateLimitConfig(requests=1000, window=3600),  # 1000/hour
             "pro": RateLimitConfig(requests=10000, window=3600),  # 10000/hour
@@ -557,7 +557,7 @@ class UserRateLimiter:
         self,
         user_id: str,
         tier: str = "free",
-        endpoint: Optional[str] = None,
+        endpoint: str | None = None,
     ) -> RateLimitResult:
         """
         Check rate limit for user.
@@ -595,7 +595,7 @@ class APIKeyRateLimiter:
 
     def __init__(
         self,
-        backend: Optional[RateLimitBackend] = None,
+        backend: RateLimitBackend | None = None,
         default_limit: int = 1000,
         default_window: int = 3600,
     ):
@@ -605,7 +605,7 @@ class APIKeyRateLimiter:
             requests=default_limit,
             window=default_window,
         )
-        self._key_limits: Dict[str, RateLimitConfig] = {}
+        self._key_limits: dict[str, RateLimitConfig] = {}
 
     def set_key_limit(
         self,

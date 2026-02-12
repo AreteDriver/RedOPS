@@ -5,7 +5,7 @@ Queries URLhaus API to identify malicious URLs, hosts, and payloads.
 URLhaus is a project of abuse.ch tracking malware distribution sites.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -23,7 +23,7 @@ except ImportError:
 URLHAUS_API = "https://urlhaus-api.abuse.ch/v1"
 
 
-def check_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def check_url(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Check if a URL is listed in URLhaus.
 
@@ -71,7 +71,7 @@ def check_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     return ctx
 
 
-def _query_url(url: str) -> Dict[str, Any]:
+def _query_url(url: str) -> dict[str, Any]:
     """Query URLhaus URL lookup endpoint."""
     try:
         api_url = f"{URLHAUS_API}/url/"
@@ -90,7 +90,7 @@ def _query_url(url: str) -> Dict[str, Any]:
         return {"queried_url": url, "error": f"Query failed: {str(e)}"}
 
 
-def check_host(host: str) -> Dict[str, Any]:
+def check_host(host: str) -> dict[str, Any]:
     """
     Check if a host/domain is listed in URLhaus.
 
@@ -121,10 +121,10 @@ def check_host(host: str) -> Dict[str, Any]:
 
 
 def check_payload(
-    payload_hash: Optional[str] = None,
-    md5: Optional[str] = None,
-    sha256: Optional[str] = None,
-) -> Dict[str, Any]:
+    payload_hash: str | None = None,
+    md5: str | None = None,
+    sha256: str | None = None,
+) -> dict[str, Any]:
     """
     Check if a payload hash is listed in URLhaus.
 
@@ -171,7 +171,7 @@ def check_payload(
         return {"queried_hash": hash_value, "error": f"Query failed: {str(e)}"}
 
 
-def get_recent_urls(limit: int = 100) -> List[Dict[str, Any]]:
+def get_recent_urls(limit: int = 100) -> list[dict[str, Any]]:
     """
     Get recent malicious URLs from URLhaus.
 
@@ -197,7 +197,7 @@ def get_recent_urls(limit: int = 100) -> List[Dict[str, Any]]:
         return []
 
 
-def analyze_urlhaus_results(result: Dict[str, Any], queried: str) -> List[Finding]:
+def analyze_urlhaus_results(result: dict[str, Any], queried: str) -> list[Finding]:
     """
     Analyze URLhaus results for security findings.
 
@@ -359,7 +359,7 @@ def analyze_urlhaus_results(result: Dict[str, Any], queried: str) -> List[Findin
     return findings
 
 
-def get_urlhaus_summary(ctx: Context) -> Dict[str, Any]:
+def get_urlhaus_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of URLhaus query results.
 

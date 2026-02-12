@@ -1,6 +1,6 @@
 """Executive summary report template."""
 
-from typing import Any, List
+from typing import Any
 
 from reportlab.lib import colors
 from reportlab.lib.units import inch
@@ -23,7 +23,7 @@ class ExecutiveSummaryReport(BaseReport):
     and key recommendations without technical details.
     """
 
-    def generate(self, data: ScanResult) -> List[Any]:
+    def generate(self, data: ScanResult) -> list[Any]:
         """Generate executive summary content."""
         elements = []
 

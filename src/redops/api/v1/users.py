@@ -3,7 +3,6 @@ Users API routes.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -20,7 +19,7 @@ class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=64)
     email: EmailStr
     password: str = Field(..., min_length=8)
-    full_name: Optional[str] = None
+    full_name: str | None = None
     role: str = Field(default="user", description="Role: admin, user, viewer")
 
     model_config = ConfigDict(
@@ -39,10 +38,10 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     """Update user request."""
 
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
-    role: Optional[str] = None
-    is_active: Optional[bool] = None
+    email: EmailStr | None = None
+    full_name: str | None = None
+    role: str | None = None
+    is_active: bool | None = None
 
 
 class UserResponse(BaseModel):
@@ -51,17 +50,17 @@ class UserResponse(BaseModel):
     id: str
     username: str
     email: str
-    full_name: Optional[str] = None
+    full_name: str | None = None
     role: str
     is_active: bool = True
-    last_login: Optional[datetime] = None
+    last_login: datetime | None = None
     created_at: datetime
 
 
 class UserList(BaseModel):
     """Paginated user list response."""
 
-    users: List[UserResponse]
+    users: list[UserResponse]
     total: int
     skip: int
     limit: int
@@ -94,8 +93,8 @@ async def get_current_user_info(
 @router.get("", response_model=UserList)
 async def list_users(
     pagination: Pagination = Depends(),
-    role: Optional[str] = None,
-    is_active: Optional[bool] = None,
+    role: str | None = None,
+    is_active: bool | None = None,
     current_user: dict = Depends(require_admin),
 ):
     """List all users (admin only)."""

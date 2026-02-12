@@ -10,7 +10,7 @@ Supports:
 import importlib
 import copy
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable, Optional, List, Dict, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 from redops.pipelines.schemas import Pipeline, PipelineStep
 from redops.core.context import Context
 from redops.core.plugin_system import (
@@ -41,8 +41,8 @@ class PipelineRunner:
     def __init__(
         self,
         pipeline: Pipeline,
-        config: Optional["RedOpsConfig"] = None,
-        plugin_registry: Optional[PluginRegistry] = None,
+        config: "RedOpsConfig | None" = None,
+        plugin_registry: PluginRegistry | None = None,
         max_workers: int = 4,
     ):
         """
@@ -166,7 +166,7 @@ class PipelineRunner:
 
             return ctx
 
-    def _get_plugin_module(self, module_path: str) -> Optional[ModulePlugin]:
+    def _get_plugin_module(self, module_path: str) -> ModulePlugin | None:
         """
         Check if a module path refers to a registered plugin.
 
@@ -199,8 +199,8 @@ class PipelineRunner:
         return None
 
     def _group_steps_for_execution(
-        self, steps: List[PipelineStep]
-    ) -> List[List[PipelineStep]]:
+        self, steps: list[PipelineStep]
+    ) -> list[list[PipelineStep]]:
         """
         Group steps into execution batches.
 
@@ -213,9 +213,9 @@ class PipelineRunner:
         Returns:
             List of step batches (each batch runs concurrently)
         """
-        batches: List[List[PipelineStep]] = []
-        current_group: Optional[str] = None
-        current_batch: List[PipelineStep] = []
+        batches: list[list[PipelineStep]] = []
+        current_group: str | None = None
+        current_batch: list[PipelineStep] = []
 
         for step in steps:
             if step.parallel_group is None:
@@ -242,7 +242,7 @@ class PipelineRunner:
         return batches
 
     def _execute_parallel_batch(
-        self, batch: List[PipelineStep], ctx: Context
+        self, batch: list[PipelineStep], ctx: Context
     ) -> Context:
         """
         Execute a batch of steps in parallel.
@@ -266,9 +266,9 @@ class PipelineRunner:
         )
 
         # Track results from each parallel execution
-        step_results: Dict[str, Dict] = {}
-        step_logs: Dict[str, List] = {}
-        errors: List[str] = []
+        step_results: dict[str, dict] = {}
+        step_logs: dict[str, list] = {}
+        errors: list[str] = []
 
         def run_step(step: PipelineStep) -> tuple:
             """Execute a step in a thread."""
@@ -327,8 +327,8 @@ class PipelineRunner:
 
     def run(
         self,
-        target: Optional[str] = None,
-        initial_context: Optional[Context] = None,
+        target: str | None = None,
+        initial_context: Context | None = None,
         parallel: bool = True,
     ) -> Context:
         """

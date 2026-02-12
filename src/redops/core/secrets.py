@@ -4,6 +4,8 @@ Secrets Manager - Secure credential storage and management.
 Provides encryption, key rotation, and secure access to sensitive data.
 """
 
+from __future__ import annotations
+
 import base64
 import hashlib
 import hmac
@@ -16,7 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,14 +55,14 @@ class SecretMetadata:
     secret_type: SecretType = SecretType.GENERIC
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
     version: int = 1
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: dict[str, str] = field(default_factory=dict)
     description: str = ""
-    rotation_policy: Optional[str] = None
-    last_rotated: Optional[datetime] = None
+    rotation_policy: str | None = None
+    last_rotated: datetime | None = None
     access_count: int = 0
-    last_accessed: Optional[datetime] = None
+    last_accessed: datetime | None = None
 
     def is_expired(self) -> bool:
         """Check if secret has expired."""
@@ -68,7 +70,7 @@ class SecretMetadata:
             return False
         return datetime.now() > self.expires_at
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -90,7 +92,7 @@ class SecretMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SecretMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "SecretMetadata":
         """Create from dictionary."""
         return cls(
             name=data["name"],
@@ -163,7 +165,7 @@ class EncryptionProvider(ABC):
 class FernetEncryption(EncryptionProvider):
     """Fernet symmetric encryption (AES-128-CBC with HMAC)."""
 
-    def __init__(self, key: Optional[bytes] = None):
+    def __init__(self, key: bytes | None = None):
         """
         Initialize Fernet encryption.
 
@@ -182,7 +184,7 @@ class FernetEncryption(EncryptionProvider):
 
         self._key = key
         self._fernet = Fernet(key)
-        self._previous_keys: List[bytes] = []
+        self._previous_keys: list[bytes] = []
 
     @property
     def key(self) -> bytes:
@@ -225,7 +227,7 @@ class SecretBackend(ABC):
     """Abstract base class for secret storage backends."""
 
     @abstractmethod
-    def get(self, name: str) -> Optional[Secret]:
+    def get(self, name: str) -> Secret | None:
         """Get a secret by name."""
         pass
 
@@ -240,7 +242,7 @@ class SecretBackend(ABC):
         pass
 
     @abstractmethod
-    def list(self) -> List[str]:
+    def list(self) -> list[str]:
         """List all secret names."""
         pass
 
@@ -255,10 +257,10 @@ class MemoryBackend(SecretBackend):
 
     def __init__(self):
         """Initialize memory backend."""
-        self._secrets: Dict[str, Secret] = {}
+        self._secrets: dict[str, Secret] = {}
         self._lock = threading.RLock()
 
-    def get(self, name: str) -> Optional[Secret]:
+    def get(self, name: str) -> Secret | None:
         """Get a secret by name."""
         with self._lock:
             return self._secrets.get(name)
@@ -276,7 +278,7 @@ class MemoryBackend(SecretBackend):
                 return True
             return False
 
-    def list(self) -> List[str]:
+    def list(self) -> list[str]:
         """List all secret names."""
         with self._lock:
             return list(self._secrets.keys())
@@ -297,8 +299,8 @@ class FileBackend(SecretBackend):
 
     def __init__(
         self,
-        path: Union[str, Path],
-        encryption: Optional[EncryptionProvider] = None,
+        path: str | Path,
+        encryption: EncryptionProvider | None = None,
     ):
         """
         Initialize file backend.
@@ -310,7 +312,7 @@ class FileBackend(SecretBackend):
         self._path = Path(path)
         self._encryption = encryption
         self._lock = threading.RLock()
-        self._cache: Dict[str, Secret] = {}
+        self._cache: dict[str, Secret] = {}
         self._loaded = False
 
     def _load(self) -> None:
@@ -366,7 +368,7 @@ class FileBackend(SecretBackend):
             # Set restrictive permissions
             os.chmod(self._path, 0o600)
 
-    def get(self, name: str) -> Optional[Secret]:
+    def get(self, name: str) -> Secret | None:
         """Get a secret by name."""
         self._load()
         with self._lock:
@@ -389,7 +391,7 @@ class FileBackend(SecretBackend):
                 return True
             return False
 
-    def list(self) -> List[str]:
+    def list(self) -> list[str]:
         """List all secret names."""
         self._load()
         with self._lock:
@@ -421,7 +423,7 @@ class EnvironmentBackend(SecretBackend):
             return f"{self._prefix}{env_name}"
         return env_name
 
-    def get(self, name: str) -> Optional[Secret]:
+    def get(self, name: str) -> Secret | None:
         """Get a secret from environment."""
         env_name = self._env_name(name)
         value = os.environ.get(env_name)
@@ -450,7 +452,7 @@ class EnvironmentBackend(SecretBackend):
             return True
         return False
 
-    def list(self) -> List[str]:
+    def list(self) -> list[str]:
         """List secrets from environment with matching prefix."""
         secrets = []
         for key in os.environ:
@@ -473,8 +475,8 @@ class RotationPolicy:
 
     name: str
     interval: timedelta
-    generator: Optional[Callable[[], str]] = None
-    notify_before: Optional[timedelta] = None
+    generator: Callable[[], str] | None = None
+    notify_before: timedelta | None = None
     auto_rotate: bool = False
 
     def should_rotate(self, secret: Secret) -> bool:
@@ -502,7 +504,7 @@ class SecretValidator:
         SecretType.CERTIFICATE: r"^-----BEGIN CERTIFICATE-----",
     }
 
-    def __init__(self, custom_patterns: Optional[Dict[SecretType, str]] = None):
+    def __init__(self, custom_patterns: dict[SecretType, str] | None = None):
         """Initialize with optional custom patterns."""
         self._patterns = dict(self.PATTERNS)
         if custom_patterns:
@@ -527,7 +529,7 @@ class SecretValidator:
 
         return True, ""
 
-    def check_strength(self, value: str) -> Dict[str, Any]:
+    def check_strength(self, value: str) -> dict[str, Any]:
         """Check password/secret strength."""
         result = {
             "length": len(value),
@@ -640,18 +642,18 @@ class SecretGenerator:
 class AuditLog:
     """Audit log for secret access and modifications."""
 
-    def __init__(self, path: Optional[Union[str, Path]] = None):
+    def __init__(self, path: str | Path | None = None):
         """Initialize audit log."""
         self._path = Path(path) if path else None
-        self._entries: List[Dict[str, Any]] = []
+        self._entries: list[dict[str, Any]] = []
         self._lock = threading.RLock()
 
     def log(
         self,
         action: str,
         secret_name: str,
-        user: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        user: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Log an action."""
         entry = {
@@ -671,11 +673,11 @@ class AuditLog:
 
     def get_entries(
         self,
-        secret_name: Optional[str] = None,
-        action: Optional[str] = None,
-        since: Optional[datetime] = None,
+        secret_name: str | None = None,
+        action: str | None = None,
+        since: datetime | None = None,
         limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Query audit log entries."""
         with self._lock:
             entries = self._entries.copy()
@@ -710,10 +712,10 @@ class SecretsManager:
 
     def __init__(
         self,
-        backend: Optional[SecretBackend] = None,
-        encryption: Optional[EncryptionProvider] = None,
-        audit_log: Optional[AuditLog] = None,
-        validator: Optional[SecretValidator] = None,
+        backend: SecretBackend | None = None,
+        encryption: EncryptionProvider | None = None,
+        audit_log: AuditLog | None = None,
+        validator: SecretValidator | None = None,
     ):
         """
         Initialize secrets manager.
@@ -728,8 +730,8 @@ class SecretsManager:
         self._encryption = encryption
         self._audit = audit_log or AuditLog()
         self._validator = validator or SecretValidator()
-        self._rotation_policies: Dict[str, RotationPolicy] = {}
-        self._access_callbacks: List[Callable[[str, Secret], None]] = []
+        self._rotation_policies: dict[str, RotationPolicy] = {}
+        self._access_callbacks: list[Callable[[str, Secret], None]] = []
         self._lock = threading.RLock()
 
     def set(
@@ -737,8 +739,8 @@ class SecretsManager:
         name: str,
         value: str,
         secret_type: SecretType = SecretType.GENERIC,
-        expires_at: Optional[datetime] = None,
-        tags: Optional[Dict[str, str]] = None,
+        expires_at: datetime | None = None,
+        tags: dict[str, str] | None = None,
         description: str = "",
         validate: bool = True,
     ) -> Secret:
@@ -795,7 +797,7 @@ class SecretsManager:
 
         return Secret(value=value, metadata=metadata, encrypted=False)
 
-    def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
+    def get(self, name: str, default: str | None = None) -> str | None:
         """
         Get a secret value.
 
@@ -811,7 +813,7 @@ class SecretsManager:
             return default
         return secret.value
 
-    def get_secret(self, name: str) -> Optional[Secret]:
+    def get_secret(self, name: str) -> Secret | None:
         """
         Get a secret with metadata.
 
@@ -874,8 +876,8 @@ class SecretsManager:
         return self._backend.exists(name)
 
     def list(
-        self, prefix: Optional[str] = None, tags: Optional[Dict[str, str]] = None
-    ) -> List[str]:
+        self, prefix: str | None = None, tags: dict[str, str] | None = None
+    ) -> list[str]:
         """
         List secret names.
 
@@ -906,8 +908,8 @@ class SecretsManager:
     def rotate(
         self,
         name: str,
-        new_value: Optional[str] = None,
-        generator: Optional[Callable[[], str]] = None,
+        new_value: str | None = None,
+        generator: Callable[[], str] | None = None,
     ) -> Secret:
         """
         Rotate a secret.
@@ -966,7 +968,7 @@ class SecretsManager:
         """Set rotation policy for a secret."""
         self._rotation_policies[name] = policy
 
-    def check_rotation_needed(self) -> List[str]:
+    def check_rotation_needed(self) -> list[str]:
         """Check which secrets need rotation."""
         needs_rotation = []
 
@@ -1019,13 +1021,13 @@ class SecretsManager:
 
     def get_audit_log(
         self,
-        secret_name: Optional[str] = None,
+        secret_name: str | None = None,
         limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get audit log entries."""
         return self._audit.get_entries(secret_name=secret_name, limit=limit)
 
-    def check_expiring(self, within: timedelta = timedelta(days=7)) -> List[str]:
+    def check_expiring(self, within: timedelta = timedelta(days=7)) -> list[str]:
         """Find secrets expiring within the given timeframe."""
         expiring = []
         cutoff = datetime.now() + within
@@ -1042,7 +1044,7 @@ class SecretsManager:
         self,
         prefix: str = "",
         secret_type: SecretType = SecretType.GENERIC,
-        pattern: Optional[str] = None,
+        pattern: str | None = None,
     ) -> int:
         """
         Import secrets from environment variables.
@@ -1081,7 +1083,7 @@ class SecretsManager:
 
         return count
 
-    def export_to_env(self, prefix: str = "", names: Optional[List[str]] = None) -> int:
+    def export_to_env(self, prefix: str = "", names: list[str] | None = None) -> int:
         """
         Export secrets to environment variables.
 
@@ -1112,9 +1114,9 @@ class SecretsManager:
 
 def create_secrets_manager(
     backend_type: str = "memory",
-    path: Optional[str] = None,
-    encryption_key: Optional[str] = None,
-    audit_path: Optional[str] = None,
+    path: str | None = None,
+    encryption_key: str | None = None,
+    audit_path: str | None = None,
 ) -> SecretsManager:
     """
     Create a secrets manager with common configuration.
@@ -1188,7 +1190,7 @@ def generate_token(length: int = 64) -> str:
     return SecretGenerator.token(length)
 
 
-def hash_secret(value: str, salt: Optional[str] = None) -> str:
+def hash_secret(value: str, salt: str | None = None) -> str:
     """
     Create a secure hash of a secret value.
 

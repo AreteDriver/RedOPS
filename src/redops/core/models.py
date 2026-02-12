@@ -5,7 +5,7 @@ Defines data models for risk assessment, targets, findings, and other
 structured data used throughout the framework.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -37,9 +37,9 @@ class Risk(BaseModel):
     description: str
     likelihood: int = Field(ge=1, le=5, description="Likelihood score (1-5)")
     impact: int = Field(ge=1, le=5, description="Impact score (1-5)")
-    category: Optional[RiskCategory] = None
-    mitre_id: Optional[str] = None
-    owasp_id: Optional[str] = None
+    category: RiskCategory | None = None
+    mitre_id: str | None = None
+    owasp_id: str | None = None
 
     @property
     def score(self) -> int:
@@ -65,7 +65,7 @@ class Target(BaseModel):
 
     value: str
     type: str = Field(description="Type of target: domain, ip, directory, etc.")
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     in_scope: bool = True
 
 
@@ -76,8 +76,8 @@ class Finding(BaseModel):
     title: str
     description: str
     severity: RiskLevel = RiskLevel.INFO
-    data: Dict[str, Any] = Field(default_factory=dict)
-    tags: List[str] = Field(default_factory=list)
+    data: dict[str, Any] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
 
 
 class Asset(BaseModel):
@@ -85,9 +85,9 @@ class Asset(BaseModel):
 
     name: str
     type: str
-    description: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    risks: List[Risk] = Field(default_factory=list)
+    description: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    risks: list[Risk] = Field(default_factory=list)
 
 
 class AttackPath(BaseModel):
@@ -95,8 +95,8 @@ class AttackPath(BaseModel):
 
     name: str
     description: str
-    steps: List[str]
-    mitre_techniques: List[str] = Field(default_factory=list)
+    steps: list[str]
+    mitre_techniques: list[str] = Field(default_factory=list)
     likelihood: int = Field(ge=1, le=5)
     impact: int = Field(ge=1, le=5)
 
@@ -110,30 +110,30 @@ class ReconResult(BaseModel):
     """Model for reconnaissance results."""
 
     target: str
-    findings: List[Finding] = Field(default_factory=list)
-    assets: List[Asset] = Field(default_factory=list)
-    risks: List[Risk] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    findings: list[Finding] = Field(default_factory=list)
+    assets: list[Asset] = Field(default_factory=list)
+    risks: list[Risk] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class TechStack(BaseModel):
     """Model for technology stack fingerprinting."""
 
-    web_server: Optional[str] = None
-    frameworks: List[str] = Field(default_factory=list)
-    languages: List[str] = Field(default_factory=list)
-    libraries: List[str] = Field(default_factory=list)
-    headers: Dict[str, str] = Field(default_factory=dict)
-    fingerprints: Dict[str, Any] = Field(default_factory=dict)
+    web_server: str | None = None
+    frameworks: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    libraries: list[str] = Field(default_factory=list)
+    headers: dict[str, str] = Field(default_factory=dict)
+    fingerprints: dict[str, Any] = Field(default_factory=dict)
 
 
 class ExifData(BaseModel):
     """Model for EXIF metadata."""
 
     filename: str
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    sensitive_fields: List[str] = Field(default_factory=list)
-    warnings: List[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    sensitive_fields: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
 
 
 class DocumentMetadata(BaseModel):
@@ -141,8 +141,8 @@ class DocumentMetadata(BaseModel):
 
     filename: str
     file_type: str
-    author: Optional[str] = None
-    created: Optional[str] = None
-    modified: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    warnings: List[str] = Field(default_factory=list)
+    author: str | None = None
+    created: str | None = None
+    modified: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    warnings: list[str] = Field(default_factory=list)

@@ -4,7 +4,7 @@ Webhook notification providers for RedOPS.
 Supports Slack, Microsoft Teams, Discord, and custom webhooks.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from abc import ABC, abstractmethod
@@ -39,13 +39,13 @@ class NotificationMessage:
     title: str
     body: str
     level: NotificationLevel = NotificationLevel.INFO
-    fields: Dict[str, str] = field(default_factory=dict)
+    fields: dict[str, str] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     source: str = "redops"
-    url: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
+    url: str | None = None
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "title": self.title,
@@ -68,7 +68,7 @@ class WebhookProvider(ABC):
         pass
 
     @abstractmethod
-    def format_payload(self, message: NotificationMessage) -> Dict[str, Any]:
+    def format_payload(self, message: NotificationMessage) -> dict[str, Any]:
         """Format message for the provider's API."""
         pass
 
@@ -98,8 +98,8 @@ class SlackWebhook(WebhookProvider):
 
     def __init__(
         self,
-        webhook_url: Optional[str] = None,
-        channel: Optional[str] = None,
+        webhook_url: str | None = None,
+        channel: str | None = None,
         username: str = "RedOPS",
         icon_emoji: str = ":shield:",
     ):
@@ -117,7 +117,7 @@ class SlackWebhook(WebhookProvider):
         self.username = username
         self.icon_emoji = icon_emoji
 
-    def format_payload(self, message: NotificationMessage) -> Dict[str, Any]:
+    def format_payload(self, message: NotificationMessage) -> dict[str, Any]:
         """Format message as Slack Block Kit payload."""
         color = self.LEVEL_COLORS.get(message.level, "#808080")
         emoji = self.LEVEL_EMOJI.get(message.level, ":bell:")
@@ -235,7 +235,7 @@ class TeamsWebhook(WebhookProvider):
         NotificationLevel.SUCCESS: "good",
     }
 
-    def __init__(self, webhook_url: Optional[str] = None):
+    def __init__(self, webhook_url: str | None = None):
         """
         Initialize Teams webhook.
 
@@ -244,7 +244,7 @@ class TeamsWebhook(WebhookProvider):
         """
         self.webhook_url = webhook_url or os.environ.get("TEAMS_WEBHOOK_URL", "")
 
-    def format_payload(self, message: NotificationMessage) -> Dict[str, Any]:
+    def format_payload(self, message: NotificationMessage) -> dict[str, Any]:
         """Format message as Teams Adaptive Card."""
         color = self.LEVEL_COLORS.get(message.level, "default")
 
@@ -364,9 +364,9 @@ class DiscordWebhook(WebhookProvider):
 
     def __init__(
         self,
-        webhook_url: Optional[str] = None,
+        webhook_url: str | None = None,
         username: str = "RedOPS",
-        avatar_url: Optional[str] = None,
+        avatar_url: str | None = None,
     ):
         """
         Initialize Discord webhook.
@@ -380,7 +380,7 @@ class DiscordWebhook(WebhookProvider):
         self.username = username
         self.avatar_url = avatar_url
 
-    def format_payload(self, message: NotificationMessage) -> Dict[str, Any]:
+    def format_payload(self, message: NotificationMessage) -> dict[str, Any]:
         """Format message as Discord embed."""
         color = self.LEVEL_COLORS.get(message.level, 8421504)
         emoji = self.LEVEL_EMOJI.get(message.level, "🔔")
@@ -452,10 +452,10 @@ class GenericWebhook(WebhookProvider):
 
     def __init__(
         self,
-        webhook_url: Optional[str] = None,
+        webhook_url: str | None = None,
         method: str = "POST",
-        headers: Optional[Dict[str, str]] = None,
-        auth_token: Optional[str] = None,
+        headers: dict[str, str] | None = None,
+        auth_token: str | None = None,
         auth_header: str = "Authorization",
     ):
         """
@@ -474,7 +474,7 @@ class GenericWebhook(WebhookProvider):
         self.auth_token = auth_token or os.environ.get("WEBHOOK_AUTH_TOKEN")
         self.auth_header = auth_header
 
-    def format_payload(self, message: NotificationMessage) -> Dict[str, Any]:
+    def format_payload(self, message: NotificationMessage) -> dict[str, Any]:
         """Format message as generic JSON."""
         return {
             "title": message.title,
@@ -538,7 +538,7 @@ class PagerDutyWebhook(WebhookProvider):
 
     def __init__(
         self,
-        routing_key: Optional[str] = None,
+        routing_key: str | None = None,
         source: str = "redops",
     ):
         """
@@ -552,7 +552,7 @@ class PagerDutyWebhook(WebhookProvider):
         self.source = source
         self.events_url = "https://events.pagerduty.com/v2/enqueue"
 
-    def format_payload(self, message: NotificationMessage) -> Dict[str, Any]:
+    def format_payload(self, message: NotificationMessage) -> dict[str, Any]:
         """Format message as PagerDuty event."""
         severity = self.LEVEL_SEVERITY.get(message.level, "info")
 

@@ -4,7 +4,7 @@ Jira integration for RedOPS.
 Automatically creates Jira issues from security findings.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 import os
 import json
 from dataclasses import dataclass, field
@@ -28,10 +28,10 @@ class JiraConfig:
     api_token: str
     project_key: str
     issue_type: str = "Bug"
-    priority_map: Dict[str, str] = field(default_factory=dict)
-    labels: List[str] = field(default_factory=list)
-    components: List[str] = field(default_factory=list)
-    custom_fields: Dict[str, Any] = field(default_factory=dict)
+    priority_map: dict[str, str] = field(default_factory=dict)
+    labels: list[str] = field(default_factory=list)
+    components: list[str] = field(default_factory=list)
+    custom_fields: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.priority_map:
@@ -76,7 +76,7 @@ class JiraClient:
     Creates and manages security issues in Jira.
     """
 
-    def __init__(self, config: Optional[JiraConfig] = None):
+    def __init__(self, config: JiraConfig | None = None):
         """
         Initialize the client.
 
@@ -89,7 +89,7 @@ class JiraClient:
         """Get basic auth tuple."""
         return (self.config.username, self.config.api_token)
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get request headers."""
         return {
             "Content-Type": "application/json",
@@ -106,10 +106,10 @@ class JiraClient:
         summary: str,
         description: str,
         severity: str = "medium",
-        labels: Optional[List[str]] = None,
-        components: Optional[List[str]] = None,
-        custom_fields: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        labels: list[str] | None = None,
+        components: list[str] | None = None,
+        custom_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Create a Jira issue.
 
@@ -211,10 +211,10 @@ class JiraClient:
 
     def create_issue_from_finding(
         self,
-        finding: Dict[str, Any],
-        scan_id: Optional[str] = None,
-        target: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        finding: dict[str, Any],
+        scan_id: str | None = None,
+        target: str | None = None,
+    ) -> dict[str, Any]:
         """
         Create an issue from a security finding.
 
@@ -276,7 +276,7 @@ class JiraClient:
             labels=labels,
         )
 
-    def get_issue(self, issue_key: str) -> Dict[str, Any]:
+    def get_issue(self, issue_key: str) -> dict[str, Any]:
         """
         Get issue details.
 
@@ -309,7 +309,7 @@ class JiraClient:
             return {"success": False, "error": str(e)}
 
 
-def create_jira_issue(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def create_jira_issue(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Create a single Jira issue.
 
@@ -359,7 +359,7 @@ def create_jira_issue(ctx: Context, params: Optional[Dict[str, Any]] = None) -> 
 
 
 def create_jira_issues_from_findings(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Create Jira issues from all findings in context.

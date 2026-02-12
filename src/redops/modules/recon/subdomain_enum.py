@@ -5,7 +5,7 @@ Discovers subdomains using multiple techniques including DNS brute-forcing,
 certificate transparency, and common subdomain wordlists.
 """
 
-from typing import Optional, Dict, Any, List, Set
+from typing import Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import socket
 from datetime import datetime
@@ -267,7 +267,7 @@ COMMON_SUBDOMAINS = [
 
 
 def enumerate_subdomains(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Enumerate subdomains using multiple techniques.
@@ -299,7 +299,7 @@ def enumerate_subdomains(
 
     ctx.log(f"Enumerating subdomains for: {domain}", level="INFO")
 
-    discovered: Set[str] = set()
+    discovered: set[str] = set()
 
     # Method 1: DNS brute-force with wordlist
     ctx.log(f"Brute-forcing with {len(wordlist)} prefixes...", level="INFO")
@@ -365,8 +365,8 @@ def enumerate_subdomains(
 
 
 def bruteforce_subdomains(
-    domain: str, wordlist: List[str], threads: int = 10, timeout: int = 3
-) -> Set[str]:
+    domain: str, wordlist: list[str], threads: int = 10, timeout: int = 3
+) -> set[str]:
     """
     Brute-force subdomains using a wordlist.
 
@@ -381,7 +381,7 @@ def bruteforce_subdomains(
     """
     discovered = set()
 
-    def check_subdomain(prefix: str) -> Optional[str]:
+    def check_subdomain(prefix: str) -> str | None:
         subdomain = f"{prefix}.{domain}"
         if resolve_domain(subdomain, timeout=timeout):
             return subdomain
@@ -430,8 +430,8 @@ def resolve_domain(domain: str, timeout: int = 3) -> bool:
 
 
 def verify_subdomains(
-    subdomains: Set[str], threads: int = 10, timeout: int = 3
-) -> Set[str]:
+    subdomains: set[str], threads: int = 10, timeout: int = 3
+) -> set[str]:
     """
     Verify which subdomains actually resolve.
 
@@ -445,7 +445,7 @@ def verify_subdomains(
     """
     verified = set()
 
-    def verify(subdomain: str) -> Optional[str]:
+    def verify(subdomain: str) -> str | None:
         if resolve_domain(subdomain, timeout=timeout):
             return subdomain
         return None
@@ -461,7 +461,7 @@ def verify_subdomains(
     return verified
 
 
-def get_subdomains_from_dns(domain: str, timeout: int = 3) -> Set[str]:
+def get_subdomains_from_dns(domain: str, timeout: int = 3) -> set[str]:
     """
     Extract potential subdomains from DNS records.
 
@@ -523,7 +523,7 @@ def get_subdomains_from_dns(domain: str, timeout: int = 3) -> Set[str]:
     return subdomains
 
 
-def analyze_subdomains(subdomains: List[str], domain: str) -> List[Finding]:
+def analyze_subdomains(subdomains: list[str], domain: str) -> list[Finding]:
     """
     Analyze discovered subdomains for security issues.
 
@@ -659,7 +659,7 @@ def analyze_subdomains(subdomains: List[str], domain: str) -> List[Finding]:
     return findings
 
 
-def get_subdomain_summary(ctx: Context) -> Dict[str, Any]:
+def get_subdomain_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of subdomain enumeration results.
 

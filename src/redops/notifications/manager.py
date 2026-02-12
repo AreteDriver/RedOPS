@@ -4,7 +4,7 @@ Notification manager for RedOPS.
 Orchestrates sending notifications to multiple providers.
 """
 
-from typing import Optional, Dict, Any, List, Callable
+from typing import Any, Callable
 from dataclasses import dataclass
 import os
 import logging
@@ -75,7 +75,7 @@ class NotificationManager:
     - Custom notification formatters
     """
 
-    def __init__(self, config: Optional[NotificationConfig] = None):
+    def __init__(self, config: NotificationConfig | None = None):
         """
         Initialize notification manager.
 
@@ -83,11 +83,11 @@ class NotificationManager:
             config: Notification configuration
         """
         self.config = config or NotificationConfig.from_env()
-        self._providers: Dict[str, WebhookProvider] = {}
+        self._providers: dict[str, WebhookProvider] = {}
         self._queue: queue.Queue = queue.Queue()
-        self._worker_thread: Optional[threading.Thread] = None
+        self._worker_thread: threading.Thread | None = None
         self._running = False
-        self._formatters: List[
+        self._formatters: list[
             Callable[[NotificationMessage], NotificationMessage]
         ] = []
 
@@ -145,9 +145,9 @@ class NotificationManager:
     def _send_to_providers(
         self,
         message: NotificationMessage,
-        providers: Optional[List[str]],
+        providers: list[str] | None,
         retries: int,
-    ) -> Dict[str, bool]:
+    ) -> dict[str, bool]:
         """Send message to specified providers."""
         results = {}
         target_providers = providers or list(self._providers.keys())
@@ -237,7 +237,7 @@ class NotificationManager:
     def send(
         self,
         message: NotificationMessage,
-        providers: Optional[List[str]] = None,
+        providers: list[str] | None = None,
         sync: bool = False,
     ) -> bool:
         """
@@ -307,8 +307,8 @@ class NotificationManager:
         self,
         target: str,
         findings_count: int,
-        severity_counts: Dict[str, int],
-        url: Optional[str] = None,
+        severity_counts: dict[str, int],
+        url: str | None = None,
     ) -> bool:
         """
         Send scan completion notification.
@@ -358,7 +358,7 @@ class NotificationManager:
         self,
         target: str,
         error: str,
-        pipeline: Optional[str] = None,
+        pipeline: str | None = None,
     ) -> bool:
         """
         Send scan error notification.
@@ -390,7 +390,7 @@ class NotificationManager:
         target: str,
         finding_title: str,
         finding_details: str,
-        url: Optional[str] = None,
+        url: str | None = None,
     ) -> bool:
         """
         Send critical finding alert.
@@ -422,7 +422,7 @@ class NotificationManager:
             self._queue.put(None)  # Signal shutdown
             self._worker_thread.join(timeout=5)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get notification statistics."""
         return {
             "enabled": self.config.enabled,
@@ -434,7 +434,7 @@ class NotificationManager:
 
 
 # Global notification manager
-_notification_manager: Optional[NotificationManager] = None
+_notification_manager: NotificationManager | None = None
 
 
 def get_notification_manager() -> NotificationManager:

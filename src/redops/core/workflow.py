@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable
 
 
 class TaskState(Enum):
@@ -53,13 +53,13 @@ class TaskResult:
     task_id: str
     state: TaskState
     output: Any = None
-    error: Optional[Exception] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    error: Exception | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
     retries: int = 0
 
     @property
-    def duration(self) -> Optional[float]:
+    def duration(self) -> float | None:
         """Get task duration in seconds."""
         if self.start_time and self.end_time:
             return (self.end_time - self.start_time).total_seconds()
@@ -76,9 +76,9 @@ class WorkflowContext:
     """Context passed between workflow tasks."""
 
     workflow_id: str
-    variables: Dict[str, Any] = field(default_factory=dict)
-    results: Dict[str, TaskResult] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    variables: dict[str, Any] = field(default_factory=dict)
+    results: dict[str, TaskResult] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get a variable from context."""
@@ -88,7 +88,7 @@ class WorkflowContext:
         """Set a variable in context."""
         self.variables[key] = value
 
-    def get_result(self, task_id: str) -> Optional[TaskResult]:
+    def get_result(self, task_id: str) -> TaskResult | None:
         """Get result of a specific task."""
         return self.results.get(task_id)
 
@@ -103,11 +103,11 @@ class Task(ABC):
 
     def __init__(
         self,
-        task_id: Optional[str] = None,
-        name: Optional[str] = None,
+        task_id: str | None = None,
+        name: str | None = None,
         retries: int = 0,
         retry_delay: float = 1.0,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ):
         """Initialize task."""
         self._id = task_id or str(uuid.uuid4())
@@ -116,7 +116,7 @@ class Task(ABC):
         self._retry_delay = retry_delay
         self._timeout = timeout
         self._state = TaskState.PENDING
-        self._dependencies: Set[str] = set()
+        self._dependencies: set[str] = set()
 
     @property
     def id(self) -> str:
@@ -139,7 +139,7 @@ class Task(ABC):
         self._state = value
 
     @property
-    def dependencies(self) -> Set[str]:
+    def dependencies(self) -> set[str]:
         """Get task dependencies."""
         return self._dependencies
 
@@ -168,8 +168,8 @@ class FunctionTask(Task):
     def __init__(
         self,
         func: Callable[[WorkflowContext], Any],
-        task_id: Optional[str] = None,
-        name: Optional[str] = None,
+        task_id: str | None = None,
+        name: str | None = None,
         **kwargs,
     ):
         """Initialize function task."""
@@ -187,10 +187,10 @@ class ConditionalTask(Task):
     def __init__(
         self,
         condition: Callable[[WorkflowContext], bool],
-        if_true: Optional[str] = None,
-        if_false: Optional[str] = None,
-        task_id: Optional[str] = None,
-        name: Optional[str] = None,
+        if_true: str | None = None,
+        if_false: str | None = None,
+        task_id: str | None = None,
+        name: str | None = None,
         **kwargs,
     ):
         """Initialize conditional task."""
@@ -200,12 +200,12 @@ class ConditionalTask(Task):
         self._if_false = if_false
 
     @property
-    def if_true(self) -> Optional[str]:
+    def if_true(self) -> str | None:
         """Get task ID to execute if condition is true."""
         return self._if_true
 
     @property
-    def if_false(self) -> Optional[str]:
+    def if_false(self) -> str | None:
         """Get task ID to execute if condition is false."""
         return self._if_false
 
@@ -219,9 +219,9 @@ class ParallelTask(Task):
 
     def __init__(
         self,
-        tasks: List[Task],
-        task_id: Optional[str] = None,
-        name: Optional[str] = None,
+        tasks: list[Task],
+        task_id: str | None = None,
+        name: str | None = None,
         max_workers: int = 4,
         fail_fast: bool = True,
         **kwargs,
@@ -233,11 +233,11 @@ class ParallelTask(Task):
         self._fail_fast = fail_fast
 
     @property
-    def tasks(self) -> List[Task]:
+    def tasks(self) -> list[Task]:
         """Get parallel tasks."""
         return self._tasks
 
-    def execute(self, context: WorkflowContext) -> Dict[str, TaskResult]:
+    def execute(self, context: WorkflowContext) -> dict[str, TaskResult]:
         """Execute tasks in parallel."""
         results = {}
 
@@ -298,8 +298,8 @@ class SubWorkflowTask(Task):
     def __init__(
         self,
         workflow: "Workflow",
-        task_id: Optional[str] = None,
-        name: Optional[str] = None,
+        task_id: str | None = None,
+        name: str | None = None,
         **kwargs,
     ):
         """Initialize sub-workflow task."""
@@ -325,7 +325,7 @@ class Workflow:
 
     def __init__(
         self,
-        workflow_id: Optional[str] = None,
+        workflow_id: str | None = None,
         name: str = "workflow",
         description: str = "",
     ):
@@ -333,8 +333,8 @@ class Workflow:
         self._id = workflow_id or str(uuid.uuid4())
         self._name = name
         self._description = description
-        self._tasks: Dict[str, Task] = {}
-        self._entry_point: Optional[str] = None
+        self._tasks: dict[str, Task] = {}
+        self._entry_point: str | None = None
         self._state = WorkflowState.PENDING
 
     @property
@@ -363,7 +363,7 @@ class Workflow:
         self._state = value
 
     @property
-    def tasks(self) -> Dict[str, Task]:
+    def tasks(self) -> dict[str, Task]:
         """Get all tasks."""
         return self._tasks
 
@@ -381,11 +381,11 @@ class Workflow:
         self._entry_point = task_id
         return self
 
-    def get_task(self, task_id: str) -> Optional[Task]:
+    def get_task(self, task_id: str) -> Task | None:
         """Get a task by ID."""
         return self._tasks.get(task_id)
 
-    def get_ready_tasks(self, completed: Set[str]) -> List[Task]:
+    def get_ready_tasks(self, completed: set[str]) -> list[Task]:
         """Get tasks that are ready to execute."""
         ready = []
         for task_id, task in self._tasks.items():
@@ -394,7 +394,7 @@ class Workflow:
                     ready.append(task)
         return ready
 
-    def get_execution_order(self) -> List[str]:
+    def get_execution_order(self) -> list[str]:
         """Get topological execution order."""
         visited = set()
         order = []
@@ -414,7 +414,7 @@ class Workflow:
 
         return order
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validate workflow structure."""
         errors = []
 
@@ -457,7 +457,7 @@ class Workflow:
                     return True
         return False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize workflow to dictionary."""
         return {
             "id": self._id,
@@ -483,11 +483,11 @@ class WorkflowExecutor:
     def __init__(
         self,
         max_parallel: int = 4,
-        on_task_start: Optional[Callable[[Task], None]] = None,
-        on_task_complete: Optional[Callable[[Task, TaskResult], None]] = None,
-        on_workflow_complete: Optional[
+        on_task_start: Callable[[Task], None] | None = None,
+        on_task_complete: Callable[[Task, TaskResult], None] | None = None,
+        on_workflow_complete: 
             Callable[[Workflow, WorkflowContext], None]
-        ] = None,
+         | None = None,
     ):
         """Initialize executor."""
         self._max_parallel = max_parallel
@@ -496,7 +496,7 @@ class WorkflowExecutor:
         self._on_workflow_complete = on_workflow_complete
 
     def execute(
-        self, workflow: Workflow, context: Optional[WorkflowContext] = None
+        self, workflow: Workflow, context: WorkflowContext | None = None
     ) -> WorkflowContext:
         """Execute a workflow."""
         if context is None:
@@ -508,8 +508,8 @@ class WorkflowExecutor:
             raise ValueError(f"Invalid workflow: {errors}")
 
         workflow.state = WorkflowState.RUNNING
-        completed: Set[str] = set()
-        skipped: Set[str] = set()
+        completed: set[str] = set()
+        skipped: set[str] = set()
 
         try:
             while True:
@@ -646,8 +646,8 @@ class WorkflowExecutor:
         return result
 
     def _execute_parallel(
-        self, tasks: List[Task], context: WorkflowContext, workflow: Workflow
-    ) -> Dict[str, TaskResult]:
+        self, tasks: list[Task], context: WorkflowContext, workflow: Workflow
+    ) -> dict[str, TaskResult]:
         """Execute multiple tasks in parallel."""
         results = {}
 
@@ -689,7 +689,7 @@ class WorkflowExecutor:
         self,
         workflow: Workflow,
         failed_task_id: str,
-        skipped: Set[str],
+        skipped: set[str],
         context: WorkflowContext,
     ) -> None:
         """Skip all tasks that depend on a failed task."""
@@ -711,8 +711,8 @@ class StateTransition:
     from_state: str
     to_state: str
     event: str
-    condition: Optional[Callable[[Dict[str, Any]], bool]] = None
-    action: Optional[Callable[[Dict[str, Any]], None]] = None
+    condition: Callable[[dict[str, Any]], bool] | None = None
+    action: Callable[[dict[str, Any]], None] | None = None
     transition_type: TransitionType = TransitionType.AUTOMATIC
 
 
@@ -720,18 +720,18 @@ class StateMachine:
     """Finite state machine implementation."""
 
     def __init__(
-        self, name: str = "state_machine", initial_state: Optional[str] = None
+        self, name: str = "state_machine", initial_state: str | None = None
     ):
         """Initialize state machine."""
         self._name = name
-        self._states: Set[str] = set()
-        self._transitions: List[StateTransition] = []
-        self._current_state: Optional[str] = initial_state
+        self._states: set[str] = set()
+        self._transitions: list[StateTransition] = []
+        self._current_state: str | None = initial_state
         self._initial_state = initial_state
-        self._final_states: Set[str] = set()
-        self._state_handlers: Dict[str, Callable[[Dict[str, Any]], None]] = {}
-        self._context: Dict[str, Any] = {}
-        self._history: List[Tuple[str, str, str]] = []  # (from, event, to)
+        self._final_states: set[str] = set()
+        self._state_handlers: dict[str, Callable[[dict[str, Any]], None]] = {}
+        self._context: dict[str, Any] = {}
+        self._history: list[tuple[str, str, str]] = []  # (from, event, to)
         self._lock = threading.Lock()
 
     @property
@@ -740,22 +740,22 @@ class StateMachine:
         return self._name
 
     @property
-    def current_state(self) -> Optional[str]:
+    def current_state(self) -> str | None:
         """Get current state."""
         return self._current_state
 
     @property
-    def states(self) -> Set[str]:
+    def states(self) -> set[str]:
         """Get all states."""
         return self._states
 
     @property
-    def history(self) -> List[Tuple[str, str, str]]:
+    def history(self) -> list[tuple[str, str, str]]:
         """Get transition history."""
         return list(self._history)
 
     @property
-    def context(self) -> Dict[str, Any]:
+    def context(self) -> dict[str, Any]:
         """Get state machine context."""
         return self._context
 
@@ -771,8 +771,8 @@ class StateMachine:
         from_state: str,
         to_state: str,
         event: str,
-        condition: Optional[Callable[[Dict[str, Any]], bool]] = None,
-        action: Optional[Callable[[Dict[str, Any]], None]] = None,
+        condition: Callable[[dict[str, Any]], bool] | None = None,
+        action: Callable[[dict[str, Any]], None] | None = None,
         transition_type: TransitionType = TransitionType.AUTOMATIC,
     ) -> "StateMachine":
         """Add a transition."""
@@ -791,7 +791,7 @@ class StateMachine:
         return self
 
     def set_state_handler(
-        self, state: str, handler: Callable[[Dict[str, Any]], None]
+        self, state: str, handler: Callable[[dict[str, Any]], None]
     ) -> "StateMachine":
         """Set a handler to be called when entering a state."""
         self._state_handlers[state] = handler
@@ -869,7 +869,7 @@ class StateMachine:
         """Check if current state is final."""
         return self._current_state in self._final_states
 
-    def get_available_events(self) -> List[str]:
+    def get_available_events(self) -> list[str]:
         """Get events that can be triggered from current state."""
         with self._lock:
             events = []
@@ -881,7 +881,7 @@ class StateMachine:
                         events.append(transition.event)
             return events
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize state machine to dictionary."""
         return {
             "name": self._name,
@@ -909,13 +909,13 @@ class WorkflowBuilder:
     def __init__(self, name: str = "workflow"):
         """Initialize builder."""
         self._workflow = Workflow(name=name)
-        self._last_task_id: Optional[str] = None
+        self._last_task_id: str | None = None
 
     def add_task(
         self,
         func: Callable[[WorkflowContext], Any],
-        task_id: Optional[str] = None,
-        name: Optional[str] = None,
+        task_id: str | None = None,
+        name: str | None = None,
         **kwargs,
     ) -> "WorkflowBuilder":
         """Add a function task."""
@@ -927,9 +927,9 @@ class WorkflowBuilder:
     def add_conditional(
         self,
         condition: Callable[[WorkflowContext], bool],
-        if_true: Optional[str] = None,
-        if_false: Optional[str] = None,
-        task_id: Optional[str] = None,
+        if_true: str | None = None,
+        if_false: str | None = None,
+        task_id: str | None = None,
         **kwargs,
     ) -> "WorkflowBuilder":
         """Add a conditional task."""
@@ -939,7 +939,7 @@ class WorkflowBuilder:
         return self
 
     def add_parallel(
-        self, tasks: List[Task], task_id: Optional[str] = None, **kwargs
+        self, tasks: list[Task], task_id: str | None = None, **kwargs
     ) -> "WorkflowBuilder":
         """Add a parallel task."""
         task = ParallelTask(tasks, task_id, **kwargs)
@@ -973,8 +973,8 @@ def workflow(name: str = "workflow") -> WorkflowBuilder:
 
 def task(
     func: Callable[[WorkflowContext], Any],
-    task_id: Optional[str] = None,
-    name: Optional[str] = None,
+    task_id: str | None = None,
+    name: str | None = None,
     **kwargs,
 ) -> FunctionTask:
     """Create a function task."""
@@ -988,8 +988,8 @@ def parallel(*tasks: Task, **kwargs) -> ParallelTask:
 
 def conditional(
     condition: Callable[[WorkflowContext], bool],
-    if_true: Optional[str] = None,
-    if_false: Optional[str] = None,
+    if_true: str | None = None,
+    if_false: str | None = None,
     **kwargs,
 ) -> ConditionalTask:
     """Create a conditional task."""

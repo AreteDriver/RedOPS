@@ -4,7 +4,7 @@ Pipeline schema validation using Pydantic.
 Defines the structure of pipeline JSON files and validates them.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -20,18 +20,18 @@ class PipelineStep(BaseModel):
     module: str = Field(
         description="Dotted path to module function, e.g., 'recon.domains.profile_domain'"
     )
-    params: Dict[str, Any] = Field(
+    params: dict[str, Any] = Field(
         default_factory=dict, description="Parameters to pass to the module"
     )
     enabled: bool = Field(default=True, description="Whether this step is enabled")
     continue_on_error: bool = Field(
         default=False, description="Continue pipeline execution if this step fails"
     )
-    parallel_group: Optional[str] = Field(
+    parallel_group: str | None = Field(
         default=None,
         description="Group name for parallel execution. Steps with the same group run concurrently.",
     )
-    depends_on: List[str] = Field(
+    depends_on: list[str] = Field(
         default_factory=list,
         description="Step names that must complete before this step runs",
     )
@@ -62,10 +62,10 @@ class PipelineMetadata(BaseModel):
     """Metadata about the pipeline."""
 
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     version: str = "1.0"
-    author: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
+    author: str | None = None
+    tags: list[str] = Field(default_factory=list)
 
 
 class Pipeline(BaseModel):
@@ -77,15 +77,15 @@ class Pipeline(BaseModel):
     """
 
     metadata: PipelineMetadata
-    steps: List[PipelineStep] = Field(
+    steps: list[PipelineStep] = Field(
         min_length=1, description="Pipeline must have at least one step"
     )
-    config: Dict[str, Any] = Field(
+    config: dict[str, Any] = Field(
         default_factory=dict, description="Pipeline-level configuration"
     )
 
     @property
-    def enabled_steps(self) -> List[PipelineStep]:
+    def enabled_steps(self) -> list[PipelineStep]:
         """Return only enabled steps."""
         return [step for step in self.steps if step.enabled]
 

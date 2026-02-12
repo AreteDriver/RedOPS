@@ -5,7 +5,7 @@ Queries Certificate Transparency logs to discover subdomains and certificates
 issued for a target domain. Uses crt.sh API for CT log data.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime
 import json
 import re
@@ -25,7 +25,7 @@ except ImportError:
 CRT_SH_API = "https://crt.sh/"
 
 
-def search_ct_logs(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def search_ct_logs(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Search Certificate Transparency logs for a domain.
 
@@ -106,7 +106,7 @@ def search_ct_logs(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
 
 def query_crtsh(
     domain: str, include_expired: bool = False, timeout: int = 30
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Query crt.sh API for certificates.
 
@@ -146,7 +146,7 @@ def query_crtsh(
         return []
 
 
-def is_cert_valid(cert: Dict[str, Any], now: datetime) -> bool:
+def is_cert_valid(cert: dict[str, Any], now: datetime) -> bool:
     """
     Check if a certificate is currently valid.
 
@@ -171,8 +171,8 @@ def is_cert_valid(cert: Dict[str, Any], now: datetime) -> bool:
 
 
 def extract_subdomains_from_certs(
-    certificates: List[Dict[str, Any]], base_domain: str
-) -> List[str]:
+    certificates: list[dict[str, Any]], base_domain: str
+) -> list[str]:
     """
     Extract subdomains from certificate name fields.
 
@@ -204,7 +204,7 @@ def extract_subdomains_from_certs(
     return list(subdomains)
 
 
-def parse_cert_name(name: str, base_domain: str) -> List[str]:
+def parse_cert_name(name: str, base_domain: str) -> list[str]:
     """
     Parse a certificate name and extract matching subdomains.
 
@@ -235,8 +235,8 @@ def parse_cert_name(name: str, base_domain: str) -> List[str]:
 
 
 def analyze_certificates(
-    certificates: List[Dict[str, Any]], domain: str
-) -> List[Finding]:
+    certificates: list[dict[str, Any]], domain: str
+) -> list[Finding]:
     """
     Analyze certificates for security issues.
 
@@ -335,7 +335,7 @@ def analyze_certificates(
     return findings
 
 
-def get_ct_summary(ctx: Context) -> Dict[str, Any]:
+def get_ct_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of CT log search results.
 

@@ -6,7 +6,7 @@ a simple fn(ctx, params) signature.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 from redops.core.context import Context
 
 
@@ -18,7 +18,7 @@ class BaseModule(ABC):
     a Context object and optional parameters.
     """
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str | None = None):
         """
         Initialize the module.
 
@@ -28,7 +28,7 @@ class BaseModule(ABC):
         self.name = name or self.__class__.__name__
 
     @abstractmethod
-    def execute(self, ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+    def execute(self, ctx: Context, params: dict[str, Any] | None = None) -> Context:
         """
         Execute the module's main functionality.
 
@@ -42,7 +42,7 @@ class BaseModule(ABC):
         pass
 
     def __call__(
-        self, ctx: Context, params: Optional[Dict[str, Any]] = None
+        self, ctx: Context, params: dict[str, Any] | None = None
     ) -> Context:
         """
         Allow modules to be called as functions.
@@ -78,7 +78,7 @@ class ModuleRegistry:
     Optional registry for module discovery and registration.
     """
 
-    _modules: Dict[str, BaseModule] = {}
+    _modules: dict[str, BaseModule] = {}
 
     @classmethod
     def register(cls, name: str, module: BaseModule) -> None:
@@ -92,7 +92,7 @@ class ModuleRegistry:
         cls._modules[name] = module
 
     @classmethod
-    def get(cls, name: str) -> Optional[BaseModule]:
+    def get(cls, name: str) -> BaseModule | None:
         """
         Retrieve a module from the registry.
 

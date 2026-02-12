@@ -7,7 +7,6 @@ Demonstrates building a network scanner plugin.
 import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Dict, List, Optional, Set
 
 from redops.plugins.scanner import (
     ScannerCapability,
@@ -102,15 +101,15 @@ class PortScannerPlugin(ScannerPlugin):
         return "TCP port scanner for identifying open services"
 
     @classmethod
-    def get_capabilities(cls) -> Set[ScannerCapability]:
+    def get_capabilities(cls) -> set[ScannerCapability]:
         return {ScannerCapability.NETWORK_SCAN}
 
     @classmethod
-    def get_phases(cls) -> List[ScanPhase]:
+    def get_phases(cls) -> list[ScanPhase]:
         return [ScanPhase.DISCOVERY, ScanPhase.ENUMERATION]
 
     @classmethod
-    def get_config_schema(cls) -> Dict:
+    def get_config_schema(cls) -> dict:
         return {
             "type": "object",
             "properties": {
@@ -146,7 +145,7 @@ class PortScannerPlugin(ScannerPlugin):
     def scan(
         self,
         target: str,
-        config: Optional[ScannerConfig] = None,
+        config: ScannerConfig | None = None,
     ) -> ScannerResult:
         """
         Scan target for open ports.
@@ -231,10 +230,10 @@ class PortScannerPlugin(ScannerPlugin):
     def _scan_ports(
         self,
         host: str,
-        ports: List[int],
+        ports: list[int],
         timeout: float,
         threads: int,
-    ) -> List[int]:
+    ) -> list[int]:
         """Scan ports for open connections."""
         open_ports = []
 

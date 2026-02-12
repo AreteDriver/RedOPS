@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable
 
 
 class LogLevel(Enum):
@@ -83,15 +83,15 @@ class AuditEventType(Enum):
 class LogContext:
     """Context information for log entries."""
 
-    correlation_id: Optional[str] = None
-    request_id: Optional[str] = None
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
-    component: Optional[str] = None
-    operation: Optional[str] = None
-    extra: Dict[str, Any] = field(default_factory=dict)
+    correlation_id: str | None = None
+    request_id: str | None = None
+    user_id: str | None = None
+    session_id: str | None = None
+    component: str | None = None
+    operation: str | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert context to dictionary."""
         result = {}
         if self.correlation_id:
@@ -128,15 +128,15 @@ class AuditEvent:
 
     event_type: AuditEventType
     timestamp: datetime
-    actor: Optional[str] = None
-    resource: Optional[str] = None
-    action: Optional[str] = None
+    actor: str | None = None
+    resource: str | None = None
+    action: str | None = None
     outcome: str = "success"
-    details: Dict[str, Any] = field(default_factory=dict)
-    context: Optional[LogContext] = None
+    details: dict[str, Any] = field(default_factory=dict)
+    context: LogContext | None = None
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert audit event to dictionary."""
         result = {
             "event_id": self.event_id,
@@ -165,11 +165,11 @@ class LogEntry:
     message: str
     timestamp: datetime
     logger_name: str
-    context: Optional[LogContext] = None
-    exception: Optional[Exception] = None
-    extra: Dict[str, Any] = field(default_factory=dict)
+    context: LogContext | None = None
+    exception: Exception | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert log entry to dictionary."""
         result = {
             "level": self.level.name,
@@ -205,7 +205,7 @@ class SensitiveDataMasker:
     ]
 
     def __init__(
-        self, patterns: Optional[List[tuple]] = None, mask_emails: bool = False
+        self, patterns: list[tuple] | None = None, mask_emails: bool = False
     ):
         """Initialize masker with patterns."""
         self._patterns = (
@@ -231,8 +231,8 @@ class SensitiveDataMasker:
         return result
 
     def mask_dict(
-        self, data: Dict[str, Any], sensitive_keys: Optional[Set[str]] = None
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], sensitive_keys: set[str] | None = None
+    ) -> dict[str, Any]:
         """Mask sensitive data in a dictionary."""
         if sensitive_keys is None:
             sensitive_keys = {
@@ -271,7 +271,7 @@ class TextFormatter(LogFormatter):
 
     def __init__(
         self,
-        format_string: Optional[str] = None,
+        format_string: str | None = None,
         include_context: bool = True,
         include_extra: bool = True,
     ):
@@ -330,9 +330,9 @@ class LogHandler(ABC):
 
     def __init__(
         self,
-        formatter: Optional[LogFormatter] = None,
+        formatter: LogFormatter | None = None,
         level: LogLevel = LogLevel.DEBUG,
-        masker: Optional[SensitiveDataMasker] = None,
+        masker: SensitiveDataMasker | None = None,
     ):
         """Initialize handler."""
         self._formatter = formatter or TextFormatter()
@@ -377,7 +377,7 @@ class LogHandler(ABC):
 class ConsoleHandler(LogHandler):
     """Handler that writes to console."""
 
-    def __init__(self, stream: Optional[Any] = None, colorize: bool = True, **kwargs):
+    def __init__(self, stream: Any | None = None, colorize: bool = True, **kwargs):
         """Initialize console handler."""
         super().__init__(**kwargs)
         self._stream = stream or sys.stderr
@@ -412,14 +412,14 @@ class FileHandler(LogHandler):
     """Handler that writes to a file."""
 
     def __init__(
-        self, path: Union[str, Path], mode: str = "a", encoding: str = "utf-8", **kwargs
+        self, path: str | Path, mode: str = "a", encoding: str = "utf-8", **kwargs
     ):
         """Initialize file handler."""
         super().__init__(**kwargs)
         self._path = Path(path)
         self._mode = mode
         self._encoding = encoding
-        self._file: Optional[Any] = None
+        self._file: Any | None = None
         self._lock = threading.Lock()
         self._open_file()
 
@@ -449,7 +449,7 @@ class RotatingFileHandler(LogHandler):
 
     def __init__(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         max_bytes: int = 10 * 1024 * 1024,  # 10 MB
         backup_count: int = 5,
         encoding: str = "utf-8",
@@ -461,7 +461,7 @@ class RotatingFileHandler(LogHandler):
         self._max_bytes = max_bytes
         self._backup_count = backup_count
         self._encoding = encoding
-        self._file: Optional[Any] = None
+        self._file: Any | None = None
         self._lock = threading.Lock()
         self._current_size = 0
         self._open_file()
@@ -520,7 +520,7 @@ class MemoryHandler(LogHandler):
         """Initialize memory handler."""
         super().__init__(**kwargs)
         self._max_entries = max_entries
-        self._entries: List[LogEntry] = []
+        self._entries: list[LogEntry] = []
         self._lock = threading.Lock()
 
     def emit(self, entry: LogEntry) -> None:
@@ -530,7 +530,7 @@ class MemoryHandler(LogHandler):
             if len(self._entries) > self._max_entries:
                 self._entries = self._entries[-self._max_entries :]
 
-    def get_entries(self, level: Optional[LogLevel] = None) -> List[LogEntry]:
+    def get_entries(self, level: LogLevel | None = None) -> list[LogEntry]:
         """Get stored log entries."""
         with self._lock:
             if level:
@@ -548,8 +548,8 @@ class AuditLogger:
 
     def __init__(
         self,
-        handlers: Optional[List[LogHandler]] = None,
-        context: Optional[LogContext] = None,
+        handlers: list[LogHandler] | None = None,
+        context: LogContext | None = None,
     ):
         """Initialize audit logger."""
         self._handlers = handlers or []
@@ -655,8 +655,8 @@ class AuditLogger:
         self,
         event_type: AuditEventType,
         action: str,
-        resource: Optional[str] = None,
-        actor: Optional[str] = None,
+        resource: str | None = None,
+        actor: str | None = None,
         outcome: str = "detected",
         **details,
     ) -> None:
@@ -696,12 +696,12 @@ class AuditLogger:
 _context_var = threading.local()
 
 
-def get_current_context() -> Optional[LogContext]:
+def get_current_context() -> LogContext | None:
     """Get the current thread-local context."""
     return getattr(_context_var, "context", None)
 
 
-def set_current_context(context: Optional[LogContext]) -> None:
+def set_current_context(context: LogContext | None) -> None:
     """Set the current thread-local context."""
     _context_var.context = context
 
@@ -726,9 +726,9 @@ class Logger:
     def __init__(
         self,
         name: str,
-        handlers: Optional[List[LogHandler]] = None,
+        handlers: list[LogHandler] | None = None,
         level: LogLevel = LogLevel.DEBUG,
-        context: Optional[LogContext] = None,
+        context: LogContext | None = None,
     ):
         """Initialize logger."""
         self._name = name
@@ -767,7 +767,7 @@ class Logger:
         self,
         level: LogLevel,
         message: str,
-        exception: Optional[Exception] = None,
+        exception: Exception | None = None,
         **extra,
     ) -> None:
         """Internal log method."""
@@ -814,13 +814,13 @@ class Logger:
         self._log(LogLevel.WARNING, message, **extra)
 
     def error(
-        self, message: str, exception: Optional[Exception] = None, **extra
+        self, message: str, exception: Exception | None = None, **extra
     ) -> None:
         """Log at ERROR level."""
         self._log(LogLevel.ERROR, message, exception=exception, **extra)
 
     def critical(
-        self, message: str, exception: Optional[Exception] = None, **extra
+        self, message: str, exception: Exception | None = None, **extra
     ) -> None:
         """Log at CRITICAL level."""
         self._log(LogLevel.CRITICAL, message, exception=exception, **extra)
@@ -848,13 +848,13 @@ class Logger:
 class LoggerFactory:
     """Factory for creating and managing loggers."""
 
-    _instance: Optional["LoggerFactory"] = None
+    _instance: "LoggerFactory | None" = None
     _lock = threading.Lock()
 
     def __init__(self):
         """Initialize logger factory."""
-        self._loggers: Dict[str, Logger] = {}
-        self._default_handlers: List[LogHandler] = []
+        self._loggers: dict[str, Logger] = {}
+        self._default_handlers: list[LogHandler] = []
         self._default_level = LogLevel.INFO
         self._logger_lock = threading.Lock()
 
@@ -898,7 +898,7 @@ class LoggerFactory:
                 self._loggers[name] = logger
             return self._loggers[name]
 
-    def get_all_loggers(self) -> Dict[str, Logger]:
+    def get_all_loggers(self) -> dict[str, Logger]:
         """Get all registered loggers."""
         with self._logger_lock:
             return dict(self._loggers)
@@ -912,9 +912,9 @@ def get_logger(name: str) -> Logger:
 
 def configure_logging(
     level: LogLevel = LogLevel.INFO,
-    handlers: Optional[List[LogHandler]] = None,
+    handlers: list[LogHandler] | None = None,
     format_type: str = "text",
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
     mask_sensitive: bool = True,
 ) -> None:
     """Configure the logging system."""

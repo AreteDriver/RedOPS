@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable
 
 
 class AlertSeverity(Enum):
@@ -79,7 +79,7 @@ class AlertCondition:
     value: Any
     description: str = ""
 
-    def evaluate(self, data: Dict[str, Any]) -> bool:
+    def evaluate(self, data: dict[str, Any]) -> bool:
         """Evaluate condition against data."""
         actual = self._get_field_value(data, self.field)
         if actual is None:
@@ -110,7 +110,7 @@ class AlertCondition:
 
         return False
 
-    def _get_field_value(self, data: Dict[str, Any], field: str) -> Any:
+    def _get_field_value(self, data: dict[str, Any], field: str) -> Any:
         """Get nested field value from data."""
         parts = field.split(".")
         current = data
@@ -135,15 +135,15 @@ class Alert:
     state: AlertState = AlertState.PENDING
     message: str = ""
     source: str = ""
-    labels: Dict[str, str] = field(default_factory=dict)
-    annotations: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
+    annotations: dict[str, str] = field(default_factory=dict)
     triggered_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    acknowledged_at: Optional[datetime] = None
-    acknowledged_by: Optional[str] = None
-    resolved_at: Optional[datetime] = None
-    resolved_by: Optional[str] = None
+    acknowledged_at: datetime | None = None
+    acknowledged_by: str | None = None
+    resolved_at: datetime | None = None
+    resolved_by: str | None = None
     firing_count: int = 1
-    last_fired_at: Optional[datetime] = None
+    last_fired_at: datetime | None = None
     fingerprint: str = ""
 
     def __post_init__(self):
@@ -162,7 +162,7 @@ class Alert:
         self.acknowledged_at = datetime.now(timezone.utc)
         self.acknowledged_by = by
 
-    def resolve(self, by: Optional[str] = None) -> None:
+    def resolve(self, by: str | None = None) -> None:
         """Resolve the alert."""
         self.state = AlertState.RESOLVED
         self.resolved_at = datetime.now(timezone.utc)
@@ -180,13 +180,13 @@ class Alert:
             self.state = AlertState.FIRING
 
     @property
-    def duration(self) -> Optional[timedelta]:
+    def duration(self) -> timedelta | None:
         """Get alert duration."""
         if self.resolved_at:
             return self.resolved_at - self.triggered_at
         return datetime.now(timezone.utc) - self.triggered_at
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert alert to dictionary."""
         return {
             "alert_id": self.alert_id,
@@ -216,18 +216,18 @@ class AlertRule:
 
     rule_id: str
     name: str
-    conditions: List[AlertCondition]
+    conditions: list[AlertCondition]
     severity: AlertSeverity = AlertSeverity.MEDIUM
     message_template: str = ""
-    labels: Dict[str, str] = field(default_factory=dict)
-    annotations: Dict[str, str] = field(default_factory=dict)
-    for_duration: Optional[timedelta] = None  # Must be true for this duration
+    labels: dict[str, str] = field(default_factory=dict)
+    annotations: dict[str, str] = field(default_factory=dict)
+    for_duration: timedelta | None = None  # Must be true for this duration
     enabled: bool = True
-    channels: List[str] = field(default_factory=list)  # Notification channel IDs
-    cooldown: Optional[timedelta] = None  # Minimum time between alerts
+    channels: list[str] = field(default_factory=list)  # Notification channel IDs
+    cooldown: timedelta | None = None  # Minimum time between alerts
     condition_logic: str = "all"  # "all" or "any"
 
-    def evaluate(self, data: Dict[str, Any]) -> bool:
+    def evaluate(self, data: dict[str, Any]) -> bool:
         """Evaluate all conditions."""
         if not self.enabled:
             return False
@@ -240,7 +240,7 @@ class AlertRule:
         else:
             return any(c.evaluate(data) for c in self.conditions)
 
-    def create_alert(self, data: Optional[Dict[str, Any]] = None) -> Alert:
+    def create_alert(self, data: dict[str, Any] | None = None) -> Alert:
         """Create an alert from this rule."""
         message = self.message_template
         if data:
@@ -260,7 +260,7 @@ class AlertRule:
             annotations=dict(self.annotations),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert rule to dictionary."""
         return {
             "rule_id": self.rule_id,
@@ -286,7 +286,7 @@ class SilenceRule:
     """Rule for silencing alerts."""
 
     silence_id: str
-    matchers: Dict[str, str]  # Label matchers
+    matchers: dict[str, str]  # Label matchers
     starts_at: datetime
     ends_at: datetime
     created_by: str
@@ -365,7 +365,7 @@ class WebhookChannel(NotificationChannel):
         channel_id: str,
         name: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         method: str = "POST",
     ):
         """Initialize webhook channel."""
@@ -373,7 +373,7 @@ class WebhookChannel(NotificationChannel):
         self._url = url
         self._headers = headers or {}
         self._method = method
-        self._last_response: Optional[Dict[str, Any]] = None
+        self._last_response: dict[str, Any] | None = None
 
     @property
     def url(self) -> str:
@@ -396,7 +396,7 @@ class WebhookChannel(NotificationChannel):
         }
         return self._send_request(payload)
 
-    def _send_request(self, payload: Dict[str, Any]) -> bool:
+    def _send_request(self, payload: dict[str, Any]) -> bool:
         """Send HTTP request."""
         try:
             import urllib.request
@@ -431,12 +431,12 @@ class EmailChannel(NotificationChannel):
         self,
         channel_id: str,
         name: str,
-        recipients: List[str],
+        recipients: list[str],
         smtp_host: str = "localhost",
         smtp_port: int = 25,
         from_address: str = "alerts@redops.local",
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
         use_tls: bool = False,
     ):
         """Initialize email channel."""
@@ -508,7 +508,7 @@ class CallbackChannel(NotificationChannel):
         channel_id: str,
         name: str,
         on_alert: Callable[[Alert], bool],
-        on_resolved: Optional[Callable[[Alert], bool]] = None,
+        on_resolved: Callable[[Alert], bool] | None = None,
     ):
         """Initialize callback channel."""
         super().__init__(channel_id, name)
@@ -532,10 +532,10 @@ class LogChannel(NotificationChannel):
     def __init__(self, channel_id: str, name: str):
         """Initialize log channel."""
         super().__init__(channel_id, name)
-        self._alerts: List[Dict[str, Any]] = []
+        self._alerts: list[dict[str, Any]] = []
 
     @property
-    def alerts(self) -> List[Dict[str, Any]]:
+    def alerts(self) -> list[dict[str, Any]]:
         """Get logged alerts."""
         return list(self._alerts)
 
@@ -572,7 +572,7 @@ class EscalationLevel:
 
     level: int
     delay: timedelta
-    channels: List[str]
+    channels: list[str]
     repeat_count: int = 1
 
 
@@ -583,7 +583,7 @@ class EscalationPolicy:
         """Initialize escalation policy."""
         self._id = policy_id
         self._name = name
-        self._levels: List[EscalationLevel] = []
+        self._levels: list[EscalationLevel] = []
 
     @property
     def id(self) -> str:
@@ -596,12 +596,12 @@ class EscalationPolicy:
         return self._name
 
     @property
-    def levels(self) -> List[EscalationLevel]:
+    def levels(self) -> list[EscalationLevel]:
         """Get escalation levels."""
         return self._levels
 
     def add_level(
-        self, delay: timedelta, channels: List[str], repeat_count: int = 1
+        self, delay: timedelta, channels: list[str], repeat_count: int = 1
     ) -> "EscalationPolicy":
         """Add an escalation level."""
         level = EscalationLevel(
@@ -613,7 +613,7 @@ class EscalationPolicy:
         self._levels.append(level)
         return self
 
-    def get_level_for_duration(self, duration: timedelta) -> Optional[EscalationLevel]:
+    def get_level_for_duration(self, duration: timedelta) -> EscalationLevel | None:
         """Get the escalation level for a given alert duration."""
         for level in reversed(self._levels):
             if duration >= level.delay:
@@ -626,15 +626,15 @@ class AlertManager:
 
     def __init__(self):
         """Initialize alert manager."""
-        self._rules: Dict[str, AlertRule] = {}
-        self._alerts: Dict[str, Alert] = {}
-        self._channels: Dict[str, NotificationChannel] = {}
-        self._silences: Dict[str, SilenceRule] = {}
-        self._policies: Dict[str, EscalationPolicy] = {}
-        self._alert_history: List[Alert] = []
+        self._rules: dict[str, AlertRule] = {}
+        self._alerts: dict[str, Alert] = {}
+        self._channels: dict[str, NotificationChannel] = {}
+        self._silences: dict[str, SilenceRule] = {}
+        self._policies: dict[str, EscalationPolicy] = {}
+        self._alert_history: list[Alert] = []
         self._lock = threading.Lock()
-        self._last_evaluation: Dict[str, datetime] = {}
-        self._pending_conditions: Dict[str, Tuple[datetime, Dict[str, Any]]] = {}
+        self._last_evaluation: dict[str, datetime] = {}
+        self._pending_conditions: dict[str, tuple[datetime, dict[str, Any]]] = {}
 
     # Rule management
     def add_rule(self, rule: AlertRule) -> None:
@@ -648,11 +648,11 @@ class AlertManager:
             if rule_id in self._rules:
                 del self._rules[rule_id]
 
-    def get_rule(self, rule_id: str) -> Optional[AlertRule]:
+    def get_rule(self, rule_id: str) -> AlertRule | None:
         """Get a rule by ID."""
         return self._rules.get(rule_id)
 
-    def get_rules(self) -> List[AlertRule]:
+    def get_rules(self) -> list[AlertRule]:
         """Get all rules."""
         return list(self._rules.values())
 
@@ -668,7 +668,7 @@ class AlertManager:
             if channel_id in self._channels:
                 del self._channels[channel_id]
 
-    def get_channel(self, channel_id: str) -> Optional[NotificationChannel]:
+    def get_channel(self, channel_id: str) -> NotificationChannel | None:
         """Get a channel by ID."""
         return self._channels.get(channel_id)
 
@@ -684,7 +684,7 @@ class AlertManager:
             if silence_id in self._silences:
                 del self._silences[silence_id]
 
-    def get_active_silences(self) -> List[SilenceRule]:
+    def get_active_silences(self) -> list[SilenceRule]:
         """Get currently active silences."""
         return [s for s in self._silences.values() if s.is_active]
 
@@ -694,21 +694,21 @@ class AlertManager:
         with self._lock:
             self._policies[policy.id] = policy
 
-    def get_policy(self, policy_id: str) -> Optional[EscalationPolicy]:
+    def get_policy(self, policy_id: str) -> EscalationPolicy | None:
         """Get a policy by ID."""
         return self._policies.get(policy_id)
 
     # Alert management
-    def get_alert(self, alert_id: str) -> Optional[Alert]:
+    def get_alert(self, alert_id: str) -> Alert | None:
         """Get an alert by ID."""
         return self._alerts.get(alert_id)
 
     def get_alerts(
         self,
-        state: Optional[AlertState] = None,
-        severity: Optional[AlertSeverity] = None,
-        rule_id: Optional[str] = None,
-    ) -> List[Alert]:
+        state: AlertState | None = None,
+        severity: AlertSeverity | None = None,
+        rule_id: str | None = None,
+    ) -> list[Alert]:
         """Get alerts with optional filters."""
         alerts = list(self._alerts.values())
 
@@ -721,7 +721,7 @@ class AlertManager:
 
         return sorted(alerts, key=lambda a: a.triggered_at, reverse=True)
 
-    def get_firing_alerts(self) -> List[Alert]:
+    def get_firing_alerts(self) -> list[Alert]:
         """Get all firing alerts."""
         return self.get_alerts(state=AlertState.FIRING)
 
@@ -734,7 +734,7 @@ class AlertManager:
                 return True
             return False
 
-    def resolve_alert(self, alert_id: str, by: Optional[str] = None) -> bool:
+    def resolve_alert(self, alert_id: str, by: str | None = None) -> bool:
         """Resolve an alert."""
         with self._lock:
             alert = self._alerts.get(alert_id)
@@ -752,7 +752,7 @@ class AlertManager:
             del self._alerts[alert.alert_id]
 
     # Evaluation
-    def evaluate(self, data: Dict[str, Any], source: str = "") -> List[Alert]:
+    def evaluate(self, data: dict[str, Any], source: str = "") -> list[Alert]:
         """Evaluate all rules against data."""
         triggered = []
 
@@ -816,7 +816,7 @@ class AlertManager:
 
         return triggered
 
-    def _find_existing_alert(self, rule: AlertRule) -> Optional[Alert]:
+    def _find_existing_alert(self, rule: AlertRule) -> Alert | None:
         """Find existing firing alert for a rule."""
         for alert in self._alerts.values():
             if alert.rule_id == rule.rule_id and alert.state in (
@@ -860,8 +860,8 @@ class AlertManager:
 
     # History
     def get_history(
-        self, limit: int = 100, since: Optional[datetime] = None
-    ) -> List[Alert]:
+        self, limit: int = 100, since: datetime | None = None
+    ) -> list[Alert]:
         """Get alert history."""
         history = self._alert_history
         if since:
@@ -874,7 +874,7 @@ class AlertManager:
             self._alert_history.clear()
 
     # Stats
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get alerting statistics."""
         alerts = list(self._alerts.values())
         return {
@@ -898,7 +898,7 @@ class AlertManager:
 # Convenience functions
 def create_rule(
     name: str,
-    conditions: List[Tuple[str, str, Any]],
+    conditions: list[tuple[str, str, Any]],
     severity: AlertSeverity = AlertSeverity.MEDIUM,
     message: str = "",
     **kwargs,

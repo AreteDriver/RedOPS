@@ -12,7 +12,6 @@ import secrets
 import hashlib
 import hmac
 from datetime import datetime, timezone, timedelta
-from typing import Optional
 from dataclasses import dataclass, field
 
 from fastapi import Request, HTTPException
@@ -33,9 +32,9 @@ class AuthConfig:
     """Authentication configuration."""
 
     enabled: bool = False
-    api_key: Optional[str] = None
+    api_key: str | None = None
     admin_user: str = "admin"
-    admin_password: Optional[str] = None
+    admin_password: str | None = None
     session_secret: str = field(default_factory=lambda: secrets.token_hex(32))
     session_expiry_hours: int = 24
     allowed_paths: list = field(
@@ -102,7 +101,7 @@ class SessionStore:
 
         return token
 
-    def validate_session(self, token: str) -> Optional[str]:
+    def validate_session(self, token: str) -> str | None:
         """Validate a session token and return the username if valid."""
         session_id = self._hash_token(token)
         session = self._sessions.get(session_id)
@@ -153,7 +152,7 @@ class AuthManager:
     - Session-based authentication with cookies
     """
 
-    def __init__(self, config: Optional[AuthConfig] = None):
+    def __init__(self, config: AuthConfig | None = None):
         self.config = config or AuthConfig.from_env()
         self.sessions = SessionStore(
             self.config.session_secret,
@@ -196,7 +195,7 @@ class AuthManager:
 
         return username_match and password_match
 
-    def verify_session(self, token: str) -> Optional[str]:
+    def verify_session(self, token: str) -> str | None:
         """Verify a session token and return username if valid."""
         return self.sessions.validate_session(token)
 
@@ -208,7 +207,7 @@ class AuthManager:
         """Invalidate a session."""
         return self.sessions.invalidate_session(token)
 
-    async def authenticate(self, request: Request) -> Optional[AuthenticatedUser]:
+    async def authenticate(self, request: Request) -> AuthenticatedUser | None:
         """
         Authenticate a request using available methods.
 
@@ -258,7 +257,7 @@ class AuthManager:
 
 
 # Global auth manager instance
-_auth_manager: Optional[AuthManager] = None
+_auth_manager: AuthManager | None = None
 
 
 def get_auth_manager() -> AuthManager:
@@ -307,7 +306,7 @@ async def require_auth(request: Request) -> AuthenticatedUser:
     return user
 
 
-async def optional_auth(request: Request) -> Optional[AuthenticatedUser]:
+async def optional_auth(request: Request) -> AuthenticatedUser | None:
     """
     FastAPI dependency for optional authentication.
 

@@ -4,7 +4,7 @@ Configuration management for RedOps.
 Handles loading configuration from files and environment variables.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
 from pathlib import Path
 import json
 import os
@@ -14,9 +14,9 @@ from pydantic import BaseModel, Field
 class ScopeConfig(BaseModel):
     """Configuration for scope validation."""
 
-    allowed_domains: List[str] = Field(default_factory=list)
-    allowed_ips: List[str] = Field(default_factory=list)
-    allowed_directories: List[str] = Field(default_factory=list)
+    allowed_domains: list[str] = Field(default_factory=list)
+    allowed_ips: list[str] = Field(default_factory=list)
+    allowed_directories: list[str] = Field(default_factory=list)
     strict_mode: bool = True
 
 
@@ -50,15 +50,15 @@ class AIConfig(BaseModel):
 class APIKeysConfig(BaseModel):
     """Configuration for API keys (stored securely)."""
 
-    openai: Optional[str] = None
-    anthropic: Optional[str] = None
-    shodan: Optional[str] = None
-    virustotal: Optional[str] = None
-    securitytrails: Optional[str] = None
-    censys: Optional[str] = None
-    hunter: Optional[str] = None
+    openai: str | None = None
+    anthropic: str | None = None
+    shodan: str | None = None
+    virustotal: str | None = None
+    securitytrails: str | None = None
+    censys: str | None = None
+    hunter: str | None = None
 
-    def get_key(self, provider: str) -> Optional[str]:
+    def get_key(self, provider: str) -> str | None:
         """Get API key for a provider, checking environment variables first."""
         # Check environment variable first (e.g., OPENAI_API_KEY)
         env_key = os.getenv(f"{provider.upper()}_API_KEY")
@@ -72,7 +72,7 @@ class APIKeysConfig(BaseModel):
         if hasattr(self, provider):
             setattr(self, provider, key)
 
-    def mask_key(self, key: Optional[str]) -> str:
+    def mask_key(self, key: str | None) -> str:
         """Return masked version of API key for display."""
         if not key:
             return "(not set)"
@@ -89,7 +89,7 @@ class RedOpsConfig(BaseModel):
     modules: ModuleConfig = Field(default_factory=ModuleConfig)
     api_keys: APIKeysConfig = Field(default_factory=APIKeysConfig)
     ai: AIConfig = Field(default_factory=AIConfig)
-    custom: Dict[str, Any] = Field(default_factory=dict)
+    custom: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
     def from_file(cls, path: Path) -> "RedOpsConfig":
@@ -147,7 +147,7 @@ class RedOpsConfig(BaseModel):
         with open(path, "w") as f:
             json.dump(self.model_dump(), f, indent=2)
 
-    def get_api_key(self, provider: str) -> Optional[str]:
+    def get_api_key(self, provider: str) -> str | None:
         """Get API key for a provider."""
         return self.api_keys.get_key(provider)
 

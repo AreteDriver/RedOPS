@@ -6,7 +6,7 @@ Uses regex patterns for reliable extraction without heavy NLP dependencies.
 """
 
 import re
-from typing import Optional, Dict, Any, List, Set, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 from redops.core.context import Context
 from redops.core.models import Finding, RiskLevel
@@ -16,20 +16,20 @@ from redops.core.models import Finding, RiskLevel
 class ExtractedEntities:
     """Container for extracted entities."""
 
-    emails: Set[str] = field(default_factory=set)
-    domains: Set[str] = field(default_factory=set)
-    urls: Set[str] = field(default_factory=set)
-    ipv4_addresses: Set[str] = field(default_factory=set)
-    ipv6_addresses: Set[str] = field(default_factory=set)
-    phone_numbers: Set[str] = field(default_factory=set)
-    md5_hashes: Set[str] = field(default_factory=set)
-    sha1_hashes: Set[str] = field(default_factory=set)
-    sha256_hashes: Set[str] = field(default_factory=set)
-    social_handles: Set[str] = field(default_factory=set)
-    credit_cards: Set[str] = field(default_factory=set)
-    aws_keys: Set[str] = field(default_factory=set)
+    emails: set[str] = field(default_factory=set)
+    domains: set[str] = field(default_factory=set)
+    urls: set[str] = field(default_factory=set)
+    ipv4_addresses: set[str] = field(default_factory=set)
+    ipv6_addresses: set[str] = field(default_factory=set)
+    phone_numbers: set[str] = field(default_factory=set)
+    md5_hashes: set[str] = field(default_factory=set)
+    sha1_hashes: set[str] = field(default_factory=set)
+    sha256_hashes: set[str] = field(default_factory=set)
+    social_handles: set[str] = field(default_factory=set)
+    credit_cards: set[str] = field(default_factory=set)
+    aws_keys: set[str] = field(default_factory=set)
 
-    def to_dict(self) -> Dict[str, List[str]]:
+    def to_dict(self) -> dict[str, list[str]]:
         """Convert to dictionary with sorted lists."""
         return {
             "emails": sorted(self.emails),
@@ -118,7 +118,7 @@ PATTERNS = {
 }
 
 
-def extract_entities(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def extract_entities(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Extract entities from context data.
 
@@ -142,7 +142,7 @@ def extract_entities(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     ctx.log("Extracting entities from context data", level="INFO")
 
     entities = ExtractedEntities()
-    findings: List[Finding] = []
+    findings: list[Finding] = []
 
     # Extract from target domain
     if extract_from_target and ctx.target:
@@ -228,7 +228,7 @@ def extract_entities(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
 
 def collect_text_sources(
     ctx: Context, include_findings: bool = True
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     """
     Collect text sources from context for entity extraction.
 
@@ -329,7 +329,7 @@ def extract_from_text(text: str) -> ExtractedEntities:
     return entities
 
 
-def extract_phone_numbers(text: str) -> Set[str]:
+def extract_phone_numbers(text: str) -> set[str]:
     """
     Extract and normalize phone numbers.
 
@@ -353,7 +353,7 @@ def extract_phone_numbers(text: str) -> Set[str]:
     return valid_phones
 
 
-def extract_credit_cards(text: str) -> Set[str]:
+def extract_credit_cards(text: str) -> set[str]:
     """
     Extract credit card numbers (masked for security).
 
@@ -460,7 +460,7 @@ def clean_entities(entities: ExtractedEntities) -> ExtractedEntities:
     return entities
 
 
-def extract_iocs(text: str) -> Dict[str, List[str]]:
+def extract_iocs(text: str) -> dict[str, list[str]]:
     """
     Extract Indicators of Compromise (IOCs) from text.
 
@@ -519,7 +519,7 @@ def refang_ioc(ioc: str) -> str:
     return refanged
 
 
-def get_entity_summary(entities: ExtractedEntities) -> Dict[str, Any]:
+def get_entity_summary(entities: ExtractedEntities) -> dict[str, Any]:
     """
     Generate a summary of extracted entities.
 

@@ -6,7 +6,7 @@ Identifies potential attack chains from entry points to high-value targets.
 No exploitation or intrusion - textual analysis only.
 """
 
-from typing import Optional, Dict, Any, List, Set
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 from redops.core.context import Context
@@ -23,19 +23,19 @@ class AttackNode:
     risk_contribution: float = 0.0
     is_entry_point: bool = False
     is_target: bool = False
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class AttackChain:
     """Represents a chain of attack steps."""
 
-    path: List[str]
+    path: list[str]
     entry_point: str
     target: str
     total_risk: float = 0.0
-    steps: List[Dict[str, Any]] = field(default_factory=list)
-    mitre_techniques: List[str] = field(default_factory=list)
+    steps: list[dict[str, Any]] = field(default_factory=list)
+    mitre_techniques: list[str] = field(default_factory=list)
 
     def to_attack_path(self, name: str = "", description: str = "") -> AttackPath:
         """Convert to AttackPath model."""
@@ -114,7 +114,7 @@ TRANSITION_TECHNIQUES = {
 }
 
 
-def analyze_paths(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def analyze_paths(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Analyze potential attack paths from context data.
 
@@ -210,7 +210,7 @@ def analyze_paths(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
     return ctx
 
 
-def identify_entry_points(nodes: Dict[str, Dict], ctx: Context) -> Set[str]:
+def identify_entry_points(nodes: dict[str, dict], ctx: Context) -> set[str]:
     """
     Identify potential entry points in the graph.
 
@@ -272,7 +272,7 @@ def identify_entry_points(nodes: Dict[str, Dict], ctx: Context) -> Set[str]:
     return entry_points
 
 
-def identify_targets(nodes: Dict[str, Dict], ctx: Context) -> Set[str]:
+def identify_targets(nodes: dict[str, dict], ctx: Context) -> set[str]:
     """
     Identify high-value targets in the graph.
 
@@ -318,12 +318,12 @@ def identify_targets(nodes: Dict[str, Dict], ctx: Context) -> Set[str]:
 
 
 def find_attack_chains(
-    nodes: Dict[str, Dict],
-    adjacency: Dict[str, List[str]],
-    entry_points: Set[str],
-    targets: Set[str],
+    nodes: dict[str, dict],
+    adjacency: dict[str, list[str]],
+    entry_points: set[str],
+    targets: set[str],
     max_depth: int,
-) -> List[AttackChain]:
+) -> list[AttackChain]:
     """
     Find attack chains from entry points to targets using DFS.
 
@@ -361,8 +361,8 @@ def find_attack_chains(
 
 
 def dfs_find_paths(
-    adjacency: Dict[str, List[str]], start: str, end: str, max_depth: int
-) -> List[List[str]]:
+    adjacency: dict[str, list[str]], start: str, end: str, max_depth: int
+) -> list[list[str]]:
     """
     Find all paths between two nodes using DFS.
 
@@ -377,7 +377,7 @@ def dfs_find_paths(
     """
     paths = []
 
-    def dfs(current: str, target: str, path: List[str], depth: int):
+    def dfs(current: str, target: str, path: list[str], depth: int):
         if depth > max_depth:
             return
 
@@ -395,7 +395,7 @@ def dfs_find_paths(
     return paths
 
 
-def generate_steps(path: List[str], nodes: Dict[str, Dict]) -> List[Dict[str, Any]]:
+def generate_steps(path: list[str], nodes: dict[str, dict]) -> list[dict[str, Any]]:
     """
     Generate step descriptions for a path.
 
@@ -432,7 +432,7 @@ def generate_steps(path: List[str], nodes: Dict[str, Dict]) -> List[Dict[str, An
     return steps
 
 
-def get_path_techniques(path: List[str], nodes: Dict[str, Dict]) -> List[str]:
+def get_path_techniques(path: list[str], nodes: dict[str, dict]) -> list[str]:
     """
     Get MITRE techniques for path transitions.
 
@@ -457,8 +457,8 @@ def get_path_techniques(path: List[str], nodes: Dict[str, Dict]) -> List[str]:
 
 
 def score_attack_chains(
-    chains: List[AttackChain], nodes: Dict[str, Dict]
-) -> List[AttackChain]:
+    chains: list[AttackChain], nodes: dict[str, dict]
+) -> list[AttackChain]:
     """
     Score attack chains by risk.
 
@@ -513,7 +513,7 @@ def score_attack_chains(
     return sorted(chains, key=lambda c: c.total_risk, reverse=True)
 
 
-def generate_path_description(chain: AttackChain, nodes: Dict[str, Dict]) -> str:
+def generate_path_description(chain: AttackChain, nodes: dict[str, dict]) -> str:
     """
     Generate a description for an attack path.
 
@@ -544,8 +544,8 @@ def generate_path_description(chain: AttackChain, nodes: Dict[str, Dict]) -> str
 
 
 def identify_critical_nodes(
-    graph_data: Dict[str, Any], chains: List[AttackChain]
-) -> List[Dict[str, Any]]:
+    graph_data: dict[str, Any], chains: list[AttackChain]
+) -> list[dict[str, Any]]:
     """
     Identify critical nodes (chokepoints) in attack paths.
 
@@ -589,7 +589,7 @@ def identify_critical_nodes(
     return critical[:10]
 
 
-def rank_attack_paths(paths: List[AttackPath]) -> List[AttackPath]:
+def rank_attack_paths(paths: list[AttackPath]) -> list[AttackPath]:
     """
     Rank attack paths by risk score.
 
@@ -602,7 +602,7 @@ def rank_attack_paths(paths: List[AttackPath]) -> List[AttackPath]:
     return sorted(paths, key=lambda p: p.risk_score, reverse=True)
 
 
-def get_attack_surface_summary(ctx: Context) -> Dict[str, Any]:
+def get_attack_surface_summary(ctx: Context) -> dict[str, Any]:
     """
     Generate a summary of the attack surface.
 

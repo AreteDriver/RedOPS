@@ -7,7 +7,7 @@ Tracks the lifecycle of findings from detection to remediation.
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,14 +53,14 @@ class RemediationRecord:
     finding_title: str
     severity: str
     status: RemediationStatus = RemediationStatus.OPEN
-    priority: Optional[RemediationPriority] = None
-    assignee: Optional[str] = None
-    due_date: Optional[datetime] = None
+    priority: RemediationPriority | None = None
+    assignee: str | None = None
+    due_date: datetime | None = None
     detected_at: datetime = field(default_factory=datetime.now)
     status_changed_at: datetime = field(default_factory=datetime.now)
-    resolved_at: Optional[datetime] = None
-    notes: List[Dict[str, Any]] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    resolved_at: datetime | None = None
+    notes: list[dict[str, Any]] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """Set defaults based on severity."""
@@ -103,20 +103,20 @@ class RemediationRecord:
         return (end_date - self.detected_at).days
 
     @property
-    def days_until_due(self) -> Optional[int]:
+    def days_until_due(self) -> int | None:
         """Days until due date (negative if overdue)."""
         if not self.due_date:
             return None
         return (self.due_date - datetime.now()).days
 
     @property
-    def mttr(self) -> Optional[float]:
+    def mttr(self) -> float | None:
         """Mean time to remediate in days (if resolved)."""
         if self.resolved_at:
             return (self.resolved_at - self.detected_at).total_seconds() / 86400
         return None
 
-    def add_note(self, text: str, author: Optional[str] = None) -> None:
+    def add_note(self, text: str, author: str | None = None) -> None:
         """Add a note to the remediation record."""
         self.notes.append(
             {
@@ -127,7 +127,7 @@ class RemediationRecord:
         )
 
     def update_status(
-        self, new_status: RemediationStatus, note: Optional[str] = None
+        self, new_status: RemediationStatus, note: str | None = None
     ) -> None:
         """Update remediation status."""
         old_status = self.status
@@ -162,9 +162,9 @@ class RemediationMetrics:
     false_positives: int = 0
     accepted_risk: int = 0
     overdue: int = 0
-    by_severity: Dict[str, int] = field(default_factory=dict)
-    by_priority: Dict[str, int] = field(default_factory=dict)
-    avg_mttr_days: Optional[float] = None
+    by_severity: dict[str, int] = field(default_factory=dict)
+    by_priority: dict[str, int] = field(default_factory=dict)
+    avg_mttr_days: float | None = None
     remediation_rate: float = 0.0
     sla_compliance_rate: float = 0.0
 
@@ -177,9 +177,9 @@ class RemediationTracker:
 
     def __init__(
         self,
-        slas: Optional[Dict[str, timedelta]] = None,
+        slas: dict[str, timedelta] | None = None,
         auto_assign: bool = False,
-        assignment_rules: Optional[Dict[str, str]] = None,
+        assignment_rules: dict[str, str] | None = None,
     ):
         """
         Initialize tracker.
@@ -192,15 +192,15 @@ class RemediationTracker:
         self.slas = slas or DEFAULT_SLAS.copy()
         self.auto_assign = auto_assign
         self.assignment_rules = assignment_rules or {}
-        self.records: Dict[str, RemediationRecord] = {}
+        self.records: dict[str, RemediationRecord] = {}
 
     def track_finding(
         self,
         finding_id: str,
         finding_title: str,
         severity: str,
-        detected_at: Optional[datetime] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        detected_at: datetime | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> RemediationRecord:
         """
         Start tracking a finding.
@@ -240,8 +240,8 @@ class RemediationTracker:
         return record
 
     def track_findings_from_scan(
-        self, scan_data: Dict[str, Any]
-    ) -> List[RemediationRecord]:
+        self, scan_data: dict[str, Any]
+    ) -> list[RemediationRecord]:
         """
         Track all findings from a scan.
 
@@ -274,7 +274,7 @@ class RemediationTracker:
     def update_from_comparison(
         self,
         comparison_result: Any,  # ComparisonResult
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         """
         Update tracking based on scan comparison.
 
@@ -335,21 +335,21 @@ class RemediationTracker:
 
         return actions
 
-    def get_record(self, finding_id: str) -> Optional[RemediationRecord]:
+    def get_record(self, finding_id: str) -> RemediationRecord | None:
         """Get a specific remediation record."""
         return self.records.get(finding_id)
 
     def get_records_by_status(
         self, status: RemediationStatus
-    ) -> List[RemediationRecord]:
+    ) -> list[RemediationRecord]:
         """Get all records with a specific status."""
         return [r for r in self.records.values() if r.status == status]
 
-    def get_overdue_records(self) -> List[RemediationRecord]:
+    def get_overdue_records(self) -> list[RemediationRecord]:
         """Get all overdue records."""
         return [r for r in self.records.values() if r.is_overdue]
 
-    def get_records_by_assignee(self, assignee: str) -> List[RemediationRecord]:
+    def get_records_by_assignee(self, assignee: str) -> list[RemediationRecord]:
         """Get all records assigned to a person."""
         return [r for r in self.records.values() if r.assignee == assignee]
 

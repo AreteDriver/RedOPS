@@ -12,7 +12,7 @@ IMPORTANT: Requires a Shodan API key.
 This module uses publicly available data from Shodan's database.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 import os
 
@@ -24,19 +24,19 @@ class ShodanHost:
     """Shodan host result."""
 
     ip: str
-    hostnames: List[str] = field(default_factory=list)
-    ports: List[int] = field(default_factory=list)
-    org: Optional[str] = None
-    asn: Optional[str] = None
-    isp: Optional[str] = None
-    country: Optional[str] = None
-    city: Optional[str] = None
-    os: Optional[str] = None
-    vulns: List[str] = field(default_factory=list)
-    services: List[Dict[str, Any]] = field(default_factory=list)
-    last_update: Optional[str] = None
+    hostnames: list[str] = field(default_factory=list)
+    ports: list[int] = field(default_factory=list)
+    org: str | None = None
+    asn: str | None = None
+    isp: str | None = None
+    country: str | None = None
+    city: str | None = None
+    os: str | None = None
+    vulns: list[str] = field(default_factory=list)
+    services: list[dict[str, Any]] = field(default_factory=list)
+    last_update: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "ip": self.ip,
@@ -59,11 +59,11 @@ class ShodanDNS:
     """Shodan DNS result."""
 
     domain: str
-    subdomains: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
-    data: List[Dict[str, Any]] = field(default_factory=list)
+    subdomains: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    data: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "domain": self.domain,
@@ -102,7 +102,7 @@ def get_shodan_client():
     return shodan.Shodan(api_key)
 
 
-def query_shodan_host(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_shodan_host(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query Shodan for host information.
 
@@ -206,7 +206,7 @@ def query_shodan_host(ctx: Context, params: Optional[Dict[str, Any]] = None) -> 
     return ctx
 
 
-def query_shodan_dns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_shodan_dns(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query Shodan for DNS information.
 
@@ -272,7 +272,7 @@ def query_shodan_dns(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     return ctx
 
 
-def search_shodan(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def search_shodan(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Search Shodan with a query.
 
@@ -354,7 +354,7 @@ def search_shodan(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Cont
 
 
 def analyze_shodan_intel(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Run comprehensive Shodan analysis.

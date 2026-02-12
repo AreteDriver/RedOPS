@@ -5,7 +5,7 @@ Exports findings in JUnit XML format for CI/CD pipeline integration.
 This format is widely supported by Jenkins, GitLab CI, CircleCI, etc.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 from datetime import datetime
 import xml.etree.ElementTree as ET
@@ -13,7 +13,7 @@ from xml.dom import minidom
 from redops.core.context import Context
 
 
-def export_junit(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_junit(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export findings as a JUnit XML report.
 
@@ -86,7 +86,7 @@ def export_junit(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     return ctx
 
 
-def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
+def collect_findings(ctx: Context) -> list[dict[str, Any]]:
     """
     Collect all findings from context.
 
@@ -122,7 +122,7 @@ def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
 
 def create_junit_document(
     ctx: Context,
-    findings: List[Dict[str, Any]],
+    findings: list[dict[str, Any]],
     suite_name: str = "RedOps Security Assessment",
     fail_on_critical: bool = True,
     fail_on_high: bool = True,
@@ -192,9 +192,9 @@ def create_junit_document(
     return prettify_xml(xml_str)
 
 
-def group_by_module(findings: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+def group_by_module(findings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """Group findings by module."""
-    modules: Dict[str, List[Dict[str, Any]]] = {}
+    modules: dict[str, list[dict[str, Any]]] = {}
 
     for finding in findings:
         module = finding.get("module", "unknown")
@@ -207,7 +207,7 @@ def group_by_module(findings: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, 
 
 def create_testsuite(
     module_name: str,
-    findings: List[Dict[str, Any]],
+    findings: list[dict[str, Any]],
     target: str,
     fail_on_critical: bool,
     fail_on_high: bool,
@@ -265,7 +265,7 @@ def create_testsuite(
 
 
 def create_testcase(
-    finding: Dict[str, Any],
+    finding: dict[str, Any],
     module_name: str,
     fail_on_critical: bool,
     fail_on_high: bool,
@@ -319,7 +319,7 @@ def create_testcase(
     return testcase
 
 
-def build_failure_text(finding: Dict[str, Any]) -> str:
+def build_failure_text(finding: dict[str, Any]) -> str:
     """Build failure text from finding."""
     lines = []
     lines.append(f"Title: {finding.get('title', 'Unknown')}")
@@ -343,7 +343,7 @@ def build_failure_text(finding: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def build_system_out(finding: Dict[str, Any]) -> str:
+def build_system_out(finding: dict[str, Any]) -> str:
     """Build system-out content from finding."""
     lines = []
 
@@ -380,11 +380,11 @@ def normalize_severity(severity: Any) -> str:
 
 
 def calculate_stats(
-    findings: List[Dict[str, Any]],
+    findings: list[dict[str, Any]],
     fail_on_critical: bool,
     fail_on_high: bool,
     fail_on_medium: bool,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Calculate test statistics."""
     failures = 0
     skipped = 0
@@ -421,7 +421,7 @@ def prettify_xml(xml_str: str) -> str:
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'
 
 
-def get_junit_summary(ctx: Context) -> Dict[str, Any]:
+def get_junit_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of JUnit export results.
 

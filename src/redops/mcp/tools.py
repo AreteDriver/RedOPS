@@ -4,12 +4,12 @@ Extended MCP tools for RedOPS.
 Provides additional tools for threat intelligence, recon, and reporting.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 from pathlib import Path
 
 
 # Tool definitions for new modules
-EXTENDED_TOOLS: Dict[str, Dict[str, Any]] = {
+EXTENDED_TOOLS: dict[str, dict[str, Any]] = {
     "redops_check_ip": {
         "name": "redops_check_ip",
         "description": "Check IP reputation across multiple threat intelligence sources (GreyNoise, AbuseIPDB). Returns threat indicators, abuse scores, and classifications.",
@@ -169,7 +169,7 @@ EXTENDED_TOOLS: Dict[str, Dict[str, Any]] = {
 }
 
 
-async def execute_extended_tool(tool_name: str, arguments: Dict[str, Any]) -> Any:
+async def execute_extended_tool(tool_name: str, arguments: dict[str, Any]) -> Any:
     """
     Execute an extended tool.
 
@@ -200,7 +200,7 @@ async def execute_extended_tool(tool_name: str, arguments: Dict[str, Any]) -> An
         raise ValueError(f"Unknown tool: {tool_name}")
 
 
-async def _tool_check_ip(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_check_ip(arguments: dict[str, Any]) -> dict[str, Any]:
     """Check IP reputation."""
     ip = arguments.get("ip")
     sources = arguments.get("sources", ["greynoise", "abuseipdb"])
@@ -234,7 +234,7 @@ async def _tool_check_ip(arguments: Dict[str, Any]) -> Dict[str, Any]:
     return results
 
 
-async def _tool_check_url(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_check_url(arguments: dict[str, Any]) -> dict[str, Any]:
     """Check URL reputation."""
     url = arguments.get("url")
 
@@ -253,7 +253,7 @@ async def _tool_check_url(arguments: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def _tool_cert_transparency(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_cert_transparency(arguments: dict[str, Any]) -> dict[str, Any]:
     """Search Certificate Transparency logs."""
     domain = arguments.get("domain")
     include_expired = arguments.get("include_expired", False)
@@ -274,7 +274,7 @@ async def _tool_cert_transparency(arguments: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def _tool_asn_lookup(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_asn_lookup(arguments: dict[str, Any]) -> dict[str, Any]:
     """Look up ASN information."""
     target = arguments.get("target")
     include_prefixes = arguments.get("include_prefixes", True)
@@ -301,7 +301,7 @@ async def _tool_asn_lookup(arguments: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def _tool_enumerate_subdomains(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_enumerate_subdomains(arguments: dict[str, Any]) -> dict[str, Any]:
     """Enumerate subdomains."""
     domain = arguments.get("domain")
     use_ct = arguments.get("use_ct", True)
@@ -329,7 +329,7 @@ async def _tool_enumerate_subdomains(arguments: Dict[str, Any]) -> Dict[str, Any
     }
 
 
-async def _tool_export_sarif(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_export_sarif(arguments: dict[str, Any]) -> dict[str, Any]:
     """Export as SARIF."""
     scan_data = arguments.get("scan_data", {})
     output_path = arguments.get("output_path")
@@ -354,7 +354,7 @@ async def _tool_export_sarif(arguments: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def _tool_export_junit(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_export_junit(arguments: dict[str, Any]) -> dict[str, Any]:
     """Export as JUnit XML."""
     scan_data = arguments.get("scan_data", {})
     output_path = arguments.get("output_path")
@@ -380,7 +380,7 @@ async def _tool_export_junit(arguments: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-async def _tool_dashboard_summary(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def _tool_dashboard_summary(arguments: dict[str, Any]) -> dict[str, Any]:
     """Generate dashboard summary."""
     scan_data = arguments.get("scan_data", {})
 
@@ -395,7 +395,7 @@ async def _tool_dashboard_summary(arguments: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # MCP Prompts for common security operations
-MCP_PROMPTS: List[Dict[str, Any]] = [
+MCP_PROMPTS: list[dict[str, Any]] = [
     {
         "name": "security-assessment",
         "description": "Comprehensive security assessment prompt for analyzing a target",
@@ -432,7 +432,7 @@ MCP_PROMPTS: List[Dict[str, Any]] = [
 ]
 
 
-def get_prompt_content(prompt_name: str, arguments: Dict[str, str]) -> str:
+def get_prompt_content(prompt_name: str, arguments: dict[str, str]) -> str:
     """
     Get the content for a prompt.
 

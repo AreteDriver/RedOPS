@@ -4,11 +4,11 @@ Surface summary module.
 Generates a high-level summary of the attack surface.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from redops.core.context import Context
 
 
-def generate_summary(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def generate_summary(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Generate a surface summary from collected data.
 
@@ -83,7 +83,7 @@ def calculate_exposure_level(ctx: Context) -> str:
         return "low"
 
 
-def extract_key_findings(ctx: Context, limit: int = 5) -> List[str]:
+def extract_key_findings(ctx: Context, limit: int = 5) -> list[str]:
     """
     Extract key findings from context.
 
@@ -108,7 +108,7 @@ def extract_key_findings(ctx: Context, limit: int = 5) -> List[str]:
     return findings
 
 
-def generate_recommendations(ctx: Context) -> List[str]:
+def generate_recommendations(ctx: Context) -> list[str]:
     """
     Generate recommendations based on findings.
 

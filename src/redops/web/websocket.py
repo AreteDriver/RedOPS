@@ -5,7 +5,7 @@ Provides broadcast functionality for scan progress and completion events.
 """
 
 import json
-from typing import Dict, Set, Any
+from typing import Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 
@@ -28,7 +28,7 @@ class WSEvent:
     """WebSocket event message."""
 
     event: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     scan_id: str | None = None
     timestamp: str | None = None
 
@@ -49,8 +49,8 @@ class ConnectionManager:
 
     def __init__(self):
         """Initialize connection manager."""
-        self.active_connections: Set = set()
-        self.scan_subscriptions: Dict[str, Set] = {}  # scan_id -> websockets
+        self.active_connections: set = set()
+        self.scan_subscriptions: dict[str, set] = {}  # scan_id -> websockets
 
     async def connect(self, websocket) -> None:
         """
@@ -165,7 +165,7 @@ class ConnectionManager:
         for ws in disconnected:
             self.disconnect(ws)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get connection statistics."""
         return {
             "total_connections": len(self.active_connections),

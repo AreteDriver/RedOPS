@@ -5,7 +5,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import click
 import httpx
@@ -77,12 +76,12 @@ def run_scan(
     ctx,
     target: str,
     pipeline: str = "default",
-    output: Optional[str] = None,
+    output: str | None = None,
     async_mode: bool = False,
     timeout: int = 3600,
-    modules: Optional[str] = None,
-    exclude_modules: Optional[str] = None,
-    tags: Optional[list] = None,
+    modules: str | None = None,
+    exclude_modules: str | None = None,
+    tags: list | None = None,
 ) -> None:
     """Execute a scan (shared logic for run command and quick-scan)."""
     console.print(f"[bold]Starting scan on {target}[/bold]")

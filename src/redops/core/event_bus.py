@@ -20,12 +20,8 @@ from typing import (
     Any,
     Callable,
     Coroutine,
-    Dict,
-    List,
-    Optional,
     Type,
     TypeVar,
-    Union,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Type variables
 T = TypeVar("T", bound="Event")
-HandlerType = Union[
-    Callable[["Event"], None], Callable[["Event"], Coroutine[Any, Any, None]]
-]
+HandlerType = Callable[["Event"], None] | Callable[["Event"], Coroutine[Any, Any, None]]
 
 
 class EventPriority(Enum):
@@ -67,17 +61,17 @@ class Event:
 
     # Event metadata
     source: str = ""
-    correlation_id: Optional[str] = None
-    causation_id: Optional[str] = None
+    correlation_id: str | None = None
+    causation_id: str | None = None
     priority: EventPriority = EventPriority.NORMAL
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def event_type(self) -> str:
         """Get the event type name."""
         return self.__class__.__name__
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary."""
         return {
             "id": self.id,
@@ -91,7 +85,7 @@ class Event:
             "data": self._get_data(),
         }
 
-    def _get_data(self) -> Dict[str, Any]:
+    def _get_data(self) -> dict[str, Any]:
         """Get event-specific data (override in subclasses)."""
         # Get all fields that aren't base Event fields
         base_fields = {
@@ -106,7 +100,7 @@ class Event:
         return {k: v for k, v in self.__dict__.items() if k not in base_fields}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Event":
+    def from_dict(cls, data: dict[str, Any]) -> "Event":
         """Create event from dictionary."""
         event = cls(
             id=data.get("id", str(uuid.uuid4())),
@@ -151,7 +145,7 @@ class ScanStartedEvent(Event):
 
     target: str = ""
     scan_type: str = ""
-    options: Dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -192,7 +186,7 @@ class ModuleExecutedEvent(Event):
     module_name: str = ""
     duration_seconds: float = 0.0
     success: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -201,8 +195,8 @@ class ErrorOccurredEvent(Event):
 
     error_type: str = ""
     error_message: str = ""
-    stack_trace: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    stack_trace: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 class Subscription:
@@ -211,8 +205,8 @@ class Subscription:
     def __init__(
         self,
         handler: HandlerType,
-        event_type: Optional[Type[Event]] = None,
-        filter_fn: Optional[Callable[[Event], bool]] = None,
+        event_type: Type[Event] | None = None,
+        filter_fn: Callable[[Event], bool] | None = None,
         priority: int = 0,
         once: bool = False,
     ):
@@ -234,7 +228,7 @@ class Subscription:
         self.once = once
         self.call_count = 0
         self.created_at = datetime.now()
-        self.last_called: Optional[datetime] = None
+        self.last_called: datetime | None = None
         self._active = True
 
     def matches(self, event: Event) -> bool:
@@ -279,22 +273,22 @@ class EventStore(ABC):
     @abstractmethod
     def get_events(
         self,
-        event_type: Optional[str] = None,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
-        correlation_id: Optional[str] = None,
+        event_type: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        correlation_id: str | None = None,
         limit: int = 100,
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Query events from the store."""
         pass
 
     @abstractmethod
-    def get_by_id(self, event_id: str) -> Optional[Event]:
+    def get_by_id(self, event_id: str) -> Event | None:
         """Get a specific event by ID."""
         pass
 
     @abstractmethod
-    def count(self, event_type: Optional[str] = None) -> int:
+    def count(self, event_type: str | None = None) -> int:
         """Count events in the store."""
         pass
 
@@ -304,8 +298,8 @@ class MemoryEventStore(EventStore):
 
     def __init__(self, max_events: int = 10000):
         """Initialize memory store."""
-        self._events: List[Event] = []
-        self._by_id: Dict[str, Event] = {}
+        self._events: list[Event] = []
+        self._by_id: dict[str, Event] = {}
         self._max_events = max_events
         self._lock = threading.RLock()
 
@@ -324,12 +318,12 @@ class MemoryEventStore(EventStore):
 
     def get_events(
         self,
-        event_type: Optional[str] = None,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
-        correlation_id: Optional[str] = None,
+        event_type: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        correlation_id: str | None = None,
         limit: int = 100,
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Query events."""
         with self._lock:
             result = self._events.copy()
@@ -347,12 +341,12 @@ class MemoryEventStore(EventStore):
         # Return most recent first, limited
         return sorted(result, key=lambda e: e.timestamp, reverse=True)[:limit]
 
-    def get_by_id(self, event_id: str) -> Optional[Event]:
+    def get_by_id(self, event_id: str) -> Event | None:
         """Get event by ID."""
         with self._lock:
             return self._by_id.get(event_id)
 
-    def count(self, event_type: Optional[str] = None) -> int:
+    def count(self, event_type: str | None = None) -> int:
         """Count events."""
         with self._lock:
             if event_type:
@@ -369,12 +363,12 @@ class MemoryEventStore(EventStore):
 class FileEventStore(EventStore):
     """File-based event store with append-only log."""
 
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         """Initialize file store."""
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
-        self._cache: List[Event] = []
+        self._cache: list[Event] = []
         self._loaded = False
 
     def _load(self) -> None:
@@ -404,12 +398,12 @@ class FileEventStore(EventStore):
 
     def get_events(
         self,
-        event_type: Optional[str] = None,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
-        correlation_id: Optional[str] = None,
+        event_type: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        correlation_id: str | None = None,
         limit: int = 100,
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Query events."""
         self._load()
         with self._lock:
@@ -426,7 +420,7 @@ class FileEventStore(EventStore):
 
         return sorted(result, key=lambda e: e.timestamp, reverse=True)[:limit]
 
-    def get_by_id(self, event_id: str) -> Optional[Event]:
+    def get_by_id(self, event_id: str) -> Event | None:
         """Get event by ID."""
         self._load()
         with self._lock:
@@ -435,7 +429,7 @@ class FileEventStore(EventStore):
                     return event
         return None
 
-    def count(self, event_type: Optional[str] = None) -> int:
+    def count(self, event_type: str | None = None) -> int:
         """Count events."""
         self._load()
         with self._lock:
@@ -449,7 +443,7 @@ class DeadLetterQueue:
 
     def __init__(self, max_size: int = 1000):
         """Initialize dead letter queue."""
-        self._queue: List[Dict[str, Any]] = []
+        self._queue: list[dict[str, Any]] = []
         self._max_size = max_size
         self._lock = threading.RLock()
 
@@ -476,7 +470,7 @@ class DeadLetterQueue:
             if len(self._queue) > self._max_size:
                 self._queue = self._queue[-self._max_size :]
 
-    def get_all(self) -> List[Dict[str, Any]]:
+    def get_all(self) -> list[dict[str, Any]]:
         """Get all dead letter entries."""
         with self._lock:
             return self._queue.copy()
@@ -507,8 +501,8 @@ class EventBus:
 
     def __init__(
         self,
-        event_store: Optional[EventStore] = None,
-        dead_letter_queue: Optional[DeadLetterQueue] = None,
+        event_store: EventStore | None = None,
+        dead_letter_queue: DeadLetterQueue | None = None,
     ):
         """
         Initialize event bus.
@@ -517,7 +511,7 @@ class EventBus:
             event_store: Optional store for event persistence
             dead_letter_queue: Optional queue for failed events
         """
-        self._subscriptions: List[Subscription] = []
+        self._subscriptions: list[Subscription] = []
         self._event_store = event_store
         self._dlq = dead_letter_queue or DeadLetterQueue()
         self._lock = threading.RLock()
@@ -530,8 +524,8 @@ class EventBus:
     def subscribe(
         self,
         handler: HandlerType,
-        event_type: Optional[Type[Event]] = None,
-        filter_fn: Optional[Callable[[Event], bool]] = None,
+        event_type: Type[Event] | None = None,
+        filter_fn: Callable[[Event], bool] | None = None,
         priority: int = 0,
         once: bool = False,
     ) -> Subscription:
@@ -626,7 +620,7 @@ class EventBus:
 
         return handlers_called
 
-    def publish_all(self, events: List[Event]) -> int:
+    def publish_all(self, events: list[Event]) -> int:
         """Publish multiple events."""
         total = 0
         for event in events:
@@ -679,7 +673,7 @@ class EventBus:
             return len([s for s in self._subscriptions if s.is_active])
 
     @property
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """Get event bus statistics."""
         return self._stats.copy()
 
@@ -698,11 +692,11 @@ class AsyncEventBus:
 
     def __init__(
         self,
-        event_store: Optional[EventStore] = None,
-        dead_letter_queue: Optional[DeadLetterQueue] = None,
+        event_store: EventStore | None = None,
+        dead_letter_queue: DeadLetterQueue | None = None,
     ):
         """Initialize async event bus."""
-        self._subscriptions: List[Subscription] = []
+        self._subscriptions: list[Subscription] = []
         self._event_store = event_store
         self._dlq = dead_letter_queue or DeadLetterQueue()
         self._lock = asyncio.Lock()
@@ -715,8 +709,8 @@ class AsyncEventBus:
     async def subscribe(
         self,
         handler: HandlerType,
-        event_type: Optional[Type[Event]] = None,
-        filter_fn: Optional[Callable[[Event], bool]] = None,
+        event_type: Type[Event] | None = None,
+        filter_fn: Callable[[Event], bool] | None = None,
         priority: int = 0,
         once: bool = False,
     ) -> Subscription:
@@ -846,7 +840,7 @@ class AsyncEventBus:
             self._subscriptions.clear()
 
     @property
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """Get statistics."""
         return self._stats.copy()
 
@@ -860,7 +854,7 @@ class BackgroundEventBus:
 
     def __init__(
         self,
-        event_store: Optional[EventStore] = None,
+        event_store: EventStore | None = None,
         max_queue_size: int = 10000,
         num_workers: int = 1,
     ):
@@ -874,7 +868,7 @@ class BackgroundEventBus:
         """
         self._inner_bus = EventBus(event_store=event_store)
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
-        self._workers: List[threading.Thread] = []
+        self._workers: list[threading.Thread] = []
         self._num_workers = num_workers
         self._running = False
         self._stats = {
@@ -965,7 +959,7 @@ class BackgroundEventBus:
         return self._queue.qsize()
 
     @property
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """Get combined statistics."""
         stats = self._inner_bus.stats.copy()
         stats.update(self._stats)
@@ -992,7 +986,7 @@ class EventAggregator:
         self,
         window_seconds: float = 1.0,
         max_events: int = 100,
-        on_flush: Optional[Callable[[List[Event]], None]] = None,
+        on_flush: Callable[[list[Event]], None] | None = None,
     ):
         """
         Initialize aggregator.
@@ -1005,10 +999,10 @@ class EventAggregator:
         self._window = window_seconds
         self._max_events = max_events
         self._on_flush = on_flush
-        self._events: List[Event] = []
+        self._events: list[Event] = []
         self._lock = threading.RLock()
-        self._window_start: Optional[float] = None
-        self._timer: Optional[threading.Timer] = None
+        self._window_start: float | None = None
+        self._timer: threading.Timer | None = None
 
     def add(self, event: Event) -> None:
         """Add an event to the aggregator."""
@@ -1022,12 +1016,12 @@ class EventAggregator:
             if len(self._events) >= self._max_events:
                 self._do_flush()
 
-    def flush(self) -> List[Event]:
+    def flush(self) -> list[Event]:
         """Manually flush events."""
         with self._lock:
             return self._do_flush()
 
-    def _do_flush(self) -> List[Event]:
+    def _do_flush(self) -> list[Event]:
         """Internal flush implementation."""
         events = self._events.copy()
         self._events.clear()
@@ -1077,9 +1071,9 @@ class EventReplay:
     def replay(
         self,
         handler: Callable[[Event], None],
-        event_type: Optional[str] = None,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
+        event_type: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
         limit: int = 1000,
     ) -> int:
         """
@@ -1129,7 +1123,7 @@ class EventEmitter:
     Provides a simple interface for emitting events to a bus.
     """
 
-    def __init__(self, bus: Optional[EventBus] = None):
+    def __init__(self, bus: EventBus | None = None):
         """Initialize emitter."""
         self._event_bus = bus
         self._source = self.__class__.__name__
@@ -1154,7 +1148,7 @@ class EventEmitter:
         event.source = self._source
         return self._event_bus.publish(event)
 
-    def emit_many(self, events: List[Event]) -> int:
+    def emit_many(self, events: list[Event]) -> int:
         """Emit multiple events."""
         total = 0
         for event in events:
@@ -1167,7 +1161,7 @@ class EventEmitter:
 
 def create_event_bus(
     store_type: str = "memory",
-    store_path: Optional[str] = None,
+    store_path: str | None = None,
     max_events: int = 10000,
 ) -> EventBus:
     """
@@ -1192,7 +1186,7 @@ def create_event_bus(
 
 def create_async_event_bus(
     store_type: str = "memory",
-    store_path: Optional[str] = None,
+    store_path: str | None = None,
     max_events: int = 10000,
 ) -> AsyncEventBus:
     """Create an async event bus."""
@@ -1209,7 +1203,7 @@ def create_async_event_bus(
 
 
 # Global event bus instance (optional singleton pattern)
-_global_bus: Optional[EventBus] = None
+_global_bus: EventBus | None = None
 
 
 def get_event_bus() -> EventBus:
@@ -1233,7 +1227,7 @@ def publish(event: Event) -> int:
 
 def subscribe(
     handler: HandlerType,
-    event_type: Optional[Type[Event]] = None,
+    event_type: Type[Event] | None = None,
     **kwargs,
 ) -> Subscription:
     """Subscribe to the global event bus."""

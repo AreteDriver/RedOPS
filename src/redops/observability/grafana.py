@@ -6,7 +6,7 @@ Provides pre-built dashboards for monitoring RedOPS operations.
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -15,12 +15,12 @@ class GrafanaPanel:
 
     title: str
     panel_type: str  # graph, gauge, stat, table, etc.
-    gridPos: Dict[str, int]
-    targets: List[Dict[str, Any]] = field(default_factory=list)
-    options: Dict[str, Any] = field(default_factory=dict)
-    fieldConfig: Dict[str, Any] = field(default_factory=dict)
+    gridPos: dict[str, int]
+    targets: list[dict[str, Any]] = field(default_factory=list)
+    options: dict[str, Any] = field(default_factory=dict)
+    fieldConfig: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Grafana panel format."""
         return {
             "title": self.title,
@@ -38,14 +38,14 @@ class GrafanaDashboard:
 
     title: str
     uid: str
-    tags: List[str] = field(default_factory=list)
-    panels: List[GrafanaPanel] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    panels: list[GrafanaPanel] = field(default_factory=list)
     refresh: str = "30s"
     time_from: str = "now-1h"
     time_to: str = "now"
     timezone: str = "browser"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Grafana dashboard format."""
         return {
             "uid": self.uid,
@@ -73,7 +73,7 @@ def create_prometheus_target(
     expr: str,
     legend_format: str = "",
     ref_id: str = "A",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a Prometheus query target."""
     return {
         "datasource": {"type": "prometheus", "uid": "${datasource}"},
@@ -466,7 +466,7 @@ DASHBOARDS = {
 }
 
 
-def get_dashboard(name: str) -> Optional[GrafanaDashboard]:
+def get_dashboard(name: str) -> GrafanaDashboard | None:
     """Get a pre-built dashboard by name."""
     factory = DASHBOARDS.get(name)
     if factory:
@@ -474,12 +474,12 @@ def get_dashboard(name: str) -> Optional[GrafanaDashboard]:
     return None
 
 
-def get_all_dashboards() -> Dict[str, GrafanaDashboard]:
+def get_all_dashboards() -> dict[str, GrafanaDashboard]:
     """Get all pre-built dashboards."""
     return {name: factory() for name, factory in DASHBOARDS.items()}
 
 
-def export_dashboards(output_dir: str = "./dashboards") -> List[str]:
+def export_dashboards(output_dir: str = "./dashboards") -> list[str]:
     """Export all dashboards to JSON files."""
     from pathlib import Path
 

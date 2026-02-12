@@ -14,7 +14,7 @@ IMPORTANT: This module analyzes PUBLIC information only.
 No active scanning or intrusive probing.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
 import re
@@ -88,12 +88,12 @@ class CloudDetection:
 
     provider: CloudProvider
     confidence: InfrastructureConfidence
-    indicators: List[str] = field(default_factory=list)
-    services: List[str] = field(default_factory=list)
-    regions: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    indicators: list[str] = field(default_factory=list)
+    services: list[str] = field(default_factory=list)
+    regions: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "provider": self.provider.value,
@@ -111,11 +111,11 @@ class CDNDetection:
 
     provider: CDNProvider
     confidence: InfrastructureConfidence
-    indicators: List[str] = field(default_factory=list)
-    edge_locations: List[str] = field(default_factory=list)
-    features: List[str] = field(default_factory=list)
+    indicators: list[str] = field(default_factory=list)
+    edge_locations: list[str] = field(default_factory=list)
+    features: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "provider": self.provider.value,
@@ -132,12 +132,12 @@ class ServiceFingerprint:
 
     service_type: ServiceType
     name: str
-    version: Optional[str] = None
+    version: str | None = None
     confidence: InfrastructureConfidence = InfrastructureConfidence.MEDIUM
-    indicators: List[str] = field(default_factory=list)
-    configuration: Dict[str, Any] = field(default_factory=dict)
+    indicators: list[str] = field(default_factory=list)
+    configuration: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "service_type": self.service_type.value,
@@ -155,12 +155,12 @@ class NetworkComponent:
 
     component_type: str
     name: str
-    address: Optional[str] = None
+    address: str | None = None
     role: str = ""
-    connections: List[str] = field(default_factory=list)
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    connections: list[str] = field(default_factory=list)
+    attributes: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "component_type": self.component_type,
@@ -539,7 +539,7 @@ DNS_PROVIDERS = {
 
 
 def analyze_infrastructure(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Analyze infrastructure from context data.
@@ -635,7 +635,7 @@ def analyze_infrastructure(
     return ctx
 
 
-def collect_headers_from_context(ctx: Context) -> Dict[str, str]:
+def collect_headers_from_context(ctx: Context) -> dict[str, str]:
     """
     Collect HTTP headers from context.
 
@@ -665,7 +665,7 @@ def collect_headers_from_context(ctx: Context) -> Dict[str, str]:
     return headers
 
 
-def collect_dns_from_context(ctx: Context) -> Dict[str, List[str]]:
+def collect_dns_from_context(ctx: Context) -> dict[str, list[str]]:
     """
     Collect DNS records from context.
 
@@ -690,7 +690,7 @@ def collect_dns_from_context(ctx: Context) -> Dict[str, List[str]]:
     return dns_records
 
 
-def collect_urls_from_context(ctx: Context) -> List[str]:
+def collect_urls_from_context(ctx: Context) -> list[str]:
     """
     Collect URLs from context.
 
@@ -724,7 +724,7 @@ def collect_urls_from_context(ctx: Context) -> List[str]:
     return list(set(urls))
 
 
-def collect_certificates_from_context(ctx: Context) -> List[Dict[str, Any]]:
+def collect_certificates_from_context(ctx: Context) -> list[dict[str, Any]]:
     """
     Collect SSL certificates from context.
 
@@ -750,11 +750,11 @@ def collect_certificates_from_context(ctx: Context) -> List[Dict[str, Any]]:
 
 
 def detect_cloud_providers(
-    headers: Dict[str, str],
-    dns_records: Dict[str, List[str]],
-    urls: List[str],
+    headers: dict[str, str],
+    dns_records: dict[str, list[str]],
+    urls: list[str],
     target: str,
-) -> List[CloudDetection]:
+) -> list[CloudDetection]:
     """
     Detect cloud providers from available data.
 
@@ -789,12 +789,12 @@ def detect_cloud_providers(
 
 def check_cloud_provider(
     provider: CloudProvider,
-    indicators: Dict[str, Any],
-    headers: Dict[str, str],
-    dns_records: Dict[str, List[str]],
-    urls: List[str],
+    indicators: dict[str, Any],
+    headers: dict[str, str],
+    dns_records: dict[str, list[str]],
+    urls: list[str],
     target: str,
-) -> Optional[CloudDetection]:
+) -> CloudDetection | None:
     """
     Check for a specific cloud provider.
 
@@ -886,8 +886,8 @@ def check_cloud_provider(
 
 
 def detect_cdn_providers(
-    headers: Dict[str, str], dns_records: Dict[str, List[str]]
-) -> List[CDNDetection]:
+    headers: dict[str, str], dns_records: dict[str, list[str]]
+) -> list[CDNDetection]:
     """
     Detect CDN providers from available data.
 
@@ -917,10 +917,10 @@ def detect_cdn_providers(
 
 def check_cdn_provider(
     provider: CDNProvider,
-    indicators: Dict[str, Any],
-    headers: Dict[str, str],
-    dns_records: Dict[str, List[str]],
-) -> Optional[CDNDetection]:
+    indicators: dict[str, Any],
+    headers: dict[str, str],
+    dns_records: dict[str, list[str]],
+) -> CDNDetection | None:
     """
     Check for a specific CDN provider.
 
@@ -979,8 +979,8 @@ def check_cdn_provider(
 
 
 def fingerprint_services(
-    headers: Dict[str, str], urls: List[str], ctx: Context
-) -> List[ServiceFingerprint]:
+    headers: dict[str, str], urls: list[str], ctx: Context
+) -> list[ServiceFingerprint]:
     """
     Fingerprint services from headers and other data.
 
@@ -1031,10 +1031,10 @@ def fingerprint_services(
 
 def check_service_signature(
     name: str,
-    signature: Dict[str, Any],
-    headers: Dict[str, str],
+    signature: dict[str, Any],
+    headers: dict[str, str],
     service_type: ServiceType,
-) -> Optional[ServiceFingerprint]:
+) -> ServiceFingerprint | None:
     """
     Check for a specific service signature.
 
@@ -1086,8 +1086,8 @@ def check_service_signature(
 
 
 def analyze_dns_infrastructure(
-    dns_records: Dict[str, List[str]], target: str
-) -> Dict[str, Any]:
+    dns_records: dict[str, list[str]], target: str
+) -> dict[str, Any]:
     """
     Analyze DNS infrastructure.
 
@@ -1142,7 +1142,7 @@ def analyze_dns_infrastructure(
     return analysis
 
 
-def analyze_certificates(certificates: List[Dict[str, Any]]) -> Dict[str, Any]:
+def analyze_certificates(certificates: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Analyze SSL certificates for infrastructure info.
 
@@ -1188,8 +1188,8 @@ def analyze_certificates(certificates: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def detect_security_features(
-    headers: Dict[str, str], infra_data: Dict[str, Any]
-) -> List[Dict[str, Any]]:
+    headers: dict[str, str], infra_data: dict[str, Any]
+) -> list[dict[str, Any]]:
     """
     Detect security features in use.
 
@@ -1264,8 +1264,8 @@ def detect_security_features(
 
 
 def infer_network_topology(
-    infra_data: Dict[str, Any], ctx: Context
-) -> List[NetworkComponent]:
+    infra_data: dict[str, Any], ctx: Context
+) -> list[NetworkComponent]:
     """
     Infer network topology from infrastructure data.
 
@@ -1337,7 +1337,7 @@ def infer_network_topology(
     return components
 
 
-def generate_infrastructure_summary(infra_data: Dict[str, Any]) -> Dict[str, Any]:
+def generate_infrastructure_summary(infra_data: dict[str, Any]) -> dict[str, Any]:
     """
     Generate summary of infrastructure analysis.
 
@@ -1399,7 +1399,7 @@ def generate_infrastructure_summary(infra_data: Dict[str, Any]) -> Dict[str, Any
 # ============================================================================
 
 
-def get_cloud_provider(name: str) -> Optional[CloudProvider]:
+def get_cloud_provider(name: str) -> CloudProvider | None:
     """
     Get cloud provider by name.
 
@@ -1419,7 +1419,7 @@ def get_cloud_provider(name: str) -> Optional[CloudProvider]:
         return None
 
 
-def get_cdn_provider(name: str) -> Optional[CDNProvider]:
+def get_cdn_provider(name: str) -> CDNProvider | None:
     """
     Get CDN provider by name.
 
@@ -1446,7 +1446,7 @@ def get_cdn_provider(name: str) -> Optional[CDNProvider]:
         return None
 
 
-def get_all_cloud_providers() -> List[CloudProvider]:
+def get_all_cloud_providers() -> list[CloudProvider]:
     """
     Get all cloud providers.
 
@@ -1456,7 +1456,7 @@ def get_all_cloud_providers() -> List[CloudProvider]:
     return list(CloudProvider)
 
 
-def get_all_cdn_providers() -> List[CDNProvider]:
+def get_all_cdn_providers() -> list[CDNProvider]:
     """
     Get all CDN providers.
 
@@ -1466,7 +1466,7 @@ def get_all_cdn_providers() -> List[CDNProvider]:
     return list(CDNProvider)
 
 
-def get_service_types() -> List[str]:
+def get_service_types() -> list[str]:
     """
     Get all service types.
 
@@ -1476,7 +1476,7 @@ def get_service_types() -> List[str]:
     return [t.value for t in ServiceType]
 
 
-def identify_cloud_from_ip(ip: str) -> Optional[CloudProvider]:
+def identify_cloud_from_ip(ip: str) -> CloudProvider | None:
     """
     Identify cloud provider from IP address patterns.
 
@@ -1494,7 +1494,7 @@ def identify_cloud_from_ip(ip: str) -> Optional[CloudProvider]:
     return None
 
 
-def identify_cloud_from_domain(domain: str) -> Optional[CloudProvider]:
+def identify_cloud_from_domain(domain: str) -> CloudProvider | None:
     """
     Identify cloud provider from domain name.
 
@@ -1532,7 +1532,7 @@ def identify_cloud_from_domain(domain: str) -> Optional[CloudProvider]:
     return None
 
 
-def identify_cdn_from_headers(headers: Dict[str, str]) -> Optional[CDNProvider]:
+def identify_cdn_from_headers(headers: dict[str, str]) -> CDNProvider | None:
     """
     Identify CDN provider from headers.
 
@@ -1563,7 +1563,7 @@ def identify_cdn_from_headers(headers: Dict[str, str]) -> Optional[CDNProvider]:
     return None
 
 
-def get_aws_services() -> List[str]:
+def get_aws_services() -> list[str]:
     """
     Get list of AWS services.
 
@@ -1573,7 +1573,7 @@ def get_aws_services() -> List[str]:
     return AWS_INDICATORS.get("services", [])
 
 
-def get_azure_services() -> List[str]:
+def get_azure_services() -> list[str]:
     """
     Get list of Azure services.
 
@@ -1583,7 +1583,7 @@ def get_azure_services() -> List[str]:
     return AZURE_INDICATORS.get("services", [])
 
 
-def get_gcp_services() -> List[str]:
+def get_gcp_services() -> list[str]:
     """
     Get list of GCP services.
 
@@ -1593,7 +1593,7 @@ def get_gcp_services() -> List[str]:
     return GCP_INDICATORS.get("services", [])
 
 
-def is_cloud_hosted(infra_data: Dict[str, Any]) -> bool:
+def is_cloud_hosted(infra_data: dict[str, Any]) -> bool:
     """
     Check if infrastructure is cloud-hosted.
 
@@ -1606,7 +1606,7 @@ def is_cloud_hosted(infra_data: Dict[str, Any]) -> bool:
     return len(infra_data.get("cloud_providers", [])) > 0
 
 
-def is_cdn_fronted(infra_data: Dict[str, Any]) -> bool:
+def is_cdn_fronted(infra_data: dict[str, Any]) -> bool:
     """
     Check if infrastructure is CDN-fronted.
 
@@ -1619,7 +1619,7 @@ def is_cdn_fronted(infra_data: Dict[str, Any]) -> bool:
     return len(infra_data.get("cdn_providers", [])) > 0
 
 
-def get_security_posture(infra_data: Dict[str, Any]) -> str:
+def get_security_posture(infra_data: dict[str, Any]) -> str:
     """
     Assess infrastructure security posture.
 

@@ -5,7 +5,7 @@ Exports findings in SARIF format for integration with CI/CD pipelines
 and security tools like GitHub Code Scanning, Azure DevOps, etc.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 from datetime import datetime, timezone
 import json
@@ -18,7 +18,7 @@ SARIF_VERSION = "2.1.0"
 SARIF_SCHEMA = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
 
 
-def export_sarif(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_sarif(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export findings as a SARIF report.
 
@@ -92,7 +92,7 @@ def create_sarif_document(
     tool_name: str = "RedOps",
     tool_version: str = "1.0.0",
     include_suppressed: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create a complete SARIF document from context.
 
@@ -161,7 +161,7 @@ def create_sarif_document(
     return sarif_doc
 
 
-def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
+def collect_findings(ctx: Context) -> list[dict[str, Any]]:
     """
     Collect all findings from context.
 
@@ -195,7 +195,7 @@ def collect_findings(ctx: Context) -> List[Dict[str, Any]]:
     return findings
 
 
-def build_rules(findings: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+def build_rules(findings: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """
     Build SARIF rules from findings.
 
@@ -239,8 +239,8 @@ def build_rules(findings: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
 
 
 def build_results(
-    findings: List[Dict[str, Any]], rules: Dict[str, Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    findings: list[dict[str, Any]], rules: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
     """
     Build SARIF results from findings.
 
@@ -354,13 +354,13 @@ def severity_to_score(severity: Any) -> str:
     return score_map.get(severity_str, "5.0")
 
 
-def create_fingerprint(finding: Dict[str, Any]) -> str:
+def create_fingerprint(finding: dict[str, Any]) -> str:
     """Create a unique fingerprint for deduplication."""
     key_data = f"{finding.get('module', '')}:{finding.get('title', '')}:{finding.get('description', '')}"
     return hashlib.sha256(key_data.encode()).hexdigest()
 
 
-def extract_location(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def extract_location(data: dict[str, Any]) -> dict[str, Any] | None:
     """Extract location information from finding data."""
     # Check for common location fields
     uri = (
@@ -383,7 +383,7 @@ def extract_location(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def extract_related_locations(data: Dict[str, Any]) -> List[Dict[str, Any]]:
+def extract_related_locations(data: dict[str, Any]) -> list[dict[str, Any]]:
     """Extract related locations from finding data."""
     related = []
 
@@ -426,7 +426,7 @@ def extract_related_locations(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     return related
 
 
-def get_sarif_summary(ctx: Context) -> Dict[str, Any]:
+def get_sarif_summary(ctx: Context) -> dict[str, Any]:
     """
     Get a summary of SARIF export results.
 

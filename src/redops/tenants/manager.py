@@ -4,11 +4,13 @@ Tenant manager for multi-tenant operations.
 Handles tenant lifecycle, context management, and quota enforcement.
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from .models import (
     Tenant,
@@ -24,12 +26,12 @@ logger = logging.getLogger(__name__)
 _tenant_context = threading.local()
 
 
-def get_current_tenant() -> Optional[Tenant]:
+def get_current_tenant() -> Tenant | None:
     """Get the current tenant from thread-local storage."""
     return getattr(_tenant_context, "tenant", None)
 
 
-def set_current_tenant(tenant: Optional[Tenant]) -> None:
+def set_current_tenant(tenant: Tenant | None) -> None:
     """Set the current tenant in thread-local storage."""
     _tenant_context.tenant = tenant
 
@@ -48,15 +50,15 @@ def tenant_context(tenant: Tenant):
 class TenantBackend:
     """Abstract backend for tenant storage."""
 
-    def get(self, tenant_id: str) -> Optional[Tenant]:
+    def get(self, tenant_id: str) -> Tenant | None:
         """Get tenant by ID."""
         raise NotImplementedError
 
-    def get_by_slug(self, slug: str) -> Optional[Tenant]:
+    def get_by_slug(self, slug: str) -> Tenant | None:
         """Get tenant by slug."""
         raise NotImplementedError
 
-    def list(self, status: Optional[TenantStatus] = None) -> List[Tenant]:
+    def list(self, status: TenantStatus | None = None) -> list[Tenant]:
         """List tenants."""
         raise NotImplementedError
 
@@ -73,16 +75,16 @@ class MemoryTenantBackend(TenantBackend):
     """In-memory tenant storage backend."""
 
     def __init__(self):
-        self._tenants: Dict[str, Tenant] = {}
-        self._slug_index: Dict[str, str] = {}
+        self._tenants: dict[str, Tenant] = {}
+        self._slug_index: dict[str, str] = {}
         self._lock = threading.Lock()
 
-    def get(self, tenant_id: str) -> Optional[Tenant]:
+    def get(self, tenant_id: str) -> Tenant | None:
         """Get tenant by ID."""
         with self._lock:
             return self._tenants.get(tenant_id)
 
-    def get_by_slug(self, slug: str) -> Optional[Tenant]:
+    def get_by_slug(self, slug: str) -> Tenant | None:
         """Get tenant by slug."""
         with self._lock:
             tenant_id = self._slug_index.get(slug)
@@ -90,7 +92,7 @@ class MemoryTenantBackend(TenantBackend):
                 return self._tenants.get(tenant_id)
             return None
 
-    def list(self, status: Optional[TenantStatus] = None) -> List[Tenant]:
+    def list(self, status: TenantStatus | None = None) -> list[Tenant]:
         """List tenants."""
         with self._lock:
             tenants = list(self._tenants.values())
@@ -131,10 +133,10 @@ class TenantManager:
     - Event hooks
     """
 
-    def __init__(self, backend: Optional[TenantBackend] = None):
+    def __init__(self, backend: TenantBackend | None = None):
         """Initialize tenant manager."""
         self._backend = backend or MemoryTenantBackend()
-        self._hooks: Dict[str, List[Callable]] = {
+        self._hooks: dict[str, list[Callable]] = {
             "before_create": [],
             "after_create": [],
             "before_update": [],
@@ -153,8 +155,8 @@ class TenantManager:
         owner_email: str,
         owner_name: str = "",
         tier: TenantTier = TenantTier.FREE,
-        slug: Optional[str] = None,
-        config: Optional[TenantConfig] = None,
+        slug: str | None = None,
+        config: TenantConfig | None = None,
         **kwargs,
     ) -> Tenant:
         """
@@ -201,19 +203,19 @@ class TenantManager:
 
         return tenant
 
-    def get_tenant(self, tenant_id: str) -> Optional[Tenant]:
+    def get_tenant(self, tenant_id: str) -> Tenant | None:
         """Get tenant by ID."""
         return self._backend.get(tenant_id)
 
-    def get_tenant_by_slug(self, slug: str) -> Optional[Tenant]:
+    def get_tenant_by_slug(self, slug: str) -> Tenant | None:
         """Get tenant by slug."""
         return self._backend.get_by_slug(slug)
 
     def list_tenants(
         self,
-        status: Optional[TenantStatus] = None,
-        tier: Optional[TenantTier] = None,
-    ) -> List[Tenant]:
+        status: TenantStatus | None = None,
+        tier: TenantTier | None = None,
+    ) -> list[Tenant]:
         """
         List tenants with optional filtering.
 
@@ -233,7 +235,7 @@ class TenantManager:
         self,
         tenant_id: str,
         **updates,
-    ) -> Optional[Tenant]:
+    ) -> Tenant | None:
         """
         Update tenant attributes.
 
@@ -292,7 +294,7 @@ class TenantManager:
 
         return result
 
-    def suspend_tenant(self, tenant_id: str, reason: str = "") -> Optional[Tenant]:
+    def suspend_tenant(self, tenant_id: str, reason: str = "") -> Tenant | None:
         """
         Suspend a tenant.
 
@@ -315,7 +317,7 @@ class TenantManager:
 
         return tenant
 
-    def activate_tenant(self, tenant_id: str) -> Optional[Tenant]:
+    def activate_tenant(self, tenant_id: str) -> Tenant | None:
         """
         Activate a tenant.
 
@@ -341,7 +343,7 @@ class TenantManager:
         self,
         tenant_id: str,
         new_tier: TenantTier,
-    ) -> Optional[Tenant]:
+    ) -> Tenant | None:
         """
         Upgrade tenant tier.
 
@@ -442,7 +444,7 @@ class TenantManager:
             tenant.release_resource(resource, amount)
             self._backend.save(tenant)
 
-    def get_usage_stats(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+    def get_usage_stats(self, tenant_id: str) -> dict[str, Any] | None:
         """
         Get usage statistics for a tenant.
 
@@ -509,7 +511,7 @@ class TenantManager:
 
 
 # Global tenant manager instance
-_tenant_manager: Optional[TenantManager] = None
+_tenant_manager: TenantManager | None = None
 
 
 def get_tenant_manager() -> TenantManager:

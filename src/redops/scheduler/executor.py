@@ -4,7 +4,7 @@ Scan executor for scheduled jobs.
 Bridges the scheduler with RedOPS pipeline execution.
 """
 
-from typing import Optional, Dict, Any, Callable, List
+from typing import Any, Callable
 from datetime import datetime, timezone
 import logging
 import traceback
@@ -24,8 +24,8 @@ class ScanExecutor:
 
     def __init__(
         self,
-        pipeline_registry: Optional[Dict[str, Callable]] = None,
-        notification_handler: Optional[Callable[[ScanJob, str], None]] = None,
+        pipeline_registry: dict[str, Callable] | None = None,
+        notification_handler: Callable[[ScanJob, str], None] | None = None,
     ):
         """
         Initialize the executor.
@@ -36,8 +36,8 @@ class ScanExecutor:
         """
         self._pipelines = pipeline_registry or {}
         self._notification_handler = notification_handler
-        self._pre_hooks: List[Callable[[ScanJob], None]] = []
-        self._post_hooks: List[Callable[[ScanJob], None]] = []
+        self._pre_hooks: list[Callable[[ScanJob], None]] = []
+        self._post_hooks: list[Callable[[ScanJob], None]] = []
 
     def register_pipeline(self, name: str, pipeline: Callable) -> None:
         """
@@ -164,9 +164,9 @@ class ScanExecutor:
         self,
         result: Any,
         policy: ScanPolicy,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Extract relevant data from result."""
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "scan_time": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -243,9 +243,9 @@ def create_default_executor() -> ScanExecutor:
 def execute_scheduled_scan(
     target: str,
     pipeline: str,
-    modules: Optional[List[str]] = None,
-    params: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    modules: list[str] | None = None,
+    params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Execute a one-off scheduled scan.
 

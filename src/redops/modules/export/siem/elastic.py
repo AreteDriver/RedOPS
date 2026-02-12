@@ -5,7 +5,7 @@ Exports RedOPS findings and scan results to Elasticsearch or OpenSearch
 for SIEM integration and analysis.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime, timezone
 import os
 import json
@@ -26,11 +26,11 @@ except ImportError:
 class ElasticConfig:
     """Elasticsearch configuration."""
 
-    hosts: List[str]
+    hosts: list[str]
     index_prefix: str = "redops"
-    api_key: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
+    api_key: str | None = None
+    username: str | None = None
+    password: str | None = None
     verify_ssl: bool = True
     timeout: int = 30
 
@@ -57,7 +57,7 @@ class ElasticExporter:
     Uses the bulk API for efficient indexing.
     """
 
-    def __init__(self, config: Optional[ElasticConfig] = None):
+    def __init__(self, config: ElasticConfig | None = None):
         """
         Initialize the exporter.
 
@@ -65,7 +65,7 @@ class ElasticExporter:
             config: Elasticsearch configuration (uses env vars if not provided)
         """
         self.config = config or ElasticConfig.from_env()
-        self._pending_docs: List[Dict] = []
+        self._pending_docs: list[dict] = []
         self._host_index = 0
 
     def _get_host(self) -> str:
@@ -74,7 +74,7 @@ class ElasticExporter:
         self._host_index += 1
         return host.rstrip("/")
 
-    def _get_auth_headers(self) -> Dict[str, str]:
+    def _get_auth_headers(self) -> dict[str, str]:
         """Get authentication headers."""
         headers = {"Content-Type": "application/json"}
 
@@ -104,9 +104,9 @@ class ElasticExporter:
 
     def add_document(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         doc_type: str = "scan",
-        doc_id: Optional[str] = None,
+        doc_id: str | None = None,
     ) -> None:
         """
         Add a document to the pending batch.
@@ -130,7 +130,7 @@ class ElasticExporter:
             }
         )
 
-    def add_finding(self, finding: Finding, scan_id: Optional[str] = None) -> None:
+    def add_finding(self, finding: Finding, scan_id: str | None = None) -> None:
         """
         Add a finding document.
 
@@ -150,7 +150,7 @@ class ElasticExporter:
         }
         self.add_document(doc, doc_type="finding")
 
-    def flush(self) -> Dict[str, Any]:
+    def flush(self) -> dict[str, Any]:
         """
         Send all pending documents via bulk API.
 
@@ -231,8 +231,8 @@ class ElasticExporter:
             }
 
     def export_context(
-        self, ctx: Context, scan_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, ctx: Context, scan_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Export all context data to Elasticsearch.
 
@@ -298,7 +298,7 @@ class ElasticExporter:
 
         return self.flush()
 
-    def create_index_template(self) -> Dict[str, Any]:
+    def create_index_template(self) -> dict[str, Any]:
         """
         Create an index template for RedOPS indices.
 
@@ -356,7 +356,7 @@ class ElasticExporter:
             return {"success": False, "error": str(e)}
 
 
-def export_to_elastic(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_to_elastic(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export scan results to Elasticsearch.
 

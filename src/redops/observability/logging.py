@@ -4,7 +4,7 @@ Structured logging for RedOPS.
 Provides JSON-formatted logging with trace correlation and context propagation.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from contextlib import contextmanager
@@ -60,7 +60,7 @@ class LogContext:
     _local = threading.local()
 
     @classmethod
-    def get_context(cls) -> Dict[str, Any]:
+    def get_context(cls) -> dict[str, Any]:
         """Get the current context."""
         if not hasattr(cls._local, "context"):
             cls._local.context = {}
@@ -292,7 +292,7 @@ class StructuredLogger:
             yield self
 
 
-def setup_structured_logging(config: Optional[LoggingConfig] = None) -> None:
+def setup_structured_logging(config: LoggingConfig | None = None) -> None:
     """
     Set up structured logging.
 

@@ -8,7 +8,6 @@ import hashlib
 import os
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 from uuid import uuid4
 
 import bcrypt
@@ -38,7 +37,7 @@ class Token(BaseModel):
     """Token response model."""
 
     access_token: str
-    refresh_token: Optional[str] = None
+    refresh_token: str | None = None
     token_type: str = "bearer"
     expires_in: int
 
@@ -59,7 +58,7 @@ class APIKeyCreate(BaseModel):
 
     name: str = Field(..., description="Key name for identification")
     scopes: list[str] = Field(default_factory=list, description="Allowed scopes")
-    expires_in_days: Optional[int] = Field(None, description="Days until expiration")
+    expires_in_days: int | None = Field(None, description="Days until expiration")
 
 
 class APIKeyResponse(BaseModel):
@@ -70,8 +69,8 @@ class APIKeyResponse(BaseModel):
     prefix: str
     scopes: list[str]
     created_at: datetime
-    expires_at: Optional[datetime] = None
-    last_used: Optional[datetime] = None
+    expires_at: datetime | None = None
+    last_used: datetime | None = None
     is_active: bool = True
 
 
@@ -104,7 +103,7 @@ def create_access_token(
     user_id: str,
     username: str,
     role: str,
-    expires_delta: Optional[timedelta] = None,
+    expires_delta: timedelta | None = None,
 ) -> str:
     """Create a JWT access token.
 
@@ -156,7 +155,7 @@ def create_refresh_token(user_id: str) -> str:
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
-def decode_token(token: str) -> Optional[dict]:
+def decode_token(token: str) -> dict | None:
     """Decode and validate a JWT token.
 
     Args:
@@ -179,7 +178,7 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 
-async def verify_token(token: str) -> Optional[dict]:
+async def verify_token(token: str) -> dict | None:
     """Verify an access token and return user info.
 
     Args:
@@ -252,8 +251,8 @@ def hash_api_key(key: str) -> str:
 def create_api_key(
     user_id: str,
     name: str,
-    scopes: Optional[list[str]] = None,
-    expires_in_days: Optional[int] = None,
+    scopes: list[str] | None = None,
+    expires_in_days: int | None = None,
 ) -> APIKeyWithSecret:
     """Create a new API key.
 
@@ -305,7 +304,7 @@ def create_api_key(
     )
 
 
-async def verify_api_key(key: str) -> Optional[dict]:
+async def verify_api_key(key: str) -> dict | None:
     """Verify an API key and return user info.
 
     Args:

@@ -5,7 +5,7 @@ Provides URL scanning and analysis capabilities via the URLScan.io API.
 Can scan URLs for malicious content and retrieve scan results.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 from datetime import datetime, timezone
 import os
 import time
@@ -25,7 +25,7 @@ except ImportError:
 URLSCAN_API = "https://urlscan.io/api/v1"
 
 
-def scan_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def scan_url(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Submit a URL for scanning via URLScan.io.
 
@@ -145,7 +145,7 @@ def scan_url(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
     return ctx
 
 
-def search_urlscan(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def search_urlscan(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Search URLScan.io for existing scans.
 
@@ -243,7 +243,7 @@ def search_urlscan(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Con
     return ctx
 
 
-def get_scan_result(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def get_scan_result(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Retrieve results for a specific scan UUID.
 
@@ -311,7 +311,7 @@ def get_scan_result(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Co
     return ctx
 
 
-def _wait_for_scan_result(uuid: str, api_key: str, timeout: int = 60) -> Optional[Dict]:
+def _wait_for_scan_result(uuid: str, api_key: str, timeout: int = 60) -> dict | None:
     """Wait for scan to complete and return result."""
     headers = {"API-Key": api_key} if api_key else {}
     start_time = time.time()
@@ -340,7 +340,7 @@ def _wait_for_scan_result(uuid: str, api_key: str, timeout: int = 60) -> Optiona
     return None
 
 
-def analyze_urlscan_results(result: Dict[str, Any]) -> Dict[str, Any]:
+def analyze_urlscan_results(result: dict[str, Any]) -> dict[str, Any]:
     """
     Analyze URLScan.io results for threat indicators.
 
@@ -418,7 +418,7 @@ def analyze_urlscan_results(result: Dict[str, Any]) -> Dict[str, Any]:
     return analysis
 
 
-def get_urlscan_summary(result: Dict[str, Any]) -> str:
+def get_urlscan_summary(result: dict[str, Any]) -> str:
     """
     Generate a human-readable summary of URLScan.io results.
 

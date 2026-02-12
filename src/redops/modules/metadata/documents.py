@@ -6,7 +6,7 @@ Identifies potentially sensitive information like author names, revision history
 and hidden content.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from pathlib import Path
 from redops.core.context import Context
 from redops.core.models import DocumentMetadata, Finding, RiskLevel
@@ -50,7 +50,7 @@ SENSITIVE_FIELDS = {
 }
 
 
-def extract_metadata(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def extract_metadata(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Extract metadata from documents.
 
@@ -79,8 +79,8 @@ def extract_metadata(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
         )
         return ctx
 
-    metadata_results: List[DocumentMetadata] = []
-    findings: List[Finding] = []
+    metadata_results: list[DocumentMetadata] = []
+    findings: list[Finding] = []
 
     # Process single file
     if file_path:
@@ -146,7 +146,7 @@ def extract_metadata(ctx: Context, params: Optional[Dict[str, Any]] = None) -> C
     return ctx
 
 
-def scan_directory_for_documents(directory: str, recursive: bool = True) -> List[Path]:
+def scan_directory_for_documents(directory: str, recursive: bool = True) -> list[Path]:
     """
     Scan a directory for document files.
 
@@ -174,7 +174,7 @@ def scan_directory_for_documents(directory: str, recursive: bool = True) -> List
 
 def extract_from_file(
     file_path: str, include_hidden_check: bool = True
-) -> Optional[DocumentMetadata]:
+) -> DocumentMetadata | None:
     """
     Extract metadata from a single document file.
 
@@ -222,7 +222,7 @@ def extract_from_file(
         )
 
 
-def extract_pdf_metadata(file_path: str) -> Optional[DocumentMetadata]:
+def extract_pdf_metadata(file_path: str) -> DocumentMetadata | None:
     """
     Extract metadata from a PDF file.
 
@@ -242,8 +242,8 @@ def extract_pdf_metadata(file_path: str) -> Optional[DocumentMetadata]:
             warnings=["pypdf not available - install with: pip install pypdf"],
         )
 
-    metadata: Dict[str, Any] = {}
-    warnings: List[str] = []
+    metadata: dict[str, Any] = {}
+    warnings: list[str] = []
     author = None
     created = None
     modified = None
@@ -315,7 +315,7 @@ def extract_pdf_metadata(file_path: str) -> Optional[DocumentMetadata]:
 
 def extract_docx_metadata(
     file_path: str, include_hidden_check: bool = True
-) -> Optional[DocumentMetadata]:
+) -> DocumentMetadata | None:
     """
     Extract metadata from a Word (.docx) file.
 
@@ -338,8 +338,8 @@ def extract_docx_metadata(
             ],
         )
 
-    metadata: Dict[str, Any] = {}
-    warnings: List[str] = []
+    metadata: dict[str, Any] = {}
+    warnings: list[str] = []
     author = None
     created = None
     modified = None
@@ -402,7 +402,7 @@ def extract_docx_metadata(
     )
 
 
-def check_docx_for_hidden_data(doc) -> List[str]:
+def check_docx_for_hidden_data(doc) -> list[str]:
     """
     Check a Word document for hidden data.
 
@@ -445,7 +445,7 @@ def check_docx_for_hidden_data(doc) -> List[str]:
     return warnings
 
 
-def extract_office_metadata(file_path: str) -> Dict[str, Any]:
+def extract_office_metadata(file_path: str) -> dict[str, Any]:
     """
     Extract metadata from Office documents (Word, Excel, PowerPoint).
 
@@ -471,7 +471,7 @@ def extract_office_metadata(file_path: str) -> Dict[str, Any]:
         }
 
 
-def check_for_hidden_data(file_path: str) -> List[str]:
+def check_for_hidden_data(file_path: str) -> list[str]:
     """
     Check for hidden data in documents.
 
@@ -496,7 +496,7 @@ def check_for_hidden_data(file_path: str) -> List[str]:
 
 def analyze_document_for_findings(
     doc_meta: DocumentMetadata, file_path: str
-) -> List[Finding]:
+) -> list[Finding]:
     """
     Analyze document metadata and create security findings.
 
@@ -589,7 +589,7 @@ def analyze_document_for_findings(
     return findings
 
 
-def count_by_type(results: List[DocumentMetadata]) -> Dict[str, int]:
+def count_by_type(results: list[DocumentMetadata]) -> dict[str, int]:
     """
     Count documents by file type.
 
@@ -599,14 +599,14 @@ def count_by_type(results: List[DocumentMetadata]) -> Dict[str, int]:
     Returns:
         Dictionary of file type counts
     """
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for result in results:
         file_type = result.file_type
         counts[file_type] = counts.get(file_type, 0) + 1
     return counts
 
 
-def get_document_summary(results: List[DocumentMetadata]) -> Dict[str, Any]:
+def get_document_summary(results: list[DocumentMetadata]) -> dict[str, Any]:
     """
     Generate a summary of document metadata extraction.
 

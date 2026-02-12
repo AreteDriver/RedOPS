@@ -4,7 +4,7 @@ Datadog integration.
 Exports RedOPS findings and scan results to Datadog Logs and Events API.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from datetime import datetime, timezone
 import os
 from dataclasses import dataclass
@@ -48,7 +48,7 @@ class DatadogConfig:
     site: str = "us1"
     service: str = "redops"
     source: str = "redops"
-    tags: List[str] = None
+    tags: list[str] = None
     timeout: int = 30
 
     def __post_init__(self):
@@ -86,7 +86,7 @@ class DatadogExporter:
     Supports batch log export and individual event creation.
     """
 
-    def __init__(self, config: Optional[DatadogConfig] = None):
+    def __init__(self, config: DatadogConfig | None = None):
         """
         Initialize the exporter.
 
@@ -94,15 +94,15 @@ class DatadogExporter:
             config: Datadog configuration (uses env vars if not provided)
         """
         self.config = config or DatadogConfig.from_env()
-        self._pending_logs: List[Dict] = []
+        self._pending_logs: list[dict] = []
 
     def _build_log_entry(
         self,
         message: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         level: str = "info",
-        tags: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        tags: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
         Build a Datadog log entry.
 
@@ -132,9 +132,9 @@ class DatadogExporter:
     def add_log(
         self,
         message: str,
-        data: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
         level: str = "info",
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
     ) -> None:
         """
         Add a log entry to the pending batch.
@@ -148,7 +148,7 @@ class DatadogExporter:
         entry = self._build_log_entry(message, data or {}, level, tags)
         self._pending_logs.append(entry)
 
-    def add_finding(self, finding: Finding, scan_id: Optional[str] = None) -> None:
+    def add_finding(self, finding: Finding, scan_id: str | None = None) -> None:
         """
         Add a finding as a log entry.
 
@@ -182,7 +182,7 @@ class DatadogExporter:
         ]
         self.add_log(f"Security Finding: {finding.title}", data, level, tags)
 
-    def flush_logs(self) -> Dict[str, Any]:
+    def flush_logs(self) -> dict[str, Any]:
         """
         Send all pending logs to Datadog.
 
@@ -239,9 +239,9 @@ class DatadogExporter:
         title: str,
         text: str,
         alert_type: str = "info",
-        tags: Optional[List[str]] = None,
-        aggregation_key: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        tags: list[str] | None = None,
+        aggregation_key: str | None = None,
+    ) -> dict[str, Any]:
         """
         Send an event to Datadog Events API.
 
@@ -304,8 +304,8 @@ class DatadogExporter:
             return {"success": False, "error": str(e)}
 
     def export_context(
-        self, ctx: Context, scan_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, ctx: Context, scan_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Export all context data to Datadog.
 
@@ -404,7 +404,7 @@ class DatadogExporter:
         return result
 
 
-def export_to_datadog(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def export_to_datadog(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export scan results to Datadog.
 

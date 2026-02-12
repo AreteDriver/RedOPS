@@ -12,7 +12,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, TextIO, Tuple, Type
+from typing import Any, Callable, Sequence, TextIO, Type
 
 
 class OutputFormat(Enum):
@@ -80,7 +80,7 @@ class OutputWriter:
         self,
         stream: TextIO = None,
         error_stream: TextIO = None,
-        use_color: Optional[bool] = None,
+        use_color: bool | None = None,
         format: OutputFormat = OutputFormat.TEXT,
     ):
         """Initialize output writer."""
@@ -156,9 +156,9 @@ class OutputWriter:
 
     def table(
         self,
-        rows: List[List[str]],
-        headers: Optional[List[str]] = None,
-        align: Optional[List[str]] = None,
+        rows: list[list[str]],
+        headers: list[str] | None = None,
+        align: list[str] | None = None,
     ) -> None:
         """Write table output."""
         if not rows and not headers:
@@ -178,7 +178,7 @@ class OutputWriter:
         if not align:
             align = ["l"] * num_cols
 
-        def format_row(row: List[str]) -> str:
+        def format_row(row: list[str]) -> str:
             cells = []
             for i, (cell, width, a) in enumerate(zip(row, col_widths, align)):
                 if a == "r":
@@ -199,7 +199,7 @@ class OutputWriter:
         for row in rows:
             self.write(format_row(row))
 
-    def csv(self, rows: List[List[str]], headers: Optional[List[str]] = None) -> None:
+    def csv(self, rows: list[list[str]], headers: list[str] | None = None) -> None:
         """Write CSV output."""
         import csv
         import io
@@ -230,7 +230,7 @@ class OutputWriter:
         if current >= total:
             self._stream.write("\n")
 
-    def spinner_frames(self) -> List[str]:
+    def spinner_frames(self) -> list[str]:
         """Get spinner animation frames."""
         return ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
@@ -262,7 +262,7 @@ class Command(ABC):
 
     name: str = ""
     description: str = ""
-    aliases: List[str] = []
+    aliases: list[str] = []
 
     def __init__(self, output: OutputWriter):
         """Initialize command."""
@@ -278,7 +278,7 @@ class Command(ABC):
         """Execute the command."""
         pass
 
-    def validate(self, args: argparse.Namespace) -> Optional[str]:
+    def validate(self, args: argparse.Namespace) -> str | None:
         """Validate arguments. Return error message or None."""
         return None
 
@@ -290,7 +290,7 @@ class CommandGroup:
         """Initialize command group."""
         self._name = name
         self._description = description
-        self._commands: Dict[str, Type[Command]] = {}
+        self._commands: dict[str, Type[Command]] = {}
 
     @property
     def name(self) -> str:
@@ -309,11 +309,11 @@ class CommandGroup:
             self._commands[alias] = command_class
         return self
 
-    def get(self, name: str) -> Optional[Type[Command]]:
+    def get(self, name: str) -> Type[Command] | None:
         """Get a command by name."""
         return self._commands.get(name)
 
-    def list_commands(self) -> List[Type[Command]]:
+    def list_commands(self) -> list[Type[Command]]:
         """List unique commands (excluding aliases)."""
         seen = set()
         commands = []
@@ -334,12 +334,12 @@ class CLI:
         self._name = name
         self._version = version
         self._description = description
-        self._commands: Dict[str, Type[Command]] = {}
-        self._groups: Dict[str, CommandGroup] = {}
+        self._commands: dict[str, Type[Command]] = {}
+        self._groups: dict[str, CommandGroup] = {}
         self._output = OutputWriter()
-        self._global_options: List[Tuple[List[str], Dict]] = []
-        self._before_hooks: List[Callable] = []
-        self._after_hooks: List[Callable] = []
+        self._global_options: list[tuple[list[str], dict]] = []
+        self._before_hooks: list[Callable] = []
+        self._after_hooks: list[Callable] = []
 
     @property
     def name(self) -> str:
@@ -471,7 +471,7 @@ class CLI:
 
         return parser
 
-    def run(self, args: Optional[Sequence[str]] = None) -> int:
+    def run(self, args: Sequence[str] | None = None) -> int:
         """Run the CLI."""
         parser = self.create_parser()
         parsed = parser.parse_args(args)
@@ -585,8 +585,8 @@ class InteractiveShell:
         self._intro = intro
         self._output = cli.output
         self._running = False
-        self._history: List[str] = []
-        self._commands: Dict[str, Callable] = {
+        self._history: list[str] = []
+        self._commands: dict[str, Callable] = {
             "help": self._cmd_help,
             "exit": self._cmd_exit,
             "quit": self._cmd_exit,
@@ -594,7 +594,7 @@ class InteractiveShell:
             "clear": self._cmd_clear,
         }
 
-    def add_command(self, name: str, func: Callable[[List[str]], None]) -> None:
+    def add_command(self, name: str, func: Callable[[list[str]], None]) -> None:
         """Add a shell command."""
         self._commands[name] = func
 
@@ -638,23 +638,23 @@ class InteractiveShell:
         except SystemExit:
             pass  # Ignore argparse exits
 
-    def _cmd_help(self, args: List[str]) -> None:
+    def _cmd_help(self, args: list[str]) -> None:
         """Show help."""
         self._output.write("Available commands:")
         for name in sorted(self._commands.keys()):
             self._output.write(f"  {name}")
         self._output.write("\nCLI commands are also available.")
 
-    def _cmd_exit(self, args: List[str]) -> None:
+    def _cmd_exit(self, args: list[str]) -> None:
         """Exit the shell."""
         self._running = False
 
-    def _cmd_history(self, args: List[str]) -> None:
+    def _cmd_history(self, args: list[str]) -> None:
         """Show command history."""
         for i, cmd in enumerate(self._history, 1):
             self._output.write(f"{i:4d}  {cmd}")
 
-    def _cmd_clear(self, args: List[str]) -> None:
+    def _cmd_clear(self, args: list[str]) -> None:
         """Clear the screen."""
         print("\033[2J\033[H", end="", flush=True)
 
@@ -678,8 +678,8 @@ class PromptBuilder:
     def ask(
         self,
         message: str,
-        default: Optional[str] = None,
-        validator: Optional[Callable[[str], bool]] = None,
+        default: str | None = None,
+        validator: Callable[[str], bool] | None = None,
     ) -> str:
         """Ask for text input."""
         prompt = message
@@ -706,7 +706,7 @@ class PromptBuilder:
         return getpass.getpass(f"{message}: ")
 
     def choice(
-        self, message: str, choices: List[str], default: Optional[str] = None
+        self, message: str, choices: list[str], default: str | None = None
     ) -> str:
         """Ask user to choose from options."""
         self._output.write(message)
@@ -734,8 +734,8 @@ class PromptBuilder:
             self._output.error("Invalid choice")
 
     def multi_choice(
-        self, message: str, choices: List[str], defaults: Optional[List[str]] = None
-    ) -> List[str]:
+        self, message: str, choices: list[str], defaults: list[str] | None = None
+    ) -> list[str]:
         """Ask user to choose multiple options."""
         defaults = defaults or []
         self._output.write(message)
@@ -768,7 +768,7 @@ def create_cli(
     return CLI(name=name, version=version, description=description)
 
 
-def command(name: str, description: str = "", aliases: Optional[List[str]] = None):
+def command(name: str, description: str = "", aliases: list[str] | None = None):
     """Decorator to create a command from a function."""
 
     def decorator(func: Callable) -> Type[Command]:

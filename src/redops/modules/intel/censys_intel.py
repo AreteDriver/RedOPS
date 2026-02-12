@@ -11,7 +11,7 @@ IMPORTANT: Requires Censys API credentials (API ID and Secret).
 This module uses publicly available data from Censys's database.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any
 from dataclasses import dataclass, field
 import os
 
@@ -23,14 +23,14 @@ class CensysHost:
     """Censys host result."""
 
     ip: str
-    services: List[Dict[str, Any]] = field(default_factory=list)
-    location: Dict[str, Any] = field(default_factory=dict)
-    autonomous_system: Dict[str, Any] = field(default_factory=dict)
-    operating_system: Optional[str] = None
-    dns: Dict[str, Any] = field(default_factory=dict)
-    last_updated: Optional[str] = None
+    services: list[dict[str, Any]] = field(default_factory=list)
+    location: dict[str, Any] = field(default_factory=dict)
+    autonomous_system: dict[str, Any] = field(default_factory=dict)
+    operating_system: str | None = None
+    dns: dict[str, Any] = field(default_factory=dict)
+    last_updated: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "ip": self.ip,
@@ -48,13 +48,13 @@ class CensysCertificate:
     """Censys certificate result."""
 
     fingerprint: str
-    names: List[str] = field(default_factory=list)
-    issuer: Optional[str] = None
-    subject: Optional[str] = None
-    validity: Dict[str, Any] = field(default_factory=dict)
-    key_info: Dict[str, Any] = field(default_factory=dict)
+    names: list[str] = field(default_factory=list)
+    issuer: str | None = None
+    subject: str | None = None
+    validity: dict[str, Any] = field(default_factory=dict)
+    key_info: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "fingerprint": self.fingerprint,
@@ -103,7 +103,7 @@ def get_censys_client():
         return None, None
 
 
-def query_censys_host(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def query_censys_host(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query Censys for host information.
 
@@ -223,7 +223,7 @@ def query_censys_host(ctx: Context, params: Optional[Dict[str, Any]] = None) -> 
 
 
 def query_censys_certificates(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Query Censys for certificate information.
@@ -302,7 +302,7 @@ def query_censys_certificates(
 
 
 def search_censys_hosts(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Search Censys hosts with a query.
@@ -391,7 +391,7 @@ def search_censys_hosts(
 
 
 def analyze_censys_intel(
-    ctx: Context, params: Optional[Dict[str, Any]] = None
+    ctx: Context, params: dict[str, Any] | None = None
 ) -> Context:
     """
     Run comprehensive Censys analysis.
@@ -466,7 +466,7 @@ def analyze_censys_intel(
 # Helper functions
 
 
-def _parse_certificate(data: Dict[str, Any]) -> CensysCertificate:
+def _parse_certificate(data: dict[str, Any]) -> CensysCertificate:
     """Parse Censys certificate data."""
     return CensysCertificate(
         fingerprint=data.get("fingerprint_sha256", data.get("fingerprint", "")),

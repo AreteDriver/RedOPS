@@ -3,7 +3,6 @@ Findings API routes.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -19,16 +18,16 @@ class FindingResponse(BaseModel):
     id: str
     scan_id: str
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     severity: str
     status: str = "open"
-    module: Optional[str] = None
-    category: Optional[str] = None
-    cvss_score: Optional[float] = None
-    cve_ids: List[str] = Field(default_factory=list)
+    module: str | None = None
+    category: str | None = None
+    cvss_score: float | None = None
+    cve_ids: list[str] = Field(default_factory=list)
     evidence: dict = Field(default_factory=dict)
-    remediation: Optional[str] = None
-    references: List[str] = Field(default_factory=list)
+    remediation: str | None = None
+    references: list[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
@@ -36,17 +35,17 @@ class FindingResponse(BaseModel):
 class FindingUpdate(BaseModel):
     """Finding update request."""
 
-    status: Optional[str] = Field(
+    status: str | None = Field(
         None,
         description="Finding status: open, confirmed, false_positive, accepted_risk, remediated",
     )
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class FindingList(BaseModel):
     """Paginated finding list response."""
 
-    findings: List[FindingResponse]
+    findings: list[FindingResponse]
     total: int
     skip: int
     limit: int
@@ -59,10 +58,10 @@ _findings: dict[str, dict] = {}
 @router.get("", response_model=FindingList)
 async def list_findings(
     pagination: Pagination = Depends(),
-    scan_id: Optional[str] = Query(None, description="Filter by scan ID"),
-    severity: Optional[str] = Query(None, description="Filter by severity"),
-    status: Optional[str] = Query(None, description="Filter by status"),
-    module: Optional[str] = Query(None, description="Filter by module"),
+    scan_id: str | None = Query(None, description="Filter by scan ID"),
+    severity: str | None = Query(None, description="Filter by severity"),
+    status: str | None = Query(None, description="Filter by status"),
+    module: str | None = Query(None, description="Filter by module"),
     current_user: dict = Depends(get_current_user),
 ):
     """List findings with optional filtering."""
@@ -141,7 +140,7 @@ async def update_finding(
 
 @router.get("/severity/summary")
 async def severity_summary(
-    scan_id: Optional[str] = Query(None, description="Filter by scan ID"),
+    scan_id: str | None = Query(None, description="Filter by scan ID"),
     current_user: dict = Depends(get_current_user),
 ):
     """Get finding count by severity."""

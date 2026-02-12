@@ -9,7 +9,7 @@ import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable
 from uuid import uuid4
 
 from redops.jobs.queue import JobPriority, JobQueue, get_job_queue
@@ -26,7 +26,7 @@ class Schedule(ABC):
         pass
 
     @abstractmethod
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize schedule."""
         pass
 
@@ -53,7 +53,7 @@ class IntervalSchedule(Schedule):
         """Get next run time."""
         return after + timedelta(seconds=self.total_seconds)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize schedule."""
         return {
             "type": "interval",
@@ -64,7 +64,7 @@ class IntervalSchedule(Schedule):
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "IntervalSchedule":
+    def from_dict(cls, data: dict[str, Any]) -> "IntervalSchedule":
         """Create from dict."""
         return cls(
             seconds=data.get("seconds", 0),
@@ -96,7 +96,7 @@ class CronSchedule(Schedule):
         self._month_set = self._parse_field(self.month, 1, 12)
         self._weekday_set = self._parse_field(self.weekday, 0, 6)
 
-    def _parse_field(self, field: str, min_val: int, max_val: int) -> Set[int]:
+    def _parse_field(self, field: str, min_val: int, max_val: int) -> set[int]:
         """Parse a cron field into a set of values."""
         values = set()
 
@@ -145,7 +145,7 @@ class CronSchedule(Schedule):
         # Fallback - should not reach here
         return after + timedelta(hours=1)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize schedule."""
         return {
             "type": "cron",
@@ -157,7 +157,7 @@ class CronSchedule(Schedule):
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CronSchedule":
+    def from_dict(cls, data: dict[str, Any]) -> "CronSchedule":
         """Create from dict."""
         return cls(
             minute=data.get("minute", "*"),
@@ -198,28 +198,28 @@ class ScheduledJob:
     name: str = ""
     func_name: str = ""
     args: tuple = field(default_factory=tuple)
-    kwargs: Dict[str, Any] = field(default_factory=dict)
-    schedule: Optional[Schedule] = None
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    schedule: Schedule | None = None
     queue: str = "default"
     priority: JobPriority = JobPriority.NORMAL
-    timeout: Optional[float] = None
+    timeout: float | None = None
     max_retries: int = 0
 
     enabled: bool = True
-    last_run: Optional[datetime] = None
-    next_run: Optional[datetime] = None
+    last_run: datetime | None = None
+    next_run: datetime | None = None
     run_count: int = 0
     error_count: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """Calculate next run time."""
         if self.schedule and not self.next_run:
             self.next_run = self.schedule.get_next_run(datetime.now(timezone.utc))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dict."""
         return {
             "id": self.id,
@@ -242,7 +242,7 @@ class ScheduledJob:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ScheduledJob":
+    def from_dict(cls, data: dict[str, Any]) -> "ScheduledJob":
         """Create from dict."""
         schedule = None
         if data.get("schedule"):
@@ -286,7 +286,7 @@ class JobScheduler:
 
     def __init__(
         self,
-        queue: Optional[JobQueue] = None,
+        queue: JobQueue | None = None,
         check_interval: float = 1.0,
     ):
         """
@@ -298,9 +298,9 @@ class JobScheduler:
         """
         self._queue = queue or get_job_queue()
         self._check_interval = check_interval
-        self._jobs: Dict[str, ScheduledJob] = {}
+        self._jobs: dict[str, ScheduledJob] = {}
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._shutdown_event = threading.Event()
         self._lock = threading.RLock()
 
@@ -308,12 +308,12 @@ class JobScheduler:
         self,
         func: Callable,
         schedule: Schedule,
-        name: Optional[str] = None,
+        name: str | None = None,
         args: tuple = (),
-        kwargs: Optional[Dict[str, Any]] = None,
+        kwargs: dict[str, Any] | None = None,
         queue: str = "default",
         priority: JobPriority = JobPriority.NORMAL,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         max_retries: int = 0,
         enabled: bool = True,
     ) -> str:
@@ -390,7 +390,7 @@ class JobScheduler:
     def add_cron(
         self,
         func: Callable,
-        cron_string: Optional[str] = None,
+        cron_string: str | None = None,
         minute: str = "*",
         hour: str = "*",
         day: str = "*",
@@ -451,7 +451,7 @@ class JobScheduler:
                 return True
             return False
 
-    def run_now(self, job_id: str) -> Optional[str]:
+    def run_now(self, job_id: str) -> str | None:
         """
         Trigger a scheduled job immediately.
 
@@ -554,12 +554,12 @@ class JobScheduler:
 
             self._shutdown_event.wait(self._check_interval)
 
-    def get_job(self, job_id: str) -> Optional[ScheduledJob]:
+    def get_job(self, job_id: str) -> ScheduledJob | None:
         """Get a scheduled job."""
         with self._lock:
             return self._jobs.get(job_id)
 
-    def list_jobs(self) -> List[ScheduledJob]:
+    def list_jobs(self) -> list[ScheduledJob]:
         """List all scheduled jobs."""
         with self._lock:
             return list(self._jobs.values())

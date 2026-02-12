@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 
@@ -34,12 +34,12 @@ class CheckResult:
     name: str
     status: HealthStatus
     message: str = ""
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -67,12 +67,12 @@ class HealthReport:
     """Aggregated health report."""
 
     status: HealthStatus
-    checks: List[CheckResult] = field(default_factory=list)
+    checks: list[CheckResult] = field(default_factory=list)
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     version: str = ""
     uptime_seconds: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "status": self.status.value,
@@ -90,7 +90,7 @@ class HealthReport:
         """Check if overall status is healthy."""
         return self.status == HealthStatus.HEALTHY
 
-    def get_check(self, name: str) -> Optional[CheckResult]:
+    def get_check(self, name: str) -> CheckResult | None:
         """Get a specific check result by name."""
         for check in self.checks:
             if check.name == name:
@@ -115,8 +115,8 @@ class HealthCheck(ABC):
         self,
         status: HealthStatus,
         message: str = "",
-        details: Optional[Dict] = None,
-        error: Optional[str] = None,
+        details: dict | None = None,
+        error: str | None = None,
         duration_ms: float = 0.0,
     ) -> CheckResult:
         """Helper to create a CheckResult."""
@@ -129,17 +129,17 @@ class HealthCheck(ABC):
             duration_ms=duration_ms,
         )
 
-    def healthy(self, message: str = "", details: Optional[Dict] = None) -> CheckResult:
+    def healthy(self, message: str = "", details: dict | None = None) -> CheckResult:
         """Create a healthy result."""
         return self._create_result(HealthStatus.HEALTHY, message, details)
 
     def unhealthy(
-        self, message: str, error: Optional[str] = None, details: Optional[Dict] = None
+        self, message: str, error: str | None = None, details: dict | None = None
     ) -> CheckResult:
         """Create an unhealthy result."""
         return self._create_result(HealthStatus.UNHEALTHY, message, details, error)
 
-    def degraded(self, message: str, details: Optional[Dict] = None) -> CheckResult:
+    def degraded(self, message: str, details: dict | None = None) -> CheckResult:
         """Create a degraded result."""
         return self._create_result(HealthStatus.DEGRADED, message, details)
 
@@ -161,8 +161,8 @@ class AsyncHealthCheck(ABC):
         self,
         status: HealthStatus,
         message: str = "",
-        details: Optional[Dict] = None,
-        error: Optional[str] = None,
+        details: dict | None = None,
+        error: str | None = None,
         duration_ms: float = 0.0,
     ) -> CheckResult:
         """Helper to create a CheckResult."""
@@ -175,17 +175,17 @@ class AsyncHealthCheck(ABC):
             duration_ms=duration_ms,
         )
 
-    def healthy(self, message: str = "", details: Optional[Dict] = None) -> CheckResult:
+    def healthy(self, message: str = "", details: dict | None = None) -> CheckResult:
         """Create a healthy result."""
         return self._create_result(HealthStatus.HEALTHY, message, details)
 
     def unhealthy(
-        self, message: str, error: Optional[str] = None, details: Optional[Dict] = None
+        self, message: str, error: str | None = None, details: dict | None = None
     ) -> CheckResult:
         """Create an unhealthy result."""
         return self._create_result(HealthStatus.UNHEALTHY, message, details, error)
 
-    def degraded(self, message: str, details: Optional[Dict] = None) -> CheckResult:
+    def degraded(self, message: str, details: dict | None = None) -> CheckResult:
         """Create a degraded result."""
         return self._create_result(HealthStatus.DEGRADED, message, details)
 
@@ -202,7 +202,7 @@ class TCPHealthCheck(HealthCheck):
         self,
         host: str,
         port: int,
-        name: Optional[str] = None,
+        name: str | None = None,
         timeout: float = 5.0,
         critical: bool = True,
     ):
@@ -264,12 +264,12 @@ class HTTPHealthCheck(HealthCheck):
     def __init__(
         self,
         url: str,
-        name: Optional[str] = None,
+        name: str | None = None,
         method: str = "GET",
         expected_status: int = 200,
         timeout: float = 5.0,
         critical: bool = True,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ):
         self.url = url
         parsed = urlparse(url)
@@ -351,9 +351,9 @@ class DiskSpaceCheck(HealthCheck):
     def __init__(
         self,
         path: str = "/",
-        min_free_bytes: Optional[int] = None,
+        min_free_bytes: int | None = None,
         min_free_percent: float = 10.0,
-        name: Optional[str] = None,
+        name: str | None = None,
         critical: bool = True,
     ):
         self.path = path
@@ -513,7 +513,7 @@ class ProcessCheck(HealthCheck):
     def __init__(
         self,
         process_name: str,
-        name: Optional[str] = None,
+        name: str | None = None,
         critical: bool = True,
     ):
         if not self._SAFE_PROCESS_NAME.match(process_name):
@@ -578,7 +578,7 @@ class FileExistsCheck(HealthCheck):
     def __init__(
         self,
         path: str,
-        name: Optional[str] = None,
+        name: str | None = None,
         check_readable: bool = True,
         check_writable: bool = False,
         critical: bool = True,
@@ -755,7 +755,7 @@ class RedisCheck(HealthCheck):
         host: str = "localhost",
         port: int = 6379,
         db: int = 0,
-        password: Optional[str] = None,
+        password: str | None = None,
         name: str = "redis",
         critical: bool = True,
         timeout: float = 5.0,
@@ -825,16 +825,16 @@ class HealthCheckManager:
     """Manages and executes health checks."""
 
     def __init__(self, version: str = ""):
-        self._checks: Dict[str, Union[HealthCheck, AsyncHealthCheck]] = {}
+        self._checks: dict[str, HealthCheck | AsyncHealthCheck] = {}
         self._version = version
         self._start_time = datetime.now(timezone.utc)
-        self._last_report: Optional[HealthReport] = None
+        self._last_report: HealthReport | None = None
         self._lock = threading.Lock()
 
     def register(
         self,
-        check: Union[HealthCheck, AsyncHealthCheck],
-        name: Optional[str] = None,
+        check: HealthCheck | AsyncHealthCheck,
+        name: str | None = None,
     ) -> "HealthCheckManager":
         """Register a health check."""
         check_name = name or check.name
@@ -850,15 +850,15 @@ class HealthCheckManager:
                 return True
         return False
 
-    def get_check(self, name: str) -> Optional[Union[HealthCheck, AsyncHealthCheck]]:
+    def get_check(self, name: str) -> HealthCheck | AsyncHealthCheck | None:
         """Get a registered health check."""
         return self._checks.get(name)
 
-    def list_checks(self) -> List[str]:
+    def list_checks(self) -> list[str]:
         """List registered check names."""
         return list(self._checks.keys())
 
-    def run_check(self, name: str) -> Optional[CheckResult]:
+    def run_check(self, name: str) -> CheckResult | None:
         """Run a specific health check."""
         check = self._checks.get(name)
         if not check:
@@ -1004,7 +1004,7 @@ class HealthCheckManager:
         self._last_report = report
         return report
 
-    def _calculate_overall_status(self, results: List[CheckResult]) -> HealthStatus:
+    def _calculate_overall_status(self, results: list[CheckResult]) -> HealthStatus:
         """Calculate overall health status from check results."""
         if not results:
             return HealthStatus.UNKNOWN
@@ -1032,7 +1032,7 @@ class HealthCheckManager:
             return HealthStatus.HEALTHY
 
     @property
-    def last_report(self) -> Optional[HealthReport]:
+    def last_report(self) -> HealthReport | None:
         """Get the last health report."""
         return self._last_report
 
@@ -1052,7 +1052,7 @@ class ReadinessProbe:
 
     def __init__(self, manager: HealthCheckManager):
         self._manager = manager
-        self._ready_checks: List[str] = []
+        self._ready_checks: list[str] = []
 
     def add_check(self, name: str) -> "ReadinessProbe":
         """Add a check to the readiness probe."""
@@ -1072,7 +1072,7 @@ class ReadinessProbe:
                 return False
         return True
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get readiness status details."""
         results = {}
         ready = True
@@ -1096,8 +1096,8 @@ class LivenessProbe:
 
     def __init__(
         self,
-        manager: Optional[HealthCheckManager] = None,
-        custom_check: Optional[Callable[[], bool]] = None,
+        manager: HealthCheckManager | None = None,
+        custom_check: Callable[[], bool] | None = None,
     ):
         self._manager = manager
         self._custom_check = custom_check
@@ -1135,7 +1135,7 @@ class LivenessProbe:
         """Mark the service as alive."""
         self._alive = True
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get liveness status details."""
         alive = self.is_alive()
         return {

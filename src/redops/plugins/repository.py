@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 from redops.plugins.manifest import PluginManifest, load_manifest, ManifestError
@@ -37,9 +37,9 @@ class PluginVersion:
     """Version information for a plugin."""
 
     version: str
-    released_at: Optional[datetime] = None
-    download_url: Optional[str] = None
-    checksum: Optional[str] = None
+    released_at: datetime | None = None
+    download_url: str | None = None
+    checksum: str | None = None
     changelog: str = ""
 
 
@@ -54,13 +54,13 @@ class PluginInfo:
     source: PluginSource = PluginSource.LOCAL
     source_url: str = ""
     installed: bool = False
-    installed_at: Optional[datetime] = None
-    path: Optional[Path] = None
-    manifest: Optional[PluginManifest] = None
-    available_versions: List[PluginVersion] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    installed_at: datetime | None = None
+    path: Path | None = None
+    manifest: PluginManifest | None = None
+    available_versions: list[PluginVersion] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -110,8 +110,8 @@ class PluginRepository:
 
     def __init__(
         self,
-        plugins_dir: Optional[Path] = None,
-        registry_url: Optional[str] = None,
+        plugins_dir: Path | None = None,
+        registry_url: str | None = None,
     ):
         """
         Initialize the repository.
@@ -124,9 +124,9 @@ class PluginRepository:
             Path(plugins_dir) if plugins_dir else Path.home() / ".redops" / "plugins"
         )
         self._registry_url = registry_url
-        self._installed: Dict[str, PluginInfo] = {}
-        self._loaded: Dict[str, Any] = {}
-        self._hooks: Dict[str, List[Callable]] = {
+        self._installed: dict[str, PluginInfo] = {}
+        self._loaded: dict[str, Any] = {}
+        self._hooks: dict[str, list[Callable]] = {
             "pre_install": [],
             "post_install": [],
             "pre_uninstall": [],
@@ -195,7 +195,7 @@ class PluginRepository:
         self,
         source: str,
         force: bool = False,
-        config: Optional[Dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> PluginInfo:
         """
         Install a plugin from various sources.
@@ -413,7 +413,7 @@ class PluginRepository:
     def upgrade(
         self,
         name: str,
-        version: Optional[str] = None,
+        version: str | None = None,
     ) -> PluginInfo:
         """
         Upgrade a plugin to a newer version.
@@ -487,11 +487,11 @@ class PluginRepository:
         except AttributeError as e:
             raise ImportError(f"Plugin class not found: {e}")
 
-    def list_installed(self) -> List[PluginInfo]:
+    def list_installed(self) -> list[PluginInfo]:
         """Get list of installed plugins."""
         return list(self._installed.values())
 
-    def get_info(self, name: str) -> Optional[PluginInfo]:
+    def get_info(self, name: str) -> PluginInfo | None:
         """Get information about a plugin."""
         return self._installed.get(name)
 
@@ -499,7 +499,7 @@ class PluginRepository:
         """Check if a plugin is installed."""
         return name in self._installed
 
-    def discover_local(self) -> List[PluginInfo]:
+    def discover_local(self) -> list[PluginInfo]:
         """
         Discover plugins in the plugins directory.
 
@@ -561,7 +561,7 @@ class PluginRepository:
 
 # Module-level convenience functions
 
-_default_repository: Optional[PluginRepository] = None
+_default_repository: PluginRepository | None = None
 
 
 def get_repository() -> PluginRepository:
@@ -582,12 +582,12 @@ def uninstall_plugin(name: str) -> bool:
     return get_repository().uninstall(name)
 
 
-def list_installed_plugins() -> List[PluginInfo]:
+def list_installed_plugins() -> list[PluginInfo]:
     """List installed plugins using the default repository."""
     return get_repository().list_installed()
 
 
-def search_plugins(query: str) -> List[PluginInfo]:
+def search_plugins(query: str) -> list[PluginInfo]:
     """
     Search for plugins.
 

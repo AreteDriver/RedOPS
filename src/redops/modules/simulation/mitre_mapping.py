@@ -5,7 +5,7 @@ Maps findings, risks, and attack paths to MITRE ATT&CK framework techniques.
 Provides tactical coverage analysis and detection recommendations.
 """
 
-from typing import Optional, Dict, Any, List, Set
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 from redops.core.context import Context
@@ -21,10 +21,10 @@ class MitreTechnique:
     description: str
     detection: str = ""
     mitigation: str = ""
-    platforms: List[str] = field(default_factory=list)
-    data_sources: List[str] = field(default_factory=list)
+    platforms: list[str] = field(default_factory=list)
+    data_sources: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -57,7 +57,7 @@ MITRE_TACTICS = [
 ]
 
 # Expanded MITRE ATT&CK technique database
-MITRE_TECHNIQUES: Dict[str, MitreTechnique] = {
+MITRE_TECHNIQUES: dict[str, MitreTechnique] = {
     # Reconnaissance
     "T1595": MitreTechnique(
         id="T1595",
@@ -411,7 +411,7 @@ KEYWORD_TECHNIQUE_MAP = {
 }
 
 
-def map_to_mitre(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Context:
+def map_to_mitre(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Map findings, risks, and attack paths to MITRE ATT&CK techniques.
 
@@ -433,7 +433,7 @@ def map_to_mitre(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     ctx.log("Mapping to MITRE ATT&CK framework", level="INFO")
 
     # Collect all technique IDs
-    techniques_used: Set[str] = set()
+    techniques_used: set[str] = set()
 
     # Map from attack paths
     attack_paths = ctx.get("attack_paths", [])
@@ -503,7 +503,7 @@ def map_to_mitre(ctx: Context, params: Optional[Dict[str, Any]] = None) -> Conte
     return ctx
 
 
-def map_findings_to_techniques(ctx: Context) -> Dict[str, List[str]]:
+def map_findings_to_techniques(ctx: Context) -> dict[str, list[str]]:
     """
     Map findings to MITRE techniques based on keywords.
 
@@ -534,7 +534,7 @@ def map_findings_to_techniques(ctx: Context) -> Dict[str, List[str]]:
     return dict(mapping)
 
 
-def find_techniques_for_text(text: str) -> Set[str]:
+def find_techniques_for_text(text: str) -> set[str]:
     """
     Find MITRE techniques that match text content.
 
@@ -554,7 +554,7 @@ def find_techniques_for_text(text: str) -> Set[str]:
     return techniques
 
 
-def map_risk_to_techniques(risk: Dict[str, Any]) -> Set[str]:
+def map_risk_to_techniques(risk: dict[str, Any]) -> set[str]:
     """
     Map a risk to MITRE techniques.
 
@@ -581,7 +581,7 @@ def map_risk_to_techniques(risk: Dict[str, Any]) -> Set[str]:
     return techniques
 
 
-def map_finding_to_technique(finding: Dict[str, Any]) -> Optional[str]:
+def map_finding_to_technique(finding: dict[str, Any]) -> str | None:
     """
     Map a single finding to the most relevant MITRE technique.
 
@@ -607,7 +607,7 @@ def map_finding_to_technique(finding: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def calculate_tactic_coverage(techniques: Set[str]) -> Dict[str, int]:
+def calculate_tactic_coverage(techniques: set[str]) -> dict[str, int]:
     """
     Calculate coverage of MITRE tactics.
 
@@ -628,7 +628,7 @@ def calculate_tactic_coverage(techniques: Set[str]) -> Dict[str, int]:
     return coverage
 
 
-def generate_detection_recommendations(techniques: Set[str]) -> List[Dict[str, Any]]:
+def generate_detection_recommendations(techniques: set[str]) -> list[dict[str, Any]]:
     """
     Generate detection recommendations for used techniques.
 
@@ -668,7 +668,7 @@ def generate_detection_recommendations(techniques: Set[str]) -> List[Dict[str, A
     return recommendations
 
 
-def get_technique_info(technique_id: str) -> Optional[Dict[str, Any]]:
+def get_technique_info(technique_id: str) -> dict[str, Any] | None:
     """
     Get information about a MITRE ATT&CK technique.
 
@@ -683,7 +683,7 @@ def get_technique_info(technique_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def get_techniques_by_tactic(tactic: str) -> List[Dict[str, Any]]:
+def get_techniques_by_tactic(tactic: str) -> list[dict[str, Any]]:
     """
     Get all techniques for a specific tactic.
 
@@ -702,7 +702,7 @@ def get_techniques_by_tactic(tactic: str) -> List[Dict[str, Any]]:
     return techniques
 
 
-def get_all_tactics() -> List[str]:
+def get_all_tactics() -> list[str]:
     """
     Get all MITRE ATT&CK tactics.
 
@@ -712,7 +712,7 @@ def get_all_tactics() -> List[str]:
     return MITRE_TACTICS.copy()
 
 
-def get_mitigations_for_techniques(techniques: Set[str]) -> List[Dict[str, str]]:
+def get_mitigations_for_techniques(techniques: set[str]) -> list[dict[str, str]]:
     """
     Get mitigations for a set of techniques.
 
@@ -739,7 +739,7 @@ def get_mitigations_for_techniques(techniques: Set[str]) -> List[Dict[str, str]]
     return mitigations
 
 
-def generate_attack_matrix_view(techniques: Set[str]) -> Dict[str, List[str]]:
+def generate_attack_matrix_view(techniques: set[str]) -> dict[str, list[str]]:
     """
     Generate a view similar to the MITRE ATT&CK matrix.
 
