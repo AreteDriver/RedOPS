@@ -3,6 +3,7 @@ Task Queue - Distributed task processing and job scheduling.
 Provides async task execution, job scheduling, and worker management.
 """
 
+import functools
 import heapq
 import logging
 import queue
@@ -89,6 +90,7 @@ class TaskResult:
         }
 
 
+@functools.total_ordering
 @dataclass
 class Task:
     """
