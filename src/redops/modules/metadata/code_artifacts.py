@@ -205,9 +205,7 @@ HIGH_PRIORITY_FILES = {
 }
 
 
-def analyze_repository(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def analyze_repository(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Analyze a code repository for artifacts and metadata.
 

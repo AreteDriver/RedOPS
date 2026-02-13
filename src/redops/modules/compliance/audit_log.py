@@ -52,9 +52,7 @@ def log_to_file(entry: dict[str, Any], log_file: Path) -> None:
         f.write(json.dumps(entry) + "\n")
 
 
-def audit_pipeline_start(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def audit_pipeline_start(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Log the start of a pipeline execution.
 
@@ -86,9 +84,7 @@ def audit_pipeline_start(
     return ctx
 
 
-def audit_pipeline_end(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def audit_pipeline_end(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Log the end of a pipeline execution.
 

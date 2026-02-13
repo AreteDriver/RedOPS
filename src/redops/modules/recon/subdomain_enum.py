@@ -266,9 +266,7 @@ COMMON_SUBDOMAINS = [
 ]
 
 
-def enumerate_subdomains(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def enumerate_subdomains(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Enumerate subdomains using multiple techniques.
 

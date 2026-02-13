@@ -116,9 +116,7 @@ def query_passivedns(ctx: Context, params: dict[str, Any] | None = None) -> Cont
     return ctx
 
 
-def get_domain_history(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def get_domain_history(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Get IP address history for a domain.
 

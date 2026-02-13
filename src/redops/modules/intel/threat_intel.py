@@ -388,9 +388,7 @@ THREAT_FEEDS = {
 # ============================================================================
 
 
-def analyze_threat_intel(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def analyze_threat_intel(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Analyze context data against threat intelligence.
 

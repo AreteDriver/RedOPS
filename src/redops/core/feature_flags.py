@@ -780,9 +780,7 @@ class ExperimentManager:
             return True
         return False
 
-    def get_variant(
-        self, experiment_name: str, context: FlagContext
-    ) -> Variant | None:
+    def get_variant(self, experiment_name: str, context: FlagContext) -> Variant | None:
         """Get the variant for a user in an experiment."""
         exp = self._experiments.get(experiment_name)
         if not exp:

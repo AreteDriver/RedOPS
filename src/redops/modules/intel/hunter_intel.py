@@ -116,9 +116,7 @@ def _make_hunter_request(
         return {"error": str(e)}
 
 
-def query_hunter_domain(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def query_hunter_domain(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query Hunter.io for domain email information.
 
@@ -267,9 +265,7 @@ def query_hunter_email_count(
     return ctx
 
 
-def verify_hunter_email(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def verify_hunter_email(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Verify an email address using Hunter.io.
 
@@ -336,9 +332,7 @@ def verify_hunter_email(
     return ctx
 
 
-def analyze_hunter_intel(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def analyze_hunter_intel(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Run comprehensive Hunter.io analysis.
 

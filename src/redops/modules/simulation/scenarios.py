@@ -158,9 +158,7 @@ RECOMMENDATION_TEMPLATES = {
 }
 
 
-def generate_scenarios(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def generate_scenarios(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Generate narrative attack scenarios from context data.
 

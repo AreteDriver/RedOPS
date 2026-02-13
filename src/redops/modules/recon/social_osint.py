@@ -919,9 +919,7 @@ def generate_osint_findings(osint_data: dict[str, Any]) -> list[dict[str, Any]]:
     return findings
 
 
-def discover_employees(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def discover_employees(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Discover potential employees from context data.
 

@@ -381,9 +381,7 @@ class GitHubClient:
             return {"success": False, "error": str(e)}
 
 
-def create_github_issue(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def create_github_issue(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Create a single GitHub issue.
 

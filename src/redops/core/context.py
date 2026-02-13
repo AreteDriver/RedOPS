@@ -21,9 +21,7 @@ class Context:
     all intermediate outputs.
     """
 
-    def __init__(
-        self, target: str | None = None, config: "RedOpsConfig | None" = None
-    ):
+    def __init__(self, target: str | None = None, config: "RedOpsConfig | None" = None):
         """
         Initialize a new Context.
 

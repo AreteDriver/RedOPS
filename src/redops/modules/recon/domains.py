@@ -329,9 +329,7 @@ def enumerate_dns(ctx: Context, params: dict[str, Any] | None = None) -> Context
     return ctx
 
 
-def discover_subdomains(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def discover_subdomains(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Discover subdomains using passive techniques.
 
@@ -439,9 +437,7 @@ def discover_subdomains(
     return ctx
 
 
-def check_zone_transfer(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def check_zone_transfer(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Check if DNS zone transfer (AXFR) is allowed.
 

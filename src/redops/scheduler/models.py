@@ -157,9 +157,7 @@ class ScanSchedule:
         if self.next_run is None and self.status == ScheduleStatus.ACTIVE:
             self.next_run = self.calculate_next_run()
 
-    def calculate_next_run(
-        self, from_time: datetime | None = None
-    ) -> datetime | None:
+    def calculate_next_run(self, from_time: datetime | None = None) -> datetime | None:
         """
         Calculate the next run time.
 

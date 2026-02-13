@@ -353,9 +353,7 @@ def search_shodan(ctx: Context, params: dict[str, Any] | None = None) -> Context
     return ctx
 
 
-def analyze_shodan_intel(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def analyze_shodan_intel(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Run comprehensive Shodan analysis.
 

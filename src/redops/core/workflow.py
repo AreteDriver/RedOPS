@@ -485,9 +485,7 @@ class WorkflowExecutor:
         max_parallel: int = 4,
         on_task_start: Callable[[Task], None] | None = None,
         on_task_complete: Callable[[Task, TaskResult], None] | None = None,
-        on_workflow_complete: 
-            Callable[[Workflow, WorkflowContext], None]
-         | None = None,
+        on_workflow_complete: Callable[[Workflow, WorkflowContext], None] | None = None,
     ):
         """Initialize executor."""
         self._max_parallel = max_parallel
@@ -719,9 +717,7 @@ class StateTransition:
 class StateMachine:
     """Finite state machine implementation."""
 
-    def __init__(
-        self, name: str = "state_machine", initial_state: str | None = None
-    ):
+    def __init__(self, name: str = "state_machine", initial_state: str | None = None):
         """Initialize state machine."""
         self._name = name
         self._states: set[str] = set()

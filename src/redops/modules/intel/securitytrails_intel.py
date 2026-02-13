@@ -158,9 +158,7 @@ def query_st_domain(ctx: Context, params: dict[str, Any] | None = None) -> Conte
     return ctx
 
 
-def query_st_subdomains(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def query_st_subdomains(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query SecurityTrails for subdomains.
 
@@ -281,9 +279,7 @@ def query_st_history(ctx: Context, params: dict[str, Any] | None = None) -> Cont
     return ctx
 
 
-def query_st_associated(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def query_st_associated(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query SecurityTrails for associated domains.
 

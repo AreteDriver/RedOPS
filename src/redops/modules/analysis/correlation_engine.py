@@ -294,9 +294,7 @@ CAUSAL_RELATIONSHIPS = {
 # ============================================================================
 
 
-def correlate_findings(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def correlate_findings(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Correlate findings from context data.
 

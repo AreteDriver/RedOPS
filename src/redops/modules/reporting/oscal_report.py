@@ -452,9 +452,7 @@ def get_oscal_summary(ctx: Context) -> dict[str, Any]:
     }
 
 
-def export_oscal_catalog(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def export_oscal_catalog(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Export a basic OSCAL Catalog of security controls.
 

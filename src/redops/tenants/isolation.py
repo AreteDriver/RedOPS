@@ -2,6 +2,7 @@
 Tenant data isolation for multi-tenant support.
 Provides isolated storage and data access patterns.
 """
+
 from __future__ import annotations
 
 import logging
@@ -17,13 +18,17 @@ from typing import (
 )
 from .manager import get_current_tenant
 from .models import Tenant
+
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
+
+
 class TenantIsolation:
     """
     Utilities for tenant data isolation.
     Provides methods to ensure data is properly scoped to tenants.
     """
+
     @staticmethod
     def get_tenant_prefix(tenant: Tenant | None = None) -> str:
         """
@@ -38,6 +43,7 @@ class TenantIsolation:
         if tenant:
             return f"tenant:{tenant.id}:"
         return "global:"
+
     @staticmethod
     def scope_key(key: str, tenant: Tenant | None = None) -> str:
         """
@@ -50,6 +56,7 @@ class TenantIsolation:
         """
         prefix = TenantIsolation.get_tenant_prefix(tenant)
         return f"{prefix}{key}"
+
     @staticmethod
     def unscope_key(scoped_key: str) -> tuple:
         """
@@ -66,6 +73,7 @@ class TenantIsolation:
         elif scoped_key.startswith("global:"):
             return None, scoped_key[7:]
         return None, scoped_key
+
     @staticmethod
     def get_tenant_path(
         base_path: str,
@@ -91,6 +99,7 @@ class TenantIsolation:
         if create:
             path.mkdir(parents=True, exist_ok=True)
         return path
+
     @staticmethod
     def filter_for_tenant(
         items: list[dict[str, Any]],
@@ -111,11 +120,14 @@ class TenantIsolation:
         if tenant is None:
             return items
         return [item for item in items if item.get(tenant_key) == tenant.id]
+
+
 class TenantDataStore(Generic[T]):
     """
     Generic tenant-scoped data store.
     Provides isolated storage per tenant with a common interface.
     """
+
     def __init__(
         self,
         name: str,
@@ -134,6 +146,7 @@ class TenantDataStore(Generic[T]):
         self._serializer = serializer or (lambda x: x)
         self._deserializer = deserializer or (lambda x: x)
         self._lock = threading.Lock()
+
     def _get_tenant_id(self, tenant: Tenant | None = None) -> str:
         """Get tenant ID, defaulting to current tenant."""
         if tenant:
@@ -142,6 +155,7 @@ class TenantDataStore(Generic[T]):
         if current:
             return current.id
         return "_global_"
+
     def set(
         self,
         key: str,
@@ -160,6 +174,7 @@ class TenantDataStore(Generic[T]):
             if tenant_id not in self._data:
                 self._data[tenant_id] = {}
             self._data[tenant_id][key] = value
+
     def get(
         self,
         key: str,
@@ -179,6 +194,7 @@ class TenantDataStore(Generic[T]):
         with self._lock:
             tenant_data = self._data.get(tenant_id, {})
             return tenant_data.get(key, default)
+
     def delete(
         self,
         key: str,
@@ -198,6 +214,7 @@ class TenantDataStore(Generic[T]):
                 del self._data[tenant_id][key]
                 return True
             return False
+
     def list(
         self,
         tenant: Tenant | None = None,
@@ -213,6 +230,7 @@ class TenantDataStore(Generic[T]):
         with self._lock:
             tenant_data = self._data.get(tenant_id, {})
             return list(tenant_data.values())
+
     def keys(
         self,
         tenant: Tenant | None = None,
@@ -228,6 +246,7 @@ class TenantDataStore(Generic[T]):
         with self._lock:
             tenant_data = self._data.get(tenant_id, {})
             return list(tenant_data.keys())
+
     def clear(
         self,
         tenant: Tenant | None = None,
@@ -246,6 +265,7 @@ class TenantDataStore(Generic[T]):
                 self._data[tenant_id] = {}
                 return count
             return 0
+
     def count(
         self,
         tenant: Tenant | None = None,
@@ -261,11 +281,14 @@ class TenantDataStore(Generic[T]):
         with self._lock:
             tenant_data = self._data.get(tenant_id, {})
             return len(tenant_data)
+
+
 class IsolatedStorage:
     """
     Filesystem-based isolated storage for tenants.
     Each tenant gets their own directory structure.
     """
+
     def __init__(self, base_path: str):
         """
         Initialize isolated storage.
@@ -274,6 +297,7 @@ class IsolatedStorage:
         """
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
+
     def get_tenant_root(self, tenant: Tenant | None = None) -> Path:
         """
         Get the root directory for a tenant.
@@ -290,6 +314,7 @@ class IsolatedStorage:
             path = self.base_path / "shared"
         path.mkdir(parents=True, exist_ok=True)
         return path
+
     def get_path(
         self,
         *path_parts: str,
@@ -310,6 +335,7 @@ class IsolatedStorage:
         if create_parents:
             path.parent.mkdir(parents=True, exist_ok=True)
         return path
+
     def write(
         self,
         path: str,
@@ -328,6 +354,7 @@ class IsolatedStorage:
         full_path = self.get_path(path, tenant=tenant)
         full_path.write_bytes(content)
         return full_path
+
     def write_text(
         self,
         path: str,
@@ -348,6 +375,7 @@ class IsolatedStorage:
         full_path = self.get_path(path, tenant=tenant)
         full_path.write_text(content, encoding=encoding)
         return full_path
+
     def read(
         self,
         path: str,
@@ -365,6 +393,7 @@ class IsolatedStorage:
         if full_path.exists():
             return full_path.read_bytes()
         return None
+
     def read_text(
         self,
         path: str,
@@ -384,6 +413,7 @@ class IsolatedStorage:
         if full_path.exists():
             return full_path.read_text(encoding=encoding)
         return None
+
     def delete(
         self,
         path: str,
@@ -405,6 +435,7 @@ class IsolatedStorage:
                 full_path.unlink()
             return True
         return False
+
     def list_files(
         self,
         path: str = "",
@@ -429,6 +460,7 @@ class IsolatedStorage:
         if recursive:
             return list(search_path.rglob(pattern))
         return list(search_path.glob(pattern))
+
     def get_usage(self, tenant: Tenant | None = None) -> dict[str, Any]:
         """
         Get storage usage statistics for a tenant.
@@ -450,6 +482,7 @@ class IsolatedStorage:
             "file_count": file_count,
             "root_path": str(root),
         }
+
     def cleanup_tenant(self, tenant: Tenant) -> bool:
         """
         Clean up all storage for a tenant.
@@ -464,11 +497,14 @@ class IsolatedStorage:
             logger.info(f"Cleaned up storage for tenant: {tenant.id}")
             return True
         return False
+
+
 class TenantAwareCache:
     """
     Tenant-aware caching layer.
     Ensures cache entries are isolated per tenant.
     """
+
     def __init__(
         self,
         backend: Any | None = None,
@@ -484,9 +520,11 @@ class TenantAwareCache:
         self._default_ttl = default_ttl
         self._memory_cache: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
+
     def _get_scoped_key(self, key: str, tenant: Tenant | None = None) -> str:
         """Get tenant-scoped cache key."""
         return TenantIsolation.scope_key(key, tenant)
+
     def get(
         self,
         key: str,
@@ -509,6 +547,7 @@ class TenantAwareCache:
                 else:
                     del self._memory_cache[scoped_key]
             return None
+
     def set(
         self,
         key: str,
@@ -527,12 +566,14 @@ class TenantAwareCache:
         scoped_key = self._get_scoped_key(key, tenant)
         ttl = ttl or self._default_ttl
         from datetime import timedelta
+
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
         with self._lock:
             self._memory_cache[scoped_key] = {
                 "value": value,
                 "expires_at": expires_at,
             }
+
     def delete(
         self,
         key: str,
@@ -552,6 +593,7 @@ class TenantAwareCache:
                 del self._memory_cache[scoped_key]
                 return True
             return False
+
     def clear_tenant(self, tenant: Tenant | None = None) -> int:
         """
         Clear all cache entries for a tenant.

@@ -136,9 +136,7 @@ def _make_hibp_request(
         return {"error": str(e)}
 
 
-def query_hibp_breaches(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def query_hibp_breaches(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Query HIBP for all breaches (no API key required).
 
@@ -376,9 +374,7 @@ def query_hibp_pastes(ctx: Context, params: dict[str, Any] | None = None) -> Con
     return ctx
 
 
-def analyze_hibp_intel(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def analyze_hibp_intel(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Run comprehensive HIBP analysis.
 

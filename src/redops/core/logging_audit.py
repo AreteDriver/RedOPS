@@ -204,9 +204,7 @@ class SensitiveDataMasker:
         (r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", "***@***.***"),  # Email
     ]
 
-    def __init__(
-        self, patterns: list[tuple] | None = None, mask_emails: bool = False
-    ):
+    def __init__(self, patterns: list[tuple] | None = None, mask_emails: bool = False):
         """Initialize masker with patterns."""
         self._patterns = (
             list(self.DEFAULT_PATTERNS) if patterns is None else list(patterns)
@@ -813,9 +811,7 @@ class Logger:
         """Log at WARNING level."""
         self._log(LogLevel.WARNING, message, **extra)
 
-    def error(
-        self, message: str, exception: Exception | None = None, **extra
-    ) -> None:
+    def error(self, message: str, exception: Exception | None = None, **extra) -> None:
         """Log at ERROR level."""
         self._log(LogLevel.ERROR, message, exception=exception, **extra)
 

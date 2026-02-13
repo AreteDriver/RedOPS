@@ -41,9 +41,7 @@ class BaseModule(ABC):
         """
         pass
 
-    def __call__(
-        self, ctx: Context, params: dict[str, Any] | None = None
-    ) -> Context:
+    def __call__(self, ctx: Context, params: dict[str, Any] | None = None) -> Context:
         """
         Allow modules to be called as functions.
 

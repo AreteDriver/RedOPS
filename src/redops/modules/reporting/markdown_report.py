@@ -676,9 +676,7 @@ def group_findings_by_category(ctx: Context) -> dict[str, list[dict[str, Any]]]:
     return {k: v for k, v in categories.items() if v}
 
 
-def generate_full_report(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def generate_full_report(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Generate a comprehensive full report with all sections.
 

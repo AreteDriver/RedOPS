@@ -2,6 +2,7 @@
 Task Queue - Distributed task processing and job scheduling.
 Provides async task execution, job scheduling, and worker management.
 """
+
 import heapq
 import logging
 import queue
@@ -17,10 +18,14 @@ from typing import (
     Callable,
     TypeVar,
 )
+
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
+
+
 class TaskStatus(Enum):
     """Task execution status."""
+
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -29,15 +34,21 @@ class TaskStatus(Enum):
     RETRYING = "retrying"
     CANCELLED = "cancelled"
     TIMEOUT = "timeout"
+
+
 class TaskPriority(Enum):
     """Task priority levels."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
     CRITICAL = 3
+
+
 @dataclass
 class TaskResult:
     """Result of task execution."""
+
     task_id: str
     status: TaskStatus
     result: Any = None
@@ -47,16 +58,19 @@ class TaskResult:
     completed_at: datetime | None = None
     attempts: int = 0
     worker_id: str | None = None
+
     @property
     def duration_seconds(self) -> float | None:
         """Get task duration in seconds."""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
         return None
+
     @property
     def success(self) -> bool:
         """Check if task succeeded."""
         return self.status == TaskStatus.COMPLETED
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -73,11 +87,14 @@ class TaskResult:
             "duration_seconds": self.duration_seconds,
             "worker_id": self.worker_id,
         }
+
+
 @dataclass
 class Task:
     """
     Represents a task to be executed.
     """
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     func: Callable | None = None
@@ -96,6 +113,7 @@ class Task:
     status: TaskStatus = TaskStatus.PENDING
     attempts: int = 0
     last_error: str | None = None
+
     def __lt__(self, other: "Task") -> bool:
         """Compare for priority queue ordering."""
         # Higher priority first, then earlier scheduled time
@@ -104,12 +122,15 @@ class Task:
         self_time = self.scheduled_at or self.created_at
         other_time = other.scheduled_at or other.created_at
         return self_time < other_time
+
     def should_retry(self) -> bool:
         """Check if task should be retried."""
         return self.attempts < self.max_retries
+
     def get_retry_delay(self) -> float:
         """Calculate retry delay with backoff."""
         return self.retry_delay * (self.retry_backoff**self.attempts)
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary (without func)."""
         return {
@@ -132,44 +153,57 @@ class Task:
             "attempts": self.attempts,
             "last_error": self.last_error,
         }
+
+
 class TaskStore(ABC):
     """Abstract base class for task storage."""
+
     @abstractmethod
     def save(self, task: Task) -> None:
         """Save a task."""
         pass
+
     @abstractmethod
     def get(self, task_id: str) -> Task | None:
         """Get a task by ID."""
         pass
+
     @abstractmethod
     def update_status(
         self, task_id: str, status: TaskStatus, error: str | None = None
     ) -> None:
         """Update task status."""
         pass
+
     @abstractmethod
     def get_pending(self, limit: int = 100) -> list[Task]:
         """Get pending tasks."""
         pass
+
     @abstractmethod
     def get_by_status(self, status: TaskStatus, limit: int = 100) -> list[Task]:
         """Get tasks by status."""
         pass
+
+
 class MemoryTaskStore(TaskStore):
     """In-memory task storage."""
+
     def __init__(self):
         """Initialize memory store."""
         self._tasks: dict[str, Task] = {}
         self._lock = threading.RLock()
+
     def save(self, task: Task) -> None:
         """Save a task."""
         with self._lock:
             self._tasks[task.id] = task
+
     def get(self, task_id: str) -> Task | None:
         """Get a task by ID."""
         with self._lock:
             return self._tasks.get(task_id)
+
     def update_status(
         self, task_id: str, status: TaskStatus, error: str | None = None
     ) -> None:
@@ -179,6 +213,7 @@ class MemoryTaskStore(TaskStore):
                 self._tasks[task_id].status = status
                 if error:
                     self._tasks[task_id].last_error = error
+
     def get_pending(self, limit: int = 100) -> list[Task]:
         """Get pending tasks."""
         with self._lock:
@@ -186,25 +221,31 @@ class MemoryTaskStore(TaskStore):
                 t for t in self._tasks.values() if t.status == TaskStatus.PENDING
             ]
             return sorted(pending)[:limit]
+
     def get_by_status(self, status: TaskStatus, limit: int = 100) -> list[Task]:
         """Get tasks by status."""
         with self._lock:
             matching = [t for t in self._tasks.values() if t.status == status]
             return matching[:limit]
+
     def clear(self) -> None:
         """Clear all tasks."""
         with self._lock:
             self._tasks.clear()
+
     def count(self, status: TaskStatus | None = None) -> int:
         """Count tasks."""
         with self._lock:
             if status:
                 return sum(1 for t in self._tasks.values() if t.status == status)
             return len(self._tasks)
+
+
 class Worker:
     """
     Worker that executes tasks.
     """
+
     def __init__(
         self,
         worker_id: str | None = None,
@@ -226,6 +267,7 @@ class Worker:
         self._current_task: Task | None = None
         self._tasks_completed = 0
         self._tasks_failed = 0
+
     def start(self) -> None:
         """Start the worker."""
         if self._running:
@@ -237,12 +279,14 @@ class Worker:
             daemon=True,
         )
         self._thread.start()
+
     def stop(self, timeout: float = 5.0) -> None:
         """Stop the worker."""
         self._running = False
         if self._thread:
             self._thread.join(timeout=timeout)
             self._thread = None
+
     def _run_loop(self) -> None:
         """Main worker loop."""
         while self._running:
@@ -262,6 +306,7 @@ class Worker:
                 continue
             except Exception as e:
                 logger.error(f"Worker {self.worker_id} error: {e}")
+
     def _execute_task(self, task: Task) -> None:
         """Execute a single task."""
         self._current_task = task
@@ -315,14 +360,17 @@ class Worker:
                     self._result_callback(result)
                 except Exception as e:
                     logger.error(f"Result callback failed: {e}")
+
     def _execute_with_timeout(self, task: Task) -> Any:
         """Execute task with timeout."""
         result_container = {"result": None, "error": None}
+
         def target():
             try:
                 result_container["result"] = task.func(*task.args, **task.kwargs)
             except Exception as e:
                 result_container["error"] = e
+
         thread = threading.Thread(target=target)
         thread.start()
         thread.join(timeout=task.timeout)
@@ -331,14 +379,17 @@ class Worker:
         if result_container["error"]:
             raise result_container["error"]
         return result_container["result"]
+
     @property
     def is_running(self) -> bool:
         """Check if worker is running."""
         return self._running
+
     @property
     def is_busy(self) -> bool:
         """Check if worker is executing a task."""
         return self._current_task is not None
+
     @property
     def stats(self) -> dict[str, Any]:
         """Get worker statistics."""
@@ -350,6 +401,8 @@ class Worker:
             "tasks_failed": self._tasks_failed,
             "current_task": self._current_task.id if self._current_task else None,
         }
+
+
 class TaskQueue:
     """
     Task queue for managing and executing tasks.
@@ -360,6 +413,7 @@ class TaskQueue:
     - Task scheduling
     - Result tracking
     """
+
     def __init__(
         self,
         num_workers: int = 1,
@@ -390,6 +444,7 @@ class TaskQueue:
             "tasks_failed": 0,
             "tasks_retried": 0,
         }
+
     def start(self) -> None:
         """Start the task queue and workers."""
         if self._running:
@@ -411,6 +466,7 @@ class TaskQueue:
             daemon=True,
         )
         self._scheduler_thread.start()
+
     def stop(self, timeout: float = 5.0) -> None:
         """Stop the task queue and workers."""
         self._running = False
@@ -427,6 +483,7 @@ class TaskQueue:
         if self._scheduler_thread:
             self._scheduler_thread.join(timeout=timeout)
             self._scheduler_thread = None
+
     def submit(
         self,
         func: Callable,
@@ -489,6 +546,7 @@ class TaskQueue:
                 # Queue immediately
                 self._enqueue(task)
         return task.id
+
     def _enqueue(self, task: Task) -> None:
         """Add task to queue."""
         task.status = TaskStatus.QUEUED
@@ -496,6 +554,7 @@ class TaskQueue:
         # Priority queue uses (priority_value, task) where lower = higher priority
         # We negate to make higher TaskPriority values process first
         self._queue.put((-task.priority.value, task))
+
     def _handle_result(self, result: TaskResult) -> None:
         """Handle task result."""
         with self._lock:
@@ -515,6 +574,7 @@ class TaskQueue:
             event = self._result_events.get(result.task_id)
             if event:
                 event.set()
+
     def _scheduler_loop(self) -> None:
         """Scheduler loop for delayed tasks."""
         while self._running:
@@ -533,6 +593,7 @@ class TaskQueue:
                 time.sleep(0.1)
             except Exception as e:
                 logger.error(f"Scheduler error: {e}")
+
     def get_result(
         self, task_id: str, timeout: float | None = None
     ) -> TaskResult | None:
@@ -549,6 +610,7 @@ class TaskQueue:
             event.wait(timeout=timeout)
         with self._lock:
             return self._results.get(task_id)
+
     def wait(self, task_id: str, timeout: float | None = None) -> TaskResult:
         """
         Wait for task to complete.
@@ -567,6 +629,7 @@ class TaskQueue:
         if result.status in (TaskStatus.PENDING, TaskStatus.QUEUED, TaskStatus.RUNNING):
             raise TimeoutError(f"Task {task_id} did not complete in time")
         return result
+
     def cancel(self, task_id: str) -> bool:
         """
         Cancel a pending task.
@@ -582,9 +645,11 @@ class TaskQueue:
                 self._store.update_status(task_id, TaskStatus.CANCELLED)
                 return True
             return False
+
     def get_task(self, task_id: str) -> Task | None:
         """Get a task by ID."""
         return self._store.get(task_id)
+
     def list_tasks(
         self,
         status: TaskStatus | None = None,
@@ -594,10 +659,12 @@ class TaskQueue:
         if status:
             return self._store.get_by_status(status, limit)
         return self._store.get_pending(limit)
+
     @property
     def queue_size(self) -> int:
         """Get current queue size."""
         return self._queue.qsize()
+
     @property
     def stats(self) -> dict[str, Any]:
         """Get queue statistics."""
@@ -608,18 +675,23 @@ class TaskQueue:
                 "scheduled_tasks": len(self._scheduled_tasks),
                 "workers": [w.stats for w in self._workers],
             }
+
     def __enter__(self) -> "TaskQueue":
         """Context manager entry."""
         self.start()
         return self
+
     def __exit__(self, *args) -> None:
         """Context manager exit."""
         self.stop()
+
+
 class JobScheduler:
     """
     Job scheduler for recurring tasks.
     Supports cron-like scheduling and interval-based execution.
     """
+
     def __init__(self, task_queue: TaskQueue | None = None):
         """
         Initialize scheduler.
@@ -631,6 +703,7 @@ class JobScheduler:
         self._running = False
         self._thread: threading.Thread | None = None
         self._lock = threading.RLock()
+
     def add_job(
         self,
         job_id: str,
@@ -669,6 +742,7 @@ class JobScheduler:
                 "next_run": self._calculate_next_run(interval, cron),
                 "running_instances": 0,
             }
+
     def remove_job(self, job_id: str) -> bool:
         """Remove a job."""
         with self._lock:
@@ -676,16 +750,19 @@ class JobScheduler:
                 del self._jobs[job_id]
                 return True
             return False
+
     def enable_job(self, job_id: str) -> None:
         """Enable a job."""
         with self._lock:
             if job_id in self._jobs:
                 self._jobs[job_id]["enabled"] = True
+
     def disable_job(self, job_id: str) -> None:
         """Disable a job."""
         with self._lock:
             if job_id in self._jobs:
                 self._jobs[job_id]["enabled"] = False
+
     def _calculate_next_run(
         self,
         interval: float | None,
@@ -705,6 +782,7 @@ class JobScheduler:
             # Full cron parsing would require a library like croniter
             return now + timedelta(minutes=1)
         return now
+
     def start(self) -> None:
         """Start the scheduler."""
         if self._running:
@@ -716,12 +794,14 @@ class JobScheduler:
             daemon=True,
         )
         self._thread.start()
+
     def stop(self, timeout: float = 5.0) -> None:
         """Stop the scheduler."""
         self._running = False
         if self._thread:
             self._thread.join(timeout=timeout)
             self._thread = None
+
     def _run_loop(self) -> None:
         """Main scheduler loop."""
         while self._running:
@@ -737,6 +817,7 @@ class JobScheduler:
                 time.sleep(0.05)  # Check more frequently
             except Exception as e:
                 logger.error(f"Scheduler loop error: {e}")
+
     def _execute_job(self, job_id: str, job: dict[str, Any]) -> None:
         """Execute a job."""
         job["running_instances"] += 1
@@ -746,6 +827,7 @@ class JobScheduler:
             job["cron"],
             job["last_run"],
         )
+
         def run_job():
             try:
                 if self._queue:
@@ -763,8 +845,10 @@ class JobScheduler:
                 with self._lock:
                     if job_id in self._jobs:
                         self._jobs[job_id]["running_instances"] -= 1
+
         thread = threading.Thread(target=run_job, daemon=True)
         thread.start()
+
     def get_jobs(self) -> dict[str, dict[str, Any]]:
         """Get all jobs."""
         with self._lock:
@@ -783,6 +867,7 @@ class JobScheduler:
                 }
                 for job_id, job in self._jobs.items()
             }
+
     def run_now(self, job_id: str) -> bool:
         """Run a job immediately."""
         with self._lock:
@@ -793,15 +878,21 @@ class JobScheduler:
                 self._execute_job(job_id, job)
                 return True
             return False
+
     def __enter__(self) -> "JobScheduler":
         """Context manager entry."""
         self.start()
         return self
+
     def __exit__(self, *args) -> None:
         """Context manager exit."""
         self.stop()
+
+
 # Decorator for defining tasks
 _task_registry: dict[str, Callable] = {}
+
+
 def task(
     name: str | None = None,
     priority: TaskPriority = TaskPriority.NORMAL,
@@ -815,6 +906,7 @@ def task(
         def my_function(arg1, arg2):
             return arg1 + arg2
     """
+
     def decorator(func: Callable) -> Callable:
         task_name = name or func.__name__
         _task_registry[task_name] = func
@@ -824,10 +916,15 @@ def task(
         func._task_timeout = timeout
         func._task_max_retries = max_retries
         return func
+
     return decorator
+
+
 def get_registered_tasks() -> dict[str, Callable]:
     """Get all registered tasks."""
     return _task_registry.copy()
+
+
 # Convenience functions
 def create_task_queue(
     num_workers: int = 2,
@@ -838,6 +935,8 @@ def create_task_queue(
         num_workers=num_workers,
         max_queue_size=max_queue_size,
     )
+
+
 def run_task(
     func: Callable,
     *args,

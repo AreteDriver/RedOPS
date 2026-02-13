@@ -325,9 +325,7 @@ class ScannerPlugin(BasePlugin):
         pass
 
     @abstractmethod
-    def scan(
-        self, target: str, config: ScannerConfig | None = None
-    ) -> ScannerResult:
+    def scan(self, target: str, config: ScannerConfig | None = None) -> ScannerResult:
         """
         Perform a scan against the target.
 

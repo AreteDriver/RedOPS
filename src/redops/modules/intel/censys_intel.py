@@ -301,9 +301,7 @@ def query_censys_certificates(
     return ctx
 
 
-def search_censys_hosts(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def search_censys_hosts(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Search Censys hosts with a query.
 
@@ -390,9 +388,7 @@ def search_censys_hosts(
     return ctx
 
 
-def analyze_censys_intel(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def analyze_censys_intel(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Run comprehensive Censys analysis.
 

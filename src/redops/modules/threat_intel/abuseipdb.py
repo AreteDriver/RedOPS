@@ -23,9 +23,7 @@ except ImportError:
 ABUSEIPDB_API = "https://api.abuseipdb.com/api/v2"
 
 
-def check_ip_reputation(
-    ctx: Context, params: dict[str, Any] | None = None
-) -> Context:
+def check_ip_reputation(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     """
     Check IP reputation on AbuseIPDB.
 
