@@ -9,7 +9,7 @@ long_description = readme_file.read_text() if readme_file.exists() else ""
 
 setup(
     name="redops",
-    version="1.0.0",
+    version="1.5.0",
     description="Advanced modular AI-assisted recon, forensics, and exposure-analysis framework",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -17,7 +17,7 @@ setup(
     url="https://github.com/AreteDriver/RedOPS",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[
         "pydantic>=2.0.0",
     ],
@@ -39,9 +39,8 @@ setup(
         "Intended Audience :: Information Technology",
         "Topic :: Security",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 )

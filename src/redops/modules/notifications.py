@@ -8,6 +8,7 @@ Sends scan results and alerts to various channels:
 - Webhooks (generic)
 """
 
+import logging
 import os
 import smtplib
 from email.mime.text import MIMEText
@@ -15,6 +16,8 @@ from email.mime.multipart import MIMEMultipart
 from typing import Any
 from dataclasses import dataclass
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 try:
     import requests
@@ -262,7 +265,8 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to send Slack notification: %s", e)
             return False
 
     def _send_slack_alert(self, title: str, message: str, color: str) -> bool:
@@ -289,7 +293,8 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to send Slack alert: %s", e)
             return False
 
     def _send_discord(self, message: dict[str, Any], critical: int, high: int) -> bool:
@@ -333,7 +338,8 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code in (200, 204)
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to send Discord notification: %s", e)
             return False
 
     def _send_discord_alert(self, title: str, message: str, color: str) -> bool:
@@ -363,7 +369,8 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code in (200, 204)
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to send Discord alert: %s", e)
             return False
 
     def _send_email(self, subject: str, body: str) -> bool:
@@ -386,7 +393,8 @@ High: {high_count}
                 server.send_message(msg)
 
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to send email notification: %s", e)
             return False
 
     def _send_webhook(self, url: str, data: dict[str, Any]) -> bool:
@@ -397,7 +405,8 @@ High: {high_count}
         try:
             response = requests.post(url, json=data, timeout=10)
             return response.status_code in (200, 201, 202, 204)
-        except Exception:
+        except Exception as e:
+            logger.warning("Failed to send webhook to %s: %s", url, e)
             return False
 
 

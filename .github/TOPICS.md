@@ -74,5 +74,5 @@ Topics have been configured in `pyproject.toml` with proper classifiers:
 - Intended Audience: Information Technology, System Administrators
 - Topic: Security, System Networking Monitoring
 - License: MIT
-- Programming Language: Python 3.8-3.12
+- Programming Language: Python 3.10-3.12
 - Environment: Console

@@ -1,7 +1,7 @@
 # RedOPS Framework
 
 [![CI Pipeline](https://github.com/AreteDriver/RedOPS/actions/workflows/ci.yml/badge.svg)](https://github.com/AreteDriver/RedOPS/actions/workflows/ci.yml)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Professional Cybersecurity Intelligence & Attack Surface Management Platform**
@@ -189,7 +189,7 @@ RedOPS is designed with strict ethical and operational boundaries:
 ## Installation
 
 ### Requirements
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip package manager
 - (Optional) Virtual environment recommended
 

@@ -1,7 +1,7 @@
 RedOPS Documentation
 ====================
 
-.. image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. image:: https://img.shields.io/badge/python-3.10+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. image:: https://img.shields.io/badge/license-MIT-green.svg

@@ -31,7 +31,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Git
 - Basic understanding of OSINT, security assessment, or related fields
 - Familiarity with modular Python development
