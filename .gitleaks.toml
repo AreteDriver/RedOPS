@@ -1,0 +1,5 @@
+[allowlist]
+description = "RedOPS gitleaks allowlist — security tool tests contain example secret patterns"
+paths = [
+  '''tests/.*''',
+]
