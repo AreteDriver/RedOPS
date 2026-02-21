@@ -256,6 +256,46 @@ Reports are saved to the `./output` directory (or your specified `--output-dir`)
 - **`report_*.html`** - Styled HTML reports for presentations
 - **`data_*.json`** - Machine-readable data for integration with security platforms (SIEM, SOAR)
 
+<details>
+<summary><strong>Sample Executive Summary Output</strong></summary>
+
+```
+Security Assessment Report: acme-corp.com
+Report ID: RPT-20260215-A3F8C1
+Generated: 2026-02-15T14:23:41Z
+
+Overall Risk Level: MODERATE (Score: 42/100)
+
+Key Findings (7):
+  CRITICAL  1   Exposed admin panel at /wp-admin with default credentials
+  HIGH      2   Outdated Apache 2.4.41 with known CVEs (CVE-2024-38474)
+             |  TLS 1.0/1.1 still enabled on port 443
+  MEDIUM    3   Missing security headers (X-Frame-Options, CSP)
+             |  Directory listing enabled on /assets/
+             |  SPF record allows +all (email spoofing risk)
+  LOW       1   Server version disclosed in HTTP headers
+
+MITRE ATT&CK Mapping:
+  T1190 Exploit Public-Facing Application  →  Critical: admin panel
+  T1595 Active Scanning                    →  High: version disclosure
+  T1566 Phishing                           →  Medium: SPF misconfiguration
+
+Compliance: 72% (12/17 controls passing)
+  Failing: access-control, transport-security, header-hardening,
+           information-disclosure, email-security
+
+Recommendations:
+  1. Immediately rotate admin credentials and restrict /wp-admin by IP
+  2. Upgrade Apache to 2.4.62+ and disable TLS 1.0/1.1
+  3. Deploy CSP, X-Frame-Options, and HSTS headers
+  4. Disable directory listing in server config
+  5. Update SPF record to use -all (hard fail)
+```
+
+See `examples/sample_output/` for full JSON reports across 7 scan profiles (quick, recon, full, executive, compliance, infrastructure, threat_intel).
+
+</details>
+
 ### 4. AI-Powered Analysis
 
 ```bash
