@@ -931,26 +931,29 @@ class TestIntegration:
         # Start rollout
         rollout.advance()
 
-        # Simulate users
+        # Simulate users - use 1000 samples to reduce statistical variance
+        # (GradualRollout salt includes time.time(), so hash distribution
+        # varies per run; larger sample size keeps assertions reliable)
+        total = 1000
         enabled_count = 0
-        for i in range(100):
+        for i in range(total):
             ctx = FlagContext(user_id=f"user_{i}")
             if manager.is_enabled("new_feature", ctx):
                 enabled_count += 1
 
-        # Should be around 10%
-        assert 5 <= enabled_count <= 20
+        # Should be around 10% (expect 100, stddev ~9.5, bounds at ~5 sigma)
+        assert 50 <= enabled_count <= 150
 
         # Advance to 50%
         rollout.advance()
         enabled_count = 0
-        for i in range(100):
+        for i in range(total):
             ctx = FlagContext(user_id=f"user_{i}")
             if manager.is_enabled("new_feature", ctx):
                 enabled_count += 1
 
-        # Should be around 50%
-        assert 35 <= enabled_count <= 65
+        # Should be around 50% (expect 500, stddev ~15.8, bounds at ~5 sigma)
+        assert 420 <= enabled_count <= 580
 
     def test_complex_targeting(self):
         """Test complex targeting rules."""
