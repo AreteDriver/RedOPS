@@ -43,8 +43,9 @@ RUN groupadd -r redops && useradd -r -g redops redops
 
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install runtime dependencies and apply security patches
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     dnsutils \
