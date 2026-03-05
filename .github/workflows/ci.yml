@@ -104,6 +104,7 @@ jobs:
             --ignore=tests/integration \
             --cov=redops \
             --cov-report=xml \
+            --cov-fail-under=80 \
             --junitxml=junit.xml \
             -v
 
