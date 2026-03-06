@@ -16,6 +16,13 @@
       "continue_on_error": false
     },
     {
+      "name": "Validate Active Scope",
+      "module": "compliance.scope_guard.validate_active_scope",
+      "params": {"require_root": true},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
       "name": "Enable Monitor Mode",
       "module": "active.wireless.monitor.enable_monitor_mode",
       "params": {"interface": "wlan1"},

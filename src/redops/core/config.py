@@ -17,6 +17,8 @@ class ScopeConfig(BaseModel):
     allowed_domains: list[str] = Field(default_factory=list)
     allowed_ips: list[str] = Field(default_factory=list)
     allowed_directories: list[str] = Field(default_factory=list)
+    allowed_bssids: list[str] = Field(default_factory=list)
+    allowed_subnets: list[str] = Field(default_factory=list)
     strict_mode: bool = True
 
 

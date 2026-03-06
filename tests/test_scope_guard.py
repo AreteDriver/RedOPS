@@ -1,13 +1,20 @@
 """Tests for the Scope Guard module."""
 
+from unittest.mock import patch
+
 import pytest
-from redops.core.context import Context
+
 from redops.core.config import RedOpsConfig, ScopeConfig
+from redops.core.context import Context
 from redops.modules.compliance.scope_guard import (
-    is_in_scope,
-    validate_scope,
-    add_to_scope,
     ScopeViolationError,
+    add_to_scope,
+    check_root_privileges,
+    is_bssid_in_scope,
+    is_in_scope,
+    is_subnet_in_scope,
+    validate_active_scope,
+    validate_scope,
 )
 
 
@@ -197,3 +204,173 @@ def test_is_in_scope_edge_cases(strict_config):
 
     # Case sensitivity
     assert is_in_scope("Example.com", strict_config) is False  # Exact match required
+
+
+# ── BSSID scope ─────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def wireless_config():
+    """Config with wireless scope restrictions."""
+    return RedOpsConfig(
+        scope=ScopeConfig(
+            allowed_bssids=["AA:BB:CC:DD:EE:FF", "11:22:33:44:55:66"],
+            allowed_subnets=["192.168.99.0/24", "10.0.0.0/8"],
+            strict_mode=True,
+        )
+    )
+
+
+class TestBssidScope:
+    def test_allowed_bssid(self, wireless_config):
+        assert is_bssid_in_scope("AA:BB:CC:DD:EE:FF", wireless_config) is True
+
+    def test_allowed_bssid_case_insensitive(self, wireless_config):
+        assert is_bssid_in_scope("aa:bb:cc:dd:ee:ff", wireless_config) is True
+
+    def test_disallowed_bssid(self, wireless_config):
+        assert is_bssid_in_scope("FF:FF:FF:FF:FF:FF", wireless_config) is False
+
+    def test_no_restrictions_allows_all(self):
+        config = RedOpsConfig(scope=ScopeConfig(allowed_bssids=[], strict_mode=True))
+        assert is_bssid_in_scope("AA:BB:CC:DD:EE:FF", config) is True
+
+    def test_permissive_mode_allows_all(self):
+        config = RedOpsConfig(
+            scope=ScopeConfig(allowed_bssids=["11:22:33:44:55:66"], strict_mode=False)
+        )
+        assert is_bssid_in_scope("FF:FF:FF:FF:FF:FF", config) is True
+
+
+# ── Subnet scope ────────────────────────────────────────────────────
+
+
+class TestSubnetScope:
+    def test_allowed_subnet_exact(self, wireless_config):
+        assert is_subnet_in_scope("192.168.99.0/24", wireless_config) is True
+
+    def test_allowed_subnet_contained(self, wireless_config):
+        assert is_subnet_in_scope("10.1.0.0/16", wireless_config) is True
+
+    def test_disallowed_subnet(self, wireless_config):
+        assert is_subnet_in_scope("172.16.0.0/12", wireless_config) is False
+
+    def test_invalid_cidr(self, wireless_config):
+        assert is_subnet_in_scope("not-a-cidr", wireless_config) is False
+
+    def test_no_restrictions_allows_all(self):
+        config = RedOpsConfig(scope=ScopeConfig(allowed_subnets=[], strict_mode=True))
+        assert is_subnet_in_scope("192.168.1.0/24", config) is True
+
+    def test_permissive_mode_allows_all(self):
+        config = RedOpsConfig(
+            scope=ScopeConfig(allowed_subnets=["10.0.0.0/8"], strict_mode=False)
+        )
+        assert is_subnet_in_scope("172.16.0.0/12", config) is True
+
+
+# ── Root privilege check ────────────────────────────────────────────
+
+
+class TestRootPrivileges:
+    @patch("redops.modules.compliance.scope_guard.os.geteuid", return_value=0)
+    def test_root(self, _mock):
+        assert check_root_privileges() is True
+
+    @patch("redops.modules.compliance.scope_guard.os.geteuid", return_value=1000)
+    def test_non_root(self, _mock):
+        assert check_root_privileges() is False
+
+
+# ── validate_active_scope ───────────────────────────────────────────
+
+
+class TestValidateActiveScope:
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges", return_value=True
+    )
+    def test_passes_with_root(self, _mock, wireless_config):
+        ctx = Context(target="home-lab")
+        result = validate_active_scope(ctx, {"config": wireless_config})
+        assert result.get("active_scope_validated") is True
+        assert result.get("root_validated") is True
+
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges",
+        return_value=False,
+    )
+    def test_fails_without_root(self, _mock, wireless_config):
+        ctx = Context(target="home-lab")
+        with pytest.raises(ScopeViolationError, match="root privileges"):
+            validate_active_scope(ctx, {"config": wireless_config})
+
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges", return_value=True
+    )
+    def test_skips_root_check_when_disabled(self, _mock):
+        config = RedOpsConfig(scope=ScopeConfig(strict_mode=True))
+        ctx = Context(target="home-lab")
+        result = validate_active_scope(ctx, {"config": config, "require_root": False})
+        assert result.get("active_scope_validated") is True
+
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges", return_value=True
+    )
+    def test_validates_bssid_in_scope(self, _mock, wireless_config):
+        ctx = Context(target="home-lab")
+        ctx.add("evil_twin_bssid", "AA:BB:CC:DD:EE:FF")
+        result = validate_active_scope(ctx, {"config": wireless_config})
+        assert result.get("active_scope_validated") is True
+
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges", return_value=True
+    )
+    def test_rejects_bssid_out_of_scope(self, _mock, wireless_config):
+        ctx = Context(target="home-lab")
+        ctx.add("evil_twin_bssid", "FF:FF:FF:FF:FF:FF")
+        with pytest.raises(ScopeViolationError, match="BSSID out of scope"):
+            validate_active_scope(ctx, {"config": wireless_config})
+
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges", return_value=True
+    )
+    def test_validates_subnet_in_scope(self, _mock, wireless_config):
+        ctx = Context(target="home-lab")
+        ctx.add("ap_subnet", "192.168.99.0/24")
+        result = validate_active_scope(ctx, {"config": wireless_config})
+        assert result.get("active_scope_validated") is True
+
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges", return_value=True
+    )
+    def test_rejects_subnet_out_of_scope(self, _mock, wireless_config):
+        ctx = Context(target="home-lab")
+        ctx.add("ap_subnet", "172.16.0.0/12")
+        with pytest.raises(ScopeViolationError, match="Subnet out of scope"):
+            validate_active_scope(ctx, {"config": wireless_config})
+
+    @patch(
+        "redops.modules.compliance.scope_guard.check_root_privileges", return_value=True
+    )
+    def test_validates_bssid_from_params(self, _mock, wireless_config):
+        ctx = Context(target="home-lab")
+        result = validate_active_scope(
+            ctx,
+            {"config": wireless_config, "target_bssid": "11:22:33:44:55:66"},
+        )
+        assert result.get("active_scope_validated") is True
+
+
+# ── add_to_scope extensions ─────────────────────────────────────────
+
+
+class TestAddToScopeExtensions:
+    def test_add_bssid(self):
+        config = RedOpsConfig(scope=ScopeConfig(strict_mode=True))
+        add_to_scope("AA:BB:CC:DD:EE:FF", config)
+        assert "AA:BB:CC:DD:EE:FF" in config.scope.allowed_bssids
+
+    def test_add_subnet(self):
+        config = RedOpsConfig(scope=ScopeConfig(strict_mode=True))
+        add_to_scope("192.168.99.0/24", config)
+        assert "192.168.99.0/24" in config.scope.allowed_subnets
