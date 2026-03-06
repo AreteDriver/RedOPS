@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "name": "Active Home Lab Chain",
+    "description": "AI-orchestrated attack chain: evil twin, deauth, recon, CVE, agent",
+    "version": "1.0",
+    "author": "ARETE",
+    "tags": ["active", "wireless", "ai", "home-lab"],
+    "warning": "Authorized home lab use only"
+  },
+  "steps": [
+    {
+      "name": "Validate Scope",
+      "module": "compliance.scope_guard.validate_scope",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Enable Monitor Mode",
+      "module": "active.wireless.monitor.enable_monitor_mode",
+      "params": {"interface": "wlan1"},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Scan Access Points",
+      "module": "active.wireless.scan.scan_access_points",
+      "params": {"duration": 30},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Start Evil Twin",
+      "module": "active.wireless.evil_twin.start_evil_twin",
+      "params": {"ap_interface": "wlan0"},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Deauth Flood",
+      "module": "active.wireless.deauth.deauth_flood",
+      "params": {"duration": 60, "count": 64},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Discover Hosts",
+      "module": "active.network.arp_scan.discover_hosts",
+      "params": {"wait": 20},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Port Scan",
+      "module": "active.network.port_scan.scan_ports",
+      "params": {"ports": "T:1-1024,U:23,2323", "timing": "T4"},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "CVE Check",
+      "module": "active.exploit.cve_check.check_cves",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Run AI Agent",
+      "module": "ai.agent.run_agent",
+      "params": {"model": "llama3.1:8b", "max_iterations": 10},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Report",
+      "module": "reporting.markdown_report.generate_exec_summary",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Disable Monitor Mode",
+      "module": "active.wireless.monitor.disable_monitor_mode",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 600,
+    "strict_scope": true
+  }
+}
