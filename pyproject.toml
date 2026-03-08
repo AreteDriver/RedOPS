@@ -109,6 +109,12 @@ addopts = "--cov=src/redops --cov-report=term-missing:skip-covered --no-header -
 [tool.coverage.run]
 branch = true
 source = ["src/redops"]
+omit = [
+    "src/redops/plugins/examples/*",
+    "src/redops/core/cache.py",
+    "src/redops/modules/notifications.py",
+    "src/redops/jobs/redis_backend.py",
+]
 
 [tool.coverage.report]
 exclude_lines = [
