@@ -1093,6 +1093,12 @@ Yes! RedOPS exports data in **JSON and CSV formats** that can be imported into S
 
 ---
 
+## Community
+
+[Discord](https://discord.gg/fdzQkrt8) — Join the community
+
+---
+
 ## Acknowledgments
 
 RedOPS builds upon the work of the cybersecurity community and leverages industry-standard frameworks:
