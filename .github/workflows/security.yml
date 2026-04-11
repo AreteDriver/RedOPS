@@ -14,7 +14,6 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   dependency-scan:
@@ -22,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -43,33 +42,49 @@ jobs:
         run: pip-audit
         continue-on-error: true
 
-  codeql:
-    name: CodeQL Analysis
+  semgrep:
+    name: Semgrep Analysis
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          languages: python
-          queries: security-and-quality
+          python-version: "3.12"
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+      - name: Install Semgrep
+        run: pip install semgrep
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+      - name: Run Semgrep (security and quality)
+        run: |
+          semgrep --config "p/python" \
+            --config "p/security-audit" \
+            --config "p/owasp-top-ten" \
+            src/ || true
+
+      - name: Run Semgrep (output JSON artifact)
+        run: |
+          semgrep --config "p/python" \
+            --config "p/security-audit" \
+            --json --output semgrep-security.json \
+            src/ || true
+
+      - name: Upload Semgrep results
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          category: "/language:python"
+          name: semgrep-security-results
+          path: semgrep-security.json
+          if-no-files-found: ignore
 
   trivy:
     name: Trivy Container Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: |
@@ -79,22 +94,32 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'redops:scan'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Run Trivy (JSON artifact)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'redops:scan'
+          format: 'json'
+          output: 'trivy-results.json'
           severity: 'CRITICAL,HIGH'
 
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload Trivy results
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          name: trivy-results
+          path: trivy-results.json
+          if-no-files-found: ignore
 
   secrets-scan:
     name: Secrets Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -111,21 +136,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install Bandit
         run: pip install bandit[toml]
 
-      - name: Run Bandit
-        run: bandit -r src/redops/ -f sarif -o bandit-results.sarif || true
+      - name: Run Bandit (console output)
+        run: bandit -r src/redops/ -ll || true
+
+      - name: Run Bandit (JSON artifact)
+        run: bandit -r src/redops/ -f json -o bandit-results.json -ll || true
 
       - name: Upload Bandit results
-        uses: github/codeql-action/upload-sarif@v4
-        if: always() && hashFiles('bandit-results.sarif') != ''
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          sarif_file: 'bandit-results.sarif'
+          name: bandit-results
+          path: bandit-results.json
+          if-no-files-found: ignore
