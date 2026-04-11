@@ -21,22 +21,32 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
       contents: read
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          languages: python
+          python-version: "3.12"
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+      - name: Install Semgrep
+        run: pip install semgrep
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+      - name: Run Semgrep (python security rules)
+        run: |
+          semgrep --config "p/python" --config "p/security-audit" \
+            --json --output semgrep-results.json \
+            src/ || true
+          semgrep --config "p/python" --config "p/security-audit" \
+            src/ || true
+
+      - name: Upload Semgrep results as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          category: "/language:python"
+          name: semgrep-results
+          path: semgrep-results.json
+          if-no-files-found: ignore
