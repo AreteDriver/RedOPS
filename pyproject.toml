@@ -76,7 +76,7 @@ web = [
     "PyJWT>=2.8.0",
     "pydantic[email]>=2.0.0",
     "sqlalchemy>=2.0.0",
-    "alembic>=1.13.0",
+    "alembic>=1.18.4",
     "redis>=5.0.0",
 ]
 dev = [
