@@ -44,7 +44,7 @@ jobs:
             src/ || true
 
       - name: Upload Semgrep results as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: semgrep-results
