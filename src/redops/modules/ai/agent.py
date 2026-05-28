@@ -66,7 +66,11 @@ def run_agent(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     Run the Ollama ReAct agent over current attack surface.
 
     Params:
+        preset: Name of an AI_PRESETS entry (e.g. "qwen-uncensored").
+            Resolves model/temperature/options; explicit params override.
         model: Ollama model name. Default: 'llama3.1:8b'
+        temperature: Sampling temperature. Default: 0.7
+        options: Extra Ollama runtime options (num_ctx, top_p, ...).
         max_iterations: Max agent steps. Default: 10
 
     Adds to context:
@@ -80,7 +84,30 @@ def run_agent(ctx: Context, params: dict[str, Any] | None = None) -> Context:
         return ctx
 
     params = params or {}
-    model = params.get("model", "llama3.1:8b")
+
+    preset_model: str | None = None
+    preset_temperature: float | None = None
+    preset_options: dict[str, Any] = {}
+    preset_name = params.get("preset")
+    if preset_name:
+        try:
+            from redops.modules.ai.presets import get_preset
+
+            preset = get_preset(preset_name)
+            preset_model = preset.get("model")
+            preset_temperature = preset.get("temperature")
+            preset_options = dict(preset.get("options", {}))
+            ctx.log(f"Agent using preset: {preset_name}", level="INFO")
+        except KeyError as exc:
+            ctx.log(str(exc), level="ERROR")
+            ctx.add("agent_complete", False)
+            return ctx
+
+    model = params.get("model") or preset_model or "llama3.1:8b"
+    temperature = params.get(
+        "temperature", preset_temperature if preset_temperature is not None else 0.7
+    )
+    options = {**preset_options, **params.get("options", {})}
     max_iterations = params.get("max_iterations", MAX_ITERATIONS_DEFAULT)
 
     agent_log: list[dict] = []
@@ -100,7 +127,9 @@ def run_agent(ctx: Context, params: dict[str, Any] | None = None) -> Context:
 
         ctx.log(f"Agent iteration {iteration + 1}", level="INFO")
 
-        response = _call_ollama(model, system, user_message)
+        response = _call_ollama(
+            model, system, user_message, temperature=temperature, options=options
+        )
         if not response:
             ctx.log("Ollama returned empty response", level="ERROR")
             break
@@ -153,15 +182,23 @@ def run_agent(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     return ctx
 
 
-def _call_ollama(model: str, system: str, user_message: str) -> str:
+def _call_ollama(
+    model: str,
+    system: str,
+    user_message: str,
+    temperature: float = 0.7,
+    options: dict[str, Any] | None = None,
+) -> str:
     """Call local Ollama API and return raw response text."""
     try:
+        merged_options = {"temperature": temperature, **(options or {})}
         payload = {
             "model": model,
             "system": system,
             "prompt": user_message,
             "stream": False,
             "format": "json",
+            "options": merged_options,
         }
         response = requests.post(OLLAMA_URL, json=payload, timeout=OLLAMA_TIMEOUT)
         response.raise_for_status()

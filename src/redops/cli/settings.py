@@ -12,6 +12,12 @@ import getpass
 from pathlib import Path
 from typing import Any
 
+# AI presets (model + sampling params bundles) live under modules/ai/ so the
+# agent can import them without pulling in the cli package's heavy deps.
+# Re-exported here so the settings menu can list/apply them.
+from redops.modules.ai.presets import AI_PRESETS as AI_PRESETS
+from redops.modules.ai.presets import get_preset as get_preset
+
 
 # Available API key providers
 API_PROVIDERS = {
@@ -116,6 +122,11 @@ AI_PROVIDERS = {
             "mistral",
             "codellama",
             "deepseek-r1",
+            "huihui_ai/qwen2.5-abliterated:7b",
+            "huihui_ai/qwen2.5-abliterated:14b",
+            "huihui_ai/qwen2.5-abliterated:32b",
+            "huihui_ai/qwen3-abliterated:8b",
+            "huihui_ai/qwen3-abliterated:14b",
         ],
         "default_model": "llama3.2",
     },
@@ -130,6 +141,26 @@ AI_PROVIDERS = {
         "default_model": "llama-3.3-70b-versatile",
     },
 }
+
+
+def apply_preset(name: str) -> dict[str, Any]:
+    """Apply a named preset to the persisted config and return it.
+
+    Updates the "ai" section (provider, model, temperature, max_tokens)
+    and stashes Ollama-specific runtime options under "ai.options" so the
+    agent and assistant can pick them up. Returns the resolved preset.
+    """
+    preset = get_preset(name)
+    config = load_config()
+    ai = config.setdefault("ai", get_default_config()["ai"])
+    ai["provider"] = preset["provider"]
+    ai["model"] = preset["model"]
+    ai["temperature"] = preset["temperature"]
+    ai["max_tokens"] = preset["max_tokens"]
+    ai["options"] = preset.get("options", {})
+    ai["preset"] = name
+    save_config(config)
+    return preset
 
 
 def clear_screen():
