@@ -171,7 +171,7 @@ class TestTracingProvider:
         async def mock_async():
             return "async-result"
 
-        result = asyncio.get_event_loop().run_until_complete(mock_async())
+        result = asyncio.run(mock_async())
         assert result == "async-result"
 
     def test_trace_pipeline_decorator(self):

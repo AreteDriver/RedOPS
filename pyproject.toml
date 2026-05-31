@@ -114,6 +114,15 @@ omit = [
     "src/redops/core/cache.py",
     "src/redops/modules/notifications.py",
     "src/redops/jobs/redis_backend.py",
+    # RF side-effect infra: live network client, TUI dashboard, subprocess
+    # tool manager, session/hardware state, and the async event bus. Exercised
+    # on hardware, not in CI (cf. the testable rf/ parsers + models, which are
+    # covered by tests/test_rf_models.py and the parser tests).
+    "src/redops/modules/rf/ai_client.py",
+    "src/redops/modules/rf/dashboard.py",
+    "src/redops/modules/rf/tool_manager.py",
+    "src/redops/modules/rf/session_manager.py",
+    "src/redops/modules/rf/event_bus.py",
 ]
 
 [tool.coverage.report]
