@@ -60,9 +60,7 @@ class RFSession:
     id: int | None = None
     name: str = ""
     started_at: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     ended_at: str | None = None
     status: str = "created"
@@ -98,14 +96,10 @@ class Target:
     wps_enabled: bool = False
     vendor: str = ""
     first_seen: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     last_seen: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     client_count: int = 0
     tags: list[str] = field(default_factory=list)
@@ -124,14 +118,10 @@ class Client:
     signal: int | None = None
     probes: list[str] = field(default_factory=list)
     first_seen: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     last_seen: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     data_frames: int = 0
 
@@ -148,9 +138,7 @@ class Capture:
     file_hash: str = ""
     tool: str = ""
     created_at: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     size_bytes: int = 0
     notes: str = ""
@@ -172,9 +160,7 @@ class RFFinding:
     ai_analysis: str = ""
     source_tool: str = ""
     created_at: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     verified: bool = False
 
@@ -190,9 +176,7 @@ class ToolRun:
     pid: int | None = None
     status: str = "running"
     started_at: str = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc
-        ).isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     ended_at: str | None = None
     exit_code: int | None = None
@@ -671,8 +655,7 @@ def update_tool_run_status(
     if ended_at is None:
         ended_at = datetime.now(timezone.utc).isoformat()
     conn.execute(
-        "UPDATE tool_runs SET status=?, exit_code=?, "
-        "ended_at=? WHERE id=?",
+        "UPDATE tool_runs SET status=?, exit_code=?, ended_at=? WHERE id=?",
         (status, exit_code, ended_at, tool_run_id),
     )
     conn.commit()

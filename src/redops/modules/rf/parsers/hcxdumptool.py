@@ -84,12 +84,8 @@ def parse_hcx_status(line: str) -> dict | None:
         result["client"] = client_match.group(1).upper()
 
     # Detect capture events
-    result["pmkid_detected"] = bool(
-        _STATUS_PATTERNS["pmkid"].search(line)
-    )
-    result["eapol_detected"] = bool(
-        _STATUS_PATTERNS["eapol"].search(line)
-    )
+    result["pmkid_detected"] = bool(_STATUS_PATTERNS["pmkid"].search(line))
+    result["eapol_detected"] = bool(_STATUS_PATTERNS["eapol"].search(line))
 
     if not result:
         return None
@@ -119,9 +115,7 @@ def check_for_captures(pcapng_path: Path) -> dict:
     """
     pcapng_path = Path(pcapng_path)
     if not pcapng_path.exists():
-        raise FileNotFoundError(
-            f"pcapng file not found: {pcapng_path}"
-        )
+        raise FileNotFoundError(f"pcapng file not found: {pcapng_path}")
 
     result: dict = {
         "file": str(pcapng_path),
@@ -149,16 +143,12 @@ def check_for_captures(pcapng_path: Path) -> dict:
         output = proc.stdout + proc.stderr
 
         # Parse PMKID count
-        pmkid_match = re.search(
-            r"PMKID.*?:\s*(\d+)", output, re.IGNORECASE
-        )
+        pmkid_match = re.search(r"PMKID.*?:\s*(\d+)", output, re.IGNORECASE)
         if pmkid_match:
             result["pmkids"] = int(pmkid_match.group(1))
 
         # Parse handshake count
-        hs_match = re.search(
-            r"EAPOL.*?:\s*(\d+)", output, re.IGNORECASE
-        )
+        hs_match = re.search(r"EAPOL.*?:\s*(\d+)", output, re.IGNORECASE)
         if hs_match:
             result["handshakes"] = int(hs_match.group(1))
 
@@ -174,9 +164,7 @@ def check_for_captures(pcapng_path: Path) -> dict:
         if proc.returncode != 0 and not any(
             result[k] for k in ("pmkids", "handshakes")
         ):
-            result["error"] = (
-                f"hcxpcapngtool exited with code {proc.returncode}"
-            )
+            result["error"] = f"hcxpcapngtool exited with code {proc.returncode}"
 
     except FileNotFoundError:
         result["error"] = "hcxpcapngtool not found in PATH"
