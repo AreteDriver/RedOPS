@@ -11,6 +11,11 @@ aligned models refuse to draft payloads, phishing pretexts, or full
 exploit chains. Authorization is enforced upstream (target allowlist,
 tenant scope); the preset itself applies no guardrail.
 
+The "qwen3.6-aggressive" preset points at the HauhauCS abliterated
+Qwen3.6 35B-A3B build that ships pulled on the reference workstation; the
+"huihui_ai/*" presets are an aspirational catalog and require an
+`ollama pull` before first use.
+
 Sampling rationale:
   temperature 0.2-0.3  abliterated Qwen drifts off the strict ReAct JSON
                        format at higher temps; low temp keeps tool calls
@@ -92,6 +97,27 @@ AI_PRESETS: dict[str, dict[str, Any]] = {
             "repeat_penalty": 1.1,
         },
     },
+    "qwen3.6-aggressive": {
+        "name": "Qwen3.6 Aggressive (35B-A3B, installed)",
+        "description": (
+            "HauhauCS abliterated Qwen3.6 35B-A3B (Q6_K_P). The locally "
+            "pulled, preferred red-team model — A3B MoE keeps inference "
+            "fast despite the 35B total (~31GB). Strongest exploit-chain "
+            "and pretext reasoning of the presets; the only one that "
+            "resolves out-of-the-box on the reference workstation."
+        ),
+        "provider": "ollama",
+        "model": (
+            "hf.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive:Q6_K_P"
+        ),
+        "temperature": 0.3,
+        "max_tokens": 2048,
+        "options": {
+            "num_ctx": 16384,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1,
+        },
+    },
 }
 
 
@@ -99,7 +125,6 @@ def get_preset(name: str) -> dict[str, Any]:
     """Return preset config by name. Raises KeyError if unknown."""
     if name not in AI_PRESETS:
         raise KeyError(
-            f"Unknown AI preset: {name!r}. "
-            f"Available: {', '.join(sorted(AI_PRESETS))}"
+            f"Unknown AI preset: {name!r}. Available: {', '.join(sorted(AI_PRESETS))}"
         )
     return AI_PRESETS[name]

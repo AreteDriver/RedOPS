@@ -268,8 +268,20 @@ class TestQwenUncensoredPreset:
             "qwen-uncensored-small",
             "qwen-uncensored-large",
             "qwen3-uncensored",
+            "qwen3.6-aggressive",
         }
         assert expected.issubset(set(AI_PRESETS))
+
+    def test_installed_hauhaucs_preset(self):
+        """The qwen3.6-aggressive preset points at the locally-pulled HauhauCS model."""
+        from redops.modules.ai.presets import get_preset
+
+        preset = get_preset("qwen3.6-aggressive")
+        assert preset["provider"] == "ollama"
+        assert preset["model"].startswith("hf.co/HauhauCS/")
+        assert 0.0 <= preset["temperature"] <= 1.0
+        assert preset["max_tokens"] > 0
+        assert preset["options"]["num_ctx"] >= 8192
 
     @patch("redops.modules.ai.agent.requests")
     def test_agent_uses_preset_model_and_temperature(self, mock_requests):
@@ -279,8 +291,7 @@ class TestQwenUncensoredPreset:
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "response": (
-                '{"thought": "no surface", "action": "COMPLETE", '
-                '"summary": "done"}'
+                '{"thought": "no surface", "action": "COMPLETE", "summary": "done"}'
             )
         }
         mock_response.raise_for_status = MagicMock()
@@ -288,9 +299,7 @@ class TestQwenUncensoredPreset:
         mock_requests.RequestException = Exception
 
         ctx = Context(target="home-lab")
-        result = run_agent(
-            ctx, {"preset": "qwen-uncensored", "max_iterations": 1}
-        )
+        result = run_agent(ctx, {"preset": "qwen-uncensored", "max_iterations": 1})
 
         assert result.get("agent_complete") is True
         assert mock_requests.post.called
@@ -307,9 +316,7 @@ class TestQwenUncensoredPreset:
         """An explicit model/temperature should win over the preset's values."""
         mock_response = MagicMock()
         mock_response.json.return_value = {
-            "response": (
-                '{"thought": "x", "action": "COMPLETE", "summary": "x"}'
-            )
+            "response": ('{"thought": "x", "action": "COMPLETE", "summary": "x"}')
         }
         mock_response.raise_for_status = MagicMock()
         mock_requests.post.return_value = mock_response
@@ -344,8 +351,7 @@ class TestQwenUncensoredPreset:
         mock_response_1 = MagicMock()
         mock_response_1.json.return_value = {
             "response": (
-                '{"thought": "scan CVEs", "action": "check_cves", '
-                '"params": {}}'
+                '{"thought": "scan CVEs", "action": "check_cves", "params": {}}'
             )
         }
         mock_response_2 = MagicMock()
@@ -362,9 +368,7 @@ class TestQwenUncensoredPreset:
 
         ctx = Context(target="home-lab")
         ctx.add("port_scan_results", [])
-        result = run_agent(
-            ctx, {"preset": "qwen-uncensored", "max_iterations": 5}
-        )
+        result = run_agent(ctx, {"preset": "qwen-uncensored", "max_iterations": 5})
 
         assert result.get("agent_complete") is True
         assert result.get("agent_summary") == "CVEs assessed"
