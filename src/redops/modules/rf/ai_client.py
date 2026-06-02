@@ -20,7 +20,12 @@ logger = logging.getLogger(__name__)
 _DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 _ENV_FILE = Path.home() / ".config" / "ollama-remote.env"
 _BATCH_WINDOW_SECONDS = 5.0
-_DEFAULT_MODEL = "llama3.1:8b"
+# Uncensored open-weights default: RF/signal analysis triggers false
+# refusals on safety-aligned base models, which defeats the purpose of
+# this analysis path. Override with REDOPS_RF_MODEL. The model must be
+# pulled on the remote Ollama box first:
+#   ollama pull huihui_ai/qwen3-abliterated:14b
+_DEFAULT_MODEL = os.environ.get("REDOPS_RF_MODEL", "huihui_ai/qwen3-abliterated:14b")
 
 
 def _load_ollama_host() -> str:
