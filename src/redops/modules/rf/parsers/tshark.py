@@ -40,9 +40,12 @@ def build_tshark_stats_command(
 
     return [
         "tshark",
-        "-i", interface.strip(),
-        "-a", f"duration:{duration}",
-        "-T", "ek",
+        "-i",
+        interface.strip(),
+        "-a",
+        f"duration:{duration}",
+        "-T",
+        "ek",
         "-l",
     ]
 
@@ -110,24 +113,16 @@ def parse_tshark_json(json_line: str) -> dict | None:
     if eth:
         src_mac = eth.get("eth_eth_src")
         dst_mac = eth.get("eth_eth_dst")
-        result["src_mac"] = (
-            src_mac[0] if isinstance(src_mac, list) else src_mac
-        )
-        result["dst_mac"] = (
-            dst_mac[0] if isinstance(dst_mac, list) else dst_mac
-        )
+        result["src_mac"] = src_mac[0] if isinstance(src_mac, list) else src_mac
+        result["dst_mac"] = dst_mac[0] if isinstance(dst_mac, list) else dst_mac
 
     # IP layer
     ip_layer = layers.get("ip", {})
     if ip_layer:
         src_ip = ip_layer.get("ip_ip_src")
         dst_ip = ip_layer.get("ip_ip_dst")
-        result["src_ip"] = (
-            src_ip[0] if isinstance(src_ip, list) else src_ip
-        )
-        result["dst_ip"] = (
-            dst_ip[0] if isinstance(dst_ip, list) else dst_ip
-        )
+        result["src_ip"] = src_ip[0] if isinstance(src_ip, list) else src_ip
+        result["dst_ip"] = dst_ip[0] if isinstance(dst_ip, list) else dst_ip
 
     return result
 
@@ -172,9 +167,12 @@ def get_pcap_summary(
 
     cmd = [
         "tshark",
-        "-r", str(pcap_path),
-        "-c", str(max_packets),
-        "-T", "ek",
+        "-r",
+        str(pcap_path),
+        "-c",
+        str(max_packets),
+        "-T",
+        "ek",
     ]
 
     try:
@@ -188,8 +186,7 @@ def get_pcap_summary(
 
         if proc.returncode != 0 and not proc.stdout:
             result["error"] = (
-                f"tshark exited with code {proc.returncode}: "
-                f"{proc.stderr[:200]}"
+                f"tshark exited with code {proc.returncode}: {proc.stderr[:200]}"
             )
             return result
 
@@ -218,12 +215,8 @@ def get_pcap_summary(
                 talkers[src] += 1
 
         result["packet_count"] = packet_count
-        result["protocols"] = dict(
-            protocols.most_common(20)
-        )
-        result["top_talkers"] = dict(
-            talkers.most_common(20)
-        )
+        result["protocols"] = dict(protocols.most_common(20))
+        result["top_talkers"] = dict(talkers.most_common(20))
 
     except FileNotFoundError:
         result["error"] = "tshark not found in PATH"

@@ -10,21 +10,11 @@ import re
 logger = logging.getLogger(__name__)
 
 # Reaver output patterns
-_PIN_ATTEMPT = re.compile(
-    r"Trying pin\s+(\d+)"
-)
-_PIN_PROGRESS = re.compile(
-    r"(\d+\.?\d*)%\s+complete"
-)
-_WPS_PIN_FOUND = re.compile(
-    r"WPS PIN:\s*'?(\d+)'?"
-)
-_WPA_PSK_FOUND = re.compile(
-    r"WPA PSK:\s*'(.+?)'"
-)
-_AP_SSID = re.compile(
-    r"Associated with\s+(\S+)\s+\(ESSID:\s*(.+?)\)"
-)
+_PIN_ATTEMPT = re.compile(r"Trying pin\s+(\d+)")
+_PIN_PROGRESS = re.compile(r"(\d+\.?\d*)%\s+complete")
+_WPS_PIN_FOUND = re.compile(r"WPS PIN:\s*'?(\d+)'?")
+_WPA_PSK_FOUND = re.compile(r"WPA PSK:\s*'(.+?)'")
+_AP_SSID = re.compile(r"Associated with\s+(\S+)\s+\(ESSID:\s*(.+?)\)")
 _TIMEOUT = re.compile(
     r"WARNING.*timeout",
     re.IGNORECASE,

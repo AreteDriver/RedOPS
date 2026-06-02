@@ -66,9 +66,7 @@ class Event:
 
     event_type: str
     data: dict[str, Any] = field(default_factory=dict)
-    event_id: str = field(
-        default_factory=lambda: uuid.uuid4().hex[:12]
-    )
+    event_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     timestamp: float = field(default_factory=time.time)
 
 
@@ -122,9 +120,7 @@ class EventBus:
         """
         self._lock = threading.Lock()
         self._subs: dict[str, list[_Subscription]] = {}
-        self._history: deque[Event] = deque(
-            maxlen=history_size
-        )
+        self._history: deque[Event] = deque(maxlen=history_size)
         self._queues: dict[str, asyncio.Queue[Event]] = {}
         self._queue_filters: dict[str, str | None] = {}
         logger.debug(
@@ -215,9 +211,7 @@ class EventBus:
         """
         queue_id = uuid.uuid4().hex[:12]
         with self._lock:
-            self._queues[queue_id] = asyncio.Queue(
-                maxsize=maxsize
-            )
+            self._queues[queue_id] = asyncio.Queue(maxsize=maxsize)
             self._queue_filters[queue_id] = event_type
         logger.debug(
             "Queue %s created (filter=%s)",
@@ -226,9 +220,7 @@ class EventBus:
         )
         return queue_id
 
-    def get_queue(
-        self, queue_id: str
-    ) -> asyncio.Queue[Event] | None:
+    def get_queue(self, queue_id: str) -> asyncio.Queue[Event] | None:
         """Return the ``asyncio.Queue`` for a given id.
 
         Args:
@@ -279,12 +271,8 @@ class EventBus:
         # Append to ring buffer (thread-safe via lock).
         with self._lock:
             self._history.append(event)
-            subs = list(
-                self._subs.get(event_type, [])
-            )
-            queues_to_notify: list[
-                asyncio.Queue[Event]
-            ] = []
+            subs = list(self._subs.get(event_type, []))
+            queues_to_notify: list[asyncio.Queue[Event]] = []
             for qid, q in self._queues.items():
                 filt = self._queue_filters.get(qid)
                 if filt is None or filt == event_type:
@@ -304,9 +292,7 @@ class EventBus:
                 if sub.is_async:
                     await sub.callback(event)  # type: ignore[misc]
                 else:
-                    await loop.run_in_executor(
-                        None, sub.callback, event
-                    )
+                    await loop.run_in_executor(None, sub.callback, event)
             except Exception:
                 logger.exception(
                     "Error in subscriber %s for %s",
@@ -351,12 +337,8 @@ class EventBus:
 
         with self._lock:
             self._history.append(event)
-            subs = list(
-                self._subs.get(event_type, [])
-            )
-            queues_to_notify: list[
-                asyncio.Queue[Event]
-            ] = []
+            subs = list(self._subs.get(event_type, []))
+            queues_to_notify: list[asyncio.Queue[Event]] = []
             for qid, q in self._queues.items():
                 filt = self._queue_filters.get(qid)
                 if filt is None or filt == event_type:
@@ -365,8 +347,7 @@ class EventBus:
         for sub in subs:
             if sub.is_async:
                 logger.warning(
-                    "Skipping async subscriber %s in "
-                    "emit_sync for %s",
+                    "Skipping async subscriber %s in emit_sync for %s",
                     sub.sub_id,
                     event_type,
                 )
@@ -405,9 +386,7 @@ class EventBus:
         with self._lock:
             return list(self._history)
 
-    def recent_events_by_type(
-        self, event_type: str
-    ) -> list[Event]:
+    def recent_events_by_type(self, event_type: str) -> list[Event]:
         """Return recent events filtered by type.
 
         Args:
@@ -417,19 +396,13 @@ class EventBus:
             Filtered list of events, oldest first.
         """
         with self._lock:
-            return [
-                e
-                for e in self._history
-                if e.event_type == event_type
-            ]
+            return [e for e in self._history if e.event_type == event_type]
 
     @property
     def subscriber_count(self) -> int:
         """Total number of active subscriptions."""
         with self._lock:
-            return sum(
-                len(s) for s in self._subs.values()
-            )
+            return sum(len(s) for s in self._subs.values())
 
     def clear_history(self) -> None:
         """Clear the ring buffer."""

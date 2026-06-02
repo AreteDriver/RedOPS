@@ -305,9 +305,7 @@ class ToolManager:
             ) from exc
         except OSError as exc:
             self._release_interface(interface, tool_id)
-            raise RuntimeError(
-                f"Failed to start tool '{name}': {exc}"
-            ) from exc
+            raise RuntimeError(f"Failed to start tool '{name}': {exc}") from exc
 
         tool_proc = ToolProcess(
             id=tool_id,
@@ -504,7 +502,10 @@ class ToolManager:
         if spec.resource_class == ResourceClass.RF_INJECT:
             for locked_iface, locked_id in self.interface_lock.items():
                 locked_proc = self._running.get(locked_id)
-                if locked_proc and locked_proc.spec.resource_class == ResourceClass.RF_INJECT:
+                if (
+                    locked_proc
+                    and locked_proc.spec.resource_class == ResourceClass.RF_INJECT
+                ):
                     raise RuntimeError(
                         f"Cannot start inject tool '{spec.name}' on '{interface}': "
                         f"another inject tool '{locked_proc.spec.name}' is active "
@@ -528,7 +529,9 @@ class ToolManager:
         current_holder = self.interface_lock.get(interface)
         if current_holder == tool_id:
             del self.interface_lock[interface]
-            logger.debug("Interface '%s' released by tool_id=%s", interface, tool_id[:8])
+            logger.debug(
+                "Interface '%s' released by tool_id=%s", interface, tool_id[:8]
+            )
         elif current_holder is not None:
             logger.warning(
                 "Interface '%s' held by %s, not by %s — not releasing",
