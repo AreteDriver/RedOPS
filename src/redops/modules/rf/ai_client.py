@@ -10,7 +10,6 @@ import asyncio
 import json
 import logging
 import os
-import time
 from pathlib import Path
 from typing import Any
 
@@ -115,9 +114,9 @@ class AIClient:
         self._openrouter_client: httpx.AsyncClient | None = None
 
         # Batch queue
-        self._batch_queue: asyncio.Queue[
-            tuple[str, str, asyncio.Future[str]]
-        ] = asyncio.Queue()
+        self._batch_queue: asyncio.Queue[tuple[str, str, asyncio.Future[str]]] = (
+            asyncio.Queue()
+        )
         self._batch_task: asyncio.Task[None] | None = None
 
         logger.info(
@@ -224,8 +223,7 @@ class AIClient:
             f"{json.dumps(rf_patterns, indent=2)}"
         )
         system = (
-            "You are an RF environment anomaly detector. "
-            "Respond ONLY with valid JSON."
+            "You are an RF environment anomaly detector. Respond ONLY with valid JSON."
         )
 
         raw = await self._send_request(prompt, system=system)
@@ -276,9 +274,7 @@ class AIClient:
         await self._batch_queue.put((prompt, system, future))
 
         if self._batch_task is None or self._batch_task.done():
-            self._batch_task = asyncio.create_task(
-                self._process_batch()
-            )
+            self._batch_task = asyncio.create_task(self._process_batch())
 
         return await future
 
@@ -439,10 +435,7 @@ class AIClient:
         # Strip markdown code fences
         if text.startswith("```"):
             lines = text.splitlines()
-            lines = [
-                l for l in lines
-                if not l.strip().startswith("```")
-            ]
+            lines = [line for line in lines if not line.strip().startswith("```")]
             text = "\n".join(lines).strip()
 
         try:

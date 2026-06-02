@@ -21,7 +21,6 @@ from sse_starlette.sse import EventSourceResponse
 from redops.core.event_bus import (
     AsyncEventBus,
     Event,
-    MemoryEventStore,
     create_async_event_bus,
 )
 from redops.modules.rf.ai_client import AIClient
@@ -245,6 +244,7 @@ router = APIRouter(prefix="/api/rf", tags=["rf"])
 # GET /status
 # ------------------------------------------------------------------
 
+
 @router.get(
     "/status",
     response_model=StatusResponse,
@@ -252,14 +252,10 @@ router = APIRouter(prefix="/api/rf", tags=["rf"])
 )
 async def get_status() -> StatusResponse:
     """Return interface status, running tools, and active session."""
-    uptime = (
-        datetime.now(tz=timezone.utc) - _state.start_time
-    ).total_seconds()
+    uptime = (datetime.now(tz=timezone.utc) - _state.start_time).total_seconds()
     return StatusResponse(
         interfaces=[],
-        running_tools=[
-            t["tool_name"] for t in _state.running_tools.values()
-        ],
+        running_tools=[t["tool_name"] for t in _state.running_tools.values()],
         active_session_id=_state.active_session_id,
         uptime_seconds=round(uptime, 2),
     )
@@ -269,6 +265,7 @@ async def get_status() -> StatusResponse:
 # Targets
 # ------------------------------------------------------------------
 
+
 @router.get(
     "/targets",
     response_model=TargetListResponse,
@@ -276,9 +273,7 @@ async def get_status() -> StatusResponse:
 )
 async def list_targets() -> TargetListResponse:
     """Return all targets discovered in the active session."""
-    targets = [
-        TargetResponse(**t) for t in _state.targets.values()
-    ]
+    targets = [TargetResponse(**t) for t in _state.targets.values()]
     return TargetListResponse(count=len(targets), targets=targets)
 
 
@@ -299,6 +294,7 @@ async def get_target(target_id: str) -> TargetResponse:
 # Sessions
 # ------------------------------------------------------------------
 
+
 @router.get(
     "/sessions",
     response_model=SessionListResponse,
@@ -306,11 +302,10 @@ async def get_target(target_id: str) -> TargetResponse:
 )
 async def list_sessions() -> SessionListResponse:
     """Return all RF sessions."""
-    sessions = [
-        SessionResponse(**s) for s in _state.sessions.values()
-    ]
+    sessions = [SessionResponse(**s) for s in _state.sessions.values()]
     return SessionListResponse(
-        count=len(sessions), sessions=sessions,
+        count=len(sessions),
+        sessions=sessions,
     )
 
 
@@ -324,7 +319,8 @@ async def get_session(session_id: str) -> SessionResponse:
     session = _state.sessions.get(session_id)
     if session is None:
         raise HTTPException(
-            status_code=404, detail="Session not found",
+            status_code=404,
+            detail="Session not found",
         )
     return SessionResponse(**session)
 
@@ -369,11 +365,13 @@ async def start_session(session_id: str) -> SessionResponse:
     session = _state.sessions.get(session_id)
     if session is None:
         raise HTTPException(
-            status_code=404, detail="Session not found",
+            status_code=404,
+            detail="Session not found",
         )
     if session["status"] == SessionStatus.ACTIVE:
         raise HTTPException(
-            status_code=409, detail="Session already active",
+            status_code=409,
+            detail="Session already active",
         )
 
     now = datetime.now(tz=timezone.utc).isoformat()
@@ -382,7 +380,8 @@ async def start_session(session_id: str) -> SessionResponse:
     _state.active_session_id = session_id
 
     await _emit_event(
-        "session_started", {"session_id": session_id},
+        "session_started",
+        {"session_id": session_id},
     )
     logger.info("Session started: %s", session_id)
     return SessionResponse(**session)
@@ -398,11 +397,13 @@ async def end_session(session_id: str) -> SessionResponse:
     session = _state.sessions.get(session_id)
     if session is None:
         raise HTTPException(
-            status_code=404, detail="Session not found",
+            status_code=404,
+            detail="Session not found",
         )
     if session["status"] == SessionStatus.ENDED:
         raise HTTPException(
-            status_code=409, detail="Session already ended",
+            status_code=409,
+            detail="Session already ended",
         )
 
     now = datetime.now(tz=timezone.utc).isoformat()
@@ -412,7 +413,8 @@ async def end_session(session_id: str) -> SessionResponse:
         _state.active_session_id = None
 
     await _emit_event(
-        "session_ended", {"session_id": session_id},
+        "session_ended",
+        {"session_id": session_id},
     )
     logger.info("Session ended: %s", session_id)
     return SessionResponse(**session)
@@ -421,6 +423,7 @@ async def end_session(session_id: str) -> SessionResponse:
 # ------------------------------------------------------------------
 # Tools
 # ------------------------------------------------------------------
+
 
 @router.post(
     "/tools/start",
@@ -470,7 +473,8 @@ async def stop_tool(tool_id: str) -> RunningToolResponse:
     tool_entry = _state.running_tools.get(tool_id)
     if tool_entry is None:
         raise HTTPException(
-            status_code=404, detail="Tool not found",
+            status_code=404,
+            detail="Tool not found",
         )
     if tool_entry["state"] != ToolState.RUNNING:
         raise HTTPException(
@@ -509,6 +513,7 @@ async def list_running_tools() -> RunningToolsResponse:
 # ------------------------------------------------------------------
 # SSE stream
 # ------------------------------------------------------------------
+
 
 @router.get(
     "/stream",
@@ -551,7 +556,8 @@ async def _sse_generator(
         while not await request.is_disconnected():
             try:
                 event = await asyncio.wait_for(
-                    queue.get(), timeout=15.0,
+                    queue.get(),
+                    timeout=15.0,
                 )
                 yield {
                     "event": event.event_type,
@@ -567,6 +573,7 @@ async def _sse_generator(
 # ------------------------------------------------------------------
 # AI analysis
 # ------------------------------------------------------------------
+
 
 @router.post(
     "/analyze",
@@ -610,6 +617,7 @@ async def analyze(body: AnalyzeRequest) -> AnalyzeResponse:
 # Captures
 # ------------------------------------------------------------------
 
+
 @router.get(
     "/captures",
     response_model=CaptureListResponse,
@@ -619,13 +627,15 @@ async def list_captures() -> CaptureListResponse:
     """Return capture files associated with the active session."""
     captures = [CaptureResponse(**c) for c in _state.captures]
     return CaptureListResponse(
-        count=len(captures), captures=captures,
+        count=len(captures),
+        captures=captures,
     )
 
 
 # ------------------------------------------------------------------
 # Audit log
 # ------------------------------------------------------------------
+
 
 @router.get(
     "/audit-log",

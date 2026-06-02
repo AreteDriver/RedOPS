@@ -8,7 +8,6 @@ lifecycle management (CREATED -> ACTIVE -> FINALIZING -> CLOSED -> ARCHIVED).
 import hashlib
 import json
 import logging
-import shutil
 import sqlite3
 import tarfile
 import uuid
@@ -16,7 +15,6 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Self
 
 logger = logging.getLogger(__name__)
 
@@ -219,9 +217,7 @@ class SessionManager:
         session_dir = self.base_dir / "sessions" / safe_name
 
         if session_dir.exists():
-            raise FileExistsError(
-                f"Session directory already exists: {session_dir}"
-            )
+            raise FileExistsError(f"Session directory already exists: {session_dir}")
 
         # Create directory structure
         session_dir.mkdir(parents=True)
@@ -337,9 +333,7 @@ class SessionManager:
         # Compute hashes for all evidence files
         evidence_hashes: dict[str, str] = {}
         evidence_dirs = [
-            session_dir / d
-            for d in self._SESSION_SUBDIRS
-            if (session_dir / d).exists()
+            session_dir / d for d in self._SESSION_SUBDIRS if (session_dir / d).exists()
         ]
         for evidence_dir in evidence_dirs:
             for file_path in evidence_dir.rglob("*"):
@@ -397,9 +391,7 @@ class SessionManager:
             ).fetchone()
 
             if row is None:
-                raise ValueError(
-                    f"Session not found: {session_id}"
-                )
+                raise ValueError(f"Session not found: {session_id}")
 
             captures = self._get_captures(conn, session_id)
 
@@ -429,9 +421,7 @@ class SessionManager:
 
             sessions: list[RFSession] = []
             for row in rows:
-                captures = self._get_captures(
-                    conn, row["session_id"]
-                )
+                captures = self._get_captures(conn, row["session_id"])
                 sessions.append(
                     RFSession(
                         session_id=row["session_id"],
@@ -479,15 +469,12 @@ class SessionManager:
         session = self.get_session(session_id)
         if session.status != SessionStatus.ACTIVE:
             raise ValueError(
-                f"Cannot add captures to session in "
-                f"'{session.status.value}' state"
+                f"Cannot add captures to session in '{session.status.value}' state"
             )
 
         file_path = Path(file_path)
         if not file_path.exists():
-            raise FileNotFoundError(
-                f"Capture file not found: {file_path}"
-            )
+            raise FileNotFoundError(f"Capture file not found: {file_path}")
 
         capture_id = str(uuid.uuid4())
         sha256 = _compute_sha256(file_path)
