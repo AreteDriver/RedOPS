@@ -30,17 +30,19 @@ Sampling rationale:
 
 from typing import Any
 
+from redops.modules.ai.models import ABLITERATED_DEFAULT_SLUG
 
 AI_PRESETS: dict[str, dict[str, Any]] = {
     "qwen-uncensored": {
         "name": "Qwen Uncensored (default, 14B)",
         "description": (
-            "Abliterated Qwen 2.5 14B via Ollama. Balanced VRAM/quality "
-            "pick for the ReAct agent, payload generation, and pretext "
-            "drafting on authorized engagements."
+            "Abliterated Qwen3 14B via Ollama — the canonical default from "
+            "modules.ai.models, shared with the RF analysis client. Balanced "
+            "VRAM/quality pick for the ReAct agent, payload generation, and "
+            "pretext drafting on authorized engagements."
         ),
         "provider": "ollama",
-        "model": "huihui_ai/qwen2.5-abliterated:14b",
+        "model": ABLITERATED_DEFAULT_SLUG,
         "temperature": 0.3,
         "max_tokens": 2048,
         "options": {

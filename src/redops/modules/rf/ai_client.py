@@ -15,17 +15,21 @@ from typing import Any
 
 import httpx
 
+from redops.modules.ai.models import default_abliterated_model
+
 logger = logging.getLogger(__name__)
 
 _DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 _ENV_FILE = Path.home() / ".config" / "ollama-remote.env"
 _BATCH_WINDOW_SECONDS = 5.0
 # Uncensored open-weights default: RF/signal analysis triggers false
-# refusals on safety-aligned base models, which defeats the purpose of
-# this analysis path. Override with REDOPS_RF_MODEL. The model must be
-# pulled on the remote Ollama box first:
-#   ollama pull huihui_ai/qwen3-abliterated:14b
-_DEFAULT_MODEL = os.environ.get("REDOPS_RF_MODEL", "huihui_ai/qwen3-abliterated:14b")
+# refusals on safety-aligned base models, which defeats the purpose of this
+# analysis path. The canonical slug lives in modules.ai.models (shared with
+# the ReAct agent presets so the two can't silently diverge). REDOPS_RF_MODEL
+# stays as a legacy per-path override for one deprecation cycle; the canonical
+# override is REDOPS_ABLITERATED_MODEL. The model must be pulled on the remote
+# Ollama box first:  ollama pull huihui_ai/qwen3-abliterated:14b
+_DEFAULT_MODEL = os.environ.get("REDOPS_RF_MODEL") or default_abliterated_model()
 
 
 def _load_ollama_host() -> str:
