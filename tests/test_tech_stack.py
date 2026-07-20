@@ -754,7 +754,7 @@ class TestMakeRequest:
         """Test that HTTPS failure falls back to HTTP."""
         # First call (HTTPS) fails, second call (HTTP) succeeds
         mock_response = MagicMock()
-        self.mock_requests.get.side_effect = [Exception("SSL Error"), mock_response]
+        self.mock_requests.get.side_effect = [ConnectionError("SSL Error"), mock_response]
 
         result = self.ts_module.make_request("https://example.com")
 
@@ -763,14 +763,14 @@ class TestMakeRequest:
 
     def test_make_request_both_fail(self):
         """Test when both HTTPS and HTTP fail."""
-        self.mock_requests.get.side_effect = Exception("Connection failed")
+        self.mock_requests.get.side_effect = ConnectionError("Connection failed")
 
         result = self.ts_module.make_request("https://example.com")
         assert result is None
 
     def test_make_request_http_url_no_fallback(self):
         """Test HTTP URL doesn't trigger HTTPS fallback."""
-        self.mock_requests.get.side_effect = Exception("Connection failed")
+        self.mock_requests.get.side_effect = ConnectionError("Connection failed")
 
         result = self.ts_module.make_request("http://example.com")
         assert result is None
@@ -853,7 +853,7 @@ class TestFetchFaviconHash:
 
     def test_fetch_favicon_exception(self):
         """Test favicon fetch with exception."""
-        self.mock_requests.get.side_effect = Exception("Connection error")
+        self.mock_requests.get.side_effect = ConnectionError("Connection error")
 
         result = self.ts_module.fetch_favicon_hash("https://example.com")
         assert result is None
@@ -887,21 +887,21 @@ class TestGetSslInfo:
     def test_ssl_info_http_url(self):
         """Test extracting hostname from HTTP URL."""
         with patch("socket.create_connection") as mock_socket:
-            mock_socket.side_effect = Exception("Connection failed")
+            mock_socket.side_effect = OSError("Connection failed")
             result = get_ssl_info("http://example.com")
             assert result is None
 
     def test_ssl_info_https_url(self):
         """Test extracting hostname from HTTPS URL."""
         with patch("socket.create_connection") as mock_socket:
-            mock_socket.side_effect = Exception("Connection failed")
+            mock_socket.side_effect = OSError("Connection failed")
             result = get_ssl_info("https://example.com")
             assert result is None
 
     def test_ssl_info_with_port(self):
         """Test extracting hostname when port is present."""
         with patch("socket.create_connection") as mock_socket:
-            mock_socket.side_effect = Exception("Connection failed")
+            mock_socket.side_effect = OSError("Connection failed")
             result = get_ssl_info("example.com:8443")
             assert result is None
 

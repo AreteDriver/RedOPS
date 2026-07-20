@@ -93,7 +93,7 @@ def get_shodan_client():
             from redops.cli.settings import get_api_key_direct
 
             api_key = get_api_key_direct("shodan")
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, ImportError):
             pass
 
     if not api_key:
@@ -149,7 +149,7 @@ def query_shodan_host(ctx: Context, params: dict[str, Any] | None = None) -> Con
 
                 ip = socket.gethostbyname(target)
                 ctx.log(f"Resolved {target} to {ip}", level="DEBUG")
-            except Exception as e:
+            except (OSError, ValueError, TypeError) as e:
                 ctx.log(f"Could not resolve {target}: {e}", level="WARNING")
                 shodan_data["error"] = f"Could not resolve domain: {e}"
                 ctx.add("shodan_host", shodan_data)
@@ -194,7 +194,7 @@ def query_shodan_host(ctx: Context, params: dict[str, Any] | None = None) -> Con
             level="INFO",
         )
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         error_msg = str(e)
         if "No information available" in error_msg:
             shodan_data["error"] = f"No Shodan data for {ip}"
@@ -264,7 +264,7 @@ def query_shodan_dns(ctx: Context, params: dict[str, Any] | None = None) -> Cont
             level="INFO",
         )
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         dns_data["error"] = f"Shodan DNS error: {str(e)}"
         ctx.log(dns_data["error"], level="WARNING")
 
@@ -345,7 +345,7 @@ def search_shodan(ctx: Context, params: dict[str, Any] | None = None) -> Context
             level="INFO",
         )
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         search_data["error"] = f"Shodan search error: {str(e)}"
         ctx.log(search_data["error"], level="WARNING")
 

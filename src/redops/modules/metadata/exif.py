@@ -241,7 +241,7 @@ def extract_exif_from_file(file_path: str) -> ExifData | None:
             else:
                 warnings.append("No EXIF data found in image")
 
-    except Exception as e:
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError, IndexError, AttributeError) as e:
         warnings.append(f"Error extracting EXIF: {str(e)}")
         return ExifData(
             filename=path.name,
@@ -312,7 +312,7 @@ def parse_gps_info(gps_info: dict[int, Any]) -> dict[str, Any] | None:
 
         return result
 
-    except Exception:
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return None
 
 
@@ -355,7 +355,7 @@ def convert_exif_value(value: Any) -> Any:
     if isinstance(value, bytes):
         try:
             return value.decode("utf-8", errors="replace")
-        except Exception:
+        except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
             return str(value)
     elif isinstance(value, tuple):
         return [convert_exif_value(v) for v in value]
@@ -372,7 +372,7 @@ def convert_exif_value(value: Any) -> Any:
             if isinstance(value, (int, float, str, bool, type(None))):
                 return value
             return str(value)
-        except Exception:
+        except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
             return str(value)
 
 
@@ -511,7 +511,7 @@ def strip_exif(file_path: str, output_path: str | None = None) -> bool:
 
             return True
 
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return False
 
 

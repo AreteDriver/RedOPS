@@ -261,7 +261,7 @@ class TestCallbackChannel:
 
     def test_callback_exception(self):
         """Test callback exception is caught."""
-        callback = MagicMock(side_effect=Exception("Test error"))
+        callback = MagicMock(side_effect=RuntimeError("Test error"))
         channel = CallbackChannel(config={"callback": callback})
 
         n = Notification(title="Test", message="Test")

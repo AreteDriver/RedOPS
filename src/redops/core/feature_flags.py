@@ -597,7 +597,7 @@ class FeatureFlagManager:
         for listener in self._listeners:
             try:
                 listener(key, value, ctx)
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 pass  # Don't let listener errors affect evaluation
 
         return value

@@ -416,14 +416,14 @@ def resolve_domain(domain: str, timeout: int = 3) -> bool:
             resolver.lifetime = timeout
             resolver.resolve(domain, "A")
             return True
-        except Exception:
+        except (OSError, ValueError, TypeError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout):
             return False
     else:
         try:
             socket.setdefaulttimeout(timeout)
             socket.gethostbyname(domain)
             return True
-        except Exception:
+        except (OSError, ValueError, TypeError):
             return False
 
 
@@ -487,7 +487,7 @@ def get_subdomains_from_dns(domain: str, timeout: int = 3) -> set[str]:
                 mx_host = str(rdata.exchange).rstrip(".")
                 if mx_host.endswith(domain):
                     subdomains.add(mx_host)
-        except Exception:
+        except (OSError, ValueError, TypeError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout):
             pass
 
         # Check NS records
@@ -497,7 +497,7 @@ def get_subdomains_from_dns(domain: str, timeout: int = 3) -> set[str]:
                 ns_host = str(rdata).rstrip(".")
                 if ns_host.endswith(domain):
                     subdomains.add(ns_host)
-        except Exception:
+        except (OSError, ValueError, TypeError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout):
             pass
 
         # Check TXT records for SPF includes
@@ -512,10 +512,10 @@ def get_subdomains_from_dns(domain: str, timeout: int = 3) -> set[str]:
                             include_domain = part[8:]
                             if include_domain.endswith(domain):
                                 subdomains.add(include_domain)
-        except Exception:
+        except (OSError, ValueError, TypeError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout):
             pass
 
-    except Exception:
+    except (OSError, ValueError, TypeError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers, dns.exception.Timeout):
         pass
 
     return subdomains

@@ -299,7 +299,7 @@ def extract_pdf_metadata(file_path: str) -> DocumentMetadata | None:
             metadata["attachments"] = attachment_names
             warnings.append(f"Document contains {len(attachment_names)} embedded files")
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         warnings.append(f"Error reading PDF: {str(e)}")
 
     return DocumentMetadata(
@@ -388,7 +388,7 @@ def extract_docx_metadata(
 
     except PackageNotFoundError:
         warnings.append("Invalid or corrupted Word document")
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         warnings.append(f"Error reading Word document: {str(e)}")
 
     return DocumentMetadata(
@@ -439,7 +439,7 @@ def check_docx_for_hidden_data(doc) -> list[str]:
                 warnings.append("Document contains embedded OLE objects")
                 break
 
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError):
         pass  # Silently ignore errors in hidden data check
 
     return warnings
@@ -488,7 +488,7 @@ def check_for_hidden_data(file_path: str) -> list[str]:
         try:
             doc = DocxDocument(file_path)
             return check_docx_for_hidden_data(doc)
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError):
             return ["Could not check for hidden data"]
 
     return []

@@ -494,7 +494,7 @@ def parse_requirements_txt(file_path: Path) -> list[dict[str, str]]:
                 deps.append({"name": name, "version": version})
 
         return deps
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return []
 
 
@@ -528,7 +528,7 @@ def parse_pyproject_toml(file_path: Path) -> list[dict[str, str]]:
                     )
 
         return deps
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return []
 
 
@@ -560,7 +560,7 @@ def parse_package_json(file_path: Path) -> list[dict[str, str]]:
                     )
 
         return deps
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError, json.JSONDecodeError):
         return []
 
 
@@ -598,7 +598,7 @@ def parse_go_mod(file_path: Path) -> list[dict[str, str]]:
             deps.append({"name": match.group(1), "version": match.group(2)})
 
         return deps
-    except Exception:
+    except (OSError, ValueError, TypeError, IndexError, AttributeError):
         return []
 
 
@@ -627,7 +627,7 @@ def parse_gemfile(file_path: Path) -> list[dict[str, str]]:
             deps.append({"name": name, "version": version})
 
         return deps
-    except Exception:
+    except (OSError, ValueError, TypeError, IndexError, AttributeError):
         return []
 
 
@@ -658,7 +658,7 @@ def parse_cargo_toml(file_path: Path) -> list[dict[str, str]]:
                 deps.append({"name": match.group(1), "version": match.group(2)})
 
         return deps
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return []
 
 
@@ -775,7 +775,7 @@ def scan_file_for_secrets(
                         }
                     )
 
-    except Exception:
+    except (OSError, ValueError, TypeError, IndexError, AttributeError):
         pass
 
     return results
@@ -895,7 +895,7 @@ def extract_git_metadata(repo_path: str) -> dict[str, Any] | None:
                 url = re.sub(r"://[^:]+:[^@]+@", "://***:***@", url)
                 metadata["remote_url"] = url
 
-        except Exception:
+        except (OSError, ValueError, TypeError, IndexError, AttributeError):
             pass
 
     # Check HEAD for current branch
@@ -907,7 +907,7 @@ def extract_git_metadata(repo_path: str) -> dict[str, Any] | None:
 
             if head_content.startswith("ref: refs/heads/"):
                 metadata["current_branch"] = head_content[16:]
-        except Exception:
+        except (OSError, ValueError, TypeError, IndexError, AttributeError):
             pass
 
     return metadata

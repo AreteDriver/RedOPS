@@ -1,5 +1,8 @@
 """Tests for the subdomain enumeration module."""
 
+import dns.resolver
+import dns.exception
+import socket
 from unittest.mock import patch, MagicMock
 from redops.core.context import Context
 from redops.modules.recon.subdomain_enum import (
@@ -126,7 +129,7 @@ class TestResolveDomain:
     def test_resolution_failure_dnspython(self, mock_resolver_class):
         """Test failed resolution with dnspython."""
         mock_resolver = MagicMock()
-        mock_resolver.resolve.side_effect = Exception("NXDOMAIN")
+        mock_resolver.resolve.side_effect = dns.resolver.NXDOMAIN("NXDOMAIN")
         mock_resolver_class.return_value = mock_resolver
 
         result = resolve_domain("nonexistent.example.com")
@@ -145,7 +148,7 @@ class TestResolveDomain:
     @patch("socket.gethostbyname")
     def test_socket_failure(self, mock_gethostbyname):
         """Test socket resolution failure."""
-        mock_gethostbyname.side_effect = Exception("Host not found")
+        mock_gethostbyname.side_effect = socket.gaierror("Host not found")
 
         result = resolve_domain("nonexistent.example.com")
         assert result is False

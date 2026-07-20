@@ -860,7 +860,7 @@ class SecretsManager:
         for callback in self._access_callbacks:
             try:
                 callback(name, result)
-            except Exception as e:  # noqa: BLE001
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.warning(f"Access callback failed: {e}")
 
         self._audit.log("get", name)

@@ -594,7 +594,7 @@ async def analyze(body: AnalyzeRequest) -> AnalyzeResponse:
             targets=targets,
             objective=body.objective,
         )
-    except Exception as exc:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as exc:
         logger.error("AI analysis failed: %s", exc)
         raise HTTPException(
             status_code=502,

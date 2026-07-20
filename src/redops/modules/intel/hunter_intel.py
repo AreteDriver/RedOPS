@@ -81,7 +81,7 @@ def get_hunter_api_key() -> str | None:
             from redops.cli.settings import get_api_key_direct
 
             api_key = get_api_key_direct("hunter")
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, ImportError):
             pass  # Settings module may not be available - use env var fallback
     return api_key
 
@@ -112,7 +112,7 @@ def _make_hunter_request(
             return {"error": "invalid_api_key"}
         else:
             return {"error": f"HTTP {response.status_code}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"error": str(e)}
 
 

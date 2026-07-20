@@ -296,7 +296,7 @@ class AIClient:
             try:
                 result = await self._send_request(prompt, system)
                 future.set_result(result)
-            except Exception as exc:
+            except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as exc:
                 future.set_exception(exc)
 
     # ------------------------------------------------------------------

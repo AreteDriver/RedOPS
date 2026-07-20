@@ -60,7 +60,7 @@ def _count_openai_tokens(text: str, model: str = "gpt-4o") -> int:
 
         encoding = tiktoken.encoding_for_model(model)
         return len(encoding.encode(text))
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError):
         return _approximate_tokens(text)
 
 
@@ -596,7 +596,7 @@ def ai_analyze(ctx, params: dict[str, Any] | None = None):
                 "cost": assistant.get_cost_metrics(),
             },
         )
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError) as e:
         ctx.log(f"AI analysis failed: {e}", level="ERROR")
 
     return ctx
@@ -617,7 +617,7 @@ def ai_summarize(ctx, params: dict[str, Any] | None = None):
                 "cost": assistant.get_cost_metrics(),
             },
         )
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError) as e:
         ctx.log(f"AI summarization failed: {e}", level="ERROR")
 
     return ctx
@@ -638,7 +638,7 @@ def ai_recommend(ctx, params: dict[str, Any] | None = None):
                 "cost": assistant.get_cost_metrics(),
             },
         )
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError) as e:
         ctx.log(f"AI recommendations failed: {e}", level="ERROR")
 
     return ctx

@@ -195,7 +195,7 @@ def _query_api(payload: dict[str, Any]) -> dict[str, Any]:
 
     except requests.exceptions.RequestException as e:
         return {"error": f"API request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"error": f"Query failed: {str(e)}"}
 
 

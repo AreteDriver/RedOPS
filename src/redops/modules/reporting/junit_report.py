@@ -417,7 +417,7 @@ def prettify_xml(xml_str: str) -> str:
     try:
         dom = minidom.parseString(xml_str)
         return dom.toprettyxml(indent="  ", encoding=None)
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError):
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'
 
 

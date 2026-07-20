@@ -344,7 +344,7 @@ class TestGetHunterApiKey:
         with patch.dict("os.environ", {}, clear=True):
             with patch(
                 "redops.cli.settings.get_api_key_direct",
-                side_effect=Exception("Settings error"),
+                side_effect=RuntimeError("Settings error"),
             ):
                 result = get_hunter_api_key()
                 assert result is None
@@ -483,7 +483,7 @@ class TestMakeHunterRequest:
     def test_request_exception(self):
         """Test request exception handling."""
         mock_requests = MagicMock()
-        mock_requests.get.side_effect = Exception("Connection error")
+        mock_requests.get.side_effect = ConnectionError("Connection error")
 
         import sys
 

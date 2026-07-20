@@ -241,7 +241,7 @@ class WorkerPool:
                     def target():
                         try:
                             result_container[0] = func(*args, **kwargs)
-                        except Exception as e:
+                        except (OSError, RuntimeError, TypeError, ValueError) as e:
                             error_container[0] = e
 
                     thread = threading.Thread(target=target)
@@ -258,7 +258,7 @@ class WorkerPool:
                 else:
                     return func(*args, **kwargs)
 
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 with self._lock:
                     info.state = TaskState.FAILED
                     info.completed_at = time.time()
@@ -327,7 +327,7 @@ class WorkerPool:
                 state=TaskState.CANCELLED,
                 error="Task was cancelled",
             )
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             return TaskResult(
                 task_id=task_id,
                 state=TaskState.FAILED,
@@ -454,7 +454,7 @@ class AsyncExecutor:
                 error="Task was cancelled",
                 started_at=started_at,
             )
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             return TaskResult(
                 task_id=task_id,
                 state=TaskState.FAILED,
@@ -792,14 +792,14 @@ class Pipeline:
                 completed_at=time.time(),
             )
 
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, ArithmeticError) as e:
             for handler in self._error_handlers:
                 try:
                     if asyncio.iscoroutinefunction(handler):
                         await handler(e, current)
                     else:
                         handler(e, current)
-                except Exception:
+                except (OSError, RuntimeError, TypeError, ValueError, ArithmeticError):
                     pass  # Ignore handler errors
 
             return TaskResult(

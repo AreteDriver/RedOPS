@@ -89,7 +89,7 @@ def get_censys_client():
 
             api_id = get_api_key_direct("censys_id")
             api_secret = get_api_key_direct("censys_secret")
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, ImportError):
             pass
 
     if not api_id or not api_secret:
@@ -99,7 +99,7 @@ def get_censys_client():
         hosts = CensysHosts(api_id=api_id, api_secret=api_secret)
         certs = CensysCerts(api_id=api_id, api_secret=api_secret)
         return hosts, certs
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError):
         return None, None
 
 
@@ -149,7 +149,7 @@ def query_censys_host(ctx: Context, params: dict[str, Any] | None = None) -> Con
 
                 ip = socket.gethostbyname(target)
                 ctx.log(f"Resolved {target} to {ip}", level="DEBUG")
-            except Exception as e:
+            except (OSError, ValueError, TypeError) as e:
                 ctx.log(f"Could not resolve {target}: {e}", level="WARNING")
                 censys_data["error"] = f"Could not resolve domain: {e}"
                 ctx.add("censys_host", censys_data)
@@ -210,7 +210,7 @@ def query_censys_host(ctx: Context, params: dict[str, Any] | None = None) -> Con
             level="INFO",
         )
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         error_msg = str(e)
         if "404" in error_msg or "not found" in error_msg.lower():
             censys_data["error"] = f"No Censys data for {ip}"
@@ -293,7 +293,7 @@ def query_censys_certificates(
             level="INFO",
         )
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         cert_data["error"] = f"Censys certificate error: {str(e)}"
         ctx.log(cert_data["error"], level="WARNING")
 
@@ -380,7 +380,7 @@ def search_censys_hosts(ctx: Context, params: dict[str, Any] | None = None) -> C
             level="INFO",
         )
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         search_data["error"] = f"Censys search error: {str(e)}"
         ctx.log(search_data["error"], level="WARNING")
 

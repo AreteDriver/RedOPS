@@ -720,7 +720,7 @@ class RateLimiter:
 
             try:
                 return func(*args, **kwargs)
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 with self._lock:
                     self._attempt_counts[key] = attempt + 1
 

@@ -384,7 +384,7 @@ def export_to_stix(ctx, params: dict[str, Any] | None = None):
         ctx.add("stix_bundle", bundle.to_dict())
         ctx.log(f"STIX bundle created with {len(bundle.objects)} objects", level="INFO")
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         ctx.log(f"STIX export failed: {e}", level="ERROR")
 
     return ctx

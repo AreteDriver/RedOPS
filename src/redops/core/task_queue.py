@@ -306,7 +306,7 @@ class Worker:
                 self._execute_task(task)
             except queue.Empty:
                 continue
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Worker {self.worker_id} error: {e}")
 
     def _execute_task(self, task: Task) -> None:
@@ -340,7 +340,7 @@ class Worker:
             task.status = TaskStatus.TIMEOUT
             task.last_error = str(e)
             self._tasks_failed += 1
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             result.error = str(e)
             result.error_type = type(e).__name__
             task.last_error = str(e)
@@ -360,7 +360,7 @@ class Worker:
             if self._result_callback:
                 try:
                     self._result_callback(result)
-                except Exception as e:
+                except (OSError, RuntimeError, TypeError, ValueError) as e:
                     logger.error(f"Result callback failed: {e}")
 
     def _execute_with_timeout(self, task: Task) -> Any:
@@ -370,7 +370,7 @@ class Worker:
         def target():
             try:
                 result_container["result"] = task.func(*task.args, **task.kwargs)
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 result_container["error"] = e
 
         thread = threading.Thread(target=target)
@@ -593,7 +593,7 @@ class TaskQueue:
                         else:
                             break
                 time.sleep(0.1)
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Scheduler error: {e}")
 
     def get_result(
@@ -817,7 +817,7 @@ class JobScheduler:
                             if job["running_instances"] < job["max_instances"]:
                                 self._execute_job(job_id, job)
                 time.sleep(0.05)  # Check more frequently
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Scheduler loop error: {e}")
 
     def _execute_job(self, job_id: str, job: dict[str, Any]) -> None:
@@ -841,7 +841,7 @@ class JobScheduler:
                     )
                 else:
                     job["func"](*job["args"], **job["kwargs"])
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Job {job_id} failed: {e}")
             finally:
                 with self._lock:

@@ -3,6 +3,7 @@
 import sys
 from importlib import reload
 from unittest.mock import patch, MagicMock
+import dns.exception
 import pytest
 from redops.core.context import Context
 from redops.modules.recon.domains import (
@@ -83,7 +84,7 @@ class TestGetDnsRecords:
     def test_socket_fallback_failure(self):
         """Test socket fallback handles errors."""
         with patch("socket.gethostbyname_ex") as mock_socket:
-            mock_socket.side_effect = Exception("DNS lookup failed")
+            mock_socket.side_effect = OSError("DNS lookup failed")
 
             records = _get_dns_records_socket("nonexistent.invalid")
 
@@ -210,7 +211,7 @@ class TestProfileDomain:
     def test_profile_domain_dns_error(self):
         """Test domain profiling with DNS errors."""
         with patch("redops.modules.recon.domains.get_all_dns_records") as mock_dns:
-            mock_dns.side_effect = Exception("DNS error")
+            mock_dns.side_effect = RuntimeError("DNS error")
 
             ctx = Context(target="example.com")
             result = profile_domain(ctx)
@@ -445,7 +446,7 @@ class TestCheckZoneTransfer:
             mock_ns.return_value = ["ns1.example.com."]
 
             with patch("dns.zone.from_xfr") as mock_xfr:
-                mock_xfr.side_effect = Exception("Transfer failed")
+                mock_xfr.side_effect = dns.exception.DNSException("Transfer failed")
 
                 ctx = Context(target="example.com")
                 result = check_zone_transfer(ctx)
@@ -722,7 +723,7 @@ class TestGetDnsRecordsDnspython:
 
         with patch("dns.resolver.Resolver") as mock_resolver_class:
             mock_resolver = MagicMock()
-            mock_resolver.resolve.side_effect = Exception("Unknown error")
+            mock_resolver.resolve.side_effect = RuntimeError("Unknown error")
             mock_resolver_class.return_value = mock_resolver
 
             records = _get_dns_records_dnspython("example.com", "A")
@@ -891,7 +892,7 @@ class TestCheckZoneTransferExtended:
             mock_ns.return_value = ["ns1.example.com."]
 
             with patch("dns.zone.from_xfr") as mock_xfr:
-                mock_xfr.side_effect = Exception("Transfer denied")
+                mock_xfr.side_effect = dns.exception.DNSException("Transfer denied")
 
                 ctx = Context(target="example.com")
                 result = check_zone_transfer(ctx)
@@ -1389,7 +1390,7 @@ class TestZoneTransferMocked:
     def test_zone_transfer_denied_mocked(self):
         """Test zone transfer denied with mocked dns modules."""
         mock_zone_module = MagicMock()
-        mock_zone_module.from_xfr.side_effect = Exception("Transfer denied")
+        mock_zone_module.from_xfr.side_effect = dns.exception.DNSException("Transfer denied")
 
         mock_query_module = MagicMock()
 
@@ -1417,7 +1418,7 @@ class TestZoneTransferMocked:
     def test_zone_transfer_completion_not_vulnerable_logging(self):
         """Test zone transfer completion logging when not vulnerable."""
         mock_zone_module = MagicMock()
-        mock_zone_module.from_xfr.side_effect = Exception("Transfer denied")
+        mock_zone_module.from_xfr.side_effect = dns.exception.DNSException("Transfer denied")
 
         mock_query_module = MagicMock()
 
@@ -1511,7 +1512,7 @@ class TestZoneTransferMocked:
                 mock_zone_instance.iterate_rdatasets.return_value = [1, 2]
                 return mock_zone_instance
             else:
-                raise Exception("Transfer denied")
+                raise RuntimeError("Transfer denied")
 
         mock_zone_module.from_xfr.side_effect = side_effect
 

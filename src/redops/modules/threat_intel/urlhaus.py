@@ -86,7 +86,7 @@ def _query_url(url: str) -> dict[str, Any]:
 
     except requests.exceptions.RequestException as e:
         return {"queried_url": url, "error": f"Request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"queried_url": url, "error": f"Query failed: {str(e)}"}
 
 
@@ -116,7 +116,7 @@ def check_host(host: str) -> dict[str, Any]:
 
     except requests.exceptions.RequestException as e:
         return {"queried_host": host, "error": f"Request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"queried_host": host, "error": f"Query failed: {str(e)}"}
 
 
@@ -167,7 +167,7 @@ def check_payload(
 
     except requests.exceptions.RequestException as e:
         return {"queried_hash": hash_value, "error": f"Request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"queried_hash": hash_value, "error": f"Query failed: {str(e)}"}
 
 
@@ -193,7 +193,7 @@ def get_recent_urls(limit: int = 100) -> list[dict[str, Any]]:
         data = response.json()
         return data.get("urls", [])
 
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError):
         return []
 
 

@@ -217,7 +217,7 @@ class TestGetRecentUrls:
     @patch("redops.modules.threat_intel.urlhaus.requests")
     def test_get_recent_error(self, mock_requests):
         """Test error handling."""
-        mock_requests.get.side_effect = Exception("API error")
+        mock_requests.get.side_effect = ConnectionError("API error")
 
         result = get_recent_urls()
 

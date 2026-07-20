@@ -419,7 +419,7 @@ class WebhookChannel(NotificationChannel):
                 }
                 return response.status < 400
 
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, ValueError) as e:
             self._last_response = {"error": str(e)}
             return False
 
@@ -496,7 +496,7 @@ class EmailChannel(NotificationChannel):
                 server.sendmail(self._from_address, self._recipients, msg.as_string())
 
             return True
-        except Exception:
+        except (OSError, ConnectionError, RuntimeError, ValueError):
             return False
 
 
@@ -842,7 +842,7 @@ class AlertManager:
             if channel and channel.enabled:
                 try:
                     channel.send(alert)
-                except Exception:
+                except (OSError, ConnectionError, RuntimeError, TypeError, ValueError):
                     pass
 
     def _send_resolved(self, alert: Alert) -> None:
@@ -855,7 +855,7 @@ class AlertManager:
             if channel and channel.enabled:
                 try:
                     channel.send_resolved(alert)
-                except Exception:
+                except (OSError, ConnectionError, RuntimeError, TypeError, ValueError):
                     pass  # Best-effort notification - don't fail resolve
 
     # History

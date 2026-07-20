@@ -247,7 +247,7 @@ class TCPHealthCheck(HealthCheck):
                 error="Connection timed out",
                 duration_ms=duration,
             )
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -334,7 +334,7 @@ class HTTPHealthCheck(HealthCheck):
                 error=str(e.reason),
                 duration_ms=duration,
             )
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, ValueError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -407,7 +407,7 @@ class DiskSpaceCheck(HealthCheck):
                 details,
                 duration_ms=duration,
             )
-        except Exception as e:
+        except (OSError, PermissionError, RuntimeError, ValueError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -493,7 +493,7 @@ class MemoryCheck(HealthCheck):
                     {},
                     duration_ms=duration,
                 )
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNKNOWN,
@@ -561,7 +561,7 @@ class ProcessCheck(HealthCheck):
                 error="pgrep not found",
                 duration_ms=duration,
             )
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -640,7 +640,7 @@ class FileExistsCheck(HealthCheck):
                 details,
                 duration_ms=duration,
             )
-        except Exception as e:
+        except (OSError, PermissionError, RuntimeError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -690,7 +690,7 @@ class CallableCheck(HealthCheck):
                     error="Check returned False",
                     duration_ms=duration,
                 )
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -736,7 +736,7 @@ class DatabaseCheck(HealthCheck):
                 {"query": self.query},
                 duration_ms=duration,
             )
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, TypeError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -805,7 +805,7 @@ class RedisCheck(HealthCheck):
                 error="redis package not installed",
                 duration_ms=duration,
             )
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, TypeError) as e:
             duration = (time.perf_counter() - start) * 1000
             return self._create_result(
                 HealthStatus.UNHEALTHY,
@@ -884,7 +884,7 @@ class HealthCheckManager:
         def run():
             try:
                 result[0] = check.check()
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 exception[0] = e
 
         thread = threading.Thread(target=run)
@@ -926,7 +926,7 @@ class HealthCheckManager:
                 error="Timeout",
                 duration_ms=check.timeout * 1000,
             )
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             return CheckResult(
                 name=check.name,
                 status=HealthStatus.UNHEALTHY,
@@ -1111,7 +1111,7 @@ class LivenessProbe:
         if self._custom_check:
             try:
                 return self._custom_check()
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 return False
 
         if self._manager:
@@ -1122,7 +1122,7 @@ class LivenessProbe:
                 if checks:
                     result = self._manager.run_check(checks[0])
                     return result is not None
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 return False
 
         return True

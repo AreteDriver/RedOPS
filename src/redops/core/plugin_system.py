@@ -327,7 +327,7 @@ class PluginRegistry:
                     plugin_name = plugin_path.stem
                     self._discover_plugin_file(plugin_path)
                     discovered.append(plugin_name)
-                except Exception as e:
+                except (OSError, RuntimeError, TypeError, ValueError, ImportError) as e:
                     # Record discovery error but continue
                     self._plugins[plugin_path.stem] = PluginInfo(
                         metadata=PluginMetadata(
@@ -430,7 +430,7 @@ class PluginRegistry:
         try:
             instance = plugin_class()
             instance.initialize(config)
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, AttributeError) as e:
             raise PluginLoadError(f"Failed to initialize plugin: {e}")
 
         self._load_order_counter += 1
@@ -540,7 +540,7 @@ class PluginRegistry:
         if plugin_info.instance:
             try:
                 plugin_info.instance.shutdown()
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError, AttributeError):
                 pass  # Ignore shutdown errors
 
         del self._plugins[name]
@@ -691,7 +691,7 @@ class PluginRegistry:
                         kwargs.get("value"),
                         ctx,
                     )
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError, AttributeError) as e:
                 # Log error but continue with other hooks
                 ctx.log(
                     f"Hook error in {hook.__class__.__name__}: {e}",
@@ -743,7 +743,7 @@ class PluginRegistry:
             if info and info.instance:
                 try:
                     info.instance.shutdown()
-                except Exception:
+                except (OSError, RuntimeError, TypeError, ValueError, AttributeError):
                     pass
 
 

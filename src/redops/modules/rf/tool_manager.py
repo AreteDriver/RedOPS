@@ -454,7 +454,7 @@ class ToolManager:
         for tool_id in tool_ids:
             try:
                 await self.stop_tool(tool_id)
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 logger.exception(
                     "Error stopping tool %s",
                     tool_id[:8],
@@ -627,7 +627,7 @@ class ToolManager:
                         await asyncio.sleep(0.1)
         except asyncio.CancelledError:
             logger.debug("Stream reader cancelled for %s", tool_id[:8])
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError):
             logger.exception("Stream reader error for tool %s", tool_id[:8])
 
 

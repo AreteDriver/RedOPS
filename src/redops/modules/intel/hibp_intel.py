@@ -92,7 +92,7 @@ def get_hibp_api_key() -> str | None:
             from redops.cli.settings import get_api_key_direct
 
             api_key = get_api_key_direct("hibp")
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, ImportError):
             pass
     return api_key
 
@@ -132,7 +132,7 @@ def _make_hibp_request(
             return {"error": "rate_limited"}
         else:
             return {"error": f"HTTP {response.status_code}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"error": str(e)}
 
 

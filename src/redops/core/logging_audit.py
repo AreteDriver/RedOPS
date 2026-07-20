@@ -791,7 +791,7 @@ class Logger:
             for handler in self._handlers:
                 try:
                     handler.handle(entry)
-                except Exception:
+                except (OSError, RuntimeError, TypeError, ValueError, AttributeError):
                     # Don't let handler errors break logging
                     pass
 
@@ -971,7 +971,7 @@ def logged(
                     logger._log(level, f"Exiting {func_name}")
 
                 return result
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Exception in {func_name}", exception=e)
                 raise
 
