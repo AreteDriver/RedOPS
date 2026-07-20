@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from redops.core.context import Context
+from redops.modules.active.authorization import assert_active_authorized
 
 HOSTAPD_CONF_TEMPLATE = """\
 interface={ap_interface}
@@ -51,6 +52,7 @@ def start_evil_twin(ctx: Context, params: dict[str, Any] | None = None) -> Conte
         evil_twin_bssid, ap_subnet, captured_clients,
         hostapd_proc, dnsmasq_proc
     """
+    assert_active_authorized(ctx)
     params = params or {}
     ap_interface = params.get("ap_interface", "wlan0")
     ap_ip = params.get("ap_ip", "192.168.99.1")

@@ -66,7 +66,6 @@ jobs:
 
       - name: Run mypy
         run: mypy src/redops --ignore-missing-imports
-        continue-on-error: true
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -173,7 +172,6 @@ jobs:
           REDIS_PORT: 6379
         run: |
           python -m pytest tests/integration/ -v --tb=short
-        continue-on-error: true
 
   build:
     name: Build Package

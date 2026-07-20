@@ -394,9 +394,10 @@ class TestSettingsMenu:
         config_file.write_text(json.dumps(config))
 
         with patch("redops.cli.settings.get_config_path", return_value=config_file):
-            menu = SettingsMenu(quiet=True)
+            with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+                menu = SettingsMenu(quiet=True)
+                result = menu._get_api_key("openai")
 
-        result = menu._get_api_key("openai")
         assert result == "config-key"
 
     def test_get_api_key_from_env(self, tmp_path):
@@ -509,10 +510,10 @@ class TestSettingsMenu:
         config_file.write_text(json.dumps(get_default_config()))
 
         with patch("redops.cli.settings.get_config_path", return_value=config_file):
-            menu = SettingsMenu(quiet=True)
-
-        with patch("builtins.input", side_effect=["1", ""]):
-            menu.test_api_key()
+            with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+                menu = SettingsMenu(quiet=True)
+                with patch("builtins.input", side_effect=["1", ""]):
+                    menu.test_api_key()
 
         captured = capsys.readouterr()
         assert "No API key configured" in captured.out
@@ -923,7 +924,8 @@ class TestListApiKeys:
         config_file.write_text(json.dumps(config))
 
         with patch("redops.cli.settings.get_config_path", return_value=config_file):
-            list_api_keys()
+            with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+                list_api_keys()
 
         captured = capsys.readouterr()
         assert "conf" in captured.out  # masked key starts with conf

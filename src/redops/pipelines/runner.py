@@ -106,6 +106,9 @@ class PipelineRunner:
         """
         ctx.log(f"Executing step: {step.name}", level="INFO", step=step.name)
 
+        # Save checkpoint before executing the step so we can rollback on failure
+        ctx.save()
+
         # Execute BEFORE_MODULE hooks
         self.plugins.execute_hooks(
             HookPoint.BEFORE_MODULE,
@@ -164,6 +167,8 @@ class PipelineRunner:
             if not step.continue_on_error:
                 raise RuntimeError(error_msg) from e
 
+            # Rollback context to preserve data integrity
+            ctx.rollback()
             return ctx
 
     def _get_plugin_module(self, module_path: str) -> ModulePlugin | None:
@@ -374,4 +379,5 @@ class PipelineRunner:
         self.plugins.execute_hooks(HookPoint.AFTER_PIPELINE, ctx)
 
         ctx.log(f"Pipeline completed: {self.pipeline.metadata.name}", level="INFO")
+        ctx.clear_checkpoints()
         return ctx

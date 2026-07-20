@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from redops.core.context import Context
+from redops.modules.active.authorization import assert_active_authorized
 
 
 def scan_access_points(ctx: Context, params: dict[str, Any] | None = None) -> Context:
@@ -28,6 +29,7 @@ def scan_access_points(ctx: Context, params: dict[str, Any] | None = None) -> Co
         clients: list of dicts with mac, associated_bssid, signal
         scan_complete: bool
     """
+    assert_active_authorized(ctx)
     params = params or {}
     duration = params.get("duration", 30)
     channel = params.get("channel")

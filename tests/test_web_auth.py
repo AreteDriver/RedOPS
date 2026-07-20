@@ -457,3 +457,98 @@ class TestAuthenticatedUser:
         )
 
         assert user.authenticated_at.tzinfo == timezone.utc
+
+
+class TestRedisSessionStore:
+    """Tests for RedisSessionStore with mocked Redis."""
+
+    def _mock_redis(self, data=None):
+        """Return a mock Redis client."""
+        redis = MagicMock()
+        redis.ping.return_value = True
+        redis.hgetall.return_value = data or {}
+        redis.delete.return_value = 1
+        redis.expire.return_value = True
+        redis.hset.return_value = True
+        return redis
+
+    def test_create_session_with_redis(self):
+        """Test session creation stores data in Redis."""
+        from redops.web.auth import RedisSessionStore
+
+        mock_redis = self._mock_redis()
+        with patch("redis.from_url", return_value=mock_redis):
+            store = RedisSessionStore(secret="test", redis_url="redis://localhost:6379/0")
+            token = store.create_session("testuser")
+
+        assert token is not None
+        assert len(token) > 20
+        mock_redis.hset.assert_called_once()
+        mock_redis.expire.assert_called_once()
+
+    def test_validate_session_with_redis(self):
+        """Test session validation reads from Redis."""
+        from redops.web.auth import RedisSessionStore
+
+        from datetime import datetime, timezone, timedelta
+
+        future = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+        mock_redis = self._mock_redis(data={"username": "testuser", "expires_at": future})
+        with patch("redis.from_url", return_value=mock_redis):
+            store = RedisSessionStore(secret="test")
+            # We need a real token that hashes correctly
+            token = store.create_session("testuser")
+            # Reset mock to not interfere with validation
+            mock_redis.hgetall.return_value = {"username": "testuser", "expires_at": future}
+            username = store.validate_session(token)
+
+        assert username == "testuser"
+
+    def test_validate_expired_session_deletes_from_redis(self):
+        """Test expired session is deleted from Redis."""
+        from redops.web.auth import RedisSessionStore
+
+        past = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        mock_redis = self._mock_redis(data={"username": "testuser", "expires_at": past})
+        with patch("redis.from_url", return_value=mock_redis):
+            store = RedisSessionStore(secret="test")
+            username = store.validate_session("any_token")
+
+        assert username is None
+        mock_redis.delete.assert_called_once()
+
+    def test_invalidate_session_with_redis(self):
+        """Test session invalidation deletes from Redis."""
+        from redops.web.auth import RedisSessionStore
+
+        mock_redis = self._mock_redis()
+        with patch("redis.from_url", return_value=mock_redis):
+            store = RedisSessionStore(secret="test")
+            result = store.invalidate_session("any_token")
+
+        assert result is True
+        mock_redis.delete.assert_called_once()
+
+    def test_cleanup_expired_is_noop_with_redis(self):
+        """Test cleanup_expired is a no-op with Redis (TTL handles it)."""
+        from redops.web.auth import RedisSessionStore
+
+        mock_redis = self._mock_redis()
+        with patch("redis.from_url", return_value=mock_redis):
+            store = RedisSessionStore(secret="test")
+            removed = store.cleanup_expired()
+
+        assert removed == 0
+
+    def test_fallback_to_memory_when_redis_unavailable(self):
+        """Test fallback to in-memory when Redis connection fails."""
+        from redops.web.auth import RedisSessionStore
+
+        with patch("redis.from_url", side_effect=ImportError("No redis")):
+            store = RedisSessionStore(secret="test")
+
+        assert store._fallback is True
+        assert store._redis is None
+
+        token = store.create_session("testuser")
+        assert store.validate_session(token) == "testuser"

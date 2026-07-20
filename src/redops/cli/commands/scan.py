@@ -20,6 +20,120 @@ from ..utils import (
 )
 
 
+# ---------------------------------------------------------------------------
+# Local execution helpers (zero-config quickstart)
+# ---------------------------------------------------------------------------
+
+def _resolve_pipeline_file(pipeline_name: str) -> Path | None:
+    """Resolve a pipeline name to a JSON file in config/pipelines/."""
+    if pipeline_name == "default":
+        pipeline_name = "quickstart"
+
+    pipelines_dir = Path(__file__).parents[3] / "config" / "pipelines"
+    if not pipelines_dir.exists():
+        return None
+
+    # Exact match first
+    exact = pipelines_dir / f"{pipeline_name}.json"
+    if exact.exists():
+        return exact
+
+    # Suffix match
+    for path in pipelines_dir.glob("*.json"):
+        if path.stem == pipeline_name or pipeline_name in path.stem:
+            return path
+
+    return None
+
+
+def _run_local_scan(
+    target: str,
+    pipeline_name: str = "quickstart",
+    output: str | None = None,
+    timeout: int = 60,
+) -> int:
+    """Run a scan locally using PipelineRunner (no API server required).
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    from redops.pipelines.loader import PipelineLoader
+    from redops.pipelines.runner import PipelineRunner
+    from redops.core.config import RedOpsConfig
+    from redops.core.context import Context
+
+    pipeline_path = _resolve_pipeline_file(pipeline_name)
+    if pipeline_path is None:
+        print_error(f"Pipeline '{pipeline_name}' not found in config/pipelines/")
+        console.print(
+            "[dim]Run 'redops scan list-pipelines' to see available pipelines.[/dim]"
+        )
+        return 1
+
+    try:
+        config = RedOpsConfig.from_env()
+    except Exception:
+        config = RedOpsConfig()
+
+    console.print(f"[bold]Starting local scan on {target}[/bold]")
+    console.print(f"  Pipeline: {pipeline_name} ({pipeline_path.name})")
+    console.print(f"  Timeout: {timeout}s")
+    console.print()
+
+    try:
+        pipeline = PipelineLoader.load(pipeline_path)
+        runner = PipelineRunner(pipeline, config=config)
+
+        console.print(f"[dim]Executing {len(pipeline.enabled_steps)} steps...[/dim]")
+        console.print()
+
+        start_time = time.time()
+        ctx = runner.run(target=target)
+        elapsed = time.time() - start_time
+
+        # Build a result dict compatible with print_scan_result
+        result = {
+            "scan_id": "local",
+            "target": target,
+            "pipeline": pipeline.metadata.name,
+            "status": "completed",
+            "started_at": datetime.fromtimestamp(start_time).isoformat(),
+            "completed_at": datetime.now().isoformat(),
+            "findings": _extract_findings_from_context(ctx),
+            "logs": ctx.logs,
+            "data_keys": list(ctx.data.keys()),
+        }
+
+        print_scan_result(result, verbose=False)
+        console.print(f"\n[dim]Completed in {format_duration(elapsed)}[/dim]")
+
+        if output:
+            output_path = Path(output)
+            output_path.write_text(json.dumps(result, indent=2, default=str))
+            print_success(f"Results saved to {output}")
+
+        return 0
+
+    except Exception as e:
+        print_error(f"Local scan failed: {e}")
+        return 1
+
+
+def _extract_findings_from_context(ctx) -> list[dict]:
+    """Extract findings from pipeline context for display."""
+    findings = []
+    for key, value in ctx.data.items():
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict) and "severity" in item:
+                    findings.append(item)
+                elif isinstance(item, dict) and "title" in item:
+                    findings.append(item)
+        elif isinstance(value, dict) and "severity" in value:
+            findings.append(value)
+    return findings
+
+
 @click.group()
 def scan():
     """Scan management commands.
@@ -45,9 +159,24 @@ def scan():
 @click.option(
     "--tag", multiple=True, help="Tags to add to scan (can be used multiple times)"
 )
+@click.option(
+    "--local",
+    "local_mode",
+    is_flag=True,
+    help="Run scan locally without an API server (zero-config mode)",
+)
 @click.pass_context
 def run_cmd(
-    ctx, target, pipeline, output, async_mode, timeout, modules, exclude_modules, tag
+    ctx,
+    target,
+    pipeline,
+    output,
+    async_mode,
+    timeout,
+    modules,
+    exclude_modules,
+    tag,
+    local_mode,
 ):
     """Run a security scan on a target.
 
@@ -57,8 +186,18 @@ def run_cmd(
     Examples:
         redops scan run https://example.com
         redops scan run -p web_full example.com
-        redops scan run --modules port_scan,ssl_check 192.168.1.1
+        redops scan run --local example.com
     """
+    if local_mode:
+        sys.exit(
+            _run_local_scan(
+                target=target,
+                pipeline_name=pipeline,
+                output=output,
+                timeout=timeout,
+            )
+        )
+
     run_scan(
         ctx=ctx.obj,
         target=target,
@@ -309,6 +448,31 @@ def status_cmd(ctx, scan_id, watch):
         sys.exit(1)
     except KeyboardInterrupt:
         console.print("\n[dim]Stopped watching[/dim]")
+
+
+@scan.command("list-pipelines")
+def list_pipelines_cmd():
+    """List available pipeline definitions."""
+    pipelines_dir = Path(__file__).parents[3] / "config" / "pipelines"
+    if not pipelines_dir.exists():
+        console.print("[yellow]Pipeline directory not found.[/yellow]")
+        return
+
+    console.print("[bold]Available Pipelines[/bold]\n")
+    from redops.pipelines.loader import PipelineLoader
+
+    for path in sorted(pipelines_dir.glob("*.json")):
+        try:
+            pipeline = PipelineLoader.load(path)
+            console.print(f"  [cyan]{path.stem}[/cyan]")
+            console.print(f"    {pipeline.metadata.name}")
+            if pipeline.metadata.description:
+                console.print(f"    [dim]{pipeline.metadata.description}[/dim]")
+            console.print(f"    Steps: {len(pipeline.steps)} | Tags: {', '.join(pipeline.metadata.tags)}")
+            console.print()
+        except Exception as e:
+            console.print(f"  [red]{path.name}[/red] — error: {e}")
+            console.print()
 
 
 @scan.command("cancel")

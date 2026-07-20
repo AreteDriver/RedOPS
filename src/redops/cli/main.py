@@ -101,8 +101,14 @@ def status(ctx):
 @click.option("-o", "--output", type=click.Path(), help="Output file path")
 @click.option("--async", "async_mode", is_flag=True, help="Run scan asynchronously")
 @click.option("--timeout", type=int, default=3600, help="Scan timeout in seconds")
+@click.option(
+    "--local",
+    "local_mode",
+    is_flag=True,
+    help="Run scan locally without an API server (zero-config mode)",
+)
 @pass_context
-def quick_scan(ctx, target, pipeline, output, async_mode, timeout):
+def quick_scan(ctx, target, pipeline, output, async_mode, timeout, local_mode):
     """Run a quick scan on a target.
 
     This is a shortcut for 'redops scan run'.
@@ -111,8 +117,19 @@ def quick_scan(ctx, target, pipeline, output, async_mode, timeout):
     Examples:
         redops quick-scan https://example.com
         redops quick-scan -p web_full example.com -o results.json
+        redops quick-scan --local example.com
     """
-    from .commands.scan import run_scan
+    from .commands.scan import run_scan, _run_local_scan
+
+    if local_mode:
+        sys.exit(
+            _run_local_scan(
+                target=target,
+                pipeline_name=pipeline,
+                output=output,
+                timeout=timeout,
+            )
+        )
 
     run_scan(
         ctx=ctx,

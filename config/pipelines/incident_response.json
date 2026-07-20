@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "name": "Incident Response Triage",
+    "description": "Rapid triage pipeline for incident response: threat intel, artifact analysis, and containment guidance",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["incident-response", "triage", "threat-intel", "artifacts"]
+  },
+  "steps": [
+    {
+      "name": "Validate Scope",
+      "module": "compliance.scope_guard.validate_scope",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Audit Pipeline Start",
+      "module": "compliance.audit_log.audit_pipeline_start",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Threat Intel Lookup",
+      "module": "threat_intel.threat_intel.lookup_indicators",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "VirusTotal Enrichment",
+      "module": "intel.virustotal_intel.query_virustotal",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "AbuseIPDB Check",
+      "module": "threat_intel.abuseipdb.check_ip",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "GreyNoise Context",
+      "module": "threat_intel.greynoise.query_greynoise",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "MalwareBazaar Hash Lookup",
+      "module": "threat_intel.malwarebazaar.query_hash",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Extract EXIF Metadata",
+      "module": "metadata.exif.extract_exif",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Analyze Document Artifacts",
+      "module": "metadata.documents.extract_metadata",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Correlate Findings",
+      "module": "analysis.correlation_engine.correlate_findings",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Triage Report",
+      "module": "reporting.markdown_report.generate_technical_report",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Export STIX Bundle",
+      "module": "intel.stix_export.export_stix",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Audit Pipeline End",
+      "module": "compliance.audit_log.audit_pipeline_end",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 600,
+    "strict_scope": false
+  }
+}

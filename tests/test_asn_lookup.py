@@ -213,9 +213,11 @@ class TestLookupAsnBgpview:
 class TestLookupAsnCymru:
     """Tests for lookup_asn_cymru function."""
 
-    def test_dns_lookup(self):
+    @patch("socket.gethostbyname_ex")
+    def test_dns_lookup(self, mock_dns):
         """Test Cymru DNS lookup (basic structure)."""
         # This is a fallback method, just ensure it doesn't crash
+        mock_dns.return_value = ("test", [], ["127.0.0.1"])
         result = lookup_asn_cymru("8.8.8.8")
         assert "ip" in result
 

@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from redops.core.context import Context
+from redops.modules.active.authorization import assert_active_authorized
 
 NMAP_TIMEOUT = 120
 
@@ -22,6 +23,7 @@ def scan_ports(ctx: Context, params: dict[str, Any] | None = None) -> Context:
     Adds to context:
         port_scan_results: list of dicts with ip, open_ports
     """
+    assert_active_authorized(ctx)
     params = params or {}
     ports = params.get("ports", "T:1-1024,U:23,2323")
     timing = params.get("timing", "T4")

@@ -216,7 +216,7 @@ services:
     restart: unless-stopped
 
   redis-commander:
-    image: rediscommander/redis-commander:latest
+    image: rediscommander/redis-commander:0.8.1
     container_name: redops-redis-commander
     environment:
       - REDIS_HOSTS=local:redis:6379

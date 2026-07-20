@@ -10,6 +10,7 @@ import subprocess
 from typing import Any
 
 from redops.core.context import Context
+from redops.modules.active.authorization import assert_active_authorized
 
 
 def get_wireless_interfaces() -> list[str]:
@@ -33,6 +34,7 @@ def enable_monitor_mode(ctx: Context, params: dict[str, Any] | None = None) -> C
         monitor_interface: Monitor mode interface name (e.g. wlan1mon)
         monitor_ready: True if mode switch succeeded
     """
+    assert_active_authorized(ctx)
     params = params or {}
     interface = params.get("interface", "wlan1")
 
@@ -74,6 +76,7 @@ def disable_monitor_mode(ctx: Context, params: dict[str, Any] | None = None) -> 
     Params:
         interface: Monitor interface to stop. Default: reads from context.
     """
+    assert_active_authorized(ctx)
     params = params or {}
     monitor_iface = params.get("interface") or ctx.get("monitor_interface", "wlan1mon")
 

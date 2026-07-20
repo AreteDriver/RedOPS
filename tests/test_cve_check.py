@@ -1,12 +1,14 @@
 """Tests for CVE cross-reference module."""
 
 from redops.core.context import Context
+from redops.modules.active.authorization import record_authorization
 from redops.modules.active.exploit.cve_check import check_cves
 
 
 class TestCheckCves:
     def test_finds_telnetd_cve(self):
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add(
             "port_scan_results",
             [
@@ -34,6 +36,7 @@ class TestCheckCves:
 
     def test_high_value_targets(self):
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add(
             "port_scan_results",
             [
@@ -59,6 +62,7 @@ class TestCheckCves:
 
     def test_no_matches(self):
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add(
             "port_scan_results",
             [
@@ -83,12 +87,14 @@ class TestCheckCves:
 
     def test_empty_scan_results(self):
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = check_cves(ctx)
         assert result.get("cve_findings") == []
         assert result.get("high_value_targets") == []
 
     def test_matches_on_product_field(self):
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add(
             "port_scan_results",
             [

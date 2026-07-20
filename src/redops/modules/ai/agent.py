@@ -11,6 +11,8 @@ import re
 from typing import Any
 
 from redops.core.context import Context
+from redops.modules.active.authorization import assert_active_authorized
+from redops.modules.active.egress import block_external_egress
 from redops.modules.ai.planner import build_attack_surface_summary
 from redops.modules.ai.tools import TOOL_REGISTRY, get_tool_descriptions
 
@@ -78,6 +80,8 @@ def run_agent(ctx: Context, params: dict[str, Any] | None = None) -> Context:
         agent_complete: bool
         agent_summary: str
     """
+    assert_active_authorized(ctx)
+
     if not HAS_REQUESTS:
         ctx.log("requests library not installed", level="ERROR")
         ctx.add("agent_complete", False)
@@ -121,58 +125,59 @@ def run_agent(ctx: Context, params: dict[str, Any] | None = None) -> Context:
         level="INFO",
     )
 
-    for iteration in range(max_iterations):
-        attack_surface = build_attack_surface_summary(ctx)
-        user_message = f"Iteration {iteration + 1}/{max_iterations}\n\n{attack_surface}"
+    with block_external_egress():
+        for iteration in range(max_iterations):
+            attack_surface = build_attack_surface_summary(ctx)
+            user_message = f"Iteration {iteration + 1}/{max_iterations}\n\n{attack_surface}"
 
-        ctx.log(f"Agent iteration {iteration + 1}", level="INFO")
+            ctx.log(f"Agent iteration {iteration + 1}", level="INFO")
 
-        response = _call_ollama(
-            model, system, user_message, temperature=temperature, options=options
-        )
-        if not response:
-            ctx.log("Ollama returned empty response", level="ERROR")
-            break
-
-        parsed = _parse_agent_response(response)
-        if not parsed:
-            ctx.log(
-                f"Could not parse agent response: {response[:200]}",
-                level="ERROR",
+            response = _call_ollama(
+                model, system, user_message, temperature=temperature, options=options
             )
-            break
+            if not response:
+                ctx.log("Ollama returned empty response", level="ERROR")
+                break
 
-        thought = parsed.get("thought", "")
-        action = parsed.get("action", "")
-        action_params = parsed.get("params", {})
+            parsed = _parse_agent_response(response)
+            if not parsed:
+                ctx.log(
+                    f"Could not parse agent response: {response[:200]}",
+                    level="ERROR",
+                )
+                break
 
-        ctx.log(f"Agent thought: {thought}", level="INFO")
-        ctx.log(f"Agent action: {action} | params: {action_params}", level="INFO")
+            thought = parsed.get("thought", "")
+            action = parsed.get("action", "")
+            action_params = parsed.get("params", {})
 
-        agent_log.append(
-            {
-                "iteration": iteration + 1,
-                "thought": thought,
-                "action": action,
-                "params": action_params,
-            }
-        )
+            ctx.log(f"Agent thought: {thought}", level="INFO")
+            ctx.log(f"Agent action: {action} | params: {action_params}", level="INFO")
 
-        if action == "COMPLETE":
-            ctx.add("agent_complete", True)
-            ctx.add(
-                "agent_summary",
-                parsed.get("summary", "Agent completed chain."),
+            agent_log.append(
+                {
+                    "iteration": iteration + 1,
+                    "thought": thought,
+                    "action": action,
+                    "params": action_params,
+                }
             )
-            ctx.log(f"Agent complete: {parsed.get('summary')}", level="INFO")
-            break
 
-        if action in TOOL_REGISTRY:
-            tool_fn = TOOL_REGISTRY[action]["fn"]
-            ctx = tool_fn(ctx, action_params)
-            ctx.log(f"Tool {action} executed", level="INFO")
-        else:
-            ctx.log(f"Unknown tool: {action}", level="WARNING")
+            if action == "COMPLETE":
+                ctx.add("agent_complete", True)
+                ctx.add(
+                    "agent_summary",
+                    parsed.get("summary", "Agent completed chain."),
+                )
+                ctx.log(f"Agent complete: {parsed.get('summary')}", level="INFO")
+                break
+
+            if action in TOOL_REGISTRY:
+                tool_fn = TOOL_REGISTRY[action]["fn"]
+                ctx = tool_fn(ctx, action_params)
+                ctx.log(f"Tool {action} executed", level="INFO")
+            else:
+                ctx.log(f"Unknown tool: {action}", level="WARNING")
 
     ctx.add("agent_log", agent_log)
     if not ctx.get("agent_complete"):

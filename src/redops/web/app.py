@@ -42,6 +42,7 @@ from redops.web.auth import (
     generate_api_key,
 )
 
+from redops.core.exceptions import RedOpsError, ModuleError
 from redops.main import __version__
 
 
@@ -553,7 +554,7 @@ async def run_scan_task(scan_id: str, request: ScanRequest):
             success = True
             try:
                 ctx = module_fn(ctx)
-            except Exception as e:
+            except (RedOpsError, RuntimeError, ImportError, TypeError, ValueError) as e:
                 ctx.log(f"Module {name} failed: {e}", level="ERROR")
                 success = False
 
@@ -572,7 +573,7 @@ async def run_scan_task(scan_id: str, request: ScanRequest):
         # Emit completion
         await emit_scan_completed(scan_id, len(ctx.data))
 
-    except Exception as e:
+    except Exception as e:  # Worker safety net — prevents unhandled exceptions from killing the background task
         _scans[scan_id].status = "failed"
         _scans[scan_id].error = str(e)
         await emit_scan_failed(scan_id, str(e))
@@ -588,25 +589,27 @@ def get_dashboard_html() -> str:
     <title>RedOPS Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
-    <div x-data="dashboard()" x-init="init()">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-gray-800 focus:text-white focus:px-4 focus:py-2 focus:rounded">Skip to main content</a>
+    <div x-data="dashboard()" x-init="init()" id="main-content" tabindex="-1">
         <!-- Header -->
-        <header class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+        <header class="bg-gray-800 border-b border-gray-700 px-6 py-4" role="banner">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <span class="text-2xl">🔴</span>
+                    <span class="text-2xl" aria-hidden="true">🔴</span>
                     <h1 class="text-xl font-bold text-red-500">RedOPS</h1>
-                    <span class="text-gray-500 text-sm" x-text="'v' + version"></span>
+                    <span class="text-gray-500 text-sm" x-text="'v' + version" aria-label="Version"></span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="text-sm" :class="wsStatus === 'Connected' ? 'text-green-400' : 'text-yellow-400'" x-text="'WS: ' + wsStatus"></span>
-                    <span class="text-sm text-gray-400" x-text="health"></span>
+                    <span class="text-sm" :class="wsStatus === 'Connected' ? 'text-green-400' : 'text-yellow-400'" x-text="'WS: ' + wsStatus" aria-live="polite" aria-label="WebSocket status"></span>
+                    <span class="text-sm text-gray-400" x-text="health" aria-label="API health"></span>
                     <!-- Auth status -->
                     <template x-if="authEnabled && authenticated">
                         <div class="flex items-center space-x-2">
                             <span class="text-sm text-green-400" x-text="'User: ' + username"></span>
-                            <button @click="logout()" class="text-xs text-gray-400 hover:text-gray-200 px-2 py-1 border border-gray-600 rounded">Logout</button>
+                            <button @click="logout()" class="text-xs text-gray-400 hover:text-gray-200 px-3 h-11 border border-gray-600 rounded inline-flex items-center">Logout</button>
                         </div>
                     </template>
                 </div>
@@ -615,23 +618,23 @@ def get_dashboard_html() -> str:
 
         <!-- Login Modal -->
         <template x-if="authEnabled && !authenticated && showLogin">
-            <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div class="bg-gray-800 rounded-lg p-8 w-96 shadow-xl">
-                    <h2 class="text-xl font-bold mb-6 text-center">Login to RedOPS</h2>
-                    <form @submit.prevent="login()">
+            <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Login dialog" @keydown.escape.window="showLogin = false">
+                <div class="bg-gray-800 rounded-lg p-6 sm:p-8 w-full max-w-sm shadow-xl">
+                    <h2 class="text-xl font-bold mb-6 text-center" id="login-title">Login to RedOPS</h2>
+                    <form @submit.prevent="login()" aria-labelledby="login-title">
                         <div class="mb-4">
-                            <label class="block text-sm text-gray-400 mb-2">Username</label>
-                            <input type="text" x-model="loginForm.username" required
-                                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500">
+                            <label for="login-username" class="block text-sm text-gray-400 mb-2">Username</label>
+                            <input id="login-username" type="text" x-model="loginForm.username" required
+                                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500 h-11">
                         </div>
                         <div class="mb-6">
-                            <label class="block text-sm text-gray-400 mb-2">Password</label>
-                            <input type="password" x-model="loginForm.password" required
-                                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500">
+                            <label for="login-password" class="block text-sm text-gray-400 mb-2">Password</label>
+                            <input id="login-password" type="password" x-model="loginForm.password" required
+                                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500 h-11">
                         </div>
                         <p x-show="loginError" class="text-red-400 text-sm mb-4" x-text="loginError"></p>
                         <button type="submit" :disabled="loggingIn"
-                            class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 py-2 rounded font-medium transition">
+                            class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 py-2 rounded font-medium transition h-11">
                             <span x-show="!loggingIn">Login</span>
                             <span x-show="loggingIn">Logging in...</span>
                         </button>
@@ -642,18 +645,21 @@ def get_dashboard_html() -> str:
 
         <div class="container mx-auto px-6 py-8">
             <!-- New Scan Form -->
-            <div class="bg-gray-800 rounded-lg p-6 mb-8">
-                <h2 class="text-lg font-semibold mb-4">New Scan</h2>
-                <form @submit.prevent="startScan()" class="flex flex-wrap gap-4">
-                    <input type="text" x-model="newScan.target" placeholder="Target (e.g., example.com)"
-                        class="flex-1 min-w-64 bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500">
-                    <select x-model="newScan.preset" class="bg-gray-700 border border-gray-600 rounded px-4 py-2">
+            <div class="bg-gray-800 rounded-lg p-6 mb-8" role="region" aria-label="New scan">
+                <h2 class="text-lg font-semibold mb-4" id="new-scan-title">New Scan</h2>
+                <form @submit.prevent="startScan()" class="flex flex-wrap gap-4" aria-labelledby="new-scan-title">
+                    <label for="scan-target" class="sr-only">Target</label>
+                    <input id="scan-target" type="text" x-model="newScan.target" placeholder="Target (e.g., example.com)"
+                        class="w-full sm:flex-1 sm:min-w-0 min-w-0 bg-gray-700 border border-gray-600 rounded px-4 py-2 focus:outline-none focus:border-red-500 h-11">
+                    <label for="scan-preset" class="sr-only">Preset</label>
+                    <select id="scan-preset" x-model="newScan.preset" class="w-full sm:w-auto bg-gray-700 border border-gray-600 rounded px-4 py-2 h-11">
                         <template x-for="preset in presets" :key="preset.id">
                             <option :value="preset.id" x-text="preset.name"></option>
                         </template>
                     </select>
                     <button type="submit" :disabled="!newScan.target || scanning"
-                        class="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 px-6 py-2 rounded font-medium transition">
+                        class="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 px-6 py-2 rounded font-medium transition h-11 w-full sm:w-auto"
+                        aria-label="Start scan">
                         <span x-show="!scanning">Start Scan</span>
                         <span x-show="scanning">Starting...</span>
                     </button>
@@ -661,22 +667,24 @@ def get_dashboard_html() -> str:
             </div>
 
             <!-- Scans List -->
-            <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <div class="bg-gray-800 rounded-lg p-6 mb-8" role="region" aria-label="Recent scans">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold">Recent Scans</h2>
-                    <button @click="loadScans()" class="text-sm text-gray-400 hover:text-gray-200">Refresh</button>
+                    <h2 class="text-lg font-semibold" id="scans-title">Recent Scans</h2>
+                    <button @click="loadScans()" class="text-sm text-gray-400 hover:text-gray-200 h-11 px-3 inline-flex items-center"
+                        aria-label="Refresh scans list">Refresh</button>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
+                <!-- Desktop table -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="w-full" aria-labelledby="scans-title">
                         <thead>
                             <tr class="text-left text-gray-400 text-sm border-b border-gray-700">
-                                <th class="pb-3">ID</th>
-                                <th class="pb-3">Target</th>
-                                <th class="pb-3">Preset</th>
-                                <th class="pb-3">Status</th>
-                                <th class="pb-3">Progress</th>
-                                <th class="pb-3">Started</th>
-                                <th class="pb-3">Actions</th>
+                                <th scope="col" class="pb-3">ID</th>
+                                <th scope="col" class="pb-3">Target</th>
+                                <th scope="col" class="pb-3">Preset</th>
+                                <th scope="col" class="pb-3">Status</th>
+                                <th scope="col" class="pb-3">Progress</th>
+                                <th scope="col" class="pb-3">Started</th>
+                                <th scope="col" class="pb-3">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -697,7 +705,8 @@ def get_dashboard_html() -> str:
                                     <td class="py-3 text-sm text-gray-400" x-text="formatDate(scan.started_at)"></td>
                                     <td class="py-3">
                                         <button x-show="scan.status === 'completed'" @click="viewResults(scan.scan_id)"
-                                            class="text-red-400 hover:text-red-300 text-sm">View</button>
+                                            class="text-red-400 hover:text-red-300 text-sm h-11 px-3 inline-flex items-center"
+                                            :aria-label="'View results for scan ' + scan.scan_id">View</button>
                                     </td>
                                 </tr>
                             </template>
@@ -707,13 +716,67 @@ def get_dashboard_html() -> str:
                         </tbody>
                     </table>
                 </div>
+                <!-- Mobile cards -->
+                <div class="md:hidden space-y-3">
+                    <template x-for="scan in scans" :key="scan.scan_id">
+                        <div class="bg-gray-700/50 rounded-lg p-4 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-mono text-sm text-gray-300" x-text="scan.scan_id"></span>
+                                <span :class="statusClass(scan.status)" class="px-2 py-1 rounded text-xs font-medium" x-text="scan.status"></span>
+                            </div>
+                            <div class="text-sm" x-text="scan.target"></div>
+                            <div class="flex items-center justify-between text-sm text-gray-400">
+                                <span class="capitalize" x-text="scan.preset"></span>
+                                <span x-text="formatDate(scan.started_at)"></span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full transition-all" :style="'width: ' + scan.progress + '%'"></div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button x-show="scan.status === 'completed'" @click="viewResults(scan.scan_id)"
+                                    class="text-red-400 hover:text-red-300 text-sm h-11 px-3 inline-flex items-center"
+                                    :aria-label="'View results for scan ' + scan.scan_id">View Results</button>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="scans.length === 0" class="py-8 text-center text-gray-500">No scans yet. Start one above.</div>
+                </div>
             </div>
 
             <!-- Results Panel -->
-            <div x-show="selectedScan" class="bg-gray-800 rounded-lg p-6">
+            <div x-show="selectedScan" class="bg-gray-800 rounded-lg p-6" role="region" aria-label="Scan results">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold">Scan Results: <span x-text="selectedScan"></span></h2>
-                    <button @click="selectedScan = null" class="text-gray-400 hover:text-gray-200">&times;</button>
+                    <h2 class="text-lg font-semibold" id="results-title">Scan Results: <span x-text="selectedScan"></span></h2>
+                    <button @click="selectedScan = null" class="text-gray-400 hover:text-gray-200"
+                        aria-label="Close results panel">&times;</button>
+                </div>
+                <!-- Severity Chart -->
+                <div class="mb-6" x-show="results && results.findings && results.findings.length > 0">
+                    <h3 class="text-sm font-medium text-gray-400 mb-2">Severity Distribution</h3>
+                    <div class="h-64">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+                <!-- Module Distribution Chart -->
+                <div class="mb-6" x-show="results && results.findings && results.findings.length > 0">
+                    <h3 class="text-sm font-medium text-gray-400 mb-2">Findings by Module</h3>
+                    <div class="h-64">
+                        <canvas id="moduleChart"></canvas>
+                    </div>
+                </div>
+                <!-- Risk Score Gauge -->
+                <div class="mb-6" x-show="results && results.findings && results.findings.length > 0">
+                    <h3 class="text-sm font-medium text-gray-400 mb-2">Risk Score</h3>
+                    <div class="h-48">
+                        <canvas id="riskGauge"></canvas>
+                    </div>
+                </div>
+                <!-- Timeline Chart -->
+                <div class="mb-6" x-show="results && results.findings && results.findings.length > 0">
+                    <h3 class="text-sm font-medium text-gray-400 mb-2">Findings Timeline</h3>
+                    <div class="h-64">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
                 </div>
                 <pre class="bg-gray-900 p-4 rounded overflow-auto max-h-96 text-sm" x-text="JSON.stringify(results, null, 2)"></pre>
             </div>
@@ -938,9 +1001,236 @@ def get_dashboard_html() -> str:
                         const res = await fetch(`/api/scans/${scanId}/results`);
                         this.results = await res.json();
                         this.selectedScan = scanId;
+                        // Allow DOM to update before rendering charts
+                        setTimeout(() => {
+                            this.renderSeverityChart();
+                            this.renderModuleChart();
+                            this.renderRiskGauge();
+                            this.renderTimelineChart();
+                        }, 50);
                     } catch (e) {
                         console.error('Failed to load results:', e);
                     }
+                },
+
+                renderSeverityChart() {
+                    const canvas = document.getElementById('severityChart');
+                    if (!canvas || !this.results || !this.results.findings) return;
+
+                    const ctx = canvas.getContext('2d');
+                    if (window._severityChart) {
+                        window._severityChart.destroy();
+                    }
+
+                    // Count findings by severity
+                    const counts = {};
+                    const colors = {
+                        critical: '#dc3545',
+                        high: '#fd7e14',
+                        medium: '#ffc107',
+                        low: '#28a745',
+                        info: '#17a2b8',
+                        unknown: '#6c757d'
+                    };
+                    const order = ['critical', 'high', 'medium', 'low', 'info'];
+
+                    for (const f of this.results.findings) {
+                        const sev = (f.severity || 'unknown').toLowerCase();
+                        counts[sev] = (counts[sev] || 0) + 1;
+                    }
+
+                    const labels = [];
+                    const data = [];
+                    const bgColors = [];
+                    for (const sev of order) {
+                        if (counts[sev]) {
+                            labels.push(sev.charAt(0).toUpperCase() + sev.slice(1));
+                            data.push(counts[sev]);
+                            bgColors.push(colors[sev] || colors.unknown);
+                        }
+                    }
+                    if (counts.unknown) {
+                        labels.push('Unknown');
+                        data.push(counts.unknown);
+                        bgColors.push(colors.unknown);
+                    }
+
+                    if (labels.length === 0) return;
+
+                    window._severityChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: data,
+                                backgroundColor: bgColors,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'right' },
+                                title: { display: true, text: 'Findings by Severity' }
+                            }
+                        }
+                    });
+                },
+
+                renderModuleChart() {
+                    const canvas = document.getElementById('moduleChart');
+                    if (!canvas || !this.results || !this.results.findings) return;
+
+                    const ctx = canvas.getContext('2d');
+                    if (window._moduleChart) {
+                        window._moduleChart.destroy();
+                    }
+
+                    const counts = {};
+                    for (const f of this.results.findings) {
+                        const mod = (f.module || 'unknown').split('.').pop();
+                        counts[mod] = (counts[mod] || 0) + 1;
+                    }
+
+                    const labels = Object.keys(counts);
+                    const data = Object.values(counts);
+
+                    if (labels.length === 0) return;
+
+                    window._moduleChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Findings',
+                                data: data,
+                                backgroundColor: '#dc3545',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                title: { display: true, text: 'Findings by Module' }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { color: '#9ca3af' } },
+                                x: { ticks: { color: '#9ca3af' } }
+                            }
+                        }
+                    });
+                },
+
+                renderRiskGauge() {
+                    const canvas = document.getElementById('riskGauge');
+                    if (!canvas || !this.results || !this.results.findings) return;
+
+                    const ctx = canvas.getContext('2d');
+                    if (window._riskGauge) {
+                        window._riskGauge.destroy();
+                    }
+
+                    const weights = { critical: 40, high: 25, medium: 15, low: 5, info: 1 };
+                    let score = 0;
+                    for (const f of this.results.findings) {
+                        score += weights[f.severity?.toLowerCase()] || 1;
+                    }
+                    score = Math.min(100, score);
+
+                    const colors = ['#17a2b8', '#28a745', '#ffc107', '#fd7e14', '#dc3545'];
+                    const zoneLabels = ['Minimal', 'Low', 'Medium', 'High', 'Critical'];
+
+                    window._riskGauge = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: zoneLabels,
+                            datasets: [{
+                                data: [20, 20, 20, 20, 20],
+                                backgroundColor: colors,
+                                borderWidth: 0,
+                                circumference: 180,
+                                rotation: 270,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '75%',
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: false },
+                            }
+                        },
+                        plugins: [{
+                            id: 'gaugeText',
+                            beforeDraw: (chart) => {
+                                const { ctx, chartArea: { top, bottom, left, right } } = chart;
+                                const cx = (left + right) / 2;
+                                const cy = (top + bottom) / 2;
+                                ctx.save();
+                                ctx.fillStyle = '#f3f4f6';
+                                ctx.font = 'bold 24px sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText(score.toString(), cx, cy);
+                                ctx.restore();
+                            }
+                        }]
+                    });
+                },
+
+                renderTimelineChart() {
+                    const canvas = document.getElementById('timelineChart');
+                    if (!canvas || !this.results || !this.results.findings) return;
+
+                    const ctx = canvas.getContext('2d');
+                    if (window._timelineChart) {
+                        window._timelineChart.destroy();
+                    }
+
+                    const bucketCounts = {};
+                    for (const f of this.results.findings) {
+                        const ts = f.timestamp || f.created_at || f.discovered_at;
+                        if (!ts) continue;
+                        const date = new Date(ts).toLocaleDateString();
+                        bucketCounts[date] = (bucketCounts[date] || 0) + 1;
+                    }
+
+                    const labels = Object.keys(bucketCounts).sort((a, b) => new Date(a) - new Date(b));
+                    const data = labels.map(d => bucketCounts[d]);
+
+                    if (labels.length === 0) return;
+
+                    window._timelineChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Findings',
+                                data: data,
+                                borderColor: '#dc3545',
+                                backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                                fill: true,
+                                tension: 0.3,
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                title: { display: true, text: 'Findings Over Time' }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { color: '#9ca3af' } },
+                                x: { ticks: { color: '#9ca3af' } }
+                            }
+                        }
+                    });
                 },
 
                 statusClass(status) {

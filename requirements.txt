@@ -6,7 +6,7 @@
 #
 # For development:
 #   pip install -r requirements.txt
-#   pip install pytest pytest-cov black flake8 mypy
+#   pip install pytest pytest-cov ruff mypy
 
 # ============================================================================
 # Core Dependencies (Required)
@@ -19,7 +19,6 @@ pydantic>=2.0.0,<3.0.0
 
 # For EXIF extraction from images
 Pillow>=10.2.0,<13.0.0
-exifread>=3.0.0,<4.0.0
 
 # For document metadata analysis (PDF, Office documents)
 pypdf>=5.0.0,<7.0.0
@@ -52,10 +51,9 @@ networkx>=3.1,<4.0.0
 # ============================================================================
 # Development Dependencies (Optional)
 # ============================================================================
-# Install separately with: pip install pytest pytest-cov black flake8 mypy
+# Install separately with: pip install pytest pytest-cov ruff mypy
 #
 # pytest>=7.4.0           # Testing framework
 # pytest-cov>=4.1.0       # Coverage reports
-# black>=23.0.0           # Code formatting
-# flake8>=6.0.0           # Linting
+# ruff>=0.15.0            # Linting and formatting
 # mypy>=1.5.0             # Type checking

@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "name": "Bug Bounty Recon",
+    "description": "Fast reconnaissance pipeline optimized for bug bounty programs: subdomains, tech stack, exposures",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["bug-bounty", "recon", "subdomains", "exposure"]
+  },
+  "steps": [
+    {
+      "name": "Validate Scope",
+      "module": "compliance.scope_guard.validate_scope",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Profile Domain",
+      "module": "recon.domains.profile_domain",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Enumerate Subdomains",
+      "module": "recon.subdomain_enum.enumerate_subdomains",
+      "params": {
+        "wordlist": "subdomains-top1million-5000.txt"
+      },
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Certificate Transparency",
+      "module": "recon.cert_transparency.query_ct_logs",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Fingerprint Technology Stack",
+      "module": "recon.tech_stack.fingerprint",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "ASN Lookup",
+      "module": "recon.asn_lookup.lookup_asn",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Score Risks",
+      "module": "intel.risk_scoring.score_risks",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Markdown Report",
+      "module": "reporting.markdown_report.generate_technical_report",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Export JSON Findings",
+      "module": "reporting.export.export_all",
+      "params": {
+        "format": "json"
+      },
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 300,
+    "strict_scope": true
+  }
+}

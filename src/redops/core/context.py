@@ -21,22 +21,71 @@ class Context:
     all intermediate outputs.
     """
 
-    def __init__(self, target: str | None = None, config: "RedOpsConfig | None" = None):
+    def __init__(
+        self,
+        target: str | None = None,
+        config: "RedOpsConfig | None" = None,
+        *,
+        authorization: Any | None = None,
+    ):
         """
         Initialize a new Context.
 
         Args:
             target: The target of the pipeline execution (e.g., domain, directory)
             config: RedOps configuration (scope, output settings, etc.)
+            authorization: ActiveAuthorization instance for active/offensive modules.
         """
         self.target = target
         self.config = config
+        self.authorization = authorization
         self.data: dict[str, Any] = {}
         self.logs: list[dict[str, Any]] = []
         self.metadata: dict[str, Any] = {
             "created_at": datetime.now(timezone.utc).isoformat(),
             "target": target,
         }
+        self._checkpoints: list[dict[str, Any]] = []
+
+    def save(self) -> None:
+        """
+        Save a checkpoint of the current context state.
+
+        Checkpoints are stored in a stack; call rollback() to restore
+        the most recent checkpoint.
+        """
+        import copy
+
+        checkpoint = {
+            "data": copy.deepcopy(self.data),
+            "logs": copy.deepcopy(self.logs),
+            "metadata": copy.deepcopy(self.metadata),
+        }
+        self._checkpoints.append(checkpoint)
+        self.log("Context checkpoint saved", level="DEBUG")
+
+    def rollback(self) -> None:
+        """
+        Restore the context data and metadata to the last checkpoint.
+
+        Logs are intentionally preserved (append-only audit trail).
+
+        Raises:
+            RuntimeError: If no checkpoints exist.
+        """
+        if not self._checkpoints:
+            raise RuntimeError("No checkpoints available to rollback")
+
+        checkpoint = self._checkpoints.pop()
+        self.data = checkpoint["data"]
+        self.metadata = checkpoint["metadata"]
+        # Logs are NOT rolled back — they form an immutable audit trail
+        self.log("Context rolled back to previous checkpoint", level="WARNING")
+
+    def clear_checkpoints(self) -> None:
+        """Remove all stored checkpoints."""
+        self._checkpoints.clear()
+        self.log("All checkpoints cleared", level="DEBUG")
 
     def add(self, key: str, value: Any) -> None:
         """

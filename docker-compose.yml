@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: redops:latest
+    image: redops:1.5.0
     container_name: redops
     volumes:
       # Mount output directory for reports
