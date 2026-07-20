@@ -573,7 +573,7 @@ async def run_scan_task(scan_id: str, request: ScanRequest):
         # Emit completion
         await emit_scan_completed(scan_id, len(ctx.data))
 
-    except Exception as e:  # Worker safety net — prevents unhandled exceptions from killing the background task
+    except (OSError, RuntimeError, ImportError, TypeError, ValueError, ConnectionError, RedOpsError) as e:  # Worker safety net — prevents unhandled exceptions from killing the background task
         _scans[scan_id].status = "failed"
         _scans[scan_id].error = str(e)
         await emit_scan_failed(scan_id, str(e))
