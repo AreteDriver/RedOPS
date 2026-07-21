@@ -4,6 +4,8 @@ import pytest
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch, MagicMock
 
+import bcrypt
+
 from redops.web.auth import (
     AuthConfig,
     AuthManager,
@@ -26,7 +28,7 @@ class TestAuthConfig:
         assert config.enabled is False
         assert config.api_key is None
         assert config.admin_user == "admin"
-        assert config.admin_password is None
+        assert config.admin_pw_hash is None
         assert config.session_expiry_hours == 24
         assert "/api/health" in config.allowed_paths
 
@@ -47,7 +49,8 @@ class TestAuthConfig:
             assert config.enabled is True
             assert config.api_key == "test_key"
             assert config.admin_user == "testuser"
-            assert config.admin_password == "testpass"
+            assert config.admin_pw_hash is not None
+            assert config.admin_pw_hash.startswith("$2b$")
             assert config.session_expiry_hours == 48
 
     def test_is_configured_when_disabled(self):
@@ -62,7 +65,7 @@ class TestAuthConfig:
 
     def test_is_configured_with_password(self):
         """Test is_configured with admin password."""
-        config = AuthConfig(enabled=True, admin_password="test_pass")
+        config = AuthConfig(enabled=True, admin_pw_hash=bcrypt.hashpw(b"test_pass", bcrypt.gensalt()).decode())
         assert config.is_configured() is True
 
     def test_is_configured_missing_credentials(self):
@@ -196,21 +199,21 @@ class TestAuthManager:
 
     def test_verify_basic_auth_valid(self):
         """Test valid basic auth verification."""
-        config = AuthConfig(admin_user="admin", admin_password="secret")
+        config = AuthConfig(admin_user="admin", admin_pw_hash="$2b$12$qIMyTYnDhp3jHtbiJnzbC.n/MpgI0YkksymRP1JhRH1Mr8KBhGQ8a")
         manager = AuthManager(config)
 
         assert manager.verify_basic_auth("admin", "secret") is True
 
     def test_verify_basic_auth_wrong_username(self):
         """Test basic auth with wrong username."""
-        config = AuthConfig(admin_user="admin", admin_password="secret")
+        config = AuthConfig(admin_user="admin", admin_pw_hash="$2b$12$qIMyTYnDhp3jHtbiJnzbC.n/MpgI0YkksymRP1JhRH1Mr8KBhGQ8a")
         manager = AuthManager(config)
 
         assert manager.verify_basic_auth("wrong", "secret") is False
 
     def test_verify_basic_auth_wrong_password(self):
         """Test basic auth with wrong password."""
-        config = AuthConfig(admin_user="admin", admin_password="secret")
+        config = AuthConfig(admin_user="admin", admin_pw_hash="$2b$12$qIMyTYnDhp3jHtbiJnzbC.n/MpgI0YkksymRP1JhRH1Mr8KBhGQ8a")
         manager = AuthManager(config)
 
         assert manager.verify_basic_auth("admin", "wrong") is False
@@ -274,7 +277,7 @@ class TestAuthManager:
         """Test authentication with basic auth."""
         import base64
 
-        config = AuthConfig(admin_user="admin", admin_password="secret")
+        config = AuthConfig(admin_user="admin", admin_pw_hash="$2b$12$qIMyTYnDhp3jHtbiJnzbC.n/MpgI0YkksymRP1JhRH1Mr8KBhGQ8a")
         manager = AuthManager(config)
 
         credentials = base64.b64encode(b"admin:secret").decode("utf-8")

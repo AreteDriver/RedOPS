@@ -14,6 +14,7 @@ from redops.core.models import DocumentMetadata, Finding, RiskLevel
 # Try to import document libraries
 try:
     from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
 
     PYPDF_AVAILABLE = True
 except ImportError:
@@ -299,7 +300,7 @@ def extract_pdf_metadata(file_path: str) -> DocumentMetadata | None:
             metadata["attachments"] = attachment_names
             warnings.append(f"Document contains {len(attachment_names)} embedded files")
 
-    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError, PdfReadError) as e:
         warnings.append(f"Error reading PDF: {str(e)}")
 
     return DocumentMetadata(
@@ -488,7 +489,7 @@ def check_for_hidden_data(file_path: str) -> list[str]:
         try:
             doc = DocxDocument(file_path)
             return check_docx_for_hidden_data(doc)
-        except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError):
+        except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError, PackageNotFoundError):
             return ["Could not check for hidden data"]
 
     return []

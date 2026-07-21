@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from ..deps import get_current_user, Pagination
+from .scans import _scans
 
 router = APIRouter()
 
@@ -54,6 +55,29 @@ class FindingList(BaseModel):
 # In-memory storage
 _findings: dict[str, dict] = {}
 
+def _require_finding_access(finding_id: str, user: dict) -> dict:
+    """Check finding exists and user has access via scan ownership (owner or admin)."""
+    finding = _findings.get(finding_id)
+    if not finding:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Finding {finding_id} not found",
+        )
+    username = user.get("username")
+    role = user.get("role")
+    if role == "admin":
+        return finding
+    # Check scan ownership
+    scan_id = finding.get("scan_id")
+    scan = _scans.get(scan_id) if scan_id else None
+    if scan and scan.get("created_by") == username:
+        return finding
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Access denied",
+    )
+
+
 
 @router.get("", response_model=FindingList)
 async def list_findings(
@@ -65,7 +89,17 @@ async def list_findings(
     current_user: dict = Depends(get_current_user),
 ):
     """List findings with optional filtering."""
+    username = current_user.get("username")
+    role = current_user.get("role")
     findings = list(_findings.values())
+
+    # Ownership filter: non-admins only see findings from their own scans
+    if role != "admin":
+        allowed_scan_ids = {
+            s["scan_id"] for s in _scans.values()
+            if s.get("created_by") == username
+        }
+        findings = [f for f in findings if f.get("scan_id") in allowed_scan_ids]
 
     # Apply filters
     if scan_id:
@@ -94,13 +128,7 @@ async def get_finding(
     current_user: dict = Depends(get_current_user),
 ):
     """Get finding details by ID."""
-    finding = _findings.get(finding_id)
-    if not finding:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Finding {finding_id} not found",
-        )
-
+    finding = _require_finding_access(finding_id, current_user)
     return FindingResponse(**finding)
 
 
@@ -111,12 +139,7 @@ async def update_finding(
     current_user: dict = Depends(get_current_user),
 ):
     """Update finding status or add notes."""
-    finding = _findings.get(finding_id)
-    if not finding:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Finding {finding_id} not found",
-        )
+    finding = _require_finding_access(finding_id, current_user)
 
     if update.status:
         valid_statuses = [
@@ -144,7 +167,17 @@ async def severity_summary(
     current_user: dict = Depends(get_current_user),
 ):
     """Get finding count by severity."""
+    username = current_user.get("username")
+    role = current_user.get("role")
     findings = list(_findings.values())
+
+    # Ownership filter: non-admins only see findings from their own scans
+    if role != "admin":
+        allowed_scan_ids = {
+            s["scan_id"] for s in _scans.values()
+            if s.get("created_by") == username
+        }
+        findings = [f for f in findings if f.get("scan_id") in allowed_scan_ids]
 
     if scan_id:
         findings = [f for f in findings if f.get("scan_id") == scan_id]

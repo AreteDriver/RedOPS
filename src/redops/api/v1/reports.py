@@ -69,6 +69,25 @@ class ReportList(BaseModel):
 # In-memory storage
 _reports: dict[str, dict] = {}
 
+def _require_report_access(report_id: str, user: dict) -> dict:
+    """Check report exists and user has access (owner or admin)."""
+    report = _reports.get(report_id)
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report {report_id} not found",
+        )
+    username = user.get("username")
+    role = user.get("role")
+    owner = report.get("metadata", {}).get("generated_by")
+    if role != "admin" and owner != username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+    return report
+
+
 
 @router.get("", response_model=ReportList)
 async def list_reports(
@@ -78,7 +97,16 @@ async def list_reports(
     current_user: dict = Depends(get_current_user),
 ):
     """List generated reports."""
+    username = current_user.get("username")
+    role = current_user.get("role")
     reports = list(_reports.values())
+
+    # Ownership filter: non-admins only see their own reports
+    if role != "admin":
+        reports = [
+            r for r in reports
+            if r.get("metadata", {}).get("generated_by") == username
+        ]
 
     if scan_id:
         reports = [r for r in reports if r.get("scan_id") == scan_id]
@@ -140,13 +168,7 @@ async def get_report(
     current_user: dict = Depends(get_current_user),
 ):
     """Get report status and metadata."""
-    report = _reports.get(report_id)
-    if not report:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report {report_id} not found",
-        )
-
+    report = _require_report_access(report_id, current_user)
     return ReportResponse(**report)
 
 
@@ -156,12 +178,7 @@ async def download_report(
     current_user: dict = Depends(get_current_user),
 ):
     """Download a generated report."""
-    report = _reports.get(report_id)
-    if not report:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report {report_id} not found",
-        )
+    report = _require_report_access(report_id, current_user)
 
     if report["status"] != "completed":
         raise HTTPException(
@@ -195,10 +212,5 @@ async def delete_report(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a generated report."""
-    if report_id not in _reports:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report {report_id} not found",
-        )
-
+    _require_report_access(report_id, current_user)
     del _reports[report_id]

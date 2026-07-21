@@ -7,6 +7,7 @@ Provides authentication mechanisms for the web dashboard and API:
 - Session-based authentication (for dashboard)
 """
 
+import logging
 import os
 import secrets
 import hashlib
@@ -14,8 +15,11 @@ import hmac
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
 
+import bcrypt
 from fastapi import Request, HTTPException
 from fastapi.security import APIKeyHeader, HTTPBasic
+
+logger = logging.getLogger(__name__)
 
 
 # Environment variables for configuration
@@ -34,7 +38,7 @@ class AuthConfig:
     enabled: bool = False
     api_key: str | None = None
     admin_user: str = "admin"
-    admin_password: str | None = None
+    admin_pw_hash: str | None = None
     session_secret: str = field(default_factory=lambda: secrets.token_hex(32))
     session_expiry_hours: int = 24
     allowed_paths: list = field(
@@ -49,11 +53,18 @@ class AuthConfig:
     @classmethod
     def from_env(cls) -> "AuthConfig":
         """Load configuration from environment variables."""
+        pw_plain = os.environ.get(ENV_ADMIN_PASSWORD)
+        pw_hash = None
+        if pw_plain:
+            pw_hash = bcrypt.hashpw(
+                pw_plain.encode("utf-8"), bcrypt.gensalt()
+            ).decode("utf-8")
+
         return cls(
             enabled=os.environ.get(ENV_AUTH_ENABLED, "false").lower() == "true",
             api_key=os.environ.get(ENV_API_KEY),
             admin_user=os.environ.get(ENV_ADMIN_USER, "admin"),
-            admin_password=os.environ.get(ENV_ADMIN_PASSWORD),
+            admin_pw_hash=pw_hash,
             session_secret=os.environ.get(ENV_SESSION_SECRET, secrets.token_hex(32)),
             session_expiry_hours=int(os.environ.get(ENV_SESSION_EXPIRY_HOURS, "24")),
         )
@@ -62,7 +73,7 @@ class AuthConfig:
         """Check if authentication is properly configured."""
         if not self.enabled:
             return True  # Not enabled means no config needed
-        return bool(self.api_key or self.admin_password)
+        return bool(self.api_key or self.admin_pw_hash)
 
 
 @dataclass
@@ -280,11 +291,17 @@ class AuthManager:
 
     def verify_basic_auth(self, username: str, password: str) -> bool:
         """Verify basic auth credentials."""
-        if not self.config.admin_password:
+        if not self.config.admin_pw_hash:
             return False
 
         username_match = secrets.compare_digest(username, self.config.admin_user)
-        password_match = secrets.compare_digest(password, self.config.admin_password)
+        try:
+            password_match = bcrypt.checkpw(
+                password.encode("utf-8"), self.config.admin_pw_hash.encode("utf-8")
+            )
+        except ValueError:
+            # Malformed hash
+            password_match = False
 
         return username_match and password_match
 

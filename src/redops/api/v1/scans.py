@@ -74,6 +74,24 @@ class ScanCompareRequest(BaseModel):
 # In-memory storage (replace with database in production)
 _scans: dict[str, dict] = {}
 
+def _require_scan_access(scan_id: str, user: dict) -> dict:
+    """Check scan exists and user has access (owner or admin)."""
+    scan = _scans.get(scan_id)
+    if not scan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Scan {scan_id} not found",
+        )
+    username = user.get("username")
+    role = user.get("role")
+    if role != "admin" and scan.get("created_by") != username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+    return scan
+
+
 
 @router.get("", response_model=ScanList)
 async def list_scans(
@@ -87,7 +105,13 @@ async def list_scans(
     - **target**: Filter by target (partial match)
     - **pipeline**: Filter by pipeline name
     """
+    username = current_user.get("username")
+    role = current_user.get("role")
     scans = list(_scans.values())
+
+    # Ownership filter: non-admins only see their own scans
+    if role != "admin":
+        scans = [s for s in scans if s.get("created_by") == username]
 
     # Apply filters
     if filters.status:
@@ -154,13 +178,7 @@ async def get_scan(
     current_user: dict = Depends(get_current_user),
 ):
     """Get scan details by ID."""
-    scan = _scans.get(scan_id)
-    if not scan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Scan {scan_id} not found",
-        )
-
+    scan = _require_scan_access(scan_id, current_user)
     return ScanResponse(**scan)
 
 
@@ -170,12 +188,7 @@ async def delete_scan(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a scan and its findings."""
-    if scan_id not in _scans:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Scan {scan_id} not found",
-        )
-
+    _require_scan_access(scan_id, current_user)
     del _scans[scan_id]
 
 
@@ -185,12 +198,7 @@ async def cancel_scan(
     current_user: dict = Depends(get_current_user),
 ):
     """Cancel a running scan."""
-    scan = _scans.get(scan_id)
-    if not scan:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Scan {scan_id} not found",
-        )
+    scan = _require_scan_access(scan_id, current_user)
 
     if scan["status"] not in ("pending", "running"):
         raise HTTPException(
@@ -214,19 +222,8 @@ async def compare_scans(
     Returns new, resolved, and modified findings between the baseline
     and current scan.
     """
-    baseline = _scans.get(request.baseline_scan_id)
-    current = _scans.get(request.current_scan_id)
-
-    if not baseline:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Baseline scan {request.baseline_scan_id} not found",
-        )
-    if not current:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Current scan {request.current_scan_id} not found",
-        )
+    baseline = _require_scan_access(request.baseline_scan_id, current_user)
+    current = _require_scan_access(request.current_scan_id, current_user)
 
     # In production, would use ScanComparator here
     return {

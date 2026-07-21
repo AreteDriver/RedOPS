@@ -5,6 +5,8 @@ Users API routes.
 from datetime import datetime, timezone
 from uuid import uuid4
 
+import bcrypt
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -27,7 +29,7 @@ class UserCreate(BaseModel):
             "example": {
                 "username": "johndoe",
                 "email": "john@example.com",
-                "password": "securepassword123",
+                "password": "[REDACTED]",
                 "full_name": "John Doe",
                 "role": "user",
             }
@@ -72,7 +74,7 @@ _users: dict[str, dict] = {
         "id": "admin-user-id",
         "username": "admin",
         "email": "admin@example.com",
-        "password_hash": "hashed_password",
+        "password_hash": "$2b$12$2r4xJEZgOYnknatj9QNAO.Usq37g1/p1oOO8mu7evMfNtmaxg4k7G",
         "full_name": "Admin User",
         "role": "admin",
         "is_active": True,
@@ -138,12 +140,13 @@ async def create_user(
     user_id = str(uuid4())
     now = datetime.now(timezone.utc)
 
-    # In production, would hash password here
     user_data = {
         "id": user_id,
         "username": user.username,
         "email": user.email,
-        "password_hash": f"hashed_{user.password}",
+        "password_hash": bcrypt.hashpw(
+            user.password.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8"),
         "full_name": user.full_name,
         "role": user.role,
         "is_active": True,

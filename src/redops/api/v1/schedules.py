@@ -79,6 +79,24 @@ class ScheduleList(BaseModel):
 # In-memory storage
 _schedules: dict[str, dict] = {}
 
+def _require_schedule_access(schedule_id: str, user: dict) -> dict:
+    """Check schedule exists and user has access (owner or admin)."""
+    schedule = _schedules.get(schedule_id)
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Schedule {schedule_id} not found",
+        )
+    username = user.get("username")
+    role = user.get("role")
+    if role != "admin" and schedule.get("created_by") != username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+    return schedule
+
+
 
 @router.get("", response_model=ScheduleList)
 async def list_schedules(
@@ -88,7 +106,13 @@ async def list_schedules(
     current_user: dict = Depends(get_current_user),
 ):
     """List all schedules."""
+    username = current_user.get("username")
+    role = current_user.get("role")
     schedules = list(_schedules.values())
+
+    # Ownership filter: non-admins only see their own schedules
+    if role != "admin":
+        schedules = [s for s in schedules if s.get("created_by") == username]
 
     if status:
         schedules = [s for s in schedules if s.get("status") == status]
@@ -144,13 +168,7 @@ async def get_schedule(
     current_user: dict = Depends(get_current_user),
 ):
     """Get schedule details."""
-    schedule = _schedules.get(schedule_id)
-    if not schedule:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Schedule {schedule_id} not found",
-        )
-
+    schedule = _require_schedule_access(schedule_id, current_user)
     return ScheduleResponse(**schedule)
 
 
@@ -161,12 +179,7 @@ async def update_schedule(
     current_user: dict = Depends(get_current_user),
 ):
     """Update a schedule."""
-    schedule = _schedules.get(schedule_id)
-    if not schedule:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Schedule {schedule_id} not found",
-        )
+    schedule = _require_schedule_access(schedule_id, current_user)
 
     if update.name is not None:
         schedule["name"] = update.name
@@ -196,12 +209,7 @@ async def delete_schedule(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a schedule."""
-    if schedule_id not in _schedules:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Schedule {schedule_id} not found",
-        )
-
+    _require_schedule_access(schedule_id, current_user)
     del _schedules[schedule_id]
 
 
@@ -211,12 +219,7 @@ async def trigger_schedule(
     current_user: dict = Depends(get_current_user),
 ):
     """Trigger a scheduled scan immediately."""
-    schedule = _schedules.get(schedule_id)
-    if not schedule:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Schedule {schedule_id} not found",
-        )
+    schedule = _require_schedule_access(schedule_id, current_user)
 
     # In production, would create a scan from the schedule
     scan_id = str(uuid4())
