@@ -36,11 +36,9 @@ jobs:
 
       - name: Run Safety check
         run: safety check --full-report
-        continue-on-error: true
 
       - name: Run pip-audit
         run: pip-audit
-        continue-on-error: true
 
   semgrep:
     name: Semgrep Analysis

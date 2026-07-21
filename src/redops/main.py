@@ -97,7 +97,7 @@ def run_pipeline(
 
         return 0
 
-    except Exception as e:
+    except (RuntimeError, ImportError, OSError, ValueError, TypeError, ConnectionError) as e:
         print(f"[RedOps] ERROR: {e}", file=sys.stderr)
         if config and config.output.verbose:
             import traceback
@@ -131,7 +131,7 @@ def list_pipelines(directory: str = "./config/pipelines"):
             print(f"    File: {pipeline_file.name}")
             print(f"    Steps: {len(pipeline.steps)}")
             print()
-        except Exception as e:
+        except (ValueError, OSError, TypeError) as e:
             print(f"  • {pipeline_file.name} (error loading: {e})")
             print()
 

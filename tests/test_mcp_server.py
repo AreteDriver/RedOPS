@@ -113,7 +113,7 @@ class TestHandleMessage:
 
         server = MCPServer()
         # Patch _handle_initialize to raise an exception
-        server._handle_initialize = MagicMock(side_effect=Exception("Test error"))
+        server._handle_initialize = MagicMock(side_effect=RuntimeError("Test error"))
 
         message = {"jsonrpc": "2.0", "id": 4, "method": "initialize", "params": {}}
 
@@ -369,7 +369,7 @@ class TestToolScan:
         mock_ctx.logs = []
 
         def failing_module(ctx):
-            raise Exception("Module failed")
+            raise RuntimeError("Module failed")
 
         with patch("redops.core.context.Context", return_value=mock_ctx):
             with patch(
@@ -675,7 +675,7 @@ class TestRunServer:
         from redops.mcp.server import run_server
 
         mock_reader = AsyncMock()
-        mock_reader.readline.side_effect = Exception("Connection error")
+        mock_reader.readline.side_effect = ConnectionError("Connection error")
 
         mock_protocol = MagicMock()
 

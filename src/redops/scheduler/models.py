@@ -214,7 +214,7 @@ class ScanSchedule:
         except ImportError:
             # Fallback to daily if croniter not installed
             return base + timedelta(days=1)
-        except Exception:
+        except (ValueError, TypeError):
             return base + timedelta(days=1)
 
     def is_due(self, current_time: datetime | None = None) -> bool:

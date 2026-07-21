@@ -329,7 +329,7 @@ class RedisBackend(CacheBackend):
         try:
             self._client.ping()
             return True
-        except Exception:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
     def _make_key(self, key: str) -> str:
@@ -365,7 +365,7 @@ class RedisBackend(CacheBackend):
             )
 
             return entry
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             logger.error(f"Redis get error: {e}")
             return None
 
@@ -409,7 +409,7 @@ class RedisBackend(CacheBackend):
                 if ttl:
                     self._client.expire(tag_key, ttl)
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, TypeError) as e:
             logger.error(f"Redis set error: {e}")
 
     def delete(self, key: str) -> bool:
@@ -420,7 +420,7 @@ class RedisBackend(CacheBackend):
         try:
             full_key = self._make_key(key)
             return self._client.delete(full_key) > 0
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
             logger.error(f"Redis delete error: {e}")
             return False
 
@@ -432,7 +432,7 @@ class RedisBackend(CacheBackend):
         try:
             full_key = self._make_key(key)
             return self._client.exists(full_key) > 0
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
             logger.error(f"Redis exists error: {e}")
             return False
 
@@ -447,7 +447,7 @@ class RedisBackend(CacheBackend):
             if keys:
                 return self._client.delete(*keys)
             return 0
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
             logger.error(f"Redis clear error: {e}")
             return 0
 
@@ -460,7 +460,7 @@ class RedisBackend(CacheBackend):
             full_pattern = self._make_key(pattern)
             keys = list(self._client.scan_iter(full_pattern))
             return [self._strip_prefix(k.decode("utf-8")) for k in keys]
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, UnicodeDecodeError) as e:
             logger.error(f"Redis keys error: {e}")
             return []
 
@@ -478,7 +478,7 @@ class RedisBackend(CacheBackend):
                     count += 1
             self._client.delete(tag_key)
             return count
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, UnicodeDecodeError) as e:
             logger.error(f"Redis delete_by_tag error: {e}")
             return 0
 
@@ -498,7 +498,7 @@ class RedisBackend(CacheBackend):
                 "connected_clients": info.get("connected_clients", 0),
                 "uptime_days": info.get("uptime_in_days", 0),
             }
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError) as e:
             logger.error(f"Redis stats error: {e}")
             return {"backend": "redis", "available": False, "error": str(e)}
 

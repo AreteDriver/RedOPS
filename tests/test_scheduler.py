@@ -761,7 +761,7 @@ class TestScanExecutor:
         from redops.scheduler import ScanExecutor, ScanJob, ScanPolicy, JobStatus
 
         def mock_pipeline(**kwargs):
-            raise Exception("Pipeline error")
+            raise RuntimeError("Pipeline error")
 
         executor = ScanExecutor()
         executor.register_pipeline("test", mock_pipeline)

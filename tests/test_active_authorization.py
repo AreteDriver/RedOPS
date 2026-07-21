@@ -14,6 +14,7 @@ from redops.modules.active.authorization import (
     assert_active_authorized,
     is_active_authorized,
     record_authorization,
+    record_authorization_from_params,
 )
 from redops.modules.active.exceptions import ActiveAuthorizationError
 from redops.modules.active.exploit.cve_check import check_cves
@@ -144,6 +145,37 @@ class TestRecordAuthorization:
             target_assertion="192.168.99.0/24",
         )
         assert auth.expires_at > datetime.now(timezone.utc) + timedelta(hours=23)
+
+
+class TestRecordAuthorizationFromParams:
+    """Tests for the pipeline-step wrapper record_authorization_from_params."""
+
+    def test_records_with_params(self):
+        ctx = Context(target="192.168.99.0/24")
+        result = record_authorization_from_params(
+            ctx,
+            params={
+                "operator": "alice",
+                "consent_text": "I consent.",
+                "duration_hours": 4,
+            },
+        )
+        assert result.authorization.operator == "alice"
+        assert result.authorization.consent_text == "I consent."
+        assert result.authorization.is_valid() is True
+        assert result.authorization.expires_at > datetime.now(timezone.utc) + timedelta(hours=3)
+
+    def test_uses_defaults_when_params_empty(self):
+        ctx = Context(target="192.168.99.0/24")
+        result = record_authorization_from_params(ctx, params={})
+        assert result.authorization.operator == "unknown-operator"
+        assert result.authorization.target_assertion == "192.168.99.0/24"
+        assert result.authorization.is_valid() is True
+
+    def test_uses_context_target_when_no_target_assertion(self):
+        ctx = Context(target="10.0.0.0/8")
+        result = record_authorization_from_params(ctx, params=None)
+        assert result.authorization.target_assertion == "10.0.0.0/8"
 
 
 class TestActiveModuleAuthorizationRefusal:

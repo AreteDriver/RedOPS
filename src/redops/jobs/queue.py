@@ -620,7 +620,7 @@ class JobWorker:
                     # No jobs available, wait a bit
                     self._shutdown_event.wait(0.5)
 
-            except Exception as e:
+            except (RuntimeError, TypeError, ValueError, OSError, ConnectionError) as e:
                 logger.error(f"Worker error: {e}")
                 if job:
                     self._handle_job_error(job, e)
@@ -662,7 +662,7 @@ class JobWorker:
             job.completed_at = datetime.now(timezone.utc)
             logger.warning(f"Job {job.id} timed out")
 
-        except Exception as e:
+        except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError) as e:
             self._handle_job_error(job, e)
 
         finally:
@@ -682,7 +682,7 @@ class JobWorker:
         def target():
             try:
                 result_container["result"] = func(*args, **kwargs)
-            except Exception as e:
+            except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError) as e:
                 result_container["error"] = e
 
         thread = threading.Thread(target=target)

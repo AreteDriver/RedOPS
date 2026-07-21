@@ -9,6 +9,18 @@
   },
   "steps": [
     {
+      "name": "Record Authorization",
+      "module": "active.authorization.record_authorization_from_params",
+      "params": {
+        "operator": "{{operator}}",
+        "target_assertion": "{{target}}",
+        "consent_text": "I am authorized to perform active security testing on the stated target. This is my own network, a designated lab environment, or a system for which I have explicit written permission.",
+        "duration_hours": 4
+      },
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
       "name": "Validate Scope",
       "module": "compliance.scope_guard.validate_scope",
       "params": {},

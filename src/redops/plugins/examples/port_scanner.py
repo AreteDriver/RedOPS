@@ -248,7 +248,7 @@ class PortScannerPlugin(ScannerPlugin):
                 try:
                     if future.result():
                         open_ports.append(port)
-                except Exception:
+                except (OSError, ConnectionError, TimeoutError):
                     pass
 
         return sorted(open_ports)

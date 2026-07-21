@@ -570,7 +570,7 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
     # Initialize AI assistant
     try:
         assistant = AIAssistant(provider=provider, model=model)
-    except Exception as e:
+    except (ImportError, ValueError) as e:
         print_error(f"Failed to initialize AI assistant: {e}")
         print_info(
             "Make sure you have configured an API key using 'redops settings' or 'redops apikey set'"
@@ -587,8 +587,11 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
         try:
             with open(input_file, "r") as f:
                 scan_data = json.load(f)
-        except Exception as e:
+        except OSError as e:
             print_error(f"Failed to read input file: {e}")
+            return 1
+        except json.JSONDecodeError as e:
+            print_error(f"Invalid JSON in input file: {e}")
             return 1
 
         if not config.quiet:
@@ -610,8 +613,8 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
             try:
                 with open(context_file, "r") as f:
                     context_data = json.load(f)
-            except Exception:
-                pass
+            except (OSError, json.JSONDecodeError):
+                context_data = None
 
         if not config.quiet:
             print_info("Getting AI explanation...")
@@ -629,8 +632,11 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
         try:
             with open(input_file, "r") as f:
                 scan_data = json.load(f)
-        except Exception as e:
+        except OSError as e:
             print_error(f"Failed to read input file: {e}")
+            return 1
+        except json.JSONDecodeError as e:
+            print_error(f"Invalid JSON in input file: {e}")
             return 1
 
         if not config.quiet:
@@ -649,8 +655,11 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
         try:
             with open(input_file, "r") as f:
                 scan_data = json.load(f)
-        except Exception as e:
+        except OSError as e:
             print_error(f"Failed to read input file: {e}")
+            return 1
+        except json.JSONDecodeError as e:
+            print_error(f"Invalid JSON in input file: {e}")
             return 1
 
         if not config.quiet:
@@ -688,7 +697,7 @@ def cmd_ai(args: argparse.Namespace, config: CLIConfig) -> int:
                     with open(filepath, "r") as f:
                         context_data = json.load(f)
                     print(f"Loaded context from: {filepath}")
-                except Exception as e:
+                except (OSError, json.JSONDecodeError) as e:
                     print(f"Error loading file: {e}")
                 continue
 
@@ -921,7 +930,7 @@ def cmd_plugin(args: argparse.Namespace, config: CLIConfig) -> int:
             else:
                 print_warning("No plugins found in source")
                 return 1
-        except Exception as e:
+        except (ImportError, OSError, ValueError) as e:
             print_error(f"Failed to load plugin: {e}")
             return 1
 
@@ -1057,7 +1066,7 @@ def execute_scan(target: str, modules: list[str], config: CLIConfig) -> ScanResu
             try:
                 ctx = run_module(ctx, module_name, config)
                 modules_run.append(module_name)
-            except Exception as e:
+            except (RuntimeError, ImportError, ConnectionError, OSError, ValueError) as e:
                 errors.append(f"{module_name}: {str(e)}")
                 if config.verbosity == Verbosity.DEBUG:
                     import traceback
@@ -1083,7 +1092,7 @@ def execute_scan(target: str, modules: list[str], config: CLIConfig) -> ScanResu
             context=ctx,
         )
 
-    except Exception as e:
+    except (RuntimeError, ImportError, OSError, ConnectionError, ValueError) as e:
         return ScanResult(
             success=False,
             target=target,

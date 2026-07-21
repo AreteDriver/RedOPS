@@ -72,7 +72,7 @@ def _run_local_scan(
 
     try:
         config = RedOpsConfig.from_env()
-    except Exception:
+    except (OSError, ValueError, TypeError):
         config = RedOpsConfig()
 
     console.print(f"[bold]Starting local scan on {target}[/bold]")
@@ -114,7 +114,7 @@ def _run_local_scan(
 
         return 0
 
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
         print_error(f"Local scan failed: {e}")
         return 1
 
@@ -134,18 +134,40 @@ def _extract_findings_from_context(ctx) -> list[dict]:
     return findings
 
 
-@click.group()
-def scan():
+class _DefaultScanGroup(click.Group):
+    """Custom group that treats unknown first argument as target for local scan."""
+
+    def parse_args(self, ctx, args):
+        # Known subcommands
+        known = {"run", "list", "status", "cancel", "list-pipelines"}
+        # If no args or first arg is a known subcommand or starts with '-', use normal parsing
+        if not args or args[0] in known or args[0].startswith("-"):
+            return super().parse_args(ctx, args)
+        # Otherwise insert 'run' and '--local' so the user can type:
+        #   redops scan example.com
+        # which becomes:
+        #   redops scan run --local example.com
+        args.insert(0, "--local")
+        args.insert(0, "run")
+        return super().parse_args(ctx, args)
+
+
+@click.group(cls=_DefaultScanGroup, invoke_without_command=True)
+@click.pass_context
+def scan(ctx):
     """Scan management commands.
 
     \b
     Examples:
+        redops scan https://example.com
         redops scan run https://example.com
         redops scan list
         redops scan status scan-123
         redops scan cancel scan-123
     """
-    pass
+    if ctx.invoked_subcommand is None:
+        # No subcommand given — show help
+        click.echo(ctx.get_help())
 
 
 @scan.command("run")
@@ -470,7 +492,7 @@ def list_pipelines_cmd():
                 console.print(f"    [dim]{pipeline.metadata.description}[/dim]")
             console.print(f"    Steps: {len(pipeline.steps)} | Tags: {', '.join(pipeline.metadata.tags)}")
             console.print()
-        except Exception as e:
+        except (OSError, ValueError, TypeError, RuntimeError) as e:
             console.print(f"  [red]{path.name}[/red] — error: {e}")
             console.print()
 

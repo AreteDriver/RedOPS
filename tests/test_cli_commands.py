@@ -245,3 +245,21 @@ class TestQuickScanLocal:
 
         # _resolve_pipeline_file should be called with "default" which maps to "quickstart"
         mock_resolve.assert_called_once_with("default")
+
+
+class TestZeroConfigQuickstart:
+    """Tests for zero-config quickstart (redops scan example.com)."""
+
+    def test_scan_group_parses_bare_target(self):
+        """The scan group routes bare targets to local scan."""
+        from click.testing import CliRunner
+        from redops.cli.commands.scan import scan
+
+        runner = CliRunner()
+        # With no pipeline file, this will fail at pipeline resolution,
+        # but it proves the routing works (it reaches _run_local_scan)
+        result = runner.invoke(scan, ["example.com"])
+        # Should not be a "No such command" error
+        assert "No such command" not in result.output
+        # Should mention pipeline not found (because we have no config/pipelines/ in test env)
+        assert "Pipeline" in result.output or result.exit_code == 1

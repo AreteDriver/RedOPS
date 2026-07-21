@@ -318,3 +318,73 @@ class TestPipelineRunnerIntegration:
         with block_external_egress():
             with pytest.raises(requests.ConnectionError):
                 requests.get("http://127.0.0.1:59999/nonexistent", timeout=1)
+
+    def test_active_chain_pipeline_refuses_without_authorization(self):
+        """Verify an active pipeline aborts if no authorization is recorded."""
+        from redops.core.config import RedOpsConfig
+        from redops.core.context import Context
+        from redops.modules.active.exceptions import ActiveAuthorizationError
+        from redops.pipelines.runner import PipelineRunner
+        from redops.pipelines.schemas import Pipeline, PipelineStep
+
+        # Minimal pipeline: one active module that requires authorization
+        pipeline = Pipeline(
+            metadata={"name": "auth-test-pipeline", "version": "1.0.0"},
+            steps=[
+                PipelineStep(
+                    name="enable-monitor",
+                    module="active.wireless.monitor.enable_monitor_mode",
+                    params={"interface": "wlan1"},
+                ),
+            ],
+        )
+        runner = PipelineRunner(pipeline=pipeline)
+
+        config = RedOpsConfig(scope={"allowed_ips": ["192.168.99.0/24"], "strict_mode": True})
+        ctx = Context(target="192.168.99.0/24", config=config)
+
+        # Run without recording authorization — the active module should refuse
+        with pytest.raises(RuntimeError, match="refused|no operator authorization"):
+            runner.run(target="192.168.99.0/24", initial_context=ctx)
+
+    def test_active_chain_pipeline_runs_with_authorization(self):
+        """Verify an active pipeline proceeds when authorization is pre-recorded."""
+        from redops.core.config import RedOpsConfig
+        from redops.core.context import Context
+        from redops.modules.active.authorization import record_authorization
+        from redops.modules.active.exceptions import ActiveAuthorizationError
+        from redops.pipelines.runner import PipelineRunner
+        from redops.pipelines.schemas import Pipeline, PipelineStep
+
+        # Minimal pipeline: one active module that requires authorization
+        pipeline = Pipeline(
+            metadata={"name": "auth-test-pipeline", "version": "1.0.0"},
+            steps=[
+                PipelineStep(
+                    name="enable-monitor",
+                    module="active.wireless.monitor.enable_monitor_mode",
+                    params={"interface": "wlan1"},
+                ),
+            ],
+        )
+        runner = PipelineRunner(pipeline=pipeline)
+
+        config = RedOpsConfig(scope={"allowed_ips": ["192.168.99.0/24"], "strict_mode": True})
+        ctx = Context(target="192.168.99.0/24", config=config)
+        record_authorization(
+            ctx,
+            operator="test-operator",
+            target_assertion="192.168.99.0/24",
+            consent_text="I consent to testing my own lab network.",
+            duration_hours=1,
+        )
+
+        # Should not raise ActiveAuthorizationError; may fail for other reasons
+        # (e.g., missing aircrack-ng) but authorization must pass.
+        try:
+            result = runner.run(target="192.168.99.0/24", initial_context=ctx)
+        except ActiveAuthorizationError:
+            pytest.fail("Pipeline raised ActiveAuthorizationError despite valid auth")
+        except RuntimeError as e:
+            # Other runtime errors are expected in CI (no wireless adapter, etc.)
+            assert "authorization" not in str(e).lower()

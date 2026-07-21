@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "name": "Web Application Assessment",
+    "description": "OWASP-aligned web application security assessment: headers, SSL/TLS, exposed panels, and technology fingerprinting",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["web-app", "owasp", "ssl", "headers", "exposure"]
+  },
+  "steps": [
+    {
+      "name": "Profile Domain",
+      "module": "recon.domains.profile_domain",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "SSL/TLS Configuration Audit",
+      "module": "recon.ssl_analyzer.analyze_ssl",
+      "params": {
+        "check_heartbleed": true,
+        "check_poodle": true
+      },
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Security Headers Check",
+      "module": "recon.http_headers.analyze_headers",
+      "params": {
+        "check_csp": true,
+        "check_hsts": true
+      },
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Fingerprint Technology Stack",
+      "module": "recon.tech_stack.fingerprint",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Detect Exposed Admin Panels",
+      "module": "recon.exposed_panels.detect",
+      "params": {
+        "panels": ["phpmyadmin", "wp-admin", "adminer", "cPanel"]
+      },
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Score Risks",
+      "module": "intel.risk_scoring.score_risks",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate SARIF Report",
+      "module": "reporting.sarif_report.generate_sarif",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Markdown Report",
+      "module": "reporting.markdown_report.generate_technical_report",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 300,
+    "strict_scope": true
+  }
+}

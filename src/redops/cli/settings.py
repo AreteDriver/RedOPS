@@ -535,7 +535,7 @@ class SettingsMenu:
         except ImportError:
             print(f"Required library for {provider} is not installed.")
             return False
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             print(f"Error: {e}")
             return False
         return False

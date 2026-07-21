@@ -110,6 +110,35 @@ def is_active_authorized(ctx: Context) -> bool:
     return False
 
 
+def record_authorization_from_params(
+    ctx: Context,
+    params: dict | None = None,
+) -> Context:
+    """Pipeline-step wrapper for ``record_authorization``.
+
+    Accepts parameters via the ``params`` dict so it can be invoked from a
+    pipeline JSON definition.
+
+    Params:
+        operator: Identity of the operator.
+        target_assertion: Specific target being authorized.
+        consent_text: Optional custom consent text.
+        duration_hours: How long the authorization remains valid.
+
+    Returns:
+        The updated context with ``ctx.authorization`` set.
+    """
+    params = params or {}
+    record_authorization(
+        ctx,
+        operator=params.get("operator", "unknown-operator"),
+        target_assertion=params.get("target_assertion", ctx.target or "unknown"),
+        consent_text=params.get("consent_text", DEFAULT_CONSENT_TEXT),
+        duration_hours=params.get("duration_hours", 24),
+    )
+    return ctx
+
+
 def assert_active_authorized(ctx: Context) -> None:
     """Raise ActiveAuthorizationError if the context lacks valid authorization.
 

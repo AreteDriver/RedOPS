@@ -568,7 +568,7 @@ class TestSettingsMenu:
             menu = SettingsMenu(quiet=True)
 
         mock_openai = MagicMock()
-        mock_openai.OpenAI.side_effect = Exception("API Error")
+        mock_openai.OpenAI.side_effect = ConnectionError("API Error")
 
         with patch.dict("sys.modules", {"openai": mock_openai}):
             result = menu._test_provider("openai", "test-key")

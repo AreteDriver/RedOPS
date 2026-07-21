@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, TYPE_CHECKING
 from redops.pipelines.schemas import Pipeline, PipelineStep
 from redops.core.context import Context
+from redops.modules.active.exceptions import ActiveAuthorizationError
 from redops.core.plugin_system import (
     PluginRegistry,
     HookPoint,
@@ -153,7 +154,7 @@ class PipelineRunner:
 
             return ctx
 
-        except Exception as e:
+        except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError, ActiveAuthorizationError, AttributeError) as e:
             error_msg = f"Step failed: {step.name} - {str(e)}"
             ctx.log(error_msg, level="ERROR", step=step.name, error=str(e))
 
@@ -286,7 +287,7 @@ class PipelineRunner:
             try:
                 result_ctx = self._execute_step(step, step_ctx)
                 return (step.name, result_ctx.data, result_ctx.logs, None)
-            except Exception as e:
+            except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError, ActiveAuthorizationError, AttributeError) as e:
                 return (step.name, {}, [], str(e))
 
         # Run steps in parallel using ThreadPoolExecutor

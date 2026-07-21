@@ -219,7 +219,7 @@ async def _tool_check_ip(arguments: dict[str, Any]) -> dict[str, Any]:
 
             ctx = query_greynoise(ctx)
             results["sources"]["greynoise"] = ctx.get("greynoise_result", {})
-        except Exception as e:
+        except (ImportError, RuntimeError, ValueError, TypeError, ConnectionError, OSError, TimeoutError) as e:
             results["sources"]["greynoise"] = {"error": str(e)}
 
     if "abuseipdb" in sources:
@@ -228,7 +228,7 @@ async def _tool_check_ip(arguments: dict[str, Any]) -> dict[str, Any]:
 
             ctx = check_ip_reputation(ctx)
             results["sources"]["abuseipdb"] = ctx.get("abuseipdb_result", {})
-        except Exception as e:
+        except (ImportError, RuntimeError, ValueError, TypeError, ConnectionError, OSError, TimeoutError) as e:
             results["sources"]["abuseipdb"] = {"error": str(e)}
 
     return results

@@ -102,7 +102,7 @@ class MetricsCollector:
         try:
             prometheus_reader = PrometheusMetricReader()
             readers.append(prometheus_reader)
-        except Exception:
+        except (ImportError, RuntimeError, OSError):
             pass
 
         # Add console exporter for debugging
@@ -382,7 +382,7 @@ def record_scan_duration(pipeline: str, target: str, status: str = "success"):
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError):
                 scan_status = "failure"
                 raise
             finally:
@@ -425,7 +425,7 @@ def record_api_request(method: str, endpoint: str):
                 result = await func(*args, **kwargs)
                 status_code = getattr(result, "status_code", 200)
                 return result
-            except Exception:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError, TimeoutError):
                 status_code = 500
                 raise
             finally:
@@ -441,7 +441,7 @@ def record_api_request(method: str, endpoint: str):
                 result = func(*args, **kwargs)
                 status_code = getattr(result, "status_code", 200)
                 return result
-            except Exception:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError, TimeoutError):
                 status_code = 500
                 raise
             finally:

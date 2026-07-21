@@ -506,7 +506,7 @@ class TenantManager:
         for callback in self._hooks.get(event, []):
             try:
                 callback(*args, **kwargs)
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
                 logger.error(f"Hook error ({event}): {e}")
 
 

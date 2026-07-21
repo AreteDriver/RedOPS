@@ -490,7 +490,7 @@ class RedisJobWorker(JobWorker):
                     count = self._queue.process_scheduled()
                     if count > 0:
                         logger.debug(f"Moved {count} scheduled jobs to queue")
-            except Exception as e:
+            except (ConnectionError, TimeoutError, OSError, RuntimeError) as e:
                 logger.error(f"Scheduler error: {e}")
 
             self._shutdown_event.wait(self._scheduler_interval)
@@ -503,7 +503,7 @@ class RedisJobWorker(JobWorker):
                     count = self._queue.cleanup_stale()
                     if count > 0:
                         logger.info(f"Cleaned up {count} stale jobs")
-            except Exception as e:
+            except (ConnectionError, TimeoutError, OSError, RuntimeError) as e:
                 logger.error(f"Cleanup error: {e}")
 
             self._shutdown_event.wait(self._cleanup_interval)

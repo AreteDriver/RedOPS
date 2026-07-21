@@ -233,7 +233,7 @@ def doctor(check):
             console.print(f"  {status} {name}: {message}")
             if not passed:
                 all_passed = False
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, ConnectionError, ImportError) as e:
             console.print(f"  [red]✗[/red] {name}: Error - {e}")
             all_passed = False
 
@@ -297,7 +297,7 @@ def _check_database():
         if db.check_connection():
             return True, "Connected"
         return False, "Connection failed"
-    except Exception as e:
+    except (ImportError, RuntimeError, OSError, ConnectionError) as e:
         return False, f"Not configured ({e})"
 
 

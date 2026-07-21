@@ -157,7 +157,7 @@ class TestRunPipeline:
         with patch("redops.main.RedOpsConfig") as mock_config_class:
             mock_config_class.from_env.return_value = mock_config
             with patch("redops.main.PipelineLoader") as mock_loader:
-                mock_loader.load.side_effect = Exception("Pipeline load failed")
+                mock_loader.load.side_effect = ValueError("Pipeline load failed")
                 result = run_pipeline("bad_pipeline.json", "example.com")
 
         assert result == 1
@@ -279,7 +279,7 @@ class TestListPipelines:
         (pipeline_dir / "bad_pipeline.json").write_text("{invalid}")
 
         with patch("redops.main.PipelineLoader") as mock_loader:
-            mock_loader.load.side_effect = Exception("Parse error")
+            mock_loader.load.side_effect = ValueError("Parse error")
             list_pipelines(str(pipeline_dir))
 
         captured = capsys.readouterr()

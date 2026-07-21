@@ -143,7 +143,7 @@ class MCPServer:
                 return self._error_response(
                     msg_id, -32601, f"Method not found: {method}"
                 )
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, ConnectionError, ImportError) as e:
             return self._error_response(msg_id, -32603, str(e))
 
     def _handle_initialize(self, msg_id: int, params: dict) -> dict:
@@ -197,7 +197,7 @@ class MCPServer:
                     ],
                 },
             }
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, ConnectionError, ImportError) as e:
             return {
                 "jsonrpc": JSONRPC_VERSION,
                 "id": msg_id,
@@ -251,7 +251,7 @@ class MCPServer:
         for name, module_fn in modules:
             try:
                 ctx = module_fn(ctx)
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError, ImportError) as e:
                 ctx.log(f"Module {name} failed: {e}", level="ERROR")
 
         return {
@@ -374,7 +374,7 @@ async def run_server():
                 writer.write((json.dumps(response) + "\n").encode())
                 await writer.drain()
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError, ConnectionError, ImportError, TimeoutError) as e:
             # Log errors to stderr (not stdout which is for protocol)
             print(f"Error: {e}", file=sys.stderr)
             break

@@ -1093,7 +1093,7 @@ class APIServer:
 
         try:
             return match.handler(request)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError) as e:
             return self._error_response(
                 HTTPStatus.INTERNAL_ERROR,
                 "internal_error",
