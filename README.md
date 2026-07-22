@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Professional Cybersecurity Intelligence & Attack Surface Management Platform**
+**Defensive security assessment framework — OSINT reconnaissance, metadata forensics, threat modeling, and attack surface analysis for authorized security evaluations.**
 
 > ⚠️ **Important:** RedOPS is NOT a hacking tool. It is a professional OSINT + metadata + threat-modeling automation system designed for authorized security assessments only.
 
