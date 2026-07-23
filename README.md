@@ -22,6 +22,8 @@ Modern cybersecurity teams face critical challenges:
 
 **RedOPS addresses these challenges** by providing a unified, modular framework for defensive security assessments, threat intelligence gathering, and risk quantification.
 
+![RedOPS presets and modules](docs/assets/redops-demo.gif)
+
 ---
 
 ## Why RedOPS?
