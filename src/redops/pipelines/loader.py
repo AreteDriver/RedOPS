@@ -4,6 +4,7 @@ Pipeline loader - Loads and validates pipeline JSON files.
 
 import json
 from pathlib import Path
+from pydantic import ValidationError
 from redops.pipelines.schemas import Pipeline
 
 
@@ -43,7 +44,7 @@ class PipelineLoader:
             pipeline = Pipeline(**data)
             pipeline.validate_pipeline()
             return pipeline
-        except Exception as e:
+        except (ValidationError, ValueError, TypeError) as e:
             raise ValueError(f"Pipeline validation failed: {e}")
 
     @staticmethod

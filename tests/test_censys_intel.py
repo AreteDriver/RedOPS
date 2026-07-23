@@ -1,5 +1,6 @@
 """Tests for Censys intelligence module."""
 
+import socket
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
@@ -477,7 +478,7 @@ class TestGetCensysClient:
                 # Mock settings to raise exception
                 with patch(
                     "redops.cli.settings.get_api_key_direct",
-                    side_effect=Exception("Settings error"),
+                    side_effect=RuntimeError("Settings error"),
                 ):
                     from importlib import reload
                     import redops.modules.intel.censys_intel as censys_mod
@@ -488,7 +489,7 @@ class TestGetCensysClient:
 
     def test_client_creation_exception_returns_none(self):
         """Test that client creation exception returns (None, None)."""
-        mock_hosts_class = MagicMock(side_effect=Exception("Auth failed"))
+        mock_hosts_class = MagicMock(side_effect=RuntimeError("Auth failed"))
         mock_certs_class = MagicMock()
 
         mock_search = MagicMock()
@@ -526,7 +527,7 @@ class TestQueryCensysHostEdgeCases:
             return_value=(mock_hosts, None),
         ):
             with patch(
-                "socket.gethostbyname", side_effect=Exception("DNS resolution failed")
+                "socket.gethostbyname", side_effect=socket.gaierror("DNS resolution failed")
             ):
                 result = query_censys_host(ctx)
 
@@ -576,7 +577,7 @@ class TestQueryCensysHostEdgeCases:
         ctx = Context(target="93.184.216.34")
 
         mock_hosts = MagicMock()
-        mock_hosts.view.side_effect = Exception("404 - Host not found")
+        mock_hosts.view.side_effect = RuntimeError("404 - Host not found")
 
         with patch(
             "redops.modules.intel.censys_intel.get_censys_client",
@@ -593,7 +594,7 @@ class TestQueryCensysHostEdgeCases:
         ctx = Context(target="10.0.0.1")
 
         mock_hosts = MagicMock()
-        mock_hosts.view.side_effect = Exception("Resource not found")
+        mock_hosts.view.side_effect = RuntimeError("Resource not found")
 
         with patch(
             "redops.modules.intel.censys_intel.get_censys_client",
@@ -609,7 +610,7 @@ class TestQueryCensysHostEdgeCases:
         ctx = Context(target="93.184.216.34")
 
         mock_hosts = MagicMock()
-        mock_hosts.view.side_effect = Exception("Rate limit exceeded")
+        mock_hosts.view.side_effect = RuntimeError("Rate limit exceeded")
 
         with patch(
             "redops.modules.intel.censys_intel.get_censys_client",
@@ -691,7 +692,7 @@ class TestQueryCensysCertificatesEdgeCases:
         ctx = Context(target="example.com")
 
         mock_certs = MagicMock()
-        mock_certs.search.side_effect = Exception("API timeout")
+        mock_certs.search.side_effect = RuntimeError("API timeout")
 
         with patch(
             "redops.modules.intel.censys_intel.get_censys_client",
@@ -761,7 +762,7 @@ class TestSearchCensysHostsEdgeCases:
         ctx = Context(target="example.com")
 
         mock_hosts = MagicMock()
-        mock_hosts.search.side_effect = Exception("Search failed")
+        mock_hosts.search.side_effect = RuntimeError("Search failed")
 
         with patch(
             "redops.modules.intel.censys_intel.get_censys_client",

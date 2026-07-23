@@ -523,7 +523,7 @@ class CLI:
             self._output.write("")  # Newline
             self._output.error("Interrupted")
             return 130
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             self._output.error(f"Error: {e}")
             if parsed.verbose > 0:
                 import traceback

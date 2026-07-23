@@ -486,7 +486,7 @@ def generate_pdf_report(ctx, params: dict[str, Any] | None = None):
 
     except ImportError as e:
         ctx.log(f"PDF generation skipped: {e}", level="WARNING")
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
         ctx.log(f"PDF generation failed: {e}", level="ERROR")
 
     return ctx

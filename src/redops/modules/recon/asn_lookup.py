@@ -126,7 +126,7 @@ def is_ip_address(value: str) -> bool:
         try:
             socket.inet_pton(socket.AF_INET6, value)
             return True
-        except Exception:
+        except (OSError, ValueError, TypeError):
             pass
 
     return False
@@ -145,7 +145,7 @@ def resolve_domain_to_ip(domain: str) -> str | None:
     """Resolve a domain to its IP address."""
     try:
         return socket.gethostbyname(domain)
-    except Exception:
+    except (OSError, ValueError, TypeError):
         return None
 
 
@@ -206,7 +206,7 @@ def lookup_asn_bgpview(ip: str) -> dict[str, Any]:
 
     except requests.exceptions.RequestException as e:
         return {"error": f"API request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError) as e:
         return {"error": f"Lookup failed: {str(e)}"}
 
 
@@ -243,7 +243,7 @@ def lookup_asn_cymru(ip: str) -> dict[str, Any]:
             "note": "Limited data via DNS fallback",
         }
 
-    except Exception:
+    except (OSError, ValueError, TypeError):
         return {"error": "DNS lookup failed"}
 
 
@@ -290,7 +290,7 @@ def lookup_asn_details(asn: str) -> dict[str, Any]:
 
     except requests.exceptions.RequestException:
         return {"asn": asn_num, "error": "API request failed"}
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return {"asn": asn_num, "error": "Lookup failed"}
 
 
@@ -348,7 +348,7 @@ def get_asn_prefixes(asn: str) -> list[dict[str, Any]]:
 
         return prefixes
 
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return []
 
 
@@ -394,7 +394,7 @@ def get_asn_peers(asn: str) -> dict[str, list[dict[str, Any]]]:
             ],
         }
 
-    except Exception:
+    except (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError):
         return {"upstreams": [], "downstreams": [], "peers": []}
 
 

@@ -73,6 +73,22 @@ class FindingData:
         fingerprint_str = "|".join(components)
         return hashlib.sha256(fingerprint_str.encode()).hexdigest()[:16]
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "severity": self.severity,
+            "description": self.description,
+            "module": self.module,
+            "category": self.category,
+            "evidence": self.evidence,
+            "cvss_score": self.cvss_score,
+            "cve_ids": self.cve_ids,
+            "status": self.status,
+            "fingerprint": self.fingerprint,
+        }
+
 
 @dataclass
 class FindingDiff:
@@ -119,6 +135,22 @@ class FindingDiff:
             new_sev = severity_order.get(self.finding.severity.lower(), 0)
             return new_sev > old_sev
         return False
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert diff to dictionary for serialization."""
+        result: dict[str, Any] = {
+            "diff_type": self.diff_type.value,
+            "finding": self.finding.to_dict(),
+            "is_improvement": self.is_improvement,
+            "is_regression": self.is_regression,
+        }
+        if self.previous_finding:
+            result["previous_finding"] = self.previous_finding.to_dict()
+        if self.changes:
+            result["changes"] = {
+                k: {"from": v[0], "to": v[1]} for k, v in self.changes.items()
+            }
+        return result
 
 
 @dataclass
@@ -203,9 +235,9 @@ class ComparisonResult:
 
         return counts
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, include_findings: bool = True) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
-        return {
+        result = {
             "baseline_scan_id": self.baseline_scan_id,
             "current_scan_id": self.current_scan_id,
             "baseline_date": self.baseline_date.isoformat(),
@@ -225,6 +257,13 @@ class ComparisonResult:
             "severity_new": self.severity_summary(DiffType.NEW),
             "severity_resolved": self.severity_summary(DiffType.RESOLVED),
         }
+        if include_findings:
+            result["new_findings"] = [d.to_dict() for d in self.new_findings]
+            result["resolved_findings"] = [d.to_dict() for d in self.resolved_findings]
+            result["modified_findings"] = [d.to_dict() for d in self.modified_findings]
+            result["unchanged_findings"] = [d.to_dict() for d in self.unchanged_findings]
+            result["regression_findings"] = [d.to_dict() for d in self.regression_findings]
+        return result
 
 
 class ScanComparator:

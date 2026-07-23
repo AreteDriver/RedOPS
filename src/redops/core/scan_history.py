@@ -162,7 +162,7 @@ class ScanHistoryDB:
         try:
             yield conn
             conn.commit()
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError):
             conn.rollback()
             raise
         finally:

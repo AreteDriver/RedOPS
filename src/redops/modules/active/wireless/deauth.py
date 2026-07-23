@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 from redops.core.context import Context
+from redops.modules.active.authorization import assert_active_authorized
 
 try:
     from scapy.all import Dot11, Dot11Deauth, RadioTap, sendp
@@ -34,6 +35,7 @@ def deauth_flood(ctx: Context, params: dict[str, Any] | None = None) -> Context:
         deauth_active: bool
         deauth_thread: thread handle
     """
+    assert_active_authorized(ctx)
     if not HAS_SCAPY:
         ctx.log("Scapy not installed, cannot run deauth", level="ERROR")
         ctx.add("deauth_active", False)

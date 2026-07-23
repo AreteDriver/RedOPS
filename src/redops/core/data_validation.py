@@ -448,7 +448,7 @@ class Custom(ValidationRule):
                 raise ValidationError(self.message, path, value)
         except ValidationError:
             raise
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             raise ValidationError(f"{self.message}: {e}", path, value)
 
     def describe(self) -> str:
@@ -534,7 +534,7 @@ class TypeCoercer:
         # Try direct conversion
         try:
             return target_type(value)
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             raise CoercionError(value, target_type.__name__, str(e))
 
     def _to_str(self, value: Any) -> str:

@@ -1230,7 +1230,7 @@ class DocumentationGenerator:
             try:
                 doc = self._analyzer.analyze_module(py_file)
                 docs[doc_name] = self._formatter.format_module(doc)
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 docs[doc_name] = f"Error generating docs: {e}"
 
         # Write to output directory if specified

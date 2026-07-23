@@ -222,7 +222,7 @@ def validate_cmd(path):
 
     try:
         config_data = load_config(str(config_path))
-    except Exception as e:
+    except (ValueError, TypeError, OSError, RuntimeError) as e:
         print_error(f"Failed to parse config: {e}")
         sys.exit(1)
 

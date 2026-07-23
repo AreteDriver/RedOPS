@@ -3,6 +3,7 @@
 from unittest.mock import patch, MagicMock
 
 from redops.core.context import Context
+from redops.modules.active.authorization import record_authorization
 from redops.modules.ai.agent import _parse_agent_response, run_agent
 from redops.modules.ai.planner import build_attack_surface_summary
 from redops.modules.ai.tools import TOOL_REGISTRY, get_tool_descriptions
@@ -156,6 +157,7 @@ class TestRunAgent:
         )
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = run_agent(ctx, {"max_iterations": 3})
 
         assert result.get("agent_complete") is True
@@ -170,6 +172,7 @@ class TestRunAgent:
         ]
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("port_scan_results", [])
         result = run_agent(ctx, {"max_iterations": 5})
 
@@ -183,6 +186,7 @@ class TestRunAgent:
         )
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("port_scan_results", [])
         result = run_agent(ctx, {"max_iterations": 2})
 
@@ -195,6 +199,7 @@ class TestRunAgent:
         mock_ollama.return_value = ""
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = run_agent(ctx, {"max_iterations": 3})
 
         assert result.get("agent_complete") is False
@@ -206,6 +211,7 @@ class TestRunAgent:
         mock_ollama.return_value = "gobbledygook"
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = run_agent(ctx, {"max_iterations": 3})
 
         assert result.get("agent_complete") is False
@@ -218,6 +224,7 @@ class TestRunAgent:
         ]
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = run_agent(ctx, {"max_iterations": 5})
 
         warning_logs = result.get_logs(level="WARNING")
@@ -230,6 +237,7 @@ class TestRunAgent:
         try:
             agent.HAS_REQUESTS = False
             ctx = Context(target="home-lab")
+            record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
             result = agent.run_agent(ctx)
             assert result.get("agent_complete") is False
         finally:
@@ -299,6 +307,7 @@ class TestQwenUncensoredPreset:
         mock_requests.RequestException = Exception
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = run_agent(ctx, {"preset": "qwen-uncensored", "max_iterations": 1})
 
         assert result.get("agent_complete") is True
@@ -323,6 +332,7 @@ class TestQwenUncensoredPreset:
         mock_requests.RequestException = Exception
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         run_agent(
             ctx,
             {
@@ -340,6 +350,7 @@ class TestQwenUncensoredPreset:
 
     def test_unknown_preset_logs_error(self):
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = run_agent(ctx, {"preset": "bogus-preset"})
         assert result.get("agent_complete") is False
         error_logs = result.get_logs(level="ERROR")
@@ -367,6 +378,7 @@ class TestQwenUncensoredPreset:
         mock_requests.RequestException = Exception
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("port_scan_results", [])
         result = run_agent(ctx, {"preset": "qwen-uncensored", "max_iterations": 5})
 

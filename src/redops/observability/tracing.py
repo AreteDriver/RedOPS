@@ -185,7 +185,7 @@ class TracingProvider:
         ) as span:
             try:
                 yield span
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
                 if span:
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)
@@ -312,7 +312,7 @@ def trace_pipeline(pipeline_name: str):
                         )
                         span.set_attribute("pipeline.findings_count", findings)
                     return result
-                except Exception as e:
+                except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
                     if span:
                         span.set_attribute("pipeline.error", str(e))
                     raise
@@ -349,7 +349,7 @@ def trace_module(module_name: str):
                 try:
                     result = func(ctx, params)
                     return result
-                except Exception as e:
+                except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
                     if span:
                         span.set_attribute("module.error", str(e))
                     raise

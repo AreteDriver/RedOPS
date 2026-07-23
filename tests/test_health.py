@@ -415,7 +415,7 @@ class TestDatabaseCheck:
         """Test failed database connection."""
 
         def bad_connection():
-            raise Exception("Connection failed")
+            raise ConnectionError("Connection failed")
 
         check = DatabaseCheck(bad_connection)
         result = check.check()

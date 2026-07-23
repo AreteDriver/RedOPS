@@ -257,7 +257,7 @@ class ParallelTask(Task):
                         for f in futures:
                             f.cancel()
                         break
-                except Exception as e:
+                except (OSError, RuntimeError, TypeError, ValueError) as e:
                     results[task.id] = TaskResult(
                         task_id=task.id,
                         state=TaskState.FAILED,
@@ -282,7 +282,7 @@ class ParallelTask(Task):
                 start_time=start_time,
                 end_time=datetime.now(timezone.utc),
             )
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError) as e:
             return TaskResult(
                 task_id=task.id,
                 state=TaskState.FAILED,
@@ -564,7 +564,7 @@ class WorkflowExecutor:
             else:
                 workflow.state = WorkflowState.COMPLETED
 
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError):
             workflow.state = WorkflowState.FAILED
             raise
 
@@ -617,7 +617,7 @@ class WorkflowExecutor:
 
                 return result
 
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 last_error = e
                 retries += 1
                 if retries <= task._retries:
@@ -662,7 +662,7 @@ class WorkflowExecutor:
                 try:
                     result = future.result()
                     results[task.id] = result
-                except Exception as e:
+                except (OSError, RuntimeError, TypeError, ValueError) as e:
                     results[task.id] = TaskResult(
                         task_id=task.id,
                         state=TaskState.FAILED,

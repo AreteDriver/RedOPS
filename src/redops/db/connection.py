@@ -10,6 +10,7 @@ import os
 import logging
 
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.exc import OperationalError, DatabaseError, SQLAlchemyError
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import QueuePool
 
@@ -141,7 +142,7 @@ class Database:
         try:
             yield session
             session.commit()
-        except Exception:
+        except SQLAlchemyError:
             session.rollback()
             raise
         finally:
@@ -163,7 +164,7 @@ class Database:
             with self.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             return True
-        except Exception as e:
+        except (OperationalError, DatabaseError, OSError) as e:
             logger.error(f"Database connection check failed: {e}")
             return False
 

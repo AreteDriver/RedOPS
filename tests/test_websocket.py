@@ -124,7 +124,7 @@ class TestConnectionManager:
         """Test that broadcast removes disconnected clients."""
         ws_good = AsyncMock()
         ws_bad = AsyncMock()
-        ws_bad.send_text.side_effect = Exception("Connection closed")
+        ws_bad.send_text.side_effect = OSError("Connection closed")
 
         manager.active_connections = {ws_good, ws_bad}
 

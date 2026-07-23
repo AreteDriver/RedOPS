@@ -37,16 +37,44 @@ def get_api_key(provider: str) -> str | None:
     return config.get("api_keys", {}).get(provider)
 
 
+# Approximate pricing per 1K tokens (input / output) in USD
+# Used for budget enforcement. Prices are conservative estimates.
+_PROVIDER_PRICING: dict[str, tuple[float, float]] = {
+    "openai": (0.005, 0.015),
+    "anthropic": (0.008, 0.024),
+    "gemini": (0.0005, 0.0015),
+    "groq": (0.0005, 0.0005),
+    "ollama": (0.0, 0.0),
+}
+
+
+def _approximate_tokens(text: str) -> int:
+    """Rough token count fallback when tiktoken is unavailable."""
+    return max(1, len(text) // 4)
+
+
+def _count_openai_tokens(text: str, model: str = "gpt-4o") -> int:
+    """Count tokens for OpenAI models."""
+    try:
+        import tiktoken
+
+        encoding = tiktoken.encoding_for_model(model)
+        return len(encoding.encode(text))
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError):
+        return _approximate_tokens(text)
+
+
 class AIAssistant:
     """AI-powered assistant for security analysis."""
 
-    def __init__(self, provider: str = None, model: str = None):
+    def __init__(self, provider: str = None, model: str = None, budget_limit: float | None = None):
         """
         Initialize the AI assistant.
 
         Args:
             provider: AI provider (openai, anthropic). Defaults to config.
             model: Model to use. Defaults to config.
+            budget_limit: Maximum estimated spend in USD for this instance.
         """
         config = load_config()
         ai_config = config.get("ai", {})
@@ -55,6 +83,15 @@ class AIAssistant:
         self.model = model or ai_config.get("model", "gpt-4o-mini")
         self.max_tokens = ai_config.get("max_tokens", 2048)
         self.temperature = ai_config.get("temperature", 0.7)
+        self.budget_limit = budget_limit or ai_config.get("budget_limit")
+
+        # Cost tracking (accumulates across calls on this instance)
+        self._cost_tracker = {
+            "calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "estimated_cost_usd": 0.0,
+        }
 
         # Get API key (not required for Ollama)
         self.api_key = get_api_key(self.provider)
@@ -122,21 +159,6 @@ class AIAssistant:
                 raise ImportError(
                     "Groq library not installed. Install with: pip install groq"
                 )
-        else:
-            raise ValueError(f"Unsupported provider: {self.provider}")
-
-    def _call_api(self, prompt: str, system_prompt: str = None) -> str:
-        """Call the AI API with the given prompt."""
-        if self.provider == "openai":
-            return self._call_openai(prompt, system_prompt)
-        elif self.provider == "anthropic":
-            return self._call_anthropic(prompt, system_prompt)
-        elif self.provider == "gemini":
-            return self._call_gemini(prompt, system_prompt)
-        elif self.provider == "ollama":
-            return self._call_ollama(prompt, system_prompt)
-        elif self.provider == "groq":
-            return self._call_groq(prompt, system_prompt)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -219,6 +241,89 @@ class AIAssistant:
         )
 
         return response.choices[0].message.content
+
+    # ------------------------------------------------------------------
+    # Cost management
+    # ------------------------------------------------------------------
+
+    def _count_tokens(self, text: str) -> int:
+        """Estimate token count for a text string."""
+        if self.provider == "openai":
+            return _count_openai_tokens(text, self.model)
+        return _approximate_tokens(text)
+
+    def _estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        """Estimate API cost in USD based on token counts."""
+        input_price, output_price = _PROVIDER_PRICING.get(
+            self.provider, (0.005, 0.015)
+        )
+        return (input_tokens / 1000.0) * input_price + (output_tokens / 1000.0) * output_price
+
+    def _check_budget(self, estimated_cost: float) -> None:
+        """Raise if the estimated cost would exceed the budget."""
+        if self.budget_limit is None:
+            return
+        current = self._cost_tracker["estimated_cost_usd"]
+        if current + estimated_cost > self.budget_limit:
+            raise RuntimeError(
+                f"AI budget exceeded: ${current:.4f} spent + ${estimated_cost:.4f} estimated "
+                f"> ${self.budget_limit:.4f} limit. "
+                f"Increase budget_limit or switch to local provider (ollama)."
+            )
+
+    def _record_usage(self, prompt: str, response_text: str) -> None:
+        """Record token usage and cost for a completed API call."""
+        input_tokens = self._count_tokens(prompt)
+        output_tokens = self._count_tokens(response_text)
+        cost = self._estimate_cost(input_tokens, output_tokens)
+
+        self._cost_tracker["calls"] += 1
+        self._cost_tracker["input_tokens"] += input_tokens
+        self._cost_tracker["output_tokens"] += output_tokens
+        self._cost_tracker["estimated_cost_usd"] += cost
+
+    def get_cost_metrics(self) -> dict[str, Any]:
+        """Return current cost metrics for this assistant instance."""
+        return {
+            "provider": self.provider,
+            "model": self.model,
+            **self._cost_tracker,
+            "budget_limit_usd": self.budget_limit,
+            "budget_remaining_usd": (
+                self.budget_limit - self._cost_tracker["estimated_cost_usd"]
+                if self.budget_limit is not None
+                else None
+            ),
+        }
+
+    # ------------------------------------------------------------------
+    # API call wrappers with cost tracking
+    # ------------------------------------------------------------------
+
+    def _call_api(self, prompt: str, system_prompt: str = None) -> str:
+        """Call the AI API with the given prompt (budget-aware)."""
+        # Build full prompt text for token estimation
+        full_prompt = f"{system_prompt or ''}\n\n{prompt}"
+        estimated_input = self._count_tokens(full_prompt)
+        estimated_output = self.max_tokens  # worst-case
+        estimated_cost = self._estimate_cost(estimated_input, estimated_output)
+        self._check_budget(estimated_cost)
+
+        if self.provider == "openai":
+            result = self._call_openai(prompt, system_prompt)
+        elif self.provider == "anthropic":
+            result = self._call_anthropic(prompt, system_prompt)
+        elif self.provider == "gemini":
+            result = self._call_gemini(prompt, system_prompt)
+        elif self.provider == "ollama":
+            result = self._call_ollama(prompt, system_prompt)
+        elif self.provider == "groq":
+            result = self._call_groq(prompt, system_prompt)
+        else:
+            raise ValueError(f"Unsupported provider: {self.provider}")
+
+        self._record_usage(full_prompt, result)
+        return result
 
     def analyze_findings(self, scan_data: dict[str, Any]) -> str:
         """
@@ -478,9 +583,9 @@ is suitable for formal documentation."""
 # Convenience functions for module integration
 def ai_analyze(ctx, params: dict[str, Any] | None = None):
     """Module wrapper for AI analysis."""
-
+    params = params or {}
     try:
-        assistant = AIAssistant()
+        assistant = AIAssistant(budget_limit=params.get("budget_limit"))
         analysis = assistant.analyze_findings(ctx.data)
         ctx.add(
             "ai_analysis",
@@ -488,9 +593,10 @@ def ai_analyze(ctx, params: dict[str, Any] | None = None):
                 "analysis": analysis,
                 "provider": assistant.provider,
                 "model": assistant.model,
+                "cost": assistant.get_cost_metrics(),
             },
         )
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError) as e:
         ctx.log(f"AI analysis failed: {e}", level="ERROR")
 
     return ctx
@@ -498,9 +604,9 @@ def ai_analyze(ctx, params: dict[str, Any] | None = None):
 
 def ai_summarize(ctx, params: dict[str, Any] | None = None):
     """Module wrapper for AI summarization."""
-
+    params = params or {}
     try:
-        assistant = AIAssistant()
+        assistant = AIAssistant(budget_limit=params.get("budget_limit"))
         summary = assistant.summarize(ctx.data)
         ctx.add(
             "ai_summary",
@@ -508,9 +614,10 @@ def ai_summarize(ctx, params: dict[str, Any] | None = None):
                 "summary": summary,
                 "provider": assistant.provider,
                 "model": assistant.model,
+                "cost": assistant.get_cost_metrics(),
             },
         )
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError) as e:
         ctx.log(f"AI summarization failed: {e}", level="ERROR")
 
     return ctx
@@ -518,9 +625,9 @@ def ai_summarize(ctx, params: dict[str, Any] | None = None):
 
 def ai_recommend(ctx, params: dict[str, Any] | None = None):
     """Module wrapper for AI recommendations."""
-
+    params = params or {}
     try:
-        assistant = AIAssistant()
+        assistant = AIAssistant(budget_limit=params.get("budget_limit"))
         recommendations = assistant.suggest_remediations(ctx.data)
         ctx.add(
             "ai_recommendations",
@@ -528,9 +635,10 @@ def ai_recommend(ctx, params: dict[str, Any] | None = None):
                 "recommendations": recommendations,
                 "provider": assistant.provider,
                 "model": assistant.model,
+                "cost": assistant.get_cost_metrics(),
             },
         )
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ImportError) as e:
         ctx.log(f"AI recommendations failed: {e}", level="ERROR")
 
     return ctx

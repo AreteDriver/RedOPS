@@ -142,7 +142,7 @@ def query_crtsh(
         return []
     except json.JSONDecodeError:
         return []
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError):
         return []
 
 
@@ -166,7 +166,7 @@ def is_cert_valid(cert: dict[str, Any], now: datetime) -> bool:
             )
             return expiry > now
         return True
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError):
         return True
 
 
@@ -271,7 +271,7 @@ def analyze_certificates(
                     expired_count += 1
                 elif (expiry - now).days < 30:
                     expiring_soon_count += 1
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 pass
 
         # Check for wildcards

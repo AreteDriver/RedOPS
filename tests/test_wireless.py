@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 from redops.core.context import Context
+from redops.modules.active.authorization import record_authorization
 from redops.modules.active.wireless.monitor import (
     disable_monitor_mode,
     enable_monitor_mode,
@@ -38,6 +39,7 @@ class TestEnableMonitorMode:
     def test_success(self, mock_run):
         mock_run.return_value = MagicMock(stdout="Mode:Monitor", returncode=0)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = enable_monitor_mode(ctx, {"interface": "wlan1"})
         assert result.get("monitor_ready") is True
         assert result.get("monitor_interface") == "wlan1mon"
@@ -46,6 +48,7 @@ class TestEnableMonitorMode:
     def test_failure(self, mock_run):
         mock_run.return_value = MagicMock(stdout="Mode:Managed", returncode=1)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = enable_monitor_mode(ctx, {"interface": "wlan1"})
         assert result.get("monitor_ready") is False
 
@@ -53,6 +56,7 @@ class TestEnableMonitorMode:
     def test_default_interface(self, mock_run):
         mock_run.return_value = MagicMock(stdout="Mode:Monitor", returncode=0)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = enable_monitor_mode(ctx)
         assert result.get("monitor_interface") == "wlan1mon"
 
@@ -62,6 +66,7 @@ class TestDisableMonitorMode:
     def test_restores_managed_mode(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("monitor_interface", "wlan1mon")
         result = disable_monitor_mode(ctx)
         assert result.get("monitor_ready") is False
@@ -70,6 +75,7 @@ class TestDisableMonitorMode:
     def test_uses_context_interface(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("monitor_interface", "wlan2mon")
         disable_monitor_mode(ctx)
         calls = [str(c) for c in mock_run.call_args_list]
@@ -118,6 +124,7 @@ class TestScanAccessPoints:
         mock_popen.return_value = mock_proc
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("monitor_interface", "wlan1mon")
 
         with patch(
@@ -150,6 +157,7 @@ class TestEvilTwin:
         mock_popen.return_value = MagicMock()
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add(
             "access_points",
             [
@@ -173,6 +181,7 @@ class TestEvilTwin:
         from redops.modules.active.wireless.evil_twin import start_evil_twin
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = start_evil_twin(ctx)
         assert result.get("evil_twin_active") is False
 
@@ -245,6 +254,7 @@ class TestDeauthFlood:
         try:
             deauth.HAS_SCAPY = False
             ctx = Context(target="home-lab")
+            record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
             result = deauth.deauth_flood(ctx)
             assert result.get("deauth_active") is False
             error_logs = result.get_logs(level="ERROR")
@@ -259,6 +269,7 @@ class TestDeauthFlood:
         try:
             deauth.HAS_SCAPY = True
             ctx = Context(target="home-lab")
+            record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
             result = deauth.deauth_flood(ctx)
             error_logs = result.get_logs(level="ERROR")
             assert any("BSSID" in log["message"] for log in error_logs)

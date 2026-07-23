@@ -464,7 +464,7 @@ def make_request(
             verify=verify_ssl,
         )
         return response
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError):
         # Try HTTP if HTTPS fails
         if url.startswith("https://"):
             try:
@@ -476,7 +476,7 @@ def make_request(
                     allow_redirects=follow_redirects,
                 )
                 return response
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError, ConnectionError):
                 pass
         return None
 
@@ -610,7 +610,7 @@ def fetch_favicon_hash(
                 # Check against known hashes
                 identified = FAVICON_HASHES.get(hash_value)
                 return (hash_value, identified)
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, ConnectionError):
             continue
 
     return None
@@ -669,7 +669,7 @@ def get_ssl_info(target: str) -> dict[str, Any] | None:
                         "serial_number": cert.get("serialNumber"),
                         "version": cert.get("version"),
                     }
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError):
         pass
 
     return None

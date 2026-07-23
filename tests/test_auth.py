@@ -154,16 +154,17 @@ class TestAPIKeys:
         full_key, key_hash = generate_api_key()
 
         assert full_key.startswith(f"{API_KEY_PREFIX}_")
-        assert len(key_hash) == 64  # SHA-256 hex
+        assert key_hash.startswith("$2b$")  # bcrypt
 
     def test_hash_api_key(self):
-        """API key is hashed consistently."""
+        """API key is hashed with bcrypt."""
+        import bcrypt
+
         key = "redops_test123"
         hash1 = hash_api_key(key)
-        hash2 = hash_api_key(key)
 
-        assert hash1 == hash2
-        assert len(hash1) == 64
+        assert hash1.startswith("$2b$")
+        assert bcrypt.checkpw(key.encode(), hash1.encode())
 
     def test_create_api_key(self):
         """API key is created with secret."""

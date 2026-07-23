@@ -7,6 +7,7 @@ Provides authentication mechanisms for the web dashboard and API:
 - Session-based authentication (for dashboard)
 """
 
+import logging
 import os
 import secrets
 import hashlib
@@ -14,8 +15,11 @@ import hmac
 from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
 
+import bcrypt
 from fastapi import Request, HTTPException
 from fastapi.security import APIKeyHeader, HTTPBasic
+
+logger = logging.getLogger(__name__)
 
 
 # Environment variables for configuration
@@ -34,7 +38,7 @@ class AuthConfig:
     enabled: bool = False
     api_key: str | None = None
     admin_user: str = "admin"
-    admin_password: str | None = None
+    admin_pw_hash: str | None = None
     session_secret: str = field(default_factory=lambda: secrets.token_hex(32))
     session_expiry_hours: int = 24
     allowed_paths: list = field(
@@ -49,11 +53,18 @@ class AuthConfig:
     @classmethod
     def from_env(cls) -> "AuthConfig":
         """Load configuration from environment variables."""
+        pw_plain = os.environ.get(ENV_ADMIN_PASSWORD)
+        pw_hash = None
+        if pw_plain:
+            pw_hash = bcrypt.hashpw(
+                pw_plain.encode("utf-8"), bcrypt.gensalt()
+            ).decode("utf-8")
+
         return cls(
             enabled=os.environ.get(ENV_AUTH_ENABLED, "false").lower() == "true",
             api_key=os.environ.get(ENV_API_KEY),
             admin_user=os.environ.get(ENV_ADMIN_USER, "admin"),
-            admin_password=os.environ.get(ENV_ADMIN_PASSWORD),
+            admin_pw_hash=pw_hash,
             session_secret=os.environ.get(ENV_SESSION_SECRET, secrets.token_hex(32)),
             session_expiry_hours=int(os.environ.get(ENV_SESSION_EXPIRY_HOURS, "24")),
         )
@@ -62,7 +73,7 @@ class AuthConfig:
         """Check if authentication is properly configured."""
         if not self.enabled:
             return True  # Not enabled means no config needed
-        return bool(self.api_key or self.admin_password)
+        return bool(self.api_key or self.admin_pw_hash)
 
 
 @dataclass
@@ -142,6 +153,91 @@ class SessionStore:
         ).hexdigest()
 
 
+class RedisSessionStore(SessionStore):
+    """Redis-backed distributed session store.
+
+    Shares sessions across workers and survives process restarts.
+    Falls back to in-memory behavior if Redis is unreachable.
+    """
+
+    def __init__(
+        self,
+        secret: str,
+        expiry_hours: int = 24,
+        redis_url: str | None = None,
+    ):
+        super().__init__(secret, expiry_hours)
+        self._redis_url = redis_url or os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+        self._redis = None
+        self._fallback = False
+        self._connect()
+
+    def _connect(self) -> None:
+        """Attempt to connect to Redis."""
+        try:
+            import redis as redis_lib
+
+            self._redis = redis_lib.from_url(self._redis_url, decode_responses=True)
+            self._redis.ping()
+        except (ConnectionError, ImportError, OSError, RuntimeError):
+            self._redis = None
+            self._fallback = True
+
+    def _redis_key(self, session_id: str) -> str:
+        return f"redops:session:{session_id}"
+
+    def create_session(self, username: str) -> str:
+        if self._fallback or not self._redis:
+            return super().create_session(username)
+
+        token = secrets.token_urlsafe(32)
+        session_id = self._hash_token(token)
+        expires_at = datetime.now(timezone.utc) + self._expiry
+
+        self._redis.hset(
+            self._redis_key(session_id),
+            mapping={
+                "username": username,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": expires_at.isoformat(),
+            },
+        )
+        self._redis.expire(self._redis_key(session_id), int(self._expiry.total_seconds()))
+        return token
+
+    def validate_session(self, token: str) -> str | None:
+        if self._fallback or not self._redis:
+            return super().validate_session(token)
+
+        session_id = self._hash_token(token)
+        key = self._redis_key(session_id)
+        data = self._redis.hgetall(key)
+
+        if not data:
+            return None
+
+        expires_at = datetime.fromisoformat(data["expires_at"])
+        if datetime.now(timezone.utc) > expires_at:
+            self._redis.delete(key)
+            return None
+
+        return data["username"]
+
+    def invalidate_session(self, token: str) -> bool:
+        if self._fallback or not self._redis:
+            return super().invalidate_session(token)
+
+        session_id = self._hash_token(token)
+        deleted = self._redis.delete(self._redis_key(session_id))
+        return deleted > 0
+
+    def cleanup_expired(self) -> int:
+        """Redis handles TTL expiry automatically; this is a no-op."""
+        if self._fallback or not self._redis:
+            return super().cleanup_expired()
+        return 0
+
+
 class AuthManager:
     """
     Manages authentication for the RedOPS web interface.
@@ -154,10 +250,18 @@ class AuthManager:
 
     def __init__(self, config: AuthConfig | None = None):
         self.config = config or AuthConfig.from_env()
-        self.sessions = SessionStore(
-            self.config.session_secret,
-            self.config.session_expiry_hours,
-        )
+        redis_url = os.environ.get("REDIS_URL")
+        if redis_url:
+            self.sessions = RedisSessionStore(
+                self.config.session_secret,
+                self.config.session_expiry_hours,
+                redis_url=redis_url,
+            )
+        else:
+            self.sessions = SessionStore(
+                self.config.session_secret,
+                self.config.session_expiry_hours,
+            )
 
         if not self.config.enabled:
             import logging
@@ -187,11 +291,17 @@ class AuthManager:
 
     def verify_basic_auth(self, username: str, password: str) -> bool:
         """Verify basic auth credentials."""
-        if not self.config.admin_password:
+        if not self.config.admin_pw_hash:
             return False
 
         username_match = secrets.compare_digest(username, self.config.admin_user)
-        password_match = secrets.compare_digest(password, self.config.admin_password)
+        try:
+            password_match = bcrypt.checkpw(
+                password.encode("utf-8"), self.config.admin_pw_hash.encode("utf-8")
+            )
+        except ValueError:
+            # Malformed hash
+            password_match = False
 
         return username_match and password_match
 

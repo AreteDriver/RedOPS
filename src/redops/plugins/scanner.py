@@ -400,7 +400,7 @@ class ScannerPlugin(BasePlugin):
         for callback in self._hooks.get(event, []):
             try:
                 callback(*args, **kwargs)
-            except Exception:
+            except (RuntimeError, TypeError, ValueError, OSError):
                 pass  # Ignore hook errors
 
     def _create_finding(
@@ -515,7 +515,7 @@ class CompositeScanner:
                 for future in concurrent.futures.as_completed(futures):
                     try:
                         results.append(future.result())
-                    except Exception as e:
+                    except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError) as e:
                         scanner = futures[future]
                         results.append(
                             ScannerResult(
@@ -530,7 +530,7 @@ class CompositeScanner:
                 if scanner.validate_target(target):
                     try:
                         results.append(scanner.scan(target, config))
-                    except Exception as e:
+                    except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError) as e:
                         results.append(
                             ScannerResult(
                                 scanner_name=scanner.get_name(),

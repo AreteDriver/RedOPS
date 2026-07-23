@@ -14,6 +14,22 @@
 
 ---
 
+## Priority 0 — Gate (blocks any offensive Active Chain release)
+
+> Folded in from the qwen-audited roadmap (2026-05-30). The Active Chain — wireless
+> evil-twin + deauth, subnet recon, CVE check, and an autonomous Ollama agent under
+> `modules/active/` + `modules/ai/` — is coded, tested, and committed, but **unreleased
+> and undocumented**. It must not ship until this gate clears. Authorization is a review,
+> not a code flag.
+
+- [ ] **Legal-boundary review** — `docs/legal-boundaries.md` + SECURITY.md: jurisdiction, authorized-use definition, explicit will/won't-do list for deauth + evil-twin.
+- [ ] **Authorization mechanism** — scope assertion + recorded operator consent that every `modules/active/` module checks before executing (not just a flag). Add a test asserting each active module refuses to run absent an authorized-target assertion.
+- [ ] **Misuse threat model** — model RedOPS pointed at an unauthorized network; document the technical controls that make casual misuse hard.
+- [ ] **Tested egress enforcement** — a test that attempts cloud egress during an active-chain run and asserts it is blocked (local Ollama only). Enforced, not asserted.
+- [ ] **Operator runbook + smoke test** — mock authorized-engagement walkthrough; full-chain smoke test on lab hardware (Alfa AWUS036NHA + Kali) before tagging the release.
+
+---
+
 ## Priority 1 — Critical (Do Now)
 
 ### Security and Reliability

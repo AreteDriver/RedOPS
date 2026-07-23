@@ -827,7 +827,7 @@ class StatsDClient:
         try:
             sock = self._get_socket()
             sock.sendto(data.encode("utf-8"), (self._host, self._port))
-        except Exception:
+        except (OSError, ConnectionError, RuntimeError):
             pass  # StatsD is fire-and-forget
 
     def _flush_buffer(self) -> None:

@@ -83,6 +83,7 @@ class APIKeyWithSecret(APIKeyResponse):
 # In-memory storage — WARNING: revocations and API keys are lost on restart.
 # Use a persistent store (database/Redis) for production deployments.
 _api_keys: dict[str, dict] = {}
+_api_key_hash_index: dict[str, str] = {}  # hash -> key_id
 _revoked_tokens: set[str] = set()
 
 
@@ -230,8 +231,8 @@ def generate_api_key() -> tuple[str, str]:
     # Create full key with prefix
     full_key = f"{API_KEY_PREFIX}_{key_secret}"
 
-    # Hash for storage
-    key_hash = hashlib.sha256(full_key.encode()).hexdigest()
+    # Hash for storage with bcrypt (slow, hardened)
+    key_hash = bcrypt.hashpw(full_key.encode(), bcrypt.gensalt()).decode()
 
     return full_key, key_hash
 
@@ -243,9 +244,9 @@ def hash_api_key(key: str) -> str:
         key: Full API key
 
     Returns:
-        SHA-256 hash of the key
+        bcrypt hash of the key
     """
-    return hashlib.sha256(key.encode()).hexdigest()
+    return bcrypt.hashpw(key.encode(), bcrypt.gensalt()).decode()
 
 
 def create_api_key(
@@ -290,6 +291,7 @@ def create_api_key(
     }
 
     _api_keys[key_id] = key_data
+    _api_key_hash_index[key_hash] = key_id
 
     return APIKeyWithSecret(
         id=key_id,
@@ -316,32 +318,40 @@ async def verify_api_key(key: str) -> dict | None:
     if not key.startswith(f"{API_KEY_PREFIX}_"):
         return None
 
-    key_hash = hash_api_key(key)
+    # O(1) index lookup: iterate stored hashes and check with bcrypt
+    for key_hash, key_id in _api_key_hash_index.items():
+        try:
+            if bcrypt.checkpw(key.encode(), key_hash.encode()):
+                break
+        except (ValueError, TypeError):
+            continue
+    else:
+        return None
 
-    for key_data in _api_keys.values():
-        if key_data["key_hash"] == key_hash:
-            # Check if active
-            if not key_data["is_active"]:
-                return None
+    key_data = _api_keys.get(key_id)
+    if not key_data:
+        return None
 
-            # Check expiration
-            if key_data["expires_at"]:
-                if datetime.now(timezone.utc) > key_data["expires_at"]:
-                    return None
+    # Check if active
+    if not key_data["is_active"]:
+        return None
 
-            # Update last used
-            key_data["last_used"] = datetime.now(timezone.utc)
+    # Check expiration
+    if key_data["expires_at"]:
+        if datetime.now(timezone.utc) > key_data["expires_at"]:
+            return None
 
-            # Return user info
-            # In production, would look up user from user_id
-            return {
-                "id": key_data["user_id"],
-                "username": f"api_key_{key_data['name']}",
-                "role": "api",
-                "scopes": key_data["scopes"],
-            }
+    # Update last used
+    key_data["last_used"] = datetime.now(timezone.utc)
 
-    return None
+    # Return user info
+    # In production, would look up user from user_id
+    return {
+        "id": key_data["user_id"],
+        "username": f"api_key_{key_data['name']}",
+        "role": "api",
+        "scopes": key_data["scopes"],
+    }
 
 
 def list_api_keys(user_id: str) -> list[APIKeyResponse]:

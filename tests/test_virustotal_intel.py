@@ -1,5 +1,6 @@
 """Tests for VirusTotal intelligence module."""
 
+import socket
 import sys
 from importlib import reload
 from unittest.mock import patch, MagicMock
@@ -399,7 +400,7 @@ class TestGetVTApiKey:
         with patch.dict("os.environ", {}, clear=True):
             with patch(
                 "redops.cli.settings.get_api_key_direct",
-                side_effect=Exception("Settings error"),
+                side_effect=RuntimeError("Settings error"),
             ):
                 result = get_vt_api_key()
                 assert result is None
@@ -489,7 +490,7 @@ class TestMakeVTRequest:
     def test_request_exception(self):
         """Test request exception handling."""
         mock_requests = MagicMock()
-        mock_requests.get.side_effect = Exception("Connection error")
+        mock_requests.get.side_effect = ConnectionError("Connection error")
 
         with patch.dict(sys.modules, {"requests": mock_requests}):
             import redops.modules.intel.virustotal_intel as vt_mod
@@ -564,7 +565,7 @@ class TestQueryVTIPEdgeCases:
         ctx = Context(target="nonexistent.invalid.domain")
 
         with patch(
-            "socket.gethostbyname", side_effect=Exception("DNS resolution failed")
+            "socket.gethostbyname", side_effect=socket.gaierror("DNS resolution failed")
         ):
             result = query_vt_ip(ctx)
 

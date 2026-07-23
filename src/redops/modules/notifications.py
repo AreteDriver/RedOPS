@@ -265,7 +265,7 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code == 200
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
             logger.warning("Failed to send Slack notification: %s", e)
             return False
 
@@ -293,7 +293,7 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code == 200
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
             logger.warning("Failed to send Slack alert: %s", e)
             return False
 
@@ -338,7 +338,7 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code in (200, 204)
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
             logger.warning("Failed to send Discord notification: %s", e)
             return False
 
@@ -369,7 +369,7 @@ High: {high_count}
                 timeout=10,
             )
             return response.status_code in (200, 204)
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
             logger.warning("Failed to send Discord alert: %s", e)
             return False
 
@@ -393,7 +393,7 @@ High: {high_count}
                 server.send_message(msg)
 
             return True
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, ConnectionError, smtplib.SMTPException) as e:
             logger.warning("Failed to send email notification: %s", e)
             return False
 
@@ -405,7 +405,7 @@ High: {high_count}
         try:
             response = requests.post(url, json=data, timeout=10)
             return response.status_code in (200, 201, 202, 204)
-        except Exception as e:
+        except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
             logger.warning("Failed to send webhook to %s: %s", url, e)
             return False
 
@@ -439,7 +439,7 @@ def notify_on_complete(ctx, params: dict[str, Any] | None = None):
         ctx.add("notification_results", results)
         ctx.log(f"Notifications sent: {results}", level="INFO")
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         ctx.log(f"Notification failed: {e}", level="WARNING")
 
     return ctx

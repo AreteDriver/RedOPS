@@ -4,9 +4,14 @@ RESTful API Server for RedOPS.
 Provides programmatic access to RedOPS functionality via HTTP API.
 """
 
+import hashlib
 import json
+import logging
+import os
 import re
+import secrets
 import threading
+import traceback
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -14,6 +19,8 @@ from enum import Enum
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Callable
 from urllib.parse import parse_qs, urlparse
+
+logger = logging.getLogger(__name__)
 
 
 class HTTPMethod(Enum):
@@ -228,17 +235,34 @@ class APIServer:
     VERSION = "1.0.0"
     API_PREFIX = "/api/v1"
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 8080):
+    MAX_BODY_SIZE = 1024 * 1024  # 1MB
+
+    # Public paths that do not require authentication
+    PUBLIC_PATHS = {"/health", "/api/v1/openapi.json"}
+
+    def __init__(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8080,
+        api_key: str | None = None,
+    ):
         self.host = host
         self.port = port
         self.router = Router()
         self._server: HTTPServer | None = None
         self._thread: threading.Thread | None = None
 
+        # API key for authentication (falls back to env var)
+        self._api_key = api_key or os.environ.get("REDOPS_API_KEY")
+        if not self._api_key:
+            logger.warning(
+                "SECURITY WARNING: No API key configured. "
+                "Set REDOPS_API_KEY to secure this API server."
+            )
+
         # In-memory storage for demo
         self._scans: dict[str, dict] = {}
         self._jobs: dict[str, dict] = {}
-        self._api_keys: set[str] = set()
 
         # Register routes
         self._register_routes()
@@ -1066,8 +1090,38 @@ class APIServer:
             },
         }
 
+    def _authenticate_request(self, request: APIRequest) -> APIResponse | None:
+        """Authenticate a request via X-API-Key header.
+
+        Returns None if authenticated or path is public.
+        Returns an error response if authentication fails.
+        """
+        # Public paths do not require authentication
+        if request.path in self.PUBLIC_PATHS:
+            return None
+
+        # If no API key is configured, allow all requests (warned in __init__)
+        if not self._api_key:
+            return None
+
+        provided_key = request.headers.get("X-API-Key", "")
+        if secrets.compare_digest(provided_key, self._api_key):
+            return None
+
+        return self._error_response(
+            HTTPStatus.UNAUTHORIZED,
+            "unauthorized",
+            "Authentication required. Provide a valid X-API-Key header.",
+            request.request_id,
+        )
+
     def handle_request(self, request: APIRequest) -> APIResponse:
         """Handle an incoming request."""
+        # Authenticate
+        auth_error = self._authenticate_request(request)
+        if auth_error is not None:
+            return auth_error
+
         # Match route
         match = self.router.match(request.path, request.method)
 
@@ -1094,10 +1148,15 @@ class APIServer:
         try:
             return match.handler(request)
         except Exception as e:
+            logger.error(
+                "Unhandled exception in API handler: %s\n%s",
+                e,
+                traceback.format_exc(),
+            )
             return self._error_response(
                 HTTPStatus.INTERNAL_ERROR,
                 "internal_error",
-                str(e),
+                "An internal server error occurred.",
                 request.request_id,
             )
 
@@ -1135,11 +1194,26 @@ class APIServer:
                 parsed = urlparse(self.path)
                 query_params = parse_qs(parsed.query)
 
-                # Read body if present
+                # Read body if present (enforce size limit)
                 body = None
                 content_length = self.headers.get("Content-Length")
                 if content_length:
-                    raw_body = self.rfile.read(int(content_length))
+                    size = int(content_length)
+                    if size > server.MAX_BODY_SIZE:
+                        self.send_response(413)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        error_body = json.dumps(
+                            {
+                                "error": "payload_too_large",
+                                "message": f"Request body exceeds maximum size of {server.MAX_BODY_SIZE} bytes",
+                                "status": 413,
+                            }
+                        )
+                        self.wfile.write(error_body.encode("utf-8"))
+                        return
+
+                    raw_body = self.rfile.read(size)
                     if raw_body:
                         try:
                             body = json.loads(raw_body.decode("utf-8"))

@@ -550,7 +550,7 @@ class PluginRepository:
         for callback in self._hooks.get(event, []):
             try:
                 callback(*args, **kwargs)
-            except Exception:
+            except (RuntimeError, TypeError, ValueError, OSError):
                 pass
 
     @property

@@ -103,7 +103,7 @@ def get_vt_api_key() -> str | None:
             from redops.cli.settings import get_api_key_direct
 
             api_key = get_api_key_direct("virustotal")
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, ImportError):
             pass
     return api_key
 
@@ -126,7 +126,7 @@ def _make_vt_request(endpoint: str, api_key: str) -> dict[str, Any] | None:
             return {"error": "not_found"}
         else:
             return {"error": f"HTTP {response.status_code}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"error": str(e)}
 
 
@@ -228,7 +228,7 @@ def query_vt_ip(ctx: Context, params: dict[str, Any] | None = None) -> Context:
             import socket
 
             ip = socket.gethostbyname(target)
-        except Exception as e:
+        except (OSError, ValueError, TypeError) as e:
             ctx.log(f"Could not resolve {target}: {e}", level="WARNING")
             return ctx
 

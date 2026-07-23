@@ -17,6 +17,7 @@ from redops.modules.simulation.mitre_mapping import (
     get_all_tactics,
     get_mitigations_for_techniques,
     generate_attack_matrix_view,
+    generate_navigator_layer,
 )
 from redops.core.context import Context
 
@@ -537,6 +538,57 @@ class TestGenerateAttackMatrixView:
 
         recon_techs = matrix["Reconnaissance"]
         assert recon_techs == sorted(recon_techs)
+
+
+class TestNavigatorLayerExport:
+    """Tests for MITRE ATT&CK Navigator layer export."""
+
+    def test_generates_valid_layer_structure(self):
+        """Navigator layer must contain required top-level keys."""
+        layer = generate_navigator_layer({"T1595", "T1190"})
+
+        assert layer["name"] == "RedOPS Scan Results"
+        assert layer["domain"] == "enterprise-attack"
+        assert "versions" in layer
+        assert "techniques" in layer
+        assert "gradient" in layer
+        assert "legendItems" in layer
+
+    def test_techniques_have_required_fields(self):
+        """Each technique entry must have techniqueID, tactic, score, comment."""
+        layer = generate_navigator_layer({"T1595"})
+        techniques = layer["techniques"]
+        assert len(techniques) == 1
+
+        tech = techniques[0]
+        assert tech["techniqueID"] == "T1595"
+        assert tech["tactic"] == "reconnaissance"
+        assert tech["score"] == 1
+        assert "Active Scanning" in tech["comment"]
+        assert tech["enabled"] is True
+
+    def test_skips_unknown_techniques(self):
+        """Unknown technique IDs should be silently skipped."""
+        layer = generate_navigator_layer({"T1595", "T9999"})
+        ids = [t["techniqueID"] for t in layer["techniques"]]
+        assert "T1595" in ids
+        assert "T9999" not in ids
+
+    def test_custom_name_and_description(self):
+        """Custom name and description should be reflected in output."""
+        layer = generate_navigator_layer(
+            {"T1595"},
+            name="Bug Bounty Recon",
+            description="Coverage from bug bounty reconnaissance scan",
+        )
+        assert layer["name"] == "Bug Bounty Recon"
+        assert layer["description"] == "Coverage from bug bounty reconnaissance scan"
+
+    def test_empty_techniques_returns_empty_layer(self):
+        """Empty input should produce valid layer with zero techniques."""
+        layer = generate_navigator_layer(set())
+        assert layer["techniques"] == []
+        assert layer["name"] == "RedOPS Scan Results"
 
 
 class TestKeywordTechniqueMap:

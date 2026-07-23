@@ -198,12 +198,17 @@ class FernetEncryption(EncryptionProvider):
 
     def decrypt(self, ciphertext: str) -> str:
         """Decrypt ciphertext using Fernet."""
-        token = base64.urlsafe_b64decode(ciphertext.encode())
+        from cryptography.fernet import InvalidToken
+
+        try:
+            token = base64.urlsafe_b64decode(ciphertext.encode())
+        except (ValueError, TypeError) as exc:
+            raise ValueError("Unable to decrypt: invalid ciphertext encoding") from exc
 
         # Try current key first
         try:
             return self._fernet.decrypt(token).decode()
-        except Exception:
+        except InvalidToken:
             pass
 
         # Try previous keys for rotation
@@ -211,7 +216,7 @@ class FernetEncryption(EncryptionProvider):
             try:
                 prev_fernet = self._fernet_class(prev_key)
                 return prev_fernet.decrypt(token).decode()
-            except Exception:
+            except InvalidToken:
                 continue
 
         raise ValueError("Unable to decrypt: invalid key or corrupted data")
@@ -339,7 +344,7 @@ class FileBackend(SecretBackend):
                         encrypted=False,
                     )
                 self._loaded = True
-            except Exception as e:
+            except (OSError, ValueError, json.JSONDecodeError) as e:
                 logger.error(f"Failed to load secrets: {e}")
                 self._loaded = True
 
@@ -850,11 +855,12 @@ class SecretsManager:
             encrypted=False,
         )
 
-        # Notify callbacks
+        # Notify callbacks — broad guard is intentional: user-provided callbacks must
+        # not break secret retrieval regardless of what they raise.
         for callback in self._access_callbacks:
             try:
                 callback(name, result)
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.warning(f"Access callback failed: {e}")
 
         self._audit.log("get", name)

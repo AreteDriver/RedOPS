@@ -16,8 +16,12 @@ try:
     import dns.exception
 
     DNS_AVAILABLE = True
+    _DNSException = getattr(dns.exception, "DNSException", None)
+    if not isinstance(_DNSException, type) or not issubclass(_DNSException, BaseException):
+        _DNSException = Exception
 except ImportError:
     DNS_AVAILABLE = False
+    _DNSException = Exception
 
 
 def get_dns_records(domain: str, record_type: str = "A") -> list[str]:
@@ -48,7 +52,7 @@ def _get_dns_records_socket(domain: str) -> list[str]:
     try:
         result = socket.gethostbyname_ex(domain)
         return result[2]
-    except Exception:
+    except (OSError, ValueError, TypeError):
         return []
 
 
@@ -93,7 +97,7 @@ def _get_dns_records_dnspython(domain: str, record_type: str) -> list[str]:
     except dns.exception.Timeout:
         # Query timed out
         pass
-    except Exception:
+    except (OSError, RuntimeError, ValueError, TypeError):
         # Other errors
         pass
 
@@ -274,7 +278,7 @@ def profile_domain(ctx: Context, params: dict[str, Any] | None = None) -> Contex
                 services = [v[0] for v in txt_analysis["verification_records"]]
                 ctx.log(f"Domain verified with services: {services}", level="INFO")
 
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError) as e:
         ctx.log(f"Error during DNS enumeration: {e}", level="ERROR")
 
     ctx.add("domain_profile", profile)
@@ -512,7 +516,7 @@ def check_zone_transfer(ctx: Context, params: dict[str, Any] | None = None) -> C
             )
             ctx.add(f"finding_axfr_{ns_clean}", finding.model_dump())
 
-        except Exception:
+        except (OSError, RuntimeError, TypeError, ValueError, _DNSException):
             # Zone transfer denied (expected/secure behavior)
             zone_transfer_results["nameservers_checked"].append(
                 {

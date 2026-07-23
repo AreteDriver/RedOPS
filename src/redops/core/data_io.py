@@ -189,7 +189,7 @@ class DataValidator:
                                     record[field_name],
                                 )
                             )
-                    except Exception as e:
+                    except (OSError, RuntimeError, TypeError, ValueError) as e:
                         errors.append(
                             ValidationError(
                                 f"Validation error for {field_name}: {e}",

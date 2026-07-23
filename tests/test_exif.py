@@ -689,7 +689,7 @@ class TestExtractExifFromFileEdgeCases:
                 img = original_open(path)
                 # Make _getexif raise an exception
                 img._getexif = lambda: (_ for _ in ()).throw(
-                    Exception("EXIF read error")
+                    RuntimeError("EXIF read error")
                 )
                 return img
 
@@ -728,7 +728,7 @@ class TestParseGpsInfoEdgeCases:
         # Force dms_to_decimal to raise an exception
         with patch(
             "redops.modules.metadata.exif.dms_to_decimal",
-            side_effect=Exception("Conversion error"),
+            side_effect=RuntimeError("Conversion error"),
         ):
             gps_info = {
                 1: "N",

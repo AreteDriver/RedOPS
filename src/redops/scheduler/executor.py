@@ -86,7 +86,7 @@ class ScanExecutor:
             for hook in self._pre_hooks:
                 try:
                     hook(job)
-                except Exception as e:
+                except (RuntimeError, TypeError, ValueError, OSError) as e:
                     logger.warning(f"Pre-hook error: {e}")
 
             # Get pipeline
@@ -123,7 +123,7 @@ class ScanExecutor:
 
             logger.info(f"Job {job.id} completed: {findings_count} findings")
 
-        except Exception as e:
+        except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError) as e:
             error_msg = str(e)
             logger.error(f"Job {job.id} failed: {error_msg}")
             logger.debug(traceback.format_exc())
@@ -142,7 +142,7 @@ class ScanExecutor:
             for hook in self._post_hooks:
                 try:
                     hook(job)
-                except Exception as e:
+                except (RuntimeError, TypeError, ValueError, OSError) as e:
                     logger.warning(f"Post-hook error: {e}")
 
     def _count_findings(self, result: Any) -> int:
@@ -214,7 +214,7 @@ class ScanExecutor:
         if self._notification_handler:
             try:
                 self._notification_handler(job, message)
-            except Exception as e:
+            except (RuntimeError, TypeError, ValueError, OSError, ConnectionError) as e:
                 logger.error(f"Notification failed: {e}")
 
 

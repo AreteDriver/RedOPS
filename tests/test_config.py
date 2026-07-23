@@ -152,7 +152,8 @@ class TestAPIKeysConfig:
         """Test get_key returns stored config value."""
         config = APIKeysConfig(openai="sk-stored-key")
 
-        result = config.get_key("openai")
+        with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+            result = config.get_key("openai")
 
         assert result == "sk-stored-key"
 
@@ -186,7 +187,8 @@ class TestAPIKeysConfig:
         """Test get_key returns None when neither env nor config set."""
         config = APIKeysConfig()
 
-        result = config.get_key("openai")
+        with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+            result = config.get_key("openai")
 
         assert result is None
 
@@ -440,7 +442,8 @@ class TestRedOpsConfig:
         """Test get_api_key wrapper method."""
         config = RedOpsConfig(api_keys=APIKeysConfig(openai="wrapper-test-key"))
 
-        result = config.get_api_key("openai")
+        with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+            result = config.get_api_key("openai")
 
         assert result == "wrapper-test-key"
 

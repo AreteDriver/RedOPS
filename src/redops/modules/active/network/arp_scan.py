@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 from redops.core.context import Context
+from redops.modules.active.authorization import assert_active_authorized
 
 
 def discover_hosts(ctx: Context, params: dict[str, Any] | None = None) -> Context:
@@ -23,6 +24,7 @@ def discover_hosts(ctx: Context, params: dict[str, Any] | None = None) -> Contex
     Adds to context:
         live_hosts: list of dicts with ip, mac, vendor
     """
+    assert_active_authorized(ctx)
     params = params or {}
     subnet = params.get("subnet") or ctx.get("ap_subnet", "192.168.99.0/24")
     wait = params.get("wait", 15)

@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "name": "Threat Intelligence Hunt",
+    "description": "Proactive threat hunting: IP reputation, malware hashes, passive DNS, and dark web exposure checks",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["threat-intel", "reputation", "passive-dns", "malware", "dark-web"]
+  },
+  "steps": [
+    {
+      "name": "IP Reputation Check",
+      "module": "threat_intel.abuseipdb.check_ip",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "GreyNoise Context",
+      "module": "threat_intel.greynoise.query_ip",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Passive DNS Lookup",
+      "module": "threat_intel.passivedns.lookup_domain",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Malware Bazaar Hash Check",
+      "module": "threat_intel.malwarebazaar.query_hash",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "ThreatFox IOC Check",
+      "module": "threat_intel.threatfox.query_ioc",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "URLhaus URL Check",
+      "module": "threat_intel.urlhaus.check_url",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "AlienVault OTX Pulse",
+      "module": "threat_intel.alienvault.query_otx",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Score Risks",
+      "module": "intel.risk_scoring.score_risks",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Markdown Report",
+      "module": "reporting.markdown_report.generate_technical_report",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 300,
+    "strict_scope": true
+  }
+}

@@ -117,7 +117,7 @@ def _query_community_api(ip: str, api_key: str | None = None) -> dict[str, Any]:
 
     except requests.exceptions.RequestException as e:
         return {"ip": ip, "error": f"API request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"ip": ip, "error": f"Query failed: {str(e)}"}
 
 
@@ -156,7 +156,7 @@ def get_greynoise_context(ip: str, api_key: str) -> dict[str, Any]:
 
     except requests.exceptions.RequestException as e:
         return {"ip": ip, "error": f"API request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"ip": ip, "error": f"Context lookup failed: {str(e)}"}
 
 
@@ -197,7 +197,7 @@ def get_greynoise_riot(ip: str, api_key: str | None = None) -> dict[str, Any]:
 
     except requests.exceptions.RequestException as e:
         return {"ip": ip, "error": f"RIOT lookup failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"ip": ip, "error": f"RIOT query failed: {str(e)}"}
 
 

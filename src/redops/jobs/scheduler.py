@@ -544,12 +544,12 @@ class JobScheduler:
                                 logger.debug(
                                     f"Triggered scheduled job {job.id}: {job.name}"
                                 )
-                            except Exception as e:
+                            except (RuntimeError, TypeError, ValueError, OSError, ConnectionError) as e:
                                 job.error_count += 1
                                 job.last_error = str(e)
                                 logger.error(f"Failed to trigger job {job.id}: {e}")
 
-            except Exception as e:
+            except (RuntimeError, OSError, ConnectionError) as e:
                 logger.error(f"Scheduler error: {e}")
 
             self._shutdown_event.wait(self._check_interval)

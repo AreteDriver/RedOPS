@@ -1,0 +1,43 @@
+{
+  "metadata": {
+    "name": "Quick Start",
+    "description": "Zero-config quickstart pipeline. Run 'redops scan example.com' and get useful output in under 60 seconds.",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["quickstart", "zero-config", "beginner"]
+  },
+  "steps": [
+    {
+      "name": "Profile Domain",
+      "module": "recon.domains.profile_domain",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Fingerprint Technology Stack",
+      "module": "recon.tech_stack.fingerprint",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Score Risks",
+      "module": "intel.risk_scoring.score_risks",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Quick Report",
+      "module": "reporting.markdown_report.generate_exec_summary",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 60,
+    "strict_scope": false
+  }
+}

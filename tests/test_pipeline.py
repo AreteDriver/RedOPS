@@ -2,6 +2,7 @@
 
 import pytest
 from pathlib import Path
+from unittest.mock import patch
 from redops.core.context import Context
 from redops.pipelines.loader import PipelineLoader
 from redops.pipelines.runner import PipelineRunner
@@ -151,3 +152,64 @@ def test_pipeline_runner_disabled_steps():
     # The enabled_steps property should filter out disabled steps
     assert len(pipeline.enabled_steps) == 1
     assert pipeline.enabled_steps[0].name == "Enabled Step"
+
+
+def test_pipeline_runner_rollback_on_step_failure():
+    """Test that context is rolled back when a step fails with continue_on_error."""
+    from redops.pipelines.schemas import Pipeline, PipelineMetadata, PipelineStep
+
+    def _failing_step(ctx, params):
+        ctx.add("corrupted", True)
+        raise RuntimeError("step failure")
+
+    pipeline = Pipeline(
+        metadata=PipelineMetadata(name="Rollback Test", version="1.0"),
+        steps=[
+            PipelineStep(
+                name="Good Step",
+                module="compliance.audit_log.audit_pipeline_start",
+                enabled=True,
+            ),
+            PipelineStep(
+                name="Failing Step",
+                module="compliance.audit_log.audit_pipeline_start",
+                enabled=True,
+                continue_on_error=True,
+            ),
+        ],
+    )
+
+    runner = PipelineRunner(pipeline)
+    with patch.object(runner, "_resolve_module_function") as mock_resolve:
+        def _mock_func(step_name):
+            if step_name == "Failing Step":
+                return _failing_step
+            return lambda ctx, params: ctx
+
+        # The module path maps to the step name for this mock
+        mock_resolve.side_effect = lambda path: _failing_step if "failing" in path.lower() else lambda ctx, params: ctx
+        ctx = runner.run(target="test.com", parallel=False)
+
+    # The failing step should have been rolled back; "corrupted" should not exist
+    assert ctx.get("corrupted") is None
+    assert ctx.get("pipeline_name") == "Rollback Test"
+
+
+def test_pipeline_runner_checkpoints_cleared_after_run():
+    """Test that checkpoints are cleared after pipeline completes."""
+    from redops.pipelines.schemas import Pipeline, PipelineMetadata, PipelineStep
+
+    pipeline = Pipeline(
+        metadata=PipelineMetadata(name="Clear Test", version="1.0"),
+        steps=[
+            PipelineStep(
+                name="Audit Step",
+                module="compliance.audit_log.audit_pipeline_start",
+                enabled=True,
+            )
+        ],
+    )
+
+    runner = PipelineRunner(pipeline)
+    ctx = runner.run(target="test.com")
+    assert len(ctx._checkpoints) == 0

@@ -795,7 +795,7 @@ class TestPdfMetadataWithMocking:
     def test_pdf_reader_exception(self):
         """Test PDF extraction handles reader exceptions."""
         mock_reader_class = MagicMock()
-        mock_reader_class.side_effect = Exception("Corrupted PDF")
+        mock_reader_class.side_effect = RuntimeError("Corrupted PDF")
 
         with patch("redops.modules.metadata.documents.PYPDF_AVAILABLE", True):
             with patch(
@@ -945,7 +945,7 @@ class TestDocxMetadataWithMocking:
     def test_docx_generic_exception(self):
         """Test DOCX extraction handles generic exceptions."""
         mock_doc_class = MagicMock()
-        mock_doc_class.side_effect = Exception("Generic error")
+        mock_doc_class.side_effect = RuntimeError("Generic error")
 
         # Create a fake PackageNotFoundError that won't match
         class FakePackageNotFoundError(Exception):
@@ -1056,7 +1056,7 @@ class TestCheckDocxHiddenDataAdvanced:
         """Test hidden data check handles exceptions gracefully."""
         mock_doc = MagicMock()
         mock_doc.core_properties.revision = "5"
-        mock_doc.part.rels.values.side_effect = Exception("Access error")
+        mock_doc.part.rels.values.side_effect = RuntimeError("Access error")
 
         # Should not raise, should return empty list
         warnings = check_docx_for_hidden_data(mock_doc)

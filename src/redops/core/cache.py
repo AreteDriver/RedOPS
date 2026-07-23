@@ -243,7 +243,7 @@ class FileCacheBackend(BaseCacheBackend):
                     size_bytes=data.get("size_bytes", 0),
                     tags=data.get("tags", []),
                 )
-            except Exception:
+            except (OSError, json.JSONDecodeError, KeyError, TypeError):
                 return None
 
     def set(self, entry: CacheEntry) -> None:
@@ -262,7 +262,7 @@ class FileCacheBackend(BaseCacheBackend):
                 }
                 with open(path, "w") as f:
                     json.dump(data, f)
-            except Exception as e:
+            except (OSError, TypeError, ValueError) as e:
                 raise CacheStorageError(f"Failed to write cache: {e}")
 
     def delete(self, key: str) -> bool:
@@ -407,7 +407,7 @@ class Cache:
         """Estimate size of a value in bytes."""
         try:
             return sys.getsizeof(value)
-        except Exception:
+        except (TypeError, ValueError, AttributeError):
             return 0
 
     def get(self, key: str, default: T = None) -> T | Any:

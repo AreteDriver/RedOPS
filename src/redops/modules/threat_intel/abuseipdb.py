@@ -114,7 +114,7 @@ def _check_ip(
         return {"ip": ip, "error": f"API error: {str(e)}"}
     except requests.exceptions.RequestException as e:
         return {"ip": ip, "error": f"Request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"ip": ip, "error": f"Query failed: {str(e)}"}
 
 
@@ -189,7 +189,7 @@ def report_ip(
         return {"error": f"API error: {str(e)}"}
     except requests.exceptions.RequestException as e:
         return {"error": f"Request failed: {str(e)}"}
-    except Exception as e:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError) as e:
         return {"error": f"Report failed: {str(e)}"}
 
 
@@ -229,7 +229,7 @@ def get_blacklist(
         data = response.json()
         return data.get("data", [])
 
-    except Exception:
+    except (OSError, RuntimeError, TypeError, ValueError, ConnectionError):
         return []
 
 

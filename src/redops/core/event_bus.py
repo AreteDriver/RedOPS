@@ -246,7 +246,7 @@ class Subscription:
             try:
                 if not self.filter_fn(event):
                     return False
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.warning(f"Filter function failed: {e}")
                 return False
 
@@ -609,7 +609,7 @@ class EventBus:
                 if sub.once:
                     to_remove.append(sub)
 
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Handler {sub.handler} failed: {e}")
                 self._stats["events_failed"] += 1
                 self._dlq.add(event, sub.handler, e)
@@ -767,7 +767,7 @@ class AsyncEventBus:
                 if sub.once:
                     to_remove.append(sub)
 
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Async handler {sub.handler} failed: {e}")
                 self._stats["events_failed"] += 1
                 self._dlq.add(event, sub.handler, e)
@@ -796,7 +796,7 @@ class AsyncEventBus:
                 sub.call_count += 1
                 sub.last_called = datetime.now()
                 return True
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Handler failed: {e}")
                 self._dlq.add(event, sub.handler, e)
                 return False
@@ -918,7 +918,7 @@ class BackgroundEventBus:
                 self._inner_bus.publish(event)
             except queue.Empty:
                 continue
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Worker error: {e}")
 
     def subscribe(self, *args, **kwargs) -> Subscription:
@@ -1034,7 +1034,7 @@ class EventAggregator:
         if self._on_flush and events:
             try:
                 self._on_flush(events)
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Flush callback failed: {e}")
 
         return events
@@ -1102,7 +1102,7 @@ class EventReplay:
         for event in events:
             try:
                 handler(event)
-            except Exception as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as e:
                 logger.error(f"Replay handler failed on {event.id}: {e}")
 
         return len(events)

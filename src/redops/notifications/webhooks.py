@@ -215,7 +215,7 @@ class SlackWebhook(WebhookProvider):
                 response.raise_for_status()
                 logger.info(f"Slack notification sent: {message.title}")
                 return True
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             logger.error(f"Failed to send Slack notification: {e}")
             return False
 
@@ -334,7 +334,7 @@ class TeamsWebhook(WebhookProvider):
                 response.raise_for_status()
                 logger.info(f"Teams notification sent: {message.title}")
                 return True
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             logger.error(f"Failed to send Teams notification: {e}")
             return False
 
@@ -438,7 +438,7 @@ class DiscordWebhook(WebhookProvider):
                 response.raise_for_status()
                 logger.info(f"Discord notification sent: {message.title}")
                 return True
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             logger.error(f"Failed to send Discord notification: {e}")
             return False
 
@@ -516,7 +516,7 @@ class GenericWebhook(WebhookProvider):
                 response.raise_for_status()
                 logger.info(f"Webhook notification sent: {message.title}")
                 return True
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             logger.error(f"Failed to send webhook notification: {e}")
             return False
 
@@ -598,6 +598,6 @@ class PagerDutyWebhook(WebhookProvider):
                 response.raise_for_status()
                 logger.info(f"PagerDuty notification sent: {message.title}")
                 return True
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             logger.error(f"Failed to send PagerDuty notification: {e}")
             return False

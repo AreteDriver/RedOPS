@@ -9,6 +9,12 @@ from typing import Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 
+try:
+    from starlette.websockets import WebSocketDisconnect
+except ImportError:  # pragma: no cover
+    class WebSocketDisconnect(Exception):  # type: ignore[no-redef]
+        pass
+
 
 class EventType(Enum):
     """WebSocket event types."""
@@ -122,7 +128,7 @@ class ConnectionManager:
         """
         try:
             await websocket.send_text(event.to_json())
-        except Exception:
+        except (WebSocketDisconnect, RuntimeError, OSError, ConnectionError):
             self.disconnect(websocket)
 
     async def broadcast(self, event: WSEvent) -> None:
@@ -136,7 +142,7 @@ class ConnectionManager:
         for websocket in self.active_connections:
             try:
                 await websocket.send_text(event.to_json())
-            except Exception:
+            except (WebSocketDisconnect, RuntimeError, OSError, ConnectionError):
                 disconnected.add(websocket)
 
         # Clean up disconnected clients
@@ -158,7 +164,7 @@ class ConnectionManager:
         for websocket in self.scan_subscriptions[scan_id]:
             try:
                 await websocket.send_text(event.to_json())
-            except Exception:
+            except (WebSocketDisconnect, RuntimeError, OSError, ConnectionError):
                 disconnected.add(websocket)
 
         # Clean up disconnected clients

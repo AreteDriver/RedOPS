@@ -139,7 +139,7 @@ class NotificationManager:
 
             except queue.Empty:
                 continue
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
                 logger.error(f"Notification worker error: {e}")
 
     def _send_to_providers(
@@ -163,7 +163,7 @@ class NotificationManager:
                     success = provider.send(message)
                     if success:
                         break
-                except Exception as e:
+                except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
                     logger.error(f"Provider {name} attempt {attempt + 1} failed: {e}")
 
                 if attempt < retries:
@@ -212,7 +212,7 @@ class NotificationManager:
         for formatter in self._formatters:
             try:
                 message = formatter(message)
-            except Exception as e:
+            except (RuntimeError, ValueError, TypeError, OSError, ConnectionError) as e:
                 logger.error(f"Formatter error: {e}")
         return message
 

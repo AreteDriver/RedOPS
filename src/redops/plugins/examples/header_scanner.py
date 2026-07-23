@@ -115,7 +115,7 @@ class HeaderScannerPlugin(ScannerPlugin):
         try:
             parsed = urlparse(target)
             return parsed.scheme in ("http", "https") and bool(parsed.netloc)
-        except Exception:
+        except (ValueError, TypeError):
             return False
 
     def scan(
@@ -194,7 +194,7 @@ class HeaderScannerPlugin(ScannerPlugin):
             # Store response headers
             result.metadata["response_headers"] = headers
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             result.success = False
             result.error = str(e)
             self._trigger_hook("on_error", e)

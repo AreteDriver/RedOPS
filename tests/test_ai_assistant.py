@@ -1082,3 +1082,105 @@ class TestGroqImportError:
                 finally:
                     if original:
                         sys.modules["groq"] = original
+
+
+class TestCostManagement:
+    """Tests for AI cost tracking and budget enforcement."""
+
+    def test_cost_tracker_initialized(self):
+        """Test that cost tracker is initialized with zeros."""
+        from redops.modules.ai_assistant import AIAssistant
+
+        mock_openai = MagicMock()
+        with patch.dict("sys.modules", {"openai": mock_openai}):
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+                with patch("redops.modules.ai_assistant.load_config", return_value={}):
+                    assistant = AIAssistant(provider="openai")
+
+        metrics = assistant.get_cost_metrics()
+        assert metrics["calls"] == 0
+        assert metrics["input_tokens"] == 0
+        assert metrics["output_tokens"] == 0
+        assert metrics["estimated_cost_usd"] == 0.0
+        assert metrics["budget_limit_usd"] is None
+        assert metrics["budget_remaining_usd"] is None
+
+    def test_budget_limit_from_config(self):
+        """Test budget limit loaded from config."""
+        from redops.modules.ai_assistant import AIAssistant
+
+        mock_openai = MagicMock()
+        with patch.dict("sys.modules", {"openai": mock_openai}):
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+                with patch(
+                    "redops.modules.ai_assistant.load_config",
+                    return_value={"ai": {"budget_limit": 5.0}},
+                ):
+                    assistant = AIAssistant(provider="openai")
+
+        assert assistant.budget_limit == 5.0
+        metrics = assistant.get_cost_metrics()
+        assert metrics["budget_limit_usd"] == 5.0
+        assert metrics["budget_remaining_usd"] == 5.0
+
+    def test_budget_enforcement_blocks_over_limit(self):
+        """Test that API calls are blocked when budget would be exceeded."""
+        from redops.modules.ai_assistant import AIAssistant
+
+        mock_openai = MagicMock()
+        with patch.dict("sys.modules", {"openai": mock_openai}):
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+                with patch("redops.modules.ai_assistant.load_config", return_value={}):
+                    assistant = AIAssistant(provider="openai", budget_limit=0.001)
+
+        # The estimated cost for any call will exceed $0.001
+        with pytest.raises(RuntimeError, match="AI budget exceeded"):
+            assistant._check_budget(0.01)
+
+    def test_record_usage_increments_counters(self):
+        """Test that _record_usage updates cost tracker."""
+        from redops.modules.ai_assistant import AIAssistant
+
+        mock_openai = MagicMock()
+        with patch.dict("sys.modules", {"openai": mock_openai}):
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+                with patch("redops.modules.ai_assistant.load_config", return_value={}):
+                    assistant = AIAssistant(provider="openai")
+
+        assistant._record_usage("short prompt", "short response")
+        metrics = assistant.get_cost_metrics()
+        assert metrics["calls"] == 1
+        assert metrics["input_tokens"] > 0
+        assert metrics["output_tokens"] > 0
+        assert metrics["estimated_cost_usd"] > 0
+
+    def test_multiple_calls_accumulate(self):
+        """Test that multiple API calls accumulate cost."""
+        from redops.modules.ai_assistant import AIAssistant
+
+        mock_openai = MagicMock()
+        with patch.dict("sys.modules", {"openai": mock_openai}):
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}):
+                with patch("redops.modules.ai_assistant.load_config", return_value={}):
+                    assistant = AIAssistant(provider="openai")
+
+        for _ in range(3):
+            assistant._record_usage("prompt", "response")
+
+        metrics = assistant.get_cost_metrics()
+        assert metrics["calls"] == 3
+        assert metrics["estimated_cost_usd"] > 0
+
+    def test_ollama_has_zero_cost(self):
+        """Test that Ollama (local) provider has zero cost."""
+        from redops.modules.ai_assistant import AIAssistant
+
+        mock_ollama = MagicMock()
+        with patch.dict("sys.modules", {"ollama": mock_ollama}):
+            with patch("redops.modules.ai_assistant.load_config", return_value={}):
+                assistant = AIAssistant(provider="ollama")
+
+        assistant._record_usage("prompt", "response")
+        metrics = assistant.get_cost_metrics()
+        assert metrics["estimated_cost_usd"] == 0.0
+        assert metrics["budget_remaining_usd"] is None

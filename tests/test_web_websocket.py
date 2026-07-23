@@ -187,7 +187,7 @@ class TestConnectionManager:
         """Test send personal handles errors."""
         cm = ConnectionManager()
         ws = AsyncMock()
-        ws.send_text.side_effect = Exception("Connection closed")
+        ws.send_text.side_effect = RuntimeError("Connection closed")
         cm.active_connections.add(ws)
         event = WSEvent(event="test", data={})
 
@@ -215,7 +215,7 @@ class TestConnectionManager:
         cm = ConnectionManager()
         ws1 = AsyncMock()
         ws2 = AsyncMock()
-        ws2.send_text.side_effect = Exception("Disconnected")
+        ws2.send_text.side_effect = ConnectionError("Disconnected")
         cm.active_connections.add(ws1)
         cm.active_connections.add(ws2)
         event = WSEvent(event="test", data={})

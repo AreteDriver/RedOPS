@@ -410,7 +410,7 @@ class TestGetHIBPApiKey:
             os.environ.pop("HIBP_API_KEY", None)
 
             with patch(
-                "redops.cli.settings.get_api_key_direct", side_effect=Exception("Error")
+                "redops.cli.settings.get_api_key_direct", side_effect=RuntimeError("Error")
             ):
                 key = get_hibp_api_key()
 
@@ -530,7 +530,7 @@ class TestMakeHIBPRequest:
     def test_request_exception(self):
         """Test request exception handling."""
         mock_requests = MagicMock()
-        mock_requests.get.side_effect = Exception("Connection error")
+        mock_requests.get.side_effect = ConnectionError("Connection error")
 
         with patch.dict("sys.modules", {"requests": mock_requests}):
             from importlib import reload

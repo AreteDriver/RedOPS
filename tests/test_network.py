@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 from redops.core.context import Context
+from redops.modules.active.authorization import record_authorization
 from redops.modules.active.network.arp_scan import discover_hosts
 from redops.modules.active.network.port_scan import _parse_nmap_xml, scan_ports
 
@@ -24,6 +25,7 @@ class TestDiscoverHosts:
         )
 
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("ap_subnet", "192.168.99.0/24")
         result = discover_hosts(ctx, {"wait": 0})
 
@@ -39,6 +41,7 @@ class TestDiscoverHosts:
     def test_no_hosts_found(self, mock_run, mock_sleep):
         mock_run.return_value = MagicMock(stdout="", returncode=0)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = discover_hosts(ctx, {"wait": 0})
         assert result.get("live_hosts") == []
 
@@ -47,6 +50,7 @@ class TestDiscoverHosts:
     def test_uses_context_subnet(self, mock_run, mock_sleep):
         mock_run.return_value = MagicMock(stdout="", returncode=0)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add("ap_subnet", "10.0.0.0/24")
         discover_hosts(ctx, {"wait": 0})
         call_args = mock_run.call_args[0][0]
@@ -106,6 +110,7 @@ class TestScanPorts:
     def test_scans_all_hosts(self, mock_run):
         mock_run.return_value = MagicMock(stdout=SAMPLE_NMAP_XML, returncode=0)
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         ctx.add(
             "live_hosts",
             [
@@ -122,6 +127,7 @@ class TestScanPorts:
 
     def test_no_hosts_logs_error(self):
         ctx = Context(target="home-lab")
+        record_authorization(ctx, operator="test-operator", target_assertion="home-lab")
         result = scan_ports(ctx)
         error_logs = result.get_logs(level="ERROR")
         assert any("No live hosts" in log["message"] for log in error_logs)

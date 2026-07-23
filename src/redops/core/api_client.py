@@ -753,7 +753,7 @@ class ApiClient:
 
                 return response
 
-            except Exception as e:
+            except (OSError, RuntimeError, ConnectionError, TimeoutError, HttpError) as e:
                 last_exception = e
 
                 if self._circuit_breaker:

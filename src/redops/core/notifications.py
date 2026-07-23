@@ -164,7 +164,7 @@ class TemplateEngine:
                     else:
                         value = getattr(value, part, "")
                 return str(value) if value is not None else ""
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError, AttributeError):
                 return ""
 
         return self.VARIABLE_PATTERN.sub(replace_var, template)
@@ -371,7 +371,7 @@ class EmailChannel(NotificationChannel):
 
             return True
 
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, ValueError) as e:
             notification.error = str(e)
             return False
 
@@ -414,7 +414,7 @@ class WebhookChannel(NotificationChannel):
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 return response.status < 400
 
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, ValueError) as e:
             notification.error = str(e)
             return False
 
@@ -494,7 +494,7 @@ class SlackChannel(NotificationChannel):
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 return response.status == 200
 
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, ValueError) as e:
             notification.error = str(e)
             return False
 
@@ -528,7 +528,7 @@ class ConsoleChannel(NotificationChannel):
             self.output_func(message)
             return True
 
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, ValueError) as e:
             notification.error = str(e)
             return False
 
@@ -551,7 +551,7 @@ class CallbackChannel(NotificationChannel):
         try:
             result = self.callback(notification)
             return bool(result) if result is not None else True
-        except Exception as e:
+        except (OSError, ConnectionError, RuntimeError, ValueError) as e:
             notification.error = str(e)
             return False
 
@@ -725,7 +725,7 @@ class NotificationManager:
         for listener in self._listeners:
             try:
                 listener(notification, result)
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError, AttributeError):
                 pass
 
         return result

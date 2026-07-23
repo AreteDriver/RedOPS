@@ -293,7 +293,7 @@ class EventBus:
                     await sub.callback(event)  # type: ignore[misc]
                 else:
                     await loop.run_in_executor(None, sub.callback, event)
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 logger.exception(
                     "Error in subscriber %s for %s",
                     sub.sub_id,
@@ -354,7 +354,7 @@ class EventBus:
                 continue
             try:
                 sub.callback(event)
-            except Exception:
+            except (OSError, RuntimeError, TypeError, ValueError):
                 logger.exception(
                     "Error in subscriber %s for %s",
                     sub.sub_id,

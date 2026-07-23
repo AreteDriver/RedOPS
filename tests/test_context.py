@@ -1,5 +1,6 @@
 """Tests for the Context module."""
 
+import pytest
 from redops.core.context import Context
 
 
@@ -159,3 +160,88 @@ def test_context_data_persistence():
     ctx.add("list", [1, 2, 3])
     assert ctx.get("counter") == 2
     assert ctx.get("list") == [1, 2, 3]
+
+
+def test_context_save_creates_checkpoint():
+    """Test that save() creates a deep-copy checkpoint."""
+    ctx = Context(target="test.com")
+    ctx.add("key", "value")
+    initial_logs = len(ctx.logs)
+
+    ctx.save()
+    assert len(ctx._checkpoints) == 1
+
+    # Mutate data after save
+    ctx.add("key", "mutated")
+    assert ctx.get("key") == "mutated"
+
+    # Rollback should restore data but preserve logs (audit trail)
+    ctx.rollback()
+    assert ctx.get("key") == "value"
+    assert len(ctx._checkpoints) == 0
+
+    # Logs are preserved (not rolled back) — should include post-save logs plus rollback log
+    rollback_logs = [log for log in ctx.logs if "rolled back" in log.get("message", "")]
+    assert len(rollback_logs) == 1
+    # The add log and rollback log should both be present
+    assert any("Added data to context" in log.get("message", "") for log in ctx.logs)
+
+
+def test_context_rollback_no_checkpoint_raises():
+    """Test that rollback without save raises RuntimeError."""
+    ctx = Context()
+    with pytest.raises(RuntimeError, match="No checkpoints available"):
+        ctx.rollback()
+
+
+def test_context_nested_save_rollback():
+    """Test nested save/rollback (stack behavior)."""
+    ctx = Context()
+    ctx.add("a", 1)
+    ctx.save()  # checkpoint 1
+
+    ctx.add("b", 2)
+    ctx.save()  # checkpoint 2
+
+    ctx.add("c", 3)
+    assert ctx.get("a") == 1
+    assert ctx.get("b") == 2
+    assert ctx.get("c") == 3
+
+    # Rollback to checkpoint 2
+    ctx.rollback()
+    assert ctx.get("a") == 1
+    assert ctx.get("b") == 2
+    assert ctx.get("c") is None
+
+    # Rollback to checkpoint 1
+    ctx.rollback()
+    assert ctx.get("a") == 1
+    assert ctx.get("b") is None
+    assert ctx.get("c") is None
+
+
+def test_context_clear_checkpoints():
+    """Test clearing all checkpoints."""
+    ctx = Context()
+    ctx.save()
+    ctx.save()
+    assert len(ctx._checkpoints) == 2
+
+    ctx.clear_checkpoints()
+    assert len(ctx._checkpoints) == 0
+
+
+def test_context_checkpoint_is_deep_copy():
+    """Test that checkpoints are deep copies, not references."""
+    ctx = Context()
+    ctx.add("nested", {"inner": [1, 2]})
+    ctx.save()
+
+    # Mutate nested structure
+    ctx.data["nested"]["inner"].append(3)
+    assert ctx.data["nested"]["inner"] == [1, 2, 3]
+
+    # Rollback should restore original nested structure
+    ctx.rollback()
+    assert ctx.data["nested"]["inner"] == [1, 2]

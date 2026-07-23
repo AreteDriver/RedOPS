@@ -527,7 +527,7 @@ class EmailBackend(WebhookProvider):
             logger.info(f"Email sent to {len(all_recipients)} recipients: {subject}")
             return True
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             logger.error(f"Failed to send email: {e}")
             return False
 
@@ -685,6 +685,6 @@ class EmailBackend(WebhookProvider):
                     if self.config.smtp_user:
                         server.login(self.config.smtp_user, self.config.smtp_password)
                     return True
-        except Exception as e:
+        except (ConnectionError, TimeoutError, OSError, RuntimeError, ValueError) as e:
             logger.error(f"SMTP connection test failed: {e}")
             return False

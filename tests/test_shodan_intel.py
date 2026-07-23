@@ -1,5 +1,6 @@
 """Tests for Shodan intelligence module."""
 
+import socket
 import sys
 from importlib import reload
 from unittest.mock import patch, MagicMock
@@ -376,7 +377,7 @@ class TestGetShodanClient:
             with patch.dict("os.environ", {}, clear=True):
                 with patch(
                     "redops.cli.settings.get_api_key_direct",
-                    side_effect=Exception("Settings error"),
+                    side_effect=RuntimeError("Settings error"),
                 ):
                     import redops.modules.intel.shodan_intel as shodan_mod
 
@@ -399,7 +400,7 @@ class TestQueryShodanHostEdgeCases:
             return_value=mock_client,
         ):
             with patch(
-                "socket.gethostbyname", side_effect=Exception("DNS resolution failed")
+                "socket.gethostbyname", side_effect=socket.gaierror("DNS resolution failed")
             ):
                 result = query_shodan_host(ctx)
 
@@ -412,7 +413,7 @@ class TestQueryShodanHostEdgeCases:
         ctx = Context(target="10.0.0.1")
 
         mock_client = MagicMock()
-        mock_client.host.side_effect = Exception("No information available for that IP")
+        mock_client.host.side_effect = RuntimeError("No information available for that IP")
 
         with patch(
             "redops.modules.intel.shodan_intel.get_shodan_client",
@@ -428,7 +429,7 @@ class TestQueryShodanHostEdgeCases:
         ctx = Context(target="93.184.216.34")
 
         mock_client = MagicMock()
-        mock_client.host.side_effect = Exception("Rate limit exceeded")
+        mock_client.host.side_effect = RuntimeError("Rate limit exceeded")
 
         with patch(
             "redops.modules.intel.shodan_intel.get_shodan_client",
@@ -482,7 +483,7 @@ class TestQueryShodanDNSEdgeCases:
         ctx = Context(target="example.com")
 
         mock_client = MagicMock()
-        mock_client.dns.domain_info.side_effect = Exception("DNS lookup failed")
+        mock_client.dns.domain_info.side_effect = RuntimeError("DNS lookup failed")
 
         with patch(
             "redops.modules.intel.shodan_intel.get_shodan_client",
@@ -523,7 +524,7 @@ class TestSearchShodanEdgeCases:
         ctx = Context(target="example.com")
 
         mock_client = MagicMock()
-        mock_client.search.side_effect = Exception("Search failed")
+        mock_client.search.side_effect = RuntimeError("Search failed")
 
         with patch(
             "redops.modules.intel.shodan_intel.get_shodan_client",

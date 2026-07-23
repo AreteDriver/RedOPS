@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "name": "Wireless Reconnaissance",
+    "description": "Authorized wireless reconnaissance: scan access points, analyze RF data, and generate findings",
+    "version": "1.0",
+    "author": "RedOps",
+    "tags": ["wireless", "rf", "wifi", "authorized-only"]
+  },
+  "steps": [
+    {
+      "name": "Validate Scope",
+      "module": "compliance.scope_guard.validate_scope",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Record Active Authorization",
+      "module": "active.authorization.record_authorization",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Enable Monitor Mode",
+      "module": "active.wireless.monitor.enable_monitor_mode",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": false
+    },
+    {
+      "name": "Scan Access Points",
+      "module": "active.wireless.scan.scan_access_points",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Parse Airodump Output",
+      "module": "rf.parsers.airodump.parse",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Parse Horst Data",
+      "module": "rf.parsers.horst.parse",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Score Risks",
+      "module": "intel.risk_scoring.score_risks",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Generate Technical Report",
+      "module": "reporting.markdown_report.generate_technical_report",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Disable Monitor Mode",
+      "module": "active.wireless.monitor.disable_monitor_mode",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    },
+    {
+      "name": "Audit Pipeline End",
+      "module": "compliance.audit_log.audit_pipeline_end",
+      "params": {},
+      "enabled": true,
+      "continue_on_error": true
+    }
+  ],
+  "config": {
+    "timeout": 300,
+    "strict_scope": true,
+    "requires_authorization": true
+  }
+}

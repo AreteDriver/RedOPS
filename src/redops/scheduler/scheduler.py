@@ -85,7 +85,7 @@ class ScheduleStore:
             logger.info(
                 f"Loaded {len(self._schedules)} schedules from {self._storage_path}"
             )
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
             logger.error(f"Failed to load schedules: {e}")
 
     def _save_to_file(self) -> None:
@@ -100,7 +100,7 @@ class ScheduleStore:
             }
             with open(self._storage_path, "w") as f:
                 json.dump(data, f, indent=2)
-        except Exception as e:
+        except (OSError, TypeError, ValueError) as e:
             logger.error(f"Failed to save schedules: {e}")
 
     def add_schedule(self, schedule: ScanSchedule) -> None:
@@ -279,7 +279,7 @@ class Scheduler:
             try:
                 self._check_and_dispatch()
                 self._check_timeouts()
-            except Exception as e:
+            except (RuntimeError, OSError, TypeError, ValueError, ConnectionError) as e:
                 logger.error(f"Scheduler error: {e}")
 
             # Sleep in small increments to allow quick shutdown
@@ -300,7 +300,7 @@ class Scheduler:
 
             try:
                 self._dispatch_schedule(schedule)
-            except Exception as e:
+            except (RuntimeError, TypeError, ValueError, OSError, ConnectionError) as e:
                 logger.error(f"Failed to dispatch schedule {schedule.id}: {e}")
                 self._job_semaphore.release()
 
@@ -345,7 +345,7 @@ class Scheduler:
             self.store.update_job(job)
             logger.info(f"Job {job.id} completed with {job.findings_count} findings")
 
-        except Exception as e:
+        except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError) as e:
             job.fail(str(e))
             self.store.update_job(job)
             logger.error(f"Job {job.id} failed: {e}")

@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, TYPE_CHECKING
 from redops.pipelines.schemas import Pipeline, PipelineStep
 from redops.core.context import Context
+from redops.modules.active.exceptions import ActiveAuthorizationError
 from redops.core.plugin_system import (
     PluginRegistry,
     HookPoint,
@@ -106,6 +107,9 @@ class PipelineRunner:
         """
         ctx.log(f"Executing step: {step.name}", level="INFO", step=step.name)
 
+        # Save checkpoint before executing the step so we can rollback on failure
+        ctx.save()
+
         # Execute BEFORE_MODULE hooks
         self.plugins.execute_hooks(
             HookPoint.BEFORE_MODULE,
@@ -150,7 +154,7 @@ class PipelineRunner:
 
             return ctx
 
-        except Exception as e:
+        except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError, ActiveAuthorizationError, AttributeError) as e:
             error_msg = f"Step failed: {step.name} - {str(e)}"
             ctx.log(error_msg, level="ERROR", step=step.name, error=str(e))
 
@@ -164,6 +168,8 @@ class PipelineRunner:
             if not step.continue_on_error:
                 raise RuntimeError(error_msg) from e
 
+            # Rollback context to preserve data integrity
+            ctx.rollback()
             return ctx
 
     def _get_plugin_module(self, module_path: str) -> ModulePlugin | None:
@@ -281,7 +287,7 @@ class PipelineRunner:
             try:
                 result_ctx = self._execute_step(step, step_ctx)
                 return (step.name, result_ctx.data, result_ctx.logs, None)
-            except Exception as e:
+            except (RuntimeError, ImportError, TypeError, ValueError, OSError, ConnectionError, ActiveAuthorizationError, AttributeError) as e:
                 return (step.name, {}, [], str(e))
 
         # Run steps in parallel using ThreadPoolExecutor
@@ -374,4 +380,5 @@ class PipelineRunner:
         self.plugins.execute_hooks(HookPoint.AFTER_PIPELINE, ctx)
 
         ctx.log(f"Pipeline completed: {self.pipeline.metadata.name}", level="INFO")
+        ctx.clear_checkpoints()
         return ctx

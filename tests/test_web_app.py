@@ -346,6 +346,8 @@ class TestScanResultsEdgeCases:
 
     def test_get_results_scan_not_completed(self):
         """Test getting results for incomplete scan."""
+        from redops.web.app import _scans
+
         app = create_app()
         client = TestClient(app)
 
@@ -353,7 +355,9 @@ class TestScanResultsEdgeCases:
         start_response = client.post("/api/scans", json={"target": "results-test.com"})
         scan_id = start_response.json()["scan_id"]
 
-        # Try to get results immediately (scan should still be pending/running)
+        # Force status to running to simulate incomplete scan (bg task may complete quickly in tests)
+        _scans[scan_id].status = "running"
+
         response = client.get(f"/api/scans/{scan_id}/results")
 
         # Should be 400 (not completed) or 404 (no results)
