@@ -37,7 +37,7 @@ requests>=2.31.0,<3.0.0
 # nltk>=3.8.0,<4.0.0
 
 # For data science, clustering, and risk analysis
-scikit-learn>=1.3.0,<2.0.0
+scikit-learn>=1.7.2,<2.0.0
 numpy>=1.24.0,<3.0.0
 pandas>=2.0.0,<3.0.0
 
